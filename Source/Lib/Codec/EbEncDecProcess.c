@@ -1258,7 +1258,13 @@ void CopyStatisticsToRefObject(
     ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->tmpLayerIdx = (uint8_t)picture_control_set_ptr->temporal_layer_index;
     ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->isSceneChange = picture_control_set_ptr->parent_pcs_ptr->scene_change_flag;
 
-
+#if FAST_CDEF
+    ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->cdef_frame_strength = picture_control_set_ptr->parent_pcs_ptr->cdef_frame_strength;
+#endif
+#if FAST_SG
+    Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+    ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->sg_frame_ep = cm->sg_frame_ep;
+#endif
 }
 
 
@@ -1329,6 +1335,9 @@ Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
 EbErrorType signal_derivation_enc_dec_kernel_oq(
+#if CHROMA_BLIND
+    SequenceControlSet_t    *sequence_control_set_ptr,
+#endif
     PictureControlSet_t     *picture_control_set_ptr,
     ModeDecisionContext_t   *context_ptr) {
 
@@ -1349,6 +1358,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->nfl_level = 3;
 
+#if CHROMA_BLIND
+    // Set Chroma Mode
+    // Level                Settings
+    // CHROMA_MODE_0  0     Chroma @ MD
+    // CHROMA_MODE_1  1     Chroma blind @ MD + CFL @ EP
+    // CHROMA_MODE_2  2     Chroma blind @ MD + no CFL @ EP
+    if (picture_control_set_ptr->enc_mode <= ENC_M3)
+        context_ptr->chroma_level = CHROMA_MODE_0;
+    else 
+        context_ptr->chroma_level = (sequence_control_set_ptr->encoder_bit_depth == EB_8BIT) ?
+            CHROMA_MODE_1 :
+            CHROMA_MODE_2 ;
+#endif
 
     return return_error;
 }
@@ -1431,6 +1453,9 @@ void* EncDecKernel(void *input_ptr)
         // EncDec Kernel Signal(s) derivation
 
         signal_derivation_enc_dec_kernel_oq(
+#if CHROMA_BLIND
+            sequence_control_set_ptr,
+#endif
             picture_control_set_ptr,
             context_ptr->md_context);
 
@@ -1832,6 +1857,17 @@ void* EncDecKernel(void *input_ptr)
             }
 #endif
 #if !FILT_PROC
+#if FAST_SG
+            uint8_t best_ep_cnt = 0;
+            uint8_t best_ep = 0;
+            for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {
+                if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
+                    best_ep = i;
+                    best_ep_cnt = picture_control_set_ptr->parent_pcs_ptr->sg_frame_ep_cnt[i];
+                }
+            }
+            cm->sg_frame_ep = best_ep;
+#endif
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
                 CopyStatisticsToRefObject(

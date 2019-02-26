@@ -13611,6 +13611,15 @@ extern "C" {
         int32_t tile_row_start_sb[MAX_TILE_ROWS + 1];  // valid for 0 <= i <= tile_rows
         int32_t tile_width, tile_height;               // In MI units
         struct PictureParentControlSet_s               *p_pcs_ptr;
+#if FAST_SG
+        int8_t  sg_filter_mode;
+        int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
+        int32_t sg_frame_ep;
+        int8_t  sg_ref_frame_ep[2];
+#endif
+#if FAST_SG
+        int8_t  wn_filter_mode;
+#endif
     } Av1Common;
 
     /**************************************
@@ -13634,7 +13643,7 @@ extern "C" {
         // ME Results
         uint64_t          treeblock_variance;
         uint32_t          leaf_count;
-        EbMdcLeafData_t   leaf_data_array[BLOCK_MAX_COUNT];
+        EbMdcLeafData_t   leaf_data_array[BLOCK_MAX_COUNT_SB_128];
 
     } MdcLcuData_t;
 
@@ -13855,7 +13864,7 @@ extern "C" {
         uint8_t   height;
         uint8_t   is_complete_sb;
         EbBool    raster_scan_cu_validity[CU_MAX_COUNT];
-        EbBool    block_is_inside_md_scan[BLOCK_MAX_COUNT];
+        EbBool    block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
         uint8_t   potential_logo_sb;
         uint8_t   is_edge_sb;
     } SbParams_t;
@@ -13869,7 +13878,7 @@ extern "C" {
         uint8_t    width;
         uint8_t    height;
         uint8_t    is_complete_sb;
-        EbBool     block_is_inside_md_scan[BLOCK_MAX_COUNT];
+        EbBool     block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
     } SbGeom_t;
 
     typedef struct CuStat_s {
@@ -13990,6 +13999,9 @@ extern "C" {
         uint8_t                              *zz_cost_array;
         // Non moving index array
         uint8_t                              *non_moving_index_array;
+#if NEW_PRED_STRUCT
+        int                                   kf_zeromotion_pct; // percent of zero motion blocks
+#endif
         uint8_t                               fade_out_from_black;
         uint8_t                               fade_in_to_black;
         EbBool                                is_pan;
@@ -14075,7 +14087,10 @@ extern "C" {
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
         uint16_t                              full_sb_count;
-        
+#if NEW_PRED_STRUCT
+        EbBool                                init_pred_struct_position_flag;
+        int8_t                                hierarchical_layers_diff;
+#endif        
         // ME Tools
         EbBool                                use_subpel_flag;
         EbBool                                enable_hme_flag;
@@ -14102,7 +14117,9 @@ extern "C" {
         EbEncMode                             enc_mode;
 
         EbLcuDepthMode                       *sb_md_mode_array;
+#if !CHROMA_BLIND
         EbChromaMode                          chroma_mode;
+#endif
         EbSbComplexityStatus                 *complex_sb_array;
         EbCu8x8Mode                           cu8x8_mode;
         EbBool                                use_src_ref;
@@ -14110,7 +14127,9 @@ extern "C" {
 
         // Multi-modes signal(s) 
         EbPictureDepthMode                    pic_depth_mode;
+#if !INTERPOLATION_SEARCH_LEVELS
         uint8_t                               interpolation_filter_search_mode;
+#endif
         uint8_t                               loop_filter_mode;
         uint8_t                               intra_pred_mode;
         //**********************************************************************************************************//
@@ -14261,6 +14280,24 @@ extern "C" {
 #if REST_M       
         RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
 #endif
+#if FAST_CDEF
+        int8_t                                cdef_filter_mode;
+        int32_t                               cdef_frame_strength;
+        int32_t                               cdf_ref_frame_strenght;
+        int32_t                               use_ref_frame_cdef_strength;
+#endif
+#if TX_SEARCH_LEVELS
+        uint8_t                               tx_search_level;
+        uint64_t                              tx_weight;
+        uint8_t                               tx_search_reduced_set;
+#endif
+#if INTERPOLATION_SEARCH_LEVELS
+        uint8_t                               interpolation_search_level;
+#endif
+#if NSQ_SEARCH_LEVELS
+        uint8_t                               nsq_search_level;
+#endif
+
     } PictureParentControlSet_t;
 
 

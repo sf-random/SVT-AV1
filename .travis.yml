@@ -10,10 +10,6 @@ addons:
     packages:
       - yasm
 
-matrix:
-  allow_failures:
-  - name: "FFmpeg patch"  # See issue #15
-
 jobs:
   include:
    # General Linux build job
@@ -21,6 +17,11 @@ jobs:
      script:
      - cd Build/linux
      - ./build.sh release
+   # General Linux debug build job
+   - name: Debug build
+     script:
+     - cd Build/linux
+     - ./build.sh debug
    # General macOS build job
    - name: macOS build
      os: osx
