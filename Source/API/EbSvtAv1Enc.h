@@ -3,8 +3,8 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#ifndef EbApi_h
-#define EbApi_h
+#ifndef EbSvtAv1Enc_h
+#define EbSvtAv1Enc_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,7 +19,7 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
 
-#define MAX_ENC_PRESET                              7
+#define MAX_ENC_PRESET                              8
 
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
@@ -503,4 +503,4 @@ typedef struct EbSvtAv1EncConfiguration
 }
 #endif // __cplusplus
 
-#endif // EbApi_h
+#endif // EbSvtAv1Enc_h
