@@ -3974,7 +3974,7 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     s7 = _mm_setzero_si128();
 
     // ss0 = 8 SADs, two search points for each 32x32
-    // ss4 = 8 MVs, two search points for each 32x32
+    // ss4 = 8 mvs, two search points for each 32x32
     //
     // XY
     // X: 32x32 block [0..3]
@@ -4065,7 +4065,7 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
     s3 = _mm_add_epi16(s3, s2);
     // Remove non-candidate's
     s3 = _mm_and_si128(s3, s4);
-    // Combine remaining candidates with remaining best MVs
+    // Combine remaining candidates with remaining best mvs
     s3 = _mm_or_si128(s3, s5);
     // Store back to memory
     _mm_storeu_si128((__m128i*)p_best_mv32x32, s3);
@@ -5353,7 +5353,6 @@ static INLINE void aom_sad16xhx4d_calc_avx2(
     res[3] = (uint32_t)_mm_cvtsi128_si32(xmm0);
 }
 
-#if AOM_SAD_PORTING
 void aom_sad16x4x4d_avx2(
     const uint8_t *src, int src_stride,
     const uint8_t *const ref[4], int ref_stride,
@@ -5946,7 +5945,6 @@ void aom_sad128x128x4d_avx2(const uint8_t *src, int src_stride,
     res[2] = sum0[2] + sum1[2];
     res[3] = sum0[3] + sum1[3];
 }
-#endif //AOM_SAD_PORTING
 #if NSQ_ME_OPT
 
 void ext_all_sad_calculation_8x8_16x16_avx2(
