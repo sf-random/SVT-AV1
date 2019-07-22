@@ -8,6 +8,13 @@
 #include "EbDefinitions.h"
 #include "EbSequenceControlSet.h"
 
+static void eb_sequence_control_set_dctor(EbPtr p)
+{
+    SequenceControlSet *obj = (SequenceControlSet*)p;
+    EB_FREE_ARRAY(obj->sb_params_array);
+    EB_FREE_ARRAY(obj->sb_geom);
+}
+
 /**************************************************************************************************
     General notes on how Sequence Control Sets (SCS) are used.
 
@@ -34,15 +41,13 @@
         pipeline, it cannot be changed on the fly or you will have pipeline coherency problems.
  ***************************************************************************************************/
 EbErrorType eb_sequence_control_set_ctor(
-    EbPtr *object_dbl_ptr,
+    SequenceControlSet *sequence_control_set_ptr,
     EbPtr object_init_data_ptr)
 {
     EbSequenceControlSetInitData *scsInitData = (EbSequenceControlSetInitData*)object_init_data_ptr;
     uint32_t segment_index;
-    SequenceControlSet *sequence_control_set_ptr;
-    EB_MALLOC(SequenceControlSet*, sequence_control_set_ptr, sizeof(SequenceControlSet), EB_N_PTR);
 
-    *object_dbl_ptr = (EbPtr)sequence_control_set_ptr;
+    sequence_control_set_ptr->dctor = eb_sequence_control_set_dctor;
 
     sequence_control_set_ptr->static_config.sb_sz = 64;
     sequence_control_set_ptr->static_config.partition_depth = 4;
@@ -57,22 +62,10 @@ EbErrorType eb_sequence_control_set_ctor(
     }
 
     // Encode Context
-    if (scsInitData != EB_NULL) {
+    if (scsInitData != EB_NULL)
         sequence_control_set_ptr->encode_context_ptr = scsInitData->encode_context_ptr;
-    }
-    else {
-        sequence_control_set_ptr->encode_context_ptr = (EncodeContext *)EB_NULL;
-    }
-
-    sequence_control_set_ptr->conformance_window_flag = 0;
 
     // Profile & ID
-    sequence_control_set_ptr->sps_id = 0;
-    sequence_control_set_ptr->vps_id = 0;
-    sequence_control_set_ptr->profile_space = 0;
-    sequence_control_set_ptr->profile_idc = 0;
-    sequence_control_set_ptr->level_idc = 0;
-    sequence_control_set_ptr->tier_idc = 0;
     sequence_control_set_ptr->chroma_format_idc = EB_YUV420;
     sequence_control_set_ptr->max_temporal_layers = 1;
 
@@ -80,13 +73,6 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->subsampling_y = 1;
     sequence_control_set_ptr->subsampling_x = 1;
 
-    // Picture Dimensions
-    sequence_control_set_ptr->luma_width = 0;
-    sequence_control_set_ptr->luma_height = 0;
-
-    sequence_control_set_ptr->chroma_width = 0;
-    sequence_control_set_ptr->chroma_height = 0;
-    sequence_control_set_ptr->frame_rate = 0;
     sequence_control_set_ptr->encoder_bit_depth = 8;
 
     // Bitdepth
@@ -95,8 +81,6 @@ EbErrorType eb_sequence_control_set_ctor(
 
     // GOP Structure
     sequence_control_set_ptr->max_ref_count = 1;
-    sequence_control_set_ptr->intra_period_length = 0;
-    sequence_control_set_ptr->intra_refresh_type = 0;
 
     // LCU
     sequence_control_set_ptr->sb_sz = 64;
@@ -128,112 +112,81 @@ EbErrorType eb_sequence_control_set_ctor(
     sequence_control_set_ptr->mv_merge_total_count = 5;
 
     // Initialize SB params
-    sb_params_ctor(
-        sequence_control_set_ptr);
+    EB_MALLOC_ARRAY(sequence_control_set_ptr->sb_params_array,
+        ((MAX_PICTURE_WIDTH_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz) *
+        ((MAX_PICTURE_HEIGHT_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz));
 
-    sequence_control_set_ptr->num_bits_width = 16;
-    sequence_control_set_ptr->num_bits_height = 16;
-    sequence_control_set_ptr->frame_id_numbers_present_flag = 0;
+    sequence_control_set_ptr->seq_header.frame_width_bits = 16;
+    sequence_control_set_ptr->seq_header.frame_height_bits = 16;
+    sequence_control_set_ptr->seq_header.frame_id_numbers_present_flag = 0;
     //    cm->large_scale_tile ? 0 : cm->error_resilient_mode;
-    sequence_control_set_ptr->frame_id_length = FRAME_ID_LENGTH;
-    sequence_control_set_ptr->delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
+    sequence_control_set_ptr->seq_header.frame_id_length = FRAME_ID_LENGTH;
+    sequence_control_set_ptr->seq_header.delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
 
     if (scsInitData && scsInitData->sb_size == 128)
     {
-        sequence_control_set_ptr->sb_size = BLOCK_128X128;
+        sequence_control_set_ptr->seq_header.sb_size = BLOCK_128X128;
         sequence_control_set_ptr->sb_size_pix = 128;
         sequence_control_set_ptr->max_block_cnt = 4421;
 
-        sequence_control_set_ptr->mib_size = 32;        // Size of the superblock in units of MI blocks
-        sequence_control_set_ptr->mib_size_log2 = 5;
+        sequence_control_set_ptr->seq_header.sb_mi_size = 32;        // Size of the superblock in units of MI blocks
+        sequence_control_set_ptr->seq_header.sb_size_log2 = 5;
     }
     else
     {
-        sequence_control_set_ptr->sb_size = BLOCK_64X64;
+        sequence_control_set_ptr->seq_header.sb_size = BLOCK_64X64;
         sequence_control_set_ptr->sb_size_pix = 64;
         sequence_control_set_ptr->max_block_cnt = 1101;
 
-        sequence_control_set_ptr->mib_size = 16;        // Size of the superblock in units of MI blocks
-        sequence_control_set_ptr->mib_size_log2 = 4;
+        sequence_control_set_ptr->seq_header.sb_mi_size = 16;        // Size of the superblock in units of MI blocks
+        sequence_control_set_ptr->seq_header.sb_size_log2 = 4;
     }
-
-
-
-    sequence_control_set_ptr->enable_dual_filter = 1;
+    sequence_control_set_ptr->seq_header.enable_dual_filter = 1;
     // 0 - disable dual interpolation filter
     // 1 - enable vertical and horiz filter selection
-    sequence_control_set_ptr->enable_order_hint = 1;
+    sequence_control_set_ptr->seq_header.order_hint_info.enable_order_hint = 1;
     // 0 - disable order hint, and related tools:
     // jnt_comp, ref_frame_mvs, frame_sign_bias
     // if 0, enable_jnt_comp must be set zs 0.
-    sequence_control_set_ptr->enable_jnt_comp = 0;
+    sequence_control_set_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
 
-    sequence_control_set_ptr->order_hint_bits_minus1 = sequence_control_set_ptr->enable_order_hint ? 6 : -1;
+    sequence_control_set_ptr->seq_header.order_hint_info.order_hint_bits = sequence_control_set_ptr->seq_header.order_hint_info.enable_order_hint ? (6+1) : (-1+1);
 
-    sequence_control_set_ptr->force_screen_content_tools = 2;
+    sequence_control_set_ptr->seq_header.seq_force_screen_content_tools = 2;
     // 0 - force off
     // 1 - force on
     // 2 - adaptive
-    sequence_control_set_ptr->force_integer_mv = 2;  // 0 - Not to force. MV can be in 1/4 or 1/8
+    sequence_control_set_ptr->seq_header.seq_force_integer_mv = 2;  // 0 - Not to force. MV can be in 1/4 or 1/8
     // 1 - force to integer
     // 2 - adaptive
 
-    sequence_control_set_ptr->enable_filter_intra = 0;
-    sequence_control_set_ptr->enable_intra_edge_filter = 0;
-
-    sequence_control_set_ptr->enable_interintra_compound = 0;
-    sequence_control_set_ptr->enable_masked_compound = 0;
-
-    sequence_control_set_ptr->enable_ref_frame_mvs = 1;
-    sequence_control_set_ptr->enable_superres = 0;
+    sequence_control_set_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
 #if NO_ENCDEC || SHUT_FILTERING
     sequence_control_set_ptr->enable_cdef = 0;
 
     sequence_control_set_ptr->enable_restoration = 0;
 #else
-    sequence_control_set_ptr->enable_cdef = 1;
-    sequence_control_set_ptr->enable_restoration = 1;
+    sequence_control_set_ptr->seq_header.enable_cdef = 1;
+    sequence_control_set_ptr->seq_header.enable_restoration = 1;
 #endif
 
-    sequence_control_set_ptr->film_grain_params_present = 0;
-    sequence_control_set_ptr->film_grain_denoise_strength = 0;
-
-    sequence_control_set_ptr->reduced_still_picture_hdr = 0;
-    sequence_control_set_ptr->still_picture = 0;
-    sequence_control_set_ptr->timing_info_present = 0;
-    sequence_control_set_ptr->operating_points_decoder_model_cnt = 0;
-    sequence_control_set_ptr->decoder_model_info_present_flag = 0;
-    sequence_control_set_ptr->display_model_info_present_flag = 0;
-
-    for (int32_t i = 0; i < MAX_NUM_OPERATING_POINTS; i++) {
-        sequence_control_set_ptr->operating_point_idc[i] = 0;
-        sequence_control_set_ptr->level[i].major = 0;
-        sequence_control_set_ptr->level[i].minor = 0;
-        sequence_control_set_ptr->tier[i] = 0;
-    }
-    sequence_control_set_ptr->monochrome = 0;
-    sequence_control_set_ptr->film_grain_params_present = 0;
     sequence_control_set_ptr->film_grain_random_seed = 7391;
-#if BASE_LAYER_REF
-    sequence_control_set_ptr->extra_frames_to_ref_islice = 0;
-    sequence_control_set_ptr->max_frame_window_to_ref_islice = 0;
-#endif
-
-#if ADP_STATS_PER_LAYER
-    uint8_t temporal_layer_index;
-    for (temporal_layer_index = 0; temporal_layer_index < 5; temporal_layer_index++) {
-        sequence_control_set_ptr->total_count[temporal_layer_index] = 0;
-        sequence_control_set_ptr->sq_search_count[temporal_layer_index] = 0;
-        sequence_control_set_ptr->sq_non4_search_count[temporal_layer_index] = 0;
-        sequence_control_set_ptr->mdc_count[temporal_layer_index] = 0;
-        sequence_control_set_ptr->pred_count[temporal_layer_index] = 0;
-        sequence_control_set_ptr->pred1_nfl_count[temporal_layer_index] = 0;
-    }
-#endif
+    sequence_control_set_ptr->reference_count = 4;
 
     return EB_ErrorNone;
 }
 
+EbErrorType eb_sequence_control_set_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr object_init_data_ptr)
+{
+    SequenceControlSet* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, eb_sequence_control_set_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+    return EB_ErrorNone;
+}
 
 /************************************************
  * Sequence Control Set Copy
@@ -261,8 +214,8 @@ EbErrorType copy_sequence_control_set(
     dst->max_input_chroma_width = src->max_input_chroma_width;                     writeCount += sizeof(uint32_t);
     dst->max_input_pad_right = src->max_input_pad_right;                        writeCount += sizeof(uint32_t);
     dst->max_input_pad_bottom = src->max_input_pad_bottom;                       writeCount += sizeof(uint32_t);
-    dst->luma_width = src->luma_width;                               writeCount += sizeof(uint32_t);
-    dst->luma_height = src->luma_height;                              writeCount += sizeof(uint32_t);
+    dst->seq_header.max_frame_width = src->seq_header.max_frame_width;                               writeCount += sizeof(uint32_t);
+    dst->seq_header.max_frame_height = src->seq_header.max_frame_height;                              writeCount += sizeof(uint32_t);
     dst->chroma_width = src->chroma_width;                             writeCount += sizeof(uint32_t);
     dst->chroma_height = src->chroma_height;                            writeCount += sizeof(uint32_t);
     dst->pad_right = src->pad_right;                                writeCount += sizeof(uint32_t);
@@ -298,13 +251,15 @@ EbErrorType copy_sequence_control_set(
     dst->enable_tmvp_sps = src->enable_tmvp_sps;                           writeCount += sizeof(uint32_t);
     dst->mv_merge_total_count = src->mv_merge_total_count;                       writeCount += sizeof(uint32_t);
     dst->film_grain_denoise_strength = src->film_grain_denoise_strength;          writeCount += sizeof(int32_t);
-    dst->film_grain_params_present = src->film_grain_params_present;              writeCount += sizeof(int32_t);
-    dst->film_grain_params_present = src->film_grain_params_present;              writeCount += sizeof(int32_t);
+    dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;              writeCount += sizeof(int32_t);
+    dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;              writeCount += sizeof(int32_t);
     dst->picture_control_set_pool_init_count = src->picture_control_set_pool_init_count;            writeCount += sizeof(int32_t);
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child; writeCount += sizeof(int32_t);
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->reference_picture_buffer_init_count = src->reference_picture_buffer_init_count; writeCount += sizeof(int32_t);
     dst->input_buffer_fifo_init_count = src->input_buffer_fifo_init_count; writeCount += sizeof(int32_t);
+    dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count; writeCount += sizeof(int32_t);
+
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count; writeCount += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count; writeCount += sizeof(int32_t);
     dst->resource_coordination_fifo_init_count = src->resource_coordination_fifo_init_count; writeCount += sizeof(int32_t);
@@ -329,7 +284,7 @@ EbErrorType copy_sequence_control_set(
     dst->right_padding = src->right_padding; writeCount += sizeof(int16_t);
     dst->top_padding = src->top_padding; writeCount += sizeof(int16_t);
     dst->bot_padding = src->bot_padding; writeCount += sizeof(int16_t);
-
+    dst->reference_count = src->reference_count; writeCount += sizeof(uint32_t);
     for (uint8_t i = 0; i< MAX_HIERARCHICAL_LEVEL; i++) {
         dst->me_segment_column_count_array[i] = src->me_segment_column_count_array[i];
         dst->me_segment_row_count_array[i] = src->me_segment_row_count_array[i];
@@ -342,10 +297,14 @@ EbErrorType copy_sequence_control_set(
 
     dst->rest_segment_column_count = src->rest_segment_column_count;
     dst->rest_segment_row_count = src->rest_segment_row_count;
-
-#if BASE_LAYER_REF
-    dst->extra_frames_to_ref_islice = src->extra_frames_to_ref_islice;
-    dst->max_frame_window_to_ref_islice = src->max_frame_window_to_ref_islice;
+    dst->mrp_mode       = src->mrp_mode;
+    dst->nsq_present    = src->nsq_present;
+    dst->cdf_mode       = src->cdf_mode;
+    dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
+    dst->tf_segment_column_count = src->tf_segment_column_count;
+    dst->tf_segment_row_count = src->tf_segment_row_count;
+#if INCOMPLETE_SB_FIX
+    dst->over_boundary_block_mode = src->over_boundary_block_mode;
 #endif
     return EB_ErrorNone;
 }
@@ -366,57 +325,46 @@ extern EbErrorType derive_input_resolution(
     return return_error;
 }
 
+static void eb_sequence_control_set_instance_dctor(EbPtr p)
+{
+   EbSequenceControlSetInstance* obj = (EbSequenceControlSetInstance*)p;
+   EB_DELETE(obj->encode_context_ptr);
+   EB_DELETE(obj->sequence_control_set_ptr);
+   EB_DESTROY_MUTEX(obj->config_mutex);
+}
+
 EbErrorType eb_sequence_control_set_instance_ctor(
-    EbSequenceControlSetInstance **object_dbl_ptr)
+    EbSequenceControlSetInstance *object_dbl_ptr)
 {
     EbSequenceControlSetInitData scsInitData;
-    EbErrorType return_error = EB_ErrorNone;
-    EB_MALLOC(EbSequenceControlSetInstance*, *object_dbl_ptr, sizeof(EbSequenceControlSetInstance), EB_N_PTR);
+
+    object_dbl_ptr->dctor = eb_sequence_control_set_instance_dctor;
+
+    EB_NEW(object_dbl_ptr->encode_context_ptr, encode_context_ctor, EB_NULL);
+    scsInitData.encode_context_ptr = object_dbl_ptr->encode_context_ptr;
 
     scsInitData.sb_size = 64;
 
-    return_error = encode_context_ctor(
-        (void **) &(*object_dbl_ptr)->encode_context_ptr,
-        EB_NULL);
-    if (return_error == EB_ErrorInsufficientResources) {
-        return EB_ErrorInsufficientResources;
-    }
-    scsInitData.encode_context_ptr = (*object_dbl_ptr)->encode_context_ptr;
-
-    scsInitData.sb_size = 64;
-
-    return_error = eb_sequence_control_set_ctor(
-        (void **) &(*object_dbl_ptr)->sequence_control_set_ptr,
-        (void *)&scsInitData);
-    if (return_error == EB_ErrorInsufficientResources) {
-        return EB_ErrorInsufficientResources;
-    }
-
-    EB_CREATEMUTEX(EbHandle*, (*object_dbl_ptr)->config_mutex, sizeof(EbHandle), EB_MUTEX);
-
+    EB_NEW(object_dbl_ptr->sequence_control_set_ptr, eb_sequence_control_set_ctor, (void *)&scsInitData);
+    EB_CREATE_MUTEX(object_dbl_ptr->config_mutex);
 
     return EB_ErrorNone;
 }
 
-extern EbErrorType sb_params_ctor(
-    SequenceControlSet *sequence_control_set_ptr) {
-
-    EbErrorType return_error = EB_ErrorNone;
-
-    EB_MALLOC(LcuParameters*, sequence_control_set_ptr->sb_params_array, sizeof(LcuParameters) * ((MAX_PICTURE_WIDTH_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz) * ((MAX_PICTURE_HEIGHT_SIZE + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz), EB_N_PTR);
-    return return_error;
-}
-
 extern EbErrorType sb_params_init(
     SequenceControlSet *sequence_control_set_ptr) {
-
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    sb_index;
     uint16_t    rasterScanCuIndex;
+#if  !INCOMPLETE_SB_FIX
     uint16_t    md_scan_block_index;
-    uint8_t   pictureLcuWidth = (uint8_t)((sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
-    uint8_t    pictureLcuHeight = (uint8_t)((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
-    EB_MALLOC(LcuParameters*, sequence_control_set_ptr->sb_params_array, sizeof(LcuParameters) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
+#endif
+    uint8_t   pictureLcuWidth = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
+    uint8_t    pictureLcuHeight = (uint8_t)((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz);
+    //free old one;
+    EB_FREE_ARRAY(sequence_control_set_ptr->sb_params_array);
+
+    EB_MALLOC_ARRAY(sequence_control_set_ptr->sb_params_array, pictureLcuWidth * pictureLcuHeight);
 
     for (sb_index = 0; sb_index < pictureLcuWidth * pictureLcuHeight; ++sb_index) {
         sequence_control_set_ptr->sb_params_array[sb_index].horizontal_index = (uint8_t)(sb_index % pictureLcuWidth);
@@ -424,12 +372,12 @@ extern EbErrorType sb_params_init(
         sequence_control_set_ptr->sb_params_array[sb_index].origin_x = sequence_control_set_ptr->sb_params_array[sb_index].horizontal_index * sequence_control_set_ptr->sb_sz;
         sequence_control_set_ptr->sb_params_array[sb_index].origin_y = sequence_control_set_ptr->sb_params_array[sb_index].vertical_index * sequence_control_set_ptr->sb_sz;
 
-        sequence_control_set_ptr->sb_params_array[sb_index].width = (uint8_t)(((sequence_control_set_ptr->luma_width - sequence_control_set_ptr->sb_params_array[sb_index].origin_x) < sequence_control_set_ptr->sb_sz) ?
-            sequence_control_set_ptr->luma_width - sequence_control_set_ptr->sb_params_array[sb_index].origin_x :
+        sequence_control_set_ptr->sb_params_array[sb_index].width = (uint8_t)(((sequence_control_set_ptr->seq_header.max_frame_width - sequence_control_set_ptr->sb_params_array[sb_index].origin_x) < sequence_control_set_ptr->sb_sz) ?
+            sequence_control_set_ptr->seq_header.max_frame_width - sequence_control_set_ptr->sb_params_array[sb_index].origin_x :
             sequence_control_set_ptr->sb_sz);
 
-        sequence_control_set_ptr->sb_params_array[sb_index].height = (uint8_t)(((sequence_control_set_ptr->luma_height - sequence_control_set_ptr->sb_params_array[sb_index].origin_y) < sequence_control_set_ptr->sb_sz) ?
-            sequence_control_set_ptr->luma_height - sequence_control_set_ptr->sb_params_array[sb_index].origin_y :
+        sequence_control_set_ptr->sb_params_array[sb_index].height = (uint8_t)(((sequence_control_set_ptr->seq_header.max_frame_height - sequence_control_set_ptr->sb_params_array[sb_index].origin_y) < sequence_control_set_ptr->sb_sz) ?
+            sequence_control_set_ptr->seq_header.max_frame_height - sequence_control_set_ptr->sb_params_array[sb_index].origin_y :
             sequence_control_set_ptr->sb_sz);
 
         sequence_control_set_ptr->sb_params_array[sb_index].is_complete_sb = (uint8_t)(((sequence_control_set_ptr->sb_params_array[sb_index].width == sequence_control_set_ptr->sb_sz) && (sequence_control_set_ptr->sb_params_array[sb_index].height == sequence_control_set_ptr->sb_sz)) ?
@@ -438,9 +386,8 @@ extern EbErrorType sb_params_init(
 
         sequence_control_set_ptr->sb_params_array[sb_index].is_edge_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x < sequence_control_set_ptr->sb_sz) ||
             (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < sequence_control_set_ptr->sb_sz) ||
-            (sequence_control_set_ptr->sb_params_array[sb_index].origin_x > sequence_control_set_ptr->luma_width - sequence_control_set_ptr->sb_sz) ||
-            (sequence_control_set_ptr->sb_params_array[sb_index].origin_y > sequence_control_set_ptr->luma_height - sequence_control_set_ptr->sb_sz) ? 1 : 0;
-
+            (sequence_control_set_ptr->sb_params_array[sb_index].origin_x > sequence_control_set_ptr->seq_header.max_frame_width - sequence_control_set_ptr->sb_sz) ||
+            (sequence_control_set_ptr->sb_params_array[sb_index].origin_y > sequence_control_set_ptr->seq_header.max_frame_height - sequence_control_set_ptr->sb_sz) ? 1 : 0;
 
         uint8_t potential_logo_sb = 0;
 
@@ -480,50 +427,44 @@ extern EbErrorType sb_params_init(
         //                         // 2
         ///////////////////////////    |
         if (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER) {
-            potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->luma_width - (3 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 2 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
+            potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->seq_header.max_frame_width - (3 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 2 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
             potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x < ((3 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 2 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
-            potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->luma_height - (2 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
-
+            potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->seq_header.max_frame_height - (2 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
         }
         else
             if (sequence_control_set_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
-                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->luma_width - (7 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 4 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
+                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->seq_header.max_frame_width - (7 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 4 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x < ((7 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 4 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
-                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->luma_height - (4 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
-
+                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->seq_header.max_frame_height - (4 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
             }
             else {
-
-                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->luma_width - (14 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 8 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
+                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x >= (sequence_control_set_ptr->seq_header.max_frame_width - (14 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 8 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
                 potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_x < ((14 * sequence_control_set_ptr->sb_sz))) && (sequence_control_set_ptr->sb_params_array[sb_index].origin_y < 8 * sequence_control_set_ptr->sb_sz) ? 1 : potential_logo_sb;
-                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->luma_height - (8 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
-
+                potential_logo_sb = (sequence_control_set_ptr->sb_params_array[sb_index].origin_y >= (sequence_control_set_ptr->seq_header.max_frame_height - (8 * sequence_control_set_ptr->sb_sz))) ? 1 : potential_logo_sb;
             }
         sequence_control_set_ptr->sb_params_array[sb_index].potential_logo_sb = potential_logo_sb;
 
         for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_64x64; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_8x8_63; rasterScanCuIndex++) {
-
-            sequence_control_set_ptr->sb_params_array[sb_index].raster_scan_cu_validity[rasterScanCuIndex] = ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + raster_scan_cu_x[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->luma_width) || (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + raster_scan_cu_y[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->luma_height)) ?
+            sequence_control_set_ptr->sb_params_array[sb_index].raster_scan_cu_validity[rasterScanCuIndex] = ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + raster_scan_cu_x[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->seq_header.max_frame_width) || (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + raster_scan_cu_y[rasterScanCuIndex] + raster_scan_cu_size[rasterScanCuIndex] > sequence_control_set_ptr->seq_header.max_frame_height)) ?
                 EB_FALSE :
                 EB_TRUE;
         }
-
+#if  !INCOMPLETE_SB_FIX
          uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count; md_scan_block_index++) {
-
             const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
 
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
             sequence_control_set_ptr->sb_params_array[sb_index].block_is_inside_md_scan[md_scan_block_index] =
-                ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->luma_width) ||
-                (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->luma_height)) ?
+                ((sequence_control_set_ptr->sb_params_array[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                (sequence_control_set_ptr->sb_params_array[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
                 EB_FALSE :
                 EB_TRUE;
         }
-
+#endif
     }
 
     sequence_control_set_ptr->picture_width_in_sb = pictureLcuWidth;
@@ -537,25 +478,25 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
 {
     uint16_t    sb_index;
     uint16_t    md_scan_block_index;
-    uint16_t   pictureLcuWidth = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
-    uint16_t    pictureLcuHeight = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
+    uint16_t   pictureLcuWidth = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
+    uint16_t    pictureLcuHeight = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_size_pix - 1) / sequence_control_set_ptr->sb_size_pix;
 
-    EB_MALLOC(SbGeom*, sequence_control_set_ptr->sb_geom, sizeof(SbGeom) * pictureLcuWidth * pictureLcuHeight, EB_N_PTR);
 
+    EB_FREE_ARRAY(sequence_control_set_ptr->sb_geom);
+    EB_MALLOC_ARRAY(sequence_control_set_ptr->sb_geom, pictureLcuWidth * pictureLcuHeight);
 
     for (sb_index = 0; sb_index < pictureLcuWidth * pictureLcuHeight; ++sb_index) {
-
         sequence_control_set_ptr->sb_geom[sb_index].horizontal_index = sb_index % pictureLcuWidth;
         sequence_control_set_ptr->sb_geom[sb_index].vertical_index = sb_index / pictureLcuWidth;
         sequence_control_set_ptr->sb_geom[sb_index].origin_x = sequence_control_set_ptr->sb_geom[sb_index].horizontal_index * sequence_control_set_ptr->sb_size_pix;
         sequence_control_set_ptr->sb_geom[sb_index].origin_y = sequence_control_set_ptr->sb_geom[sb_index].vertical_index * sequence_control_set_ptr->sb_size_pix;
 
-        sequence_control_set_ptr->sb_geom[sb_index].width = (uint8_t)(((sequence_control_set_ptr->luma_width - sequence_control_set_ptr->sb_geom[sb_index].origin_x) < sequence_control_set_ptr->sb_size_pix) ?
-            sequence_control_set_ptr->luma_width - sequence_control_set_ptr->sb_geom[sb_index].origin_x :
+        sequence_control_set_ptr->sb_geom[sb_index].width = (uint8_t)(((sequence_control_set_ptr->seq_header.max_frame_width - sequence_control_set_ptr->sb_geom[sb_index].origin_x) < sequence_control_set_ptr->sb_size_pix) ?
+            sequence_control_set_ptr->seq_header.max_frame_width - sequence_control_set_ptr->sb_geom[sb_index].origin_x :
             sequence_control_set_ptr->sb_size_pix);
 
-        sequence_control_set_ptr->sb_geom[sb_index].height = (uint8_t)(((sequence_control_set_ptr->luma_height - sequence_control_set_ptr->sb_geom[sb_index].origin_y) < sequence_control_set_ptr->sb_size_pix) ?
-            sequence_control_set_ptr->luma_height - sequence_control_set_ptr->sb_geom[sb_index].origin_y :
+        sequence_control_set_ptr->sb_geom[sb_index].height = (uint8_t)(((sequence_control_set_ptr->seq_header.max_frame_height - sequence_control_set_ptr->sb_geom[sb_index].origin_y) < sequence_control_set_ptr->sb_size_pix) ?
+            sequence_control_set_ptr->seq_header.max_frame_height - sequence_control_set_ptr->sb_geom[sb_index].origin_y :
             sequence_control_set_ptr->sb_size_pix);
 
         sequence_control_set_ptr->sb_geom[sb_index].is_complete_sb =
@@ -563,27 +504,62 @@ EbErrorType sb_geom_init(SequenceControlSet * sequence_control_set_ptr)
                 1 :
                 0);
 
-        
         uint16_t max_block_count = sequence_control_set_ptr->max_block_cnt;
 
         for (md_scan_block_index = 0; md_scan_block_index < max_block_count ; md_scan_block_index++) {
-
             const BlockGeom * blk_geom = get_blk_geom_mds(md_scan_block_index);
+#if INCOMPLETE_SB_FIX
+            if (sequence_control_set_ptr->over_boundary_block_mode == 1) {
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth / 2 < sequence_control_set_ptr->seq_header.max_frame_width) &&
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight / 2 < sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_TRUE :
+                    EB_FALSE;
 
+                // Temporary if the cropped width is not 4, 8, 16, 32, 64 and 128, the block is not allowed. To be removed after intrinsic functions for NxM spatial_full_distortion_kernel_func_ptr_array are added
+                int32_t cropped_width = MIN(blk_geom->bwidth, sequence_control_set_ptr->seq_header.max_frame_width - (sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x));
+                if (cropped_width != 4 && cropped_width != 8 && cropped_width != 16 && cropped_width != 32 && cropped_width != 64 && cropped_width != 128)
+                    sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = EB_FALSE;
+
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x >= sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y >= sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+            }
+            else {
+                if (blk_geom->shape != PART_N)
+                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+                sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
+                    ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                    (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
+                    EB_FALSE :
+                    EB_TRUE;
+
+            }
+#else
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
 
             sequence_control_set_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
-                ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->luma_width) ||
-                (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->luma_height)) ?
+                ((sequence_control_set_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth > sequence_control_set_ptr->seq_header.max_frame_width) ||
+                (sequence_control_set_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight > sequence_control_set_ptr->seq_header.max_frame_height)) ?
                 EB_FALSE :
                 EB_TRUE;
+#endif
         }
-
     }
 
     sequence_control_set_ptr->sb_tot_cnt = pictureLcuWidth * pictureLcuHeight;
 
     return 0;
 }
-

@@ -18,7 +18,6 @@
 extern "C" {
 #endif
 
-
     /***************************************
     * Function Ptr Types
     ***************************************/
@@ -62,6 +61,11 @@ extern "C" {
         uint8_t  *ref,                            // input parameter, reference samples Ptr
         uint32_t  ref_stride);                     // input parameter, reference stride
 
+    typedef uint32_t(*EB_COMPUTE8X8SAD_TYPE)(
+        uint8_t  *src,                            // input parameter, source samples Ptr
+        uint32_t  src_stride,                      // input parameter, source stride
+        uint8_t  *ref,                            // input parameter, reference samples Ptr
+        uint32_t  ref_stride);                     // input parameter, reference stride
     typedef void(*EbGetEightSad8x8)(
         uint8_t   *src,
         uint32_t   src_stride,
@@ -72,7 +76,8 @@ extern "C" {
         uint32_t  *p_best_sad16x16,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
-        uint16_t  *p_sad16x16);
+        uint16_t  *p_sad16x16,
+        EbBool     sub_sad);
 
     typedef void(*EbGetEightSad32x32)(
         uint16_t  *p_sad16x16,
@@ -189,7 +194,6 @@ extern "C" {
         sad_loop_kernel_sparse_avx2_intrin,
     };
 
-
     static EbSadLoopKernelNxMType FUNC_TABLE nxm_sad_loop_kernel_func_ptr_array[ASM_TYPE_TOTAL] =
     {
         // NON_AVX2
@@ -231,6 +235,14 @@ extern "C" {
         // AVX2
         combined_averaging_ssd_avx2,
     };
+
+uint32_t sad_16b_kernel(
+    uint16_t  *src,                           // input parameter, source samples Ptr
+    uint32_t  src_stride,                     // input parameter, source stride
+    uint16_t  *ref,                           // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                     // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width);                         // input parameter, block width (N)
 
 #ifdef __cplusplus
 }

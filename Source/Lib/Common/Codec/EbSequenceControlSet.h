@@ -18,12 +18,13 @@
 #define EbSequenceControlSet_h
 
 #include "EbDefinitions.h"
+#include "EbAv1Structs.h"
 #include "EbThreads.h"
 #include "EbSystemResourceManager.h"
 #include "EbEncodeContext.h"
 #include "EbPredictionStructure.h"
 #include "noise_model.h"
-
+#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,7 @@ extern "C" {
      ************************************/
     typedef struct SequenceControlSet
     {
+        EbDctor                                 dctor;
         EbSvtAv1EncConfiguration                static_config;
 
         // Encoding Context
@@ -58,9 +60,7 @@ extern "C" {
         uint16_t                                max_input_chroma_height;
         uint16_t                                max_input_pad_bottom;
         uint16_t                                max_input_pad_right;
-        
-        uint16_t                                luma_width;
-        uint16_t                                luma_height;
+
         uint32_t                                chroma_width;
         uint32_t                                chroma_height;
         uint32_t                                pad_right;
@@ -77,7 +77,7 @@ extern "C" {
         int32_t                                 cropping_right_offset;
         int32_t                                 cropping_top_offset;
         int32_t                                 cropping_bottom_offset;
- 
+
         // Conformance Window flag
         uint32_t                                conformance_window_flag;
 
@@ -130,13 +130,16 @@ extern "C" {
 
         uint32_t                                rest_segment_column_count;
         uint32_t                                rest_segment_row_count;
-
+        uint32_t                                tf_segment_column_count;
+        uint32_t                                tf_segment_row_count;
+        EbBool                                  enable_altrefs;
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
         uint32_t                                picture_control_set_pool_init_count_child;
         uint32_t                                pa_reference_picture_buffer_init_count;
         uint32_t                                reference_picture_buffer_init_count;
         uint32_t                                input_buffer_fifo_init_count;
+        uint32_t                                overlay_input_picture_buffer_init_count;
         uint32_t                                output_stream_buffer_fifo_init_count;
         uint32_t                                output_recon_buffer_fifo_init_count;
         uint32_t                                resource_coordination_fifo_init_count;
@@ -164,76 +167,45 @@ extern "C" {
         uint32_t                                cdef_process_init_count;
         uint32_t                                rest_process_init_count;
         uint32_t                                total_process_init_count;
-        
+
         uint16_t                                film_grain_random_seed;
-        LcuParameters                             *sb_params_array;
+        SbParams                               *sb_params_array;
         uint8_t                                 picture_width_in_sb;
         uint8_t                                 picture_height_in_sb;
         uint16_t                                sb_total_count;
         uint16_t                                sb_size_pix;  //sb size in pixels 64/128
         uint16_t                                sb_tot_cnt;   // sb total number
         uint16_t                                max_block_cnt;
-        SbGeom                               *sb_geom;
+        SbGeom                                 *sb_geom;
 
         EbInputResolution                       input_resolution;
         EbScdMode                               scd_mode;
         EbPmMode                                pm_mode;
+
+        /* MRP (mm-signal; 0: MRP mode 0, 1: MRP mode 1)
+        *
+        * Default is 0. */
+        uint8_t                                 mrp_mode;
+
+        /* CDF (mm-signal; 0: CDF update, 1: no CDF update)
+        *
+        * Default is 0. */
+        uint8_t                                 cdf_mode;
+
+        /* NSQ present (mm-signal; 0: NSQ absent, 1: NSQ present)
+        *
+        * Default is 1. */
+        uint8_t                                 nsq_present;
+
+        /* Down-sampling method @ ME and alt-ref temporal filtering (mm-signal; 0: filtering, 1: decimation)
+        *
+        * Default is 0. */
+        uint8_t                                 down_sampling_method_me_search;
         uint8_t                                 trans_coeff_shape_array[2][8][4];    // [componantTypeIndex][resolutionIndex][levelIndex][tuSizeIndex]
         EbBlockMeanPrec                         block_mean_calc_prec;
-
-        int32_t                                 num_bits_width;
-        int32_t                                 num_bits_height;
-        int32_t                                 frame_id_numbers_present_flag;
-        int32_t                                 frame_id_length;
-        int32_t                                 delta_frame_id_length;
-        BlockSize                               sb_size;                            // Size of the superblock used for this frame
-        int32_t                                 mib_size;                           // Size of the superblock in units of MI blocks
-        int32_t                                 mib_size_log2;                      // Log 2 of above.
-        int32_t                                 order_hint_bits_minus1;
-        int32_t                                 force_screen_content_tools;         // 0 - force off
-                                                                                    // 1 - force on
-                                                                                    // 2 - adaptive
-        int32_t                                 force_integer_mv;                   // 0 - Not to force. MV can be in 1/4 or 1/8
-                                                                                    // 1 - force to integer
-                                                                                    // 2 - adaptive
-        int32_t                                 monochrome;
-        int32_t                                 enable_filter_intra;                // enables/disables filterintra
-        int32_t                                 enable_intra_edge_filter;           // enables/disables corner/edge/upsampling
-        int32_t                                 enable_interintra_compound;         // enables/disables interintra_compound
-        int32_t                                 enable_masked_compound;             // enables/disables masked compound
-        int32_t                                 enable_dual_filter;                 // 0 - disable dual interpolation filter
-                                                                                    // 1 - enable vertical and horiz filter selection
-        int32_t                                 enable_order_hint;                  // 0 - disable order hint, and related tools:
-                                                                                    // jnt_comp, ref_frame_mvs, frame_sign_bias
-                                                                                    // if 0, enable_jnt_comp must be set zs 0.
-        int32_t                                 enable_jnt_comp;                    // 0 - disable joint compound modes
-                                                                                    // 1 - enable it
-        int32_t                                 enable_ref_frame_mvs;               // 0 - disable ref frame mvs
-                                                                                    // 1 - enable it
-        int32_t                                 enable_superres;                    // 0 - Disable superres for the sequence, and disable
-                                                                                    //     transmitting per-frame superres enabled flag.
-                                                                                    // 1 - Enable superres for the sequence, and also
-                                                                                    //     enable per-frame flag to denote if superres is
-                                                                                    //     enabled for that frame.
-        int32_t                                 enable_cdef;                        // To turn on/off CDEF
-        int32_t                                 enable_restoration;                 // To turn on/off loop restoration
-
-        int32_t                                 operating_point_idc[MAX_NUM_OPERATING_POINTS];
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];
-        int32_t                                 tier[MAX_NUM_OPERATING_POINTS];
-        int32_t                                 reduced_still_picture_hdr;
-        int32_t                                 still_picture;
-        int32_t                                 timing_info_present;
-        int32_t                                 operating_points_decoder_model_cnt;
-
-        int32_t                                 decoder_model_info_present_flag;
-        int32_t                                 display_model_info_present_flag;
         int32_t                                 film_grain_denoise_strength;
-        int32_t                                 film_grain_params_present;  // To turn on/off film grain (on a sequence basis)
-
-        int32_t                                 extra_frames_to_ref_islice;
-        int32_t                                 max_frame_window_to_ref_islice;
-
+        uint32_t                                reference_count;
 
 #if ADP_STATS_PER_LAYER
         uint64_t                                total_count[5];
@@ -243,7 +215,14 @@ extern "C" {
         uint64_t                                pred_count[5];
         uint64_t                                pred1_nfl_count[5];
 #endif
-
+#if INCOMPLETE_SB_FIX
+        /* over_boundary_block (mm-signal; 0: No over boundary blk allowed, 1: over boundary blk allowed)
+        *
+        * Default is 0.
+        * To enable when md_skip_blk is on*/
+        uint8_t                                 over_boundary_block_mode;
+#endif
+        SeqHeader                               seq_header;
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData
@@ -254,17 +233,21 @@ extern "C" {
 
     typedef struct EbSequenceControlSetInstance
     {
+        EbDctor                  dctor;
         EncodeContext            *encode_context_ptr;
         SequenceControlSet       *sequence_control_set_ptr;
         EbHandle                    config_mutex;
-
     } EbSequenceControlSetInstance;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType eb_sequence_control_set_ctor(
+    extern EbErrorType eb_sequence_control_set_creator(
         EbPtr *object_dbl_ptr,
+        EbPtr object_init_data_ptr);
+
+    extern EbErrorType eb_sequence_control_set_ctor(
+        SequenceControlSet* object,
         EbPtr  object_init_data_ptr);
 
     extern EbErrorType copy_sequence_control_set(
@@ -272,10 +255,7 @@ extern "C" {
         SequenceControlSet *src);
 
     extern EbErrorType eb_sequence_control_set_instance_ctor(
-        EbSequenceControlSetInstance **object_dbl_ptr);
-
-    extern EbErrorType sb_params_ctor(
-        SequenceControlSet *sequence_control_set_ptr);
+        EbSequenceControlSetInstance *object_dbl_ptr);
 
     extern EbErrorType sb_params_init(
         SequenceControlSet *sequence_control_set_ptr);

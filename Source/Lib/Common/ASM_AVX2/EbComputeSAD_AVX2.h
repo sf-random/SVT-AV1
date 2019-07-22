@@ -21,7 +21,8 @@ extern "C" {
         uint32_t *p_best_mv16x16,
         uint32_t  mv,
         uint32_t *p_sad16x16,
-        uint32_t *p_sad8x8);
+        uint32_t *p_sad8x8,
+        EbBool    sub_sad);
 
     uint32_t compute4x_m_sad_avx2_intrin(
         const uint8_t  *src,                      // input parameter, source samples Ptr
@@ -30,7 +31,6 @@ extern "C" {
         uint32_t  ref_stride,                     // input parameter, reference stride
         uint32_t  height,                         // input parameter, block height (M)
         uint32_t  width);                         // input parameter, block width (N)
-
 
     uint32_t Compute4xMSadSub_AVX2_INTRIN(
         const uint8_t  *src,                       // input parameter, source samples Ptr
@@ -126,7 +126,8 @@ extern "C" {
         uint32_t  *p_best_sad16x16,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
-        uint16_t  *p_sad16x16);
+        uint16_t  *p_sad16x16,
+        EbBool     sub_sad);
 
     void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
         uint16_t  *p_sad16x16,
@@ -150,7 +151,6 @@ extern "C" {
         int16_t   search_area_width,
         int16_t   search_area_height);
 
-#if NSQ_ME_OPT
     void ext_all_sad_calculation_8x8_16x16_avx2(
         uint8_t   *src,
         uint32_t   src_stride,
@@ -198,10 +198,8 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t  mv,
         uint32_t  p_sad32x32[4][8]);
-#endif /* NSQ_ME_OPT */
 
 #ifdef __cplusplus
 }
 #endif
 #endif // EbComputeSAD_AVX2_h
-

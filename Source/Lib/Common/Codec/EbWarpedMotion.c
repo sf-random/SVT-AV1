@@ -11,15 +11,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <math.h>
 #include <assert.h>
+#include "aom_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 
 #define WARP_ERROR_BLOCK 32
 
 /* clang-format off */
-static const int error_measure_lut[512] = {
+const int error_measure_lut[512] = {
   // pow 0.7
   16384, 16339, 16294, 16249, 16204, 16158, 16113, 16068,
   16022, 15977, 15932, 15886, 15840, 15795, 15749, 15703,
@@ -129,7 +129,6 @@ const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
   { 1, - 4,  13, 124, - 7, 1, 0, 0 }, { 1, - 4,  11, 125, - 6, 1, 0, 0 },
   { 1, - 3,   8, 126, - 5, 1, 0, 0 }, { 1, - 2,   6, 126, - 4, 1, 0, 0 },
   { 0, - 1,   4, 127, - 3, 1, 0, 0 }, { 0,   0,   2, 127, - 1, 0, 0, 0 },
-
   // [0, 1)
   { 0,  0,   0, 127,   1,   0,  0,  0}, { 0,  0,  -1, 127,   2,   0,  0,  0},
   { 0,  1,  -3, 127,   4,  -2,  1,  0}, { 0,  1,  -5, 127,   6,  -2,  1,  0},
@@ -163,7 +162,6 @@ const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
   {-1,  2,  -5,  13, 125,  -8,  3, -1}, {-1,  2,  -4,  11, 126,  -7,  2, -1},
   { 0,  1,  -3,   8, 126,  -6,  2,  0}, { 0,  1,  -2,   6, 127,  -5,  1,  0},
   { 0,  1,  -2,   4, 127,  -3,  1,  0}, { 0,  0,   0,   2, 127,  -1,  0,  0},
-
   // [1, 2)
   { 0, 0, 0,   1, 127,   0,   0, 0 }, { 0, 0, 0, - 1, 127,   2,   0, 0 },
   { 0, 0, 1, - 3, 127,   4, - 1, 0 }, { 0, 0, 1, - 4, 126,   6, - 2, 1 },
@@ -199,7 +197,6 @@ const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
   { 0, 0, 0, - 1,   4, 127, - 3, 1 }, { 0, 0, 0,   0,   2, 127, - 1, 0 },
   // dummy (replicate row index 191)
   { 0, 0, 0,   0,   2, 127, - 1, 0 },
-
 #elif WARPEDPIXEL_PREC_BITS == 5
   // [-1, 0)
   {0,   0, 127,   1,   0, 0, 0, 0}, {1,  -3, 127,   4,  -1, 0, 0, 0},
@@ -254,7 +251,6 @@ const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8] = {
   {0, 0, 1,  -3,   8, 126,  -5, 1}, {0, 0, 0,  -1,   4, 127,  -3, 1},
   // dummy (replicate row index 95)
   {0, 0, 0,  -1,   4, 127,  -3, 1},
-
 #endif  // WARPEDPIXEL_PREC_BITS == 6
 };
 
@@ -467,10 +463,8 @@ void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
           const int16_t *coeffs = warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_vert;
-          for (int m = 0; m < 8; ++m) {
+          for (int m = 0; m < 8; ++m)
             sum += tmp[(k + m + 4) * 8 + (l + 4)] * coeffs[m];
-          }
-
           if (conv_params->is_compound) {
             ConvBufType *p =
                 &conv_params
@@ -493,9 +487,8 @@ void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref,
                       (1 << (offset_bits - conv_params->round_1 - 1));
               *dst16 =
                   clip_pixel_highbd(ROUND_POWER_OF_TWO(tmp32, round_bits), bd);
-            } else {
+            } else
               *p = sum;
-            }
           } else {
             uint16_t *p =
                 &pred[(i - p_row + k + 4) * p_stride + (j - p_col + l + 4)];
@@ -578,10 +571,6 @@ static int64_t highbd_warp_error(
     }
   }
   return gm_sumerr;
-}
-
-static INLINE int error_measure(int err) {
-  return error_measure_lut[255 + err];
 }
 
 /* The warp filter for ROTZOOM and AFFINE models works as follows:
@@ -755,10 +744,8 @@ void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
           const int16_t *coeffs = warped_filter[offs];
 
           int32_t sum = 1 << offset_bits_vert;
-          for (int m = 0; m < 8; ++m) {
+          for (int m = 0; m < 8; ++m)
             sum += tmp[(k + m + 4) * 8 + (l + 4)] * coeffs[m];
-          }
-
           if (conv_params->is_compound) {
             ConvBufType *p =
                 &conv_params
@@ -780,9 +767,8 @@ void av1_warp_affine_c(const int32_t *mat, const uint8_t *ref, int width,
               tmp32 = tmp32 - (1 << (offset_bits - conv_params->round_1)) -
                       (1 << (offset_bits - conv_params->round_1 - 1));
               *dst8 = clip_pixel(ROUND_POWER_OF_TWO(tmp32, round_bits));
-            } else {
+            } else
               *p = sum;
-            }
           } else {
             uint8_t *p =
                 &pred[(i - p_row + k + 4) * p_stride + (j - p_col + l + 4)];
@@ -812,14 +798,13 @@ static void warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref,
   const int16_t beta = wm->beta;
   const int16_t gamma = wm->gamma;
   const int16_t delta = wm->delta;
-  av1_warp_affine_c(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
+  av1_warp_affine(mat, ref, width, height, stride, pred, p_col, p_row, p_width,
                   p_height, p_stride, subsampling_x, subsampling_y, conv_params,
                   alpha, beta, gamma, delta);
 }
 
-static int64_t frame_error(const uint8_t *const ref, int stride,
-                           const uint8_t *const dst, int p_width, int p_height,
-                           int p_stride) {
+int64_t av1_calc_frame_error_c(const uint8_t *const ref, int stride,
+    const uint8_t *const dst, int p_width, int p_height, int p_stride) {
   int64_t sum_error = 0;
   for (int i = 0; i < p_height; ++i) {
     for (int j = 0; j < p_width; ++j) {
@@ -853,7 +838,7 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref,
       warp_plane(wm, ref, width, height, stride, tmp, j, i, warp_w, warp_h,
                  WARP_ERROR_BLOCK, subsampling_x, subsampling_y, &conv_params);
 
-      gm_sumerr += frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
+      gm_sumerr += av1_calc_frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
                                warp_w, warp_h, p_stride);
       if (gm_sumerr > best_error) return gm_sumerr;
     }
@@ -868,7 +853,7 @@ int64_t av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
                               CONVERT_TO_SHORTPTR(dst), p_width, p_height,
                               p_stride, bd);
   }
-  return frame_error(ref, stride, dst, p_width, p_height, p_stride);
+  return av1_calc_frame_error(ref, stride, dst, p_width, p_height, p_stride);
 }
 
 int64_t av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd,

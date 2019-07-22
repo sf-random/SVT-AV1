@@ -38,156 +38,175 @@
 #define SAMPLE_THRESHOLD_PRECENT_BORDER_LINE      15
 #define SAMPLE_THRESHOLD_PRECENT_TWO_BORDER_LINES 10
 
+static void picture_analysis_context_dctor(EbPtr p)
+{
+    PictureAnalysisContext *obj = (PictureAnalysisContext*)p;
+    EB_DELETE(obj->noise_picture_ptr);
+    EB_DELETE(obj->denoised_picture_ptr);
+}
 /************************************************
 * Picture Analysis Context Constructor
 ************************************************/
 EbErrorType picture_analysis_context_ctor(
+    PictureAnalysisContext *context_ptr,
     EbPictureBufferDescInitData * input_picture_buffer_desc_init_data,
     EbBool                         denoise_flag,
-    PictureAnalysisContext **context_dbl_ptr,
     EbFifo *resource_coordination_results_input_fifo_ptr,
     EbFifo *picture_analysis_results_output_fifo_ptr)
 {
-    PictureAnalysisContext *context_ptr;
-    EB_MALLOC(PictureAnalysisContext*, context_ptr, sizeof(PictureAnalysisContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
-
     context_ptr->resource_coordination_results_input_fifo_ptr = resource_coordination_results_input_fifo_ptr;
     context_ptr->picture_analysis_results_output_fifo_ptr = picture_analysis_results_output_fifo_ptr;
 
-    EbErrorType return_error = EB_ErrorNone;
+    context_ptr->dctor = picture_analysis_context_dctor;
 
     if (denoise_flag == EB_TRUE) {
-
         //denoised
         // If 420/422, re-use luma for chroma
         // If 444, re-use luma for Cr
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
-		    input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
-        } else {
-		    input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
-        }
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->denoised_picture_ptr),
+            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+        } else
+            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
+        EB_NEW(
+            context_ptr->denoised_picture_ptr,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)input_picture_buffer_desc_init_data);
-
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
-        }
 
         if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
             context_ptr->denoised_picture_ptr->buffer_cb = context_ptr->denoised_picture_ptr->buffer_y;
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y + context_ptr->denoised_picture_ptr->chroma_size;
-        } else {
+        } else
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y;
-        }
-
         // noise
         input_picture_buffer_desc_init_data->max_height = BLOCK_SIZE_64;
         input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
 
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->noise_picture_ptr),
+        EB_NEW(
+            context_ptr->noise_picture_ptr,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)input_picture_buffer_desc_init_data);
-
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
-        }
     }
     return EB_ErrorNone;
-
-
 }
-
-static void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
+void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr, EbPictureBufferDesc* outputPicturePtr)
 {
-	uint32_t input_color_format = input_picture_ptr->color_format;
-	const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
+    uint32_t input_color_format = input_picture_ptr->color_format;
+    const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-	uint32_t output_color_format = outputPicturePtr->color_format;
-	const uint16_t output_subsampling_x = (output_color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t output_subsampling_y = (output_color_format >= EB_YUV422 ? 1 : 2) - 1;
+    uint32_t output_color_format = outputPicturePtr->color_format;
+    const uint16_t output_subsampling_x = (output_color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t output_subsampling_y = (output_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-	uint32_t stride_in, strideOut;
-	uint32_t inputOriginIndex, outputOriginIndex;
+    uint32_t stride_in, strideOut;
+    uint32_t inputOriginIndex, outputOriginIndex;
 
-	uint8_t *ptrIn;
-	uint8_t *ptrOut;
+    uint8_t *ptrIn;
+    uint8_t *ptrOut;
 
-	uint32_t ii, jj;
+    uint32_t ii, jj;
 
-	//Cb
-	{
-		stride_in = input_picture_ptr->stride_cb;
-		inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) +
+    //Cb
+    {
+        stride_in = input_picture_ptr->stride_cb;
+        inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) +
             (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cb;
-		ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
+        ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
 
-		strideOut = outputPicturePtr->stride_cb;
-		outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) +
+        strideOut = outputPicturePtr->stride_cb;
+        outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) +
             (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cb;
-		ptrOut = &(outputPicturePtr->buffer_cb[outputOriginIndex]);
+        ptrOut = &(outputPicturePtr->buffer_cb[outputOriginIndex]);
 
-		for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
-			for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
-				ptrOut[ii + jj * strideOut] =
+        for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
+            for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
+                ptrOut[ii + jj * strideOut] =
                     ptrIn[(ii << (1 - input_subsampling_x)) +
                     (jj << (1 - input_subsampling_y)) * stride_in];
-			}
-		}
+            }
+        }
+    }
 
-	}
+    //Cr
+    {
+        stride_in = input_picture_ptr->stride_cr;
+        inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) + (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cr;
+        ptrIn = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
 
-	//Cr
-	{
-		stride_in = input_picture_ptr->stride_cr;
-		inputOriginIndex = (input_picture_ptr->origin_x >> input_subsampling_x) + (input_picture_ptr->origin_y >> input_subsampling_y)  * input_picture_ptr->stride_cr;
-		ptrIn = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
+        strideOut = outputPicturePtr->stride_cr;
+        outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) + (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cr;
+        ptrOut = &(outputPicturePtr->buffer_cr[outputOriginIndex]);
 
-		strideOut = outputPicturePtr->stride_cr;
-		outputOriginIndex = (outputPicturePtr->origin_x >> output_subsampling_x) + (outputPicturePtr->origin_y >> output_subsampling_y)  * outputPicturePtr->stride_cr;
-		ptrOut = &(outputPicturePtr->buffer_cr[outputOriginIndex]);
-
-		for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
-			for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
-				ptrOut[ii + jj * strideOut] =
+        for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
+            for (ii = 0; ii < (uint32_t)(outputPicturePtr->width >> output_subsampling_x); ii++) {
+                ptrOut[ii + jj * strideOut] =
                     ptrIn[(ii << (1 - input_subsampling_x)) +
                     (jj << (1 - input_subsampling_y)) * stride_in];
-			}
-		}
-	}
+            }
+        }
+    }
 }
 
 /************************************************
  * Picture Analysis Context Destructor
  ************************************************/
-
- /********************************************
-  * decimation_2d
-  *      decimates the input
-  ********************************************/
+  /********************************************
+    * decimation_2d
+    *      decimates the input
+    ********************************************/
 void decimation_2d(
+    uint8_t *  input_samples,      // input parameter, input samples Ptr
+    uint32_t   input_stride,       // input parameter, input stride
+    uint32_t   input_area_width,   // input parameter, input area width
+    uint32_t   input_area_height,  // input parameter, input area height
+    uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
+    uint32_t   decim_stride,       // input parameter, output stride
+    uint32_t   decim_step)         // input parameter, decimation amount in pixels
+{
+    uint32_t horizontal_index;
+    uint32_t vertical_index;
+    uint32_t input_stripe_stride = input_stride * decim_step;
+
+    for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
+        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step)
+            decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
+
+        input_samples += input_stripe_stride;
+        decim_samples += decim_stride;
+    }
+
+    return;
+}
+
+/********************************************
+ * downsample_2d
+ *      downsamples the input
+ * Alternative implementation to decimation_2d that performs filtering (2x2, 0-phase)
+ ********************************************/
+void downsample_2d(
     uint8_t *  input_samples,      // input parameter, input samples Ptr
     uint32_t   input_stride,       // input parameter, input stride
     uint32_t   input_area_width,    // input parameter, input area width
     uint32_t   input_area_height,   // input parameter, input area height
     uint8_t *  decim_samples,      // output parameter, decimated samples Ptr
     uint32_t   decim_stride,       // input parameter, output stride
-    uint32_t   decim_step)        // input parameter, area height
+    uint32_t   decim_step)        // input parameter, decimation amount in pixels
 {
 
     uint32_t horizontal_index;
     uint32_t vertical_index;
+    uint32_t input_stripe_stride = input_stride * decim_step;
+    uint32_t decim_horizontal_index;
+    const uint32_t half_decim_step = decim_step >> 1;
 
-
-    for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
-        for (horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step) {
-
-            decim_samples[(horizontal_index >> (decim_step >> 1))] = input_samples[horizontal_index];
+    for (input_samples += half_decim_step * input_stride, vertical_index = half_decim_step; vertical_index < input_area_height; vertical_index += decim_step) {
+        uint8_t *prev_input_line = input_samples - input_stride;
+        for (horizontal_index = half_decim_step, decim_horizontal_index = 0; horizontal_index < input_area_width; horizontal_index += decim_step, decim_horizontal_index++) {
+            uint32_t sum = (uint32_t)prev_input_line[horizontal_index - 1] + (uint32_t)prev_input_line[horizontal_index] + (uint32_t)input_samples[horizontal_index - 1] + (uint32_t)input_samples[horizontal_index];
+            decim_samples[decim_horizontal_index] = (sum + 2) >> 2;
 
         }
-        input_samples += (input_stride << (decim_step >> 1));
+        input_samples += input_stripe_stride;
         decim_samples += decim_stride;
     }
 
@@ -208,7 +227,6 @@ void CalculateHistogram(
     uint64_t  *sum)
 
 {
-
     uint32_t horizontal_index;
     uint32_t vertical_index;
     *sum = 0;
@@ -224,14 +242,12 @@ void CalculateHistogram(
     return;
 }
 
-
 uint64_t ComputeVariance32x32(
     EbPictureBufferDesc       *input_padded_picture_ptr,         // input parameter, Input Padded Picture
     uint32_t                       inputLumaOriginIndex,          // input parameter, SB index, used to point to source/reference samples
     uint64_t                        *variance8x8,
     EbAsm                         asm_type)
 {
-
     uint32_t blockIndex;
 
     uint64_t mean_of8x8_blocks[16];
@@ -264,8 +280,6 @@ uint64_t ComputeVariance32x32(
     mean_of8x8_blocks[3] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
     meanOf8x8SquaredValuesBlocks[3] = compute_mean_func[1][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
 
-
-
     // (1,0)
     blockIndex = inputLumaOriginIndex + (input_padded_picture_ptr->stride_y << 3);
     mean_of8x8_blocks[4] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
@@ -285,8 +299,6 @@ uint64_t ComputeVariance32x32(
     blockIndex = blockIndex + 8;
     mean_of8x8_blocks[7] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
     meanOf8x8SquaredValuesBlocks[7] = compute_mean_func[1][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
-
-
 
     // (2,0)
     blockIndex = inputLumaOriginIndex + (input_padded_picture_ptr->stride_y << 4);
@@ -308,8 +320,6 @@ uint64_t ComputeVariance32x32(
     mean_of8x8_blocks[11] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
     meanOf8x8SquaredValuesBlocks[11] = compute_mean_func[1][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
 
-
-
     // (3,0)
     blockIndex = inputLumaOriginIndex + (input_padded_picture_ptr->stride_y << 3) + (input_padded_picture_ptr->stride_y << 4);
     mean_of8x8_blocks[12] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
@@ -329,7 +339,6 @@ uint64_t ComputeVariance32x32(
     blockIndex = blockIndex + 8;
     mean_of8x8_blocks[15] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
     meanOf8x8SquaredValuesBlocks[15] = compute_mean_func[1][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
-
 
     /////////////////////////////////////////////
 
@@ -356,7 +365,6 @@ uint64_t ComputeVariance32x32(
     meanOf16x16Blocks[2] = (mean_of8x8_blocks[4] + mean_of8x8_blocks[5] + mean_of8x8_blocks[12] + mean_of8x8_blocks[13]) >> 2;
     meanOf16x16Blocks[3] = (mean_of8x8_blocks[6] + mean_of8x8_blocks[7] + mean_of8x8_blocks[14] + mean_of8x8_blocks[15]) >> 2;
 
-
     meanOf16x16SquaredValuesBlocks[0] = (meanOf8x8SquaredValuesBlocks[0] + meanOf8x8SquaredValuesBlocks[1] + meanOf8x8SquaredValuesBlocks[8] + meanOf8x8SquaredValuesBlocks[9]) >> 2;
     meanOf16x16SquaredValuesBlocks[1] = (meanOf8x8SquaredValuesBlocks[2] + meanOf8x8SquaredValuesBlocks[3] + meanOf8x8SquaredValuesBlocks[10] + meanOf8x8SquaredValuesBlocks[11]) >> 2;
     meanOf16x16SquaredValuesBlocks[2] = (meanOf8x8SquaredValuesBlocks[4] + meanOf8x8SquaredValuesBlocks[5] + meanOf8x8SquaredValuesBlocks[12] + meanOf8x8SquaredValuesBlocks[13]) >> 2;
@@ -365,9 +373,7 @@ uint64_t ComputeVariance32x32(
     // 32x32
     meanOf32x32Blocks = (meanOf16x16Blocks[0] + meanOf16x16Blocks[1] + meanOf16x16Blocks[2] + meanOf16x16Blocks[3]) >> 2;
 
-
     meanOf32x32SquaredValuesBlocks = (meanOf16x16SquaredValuesBlocks[0] + meanOf16x16SquaredValuesBlocks[1] + meanOf16x16SquaredValuesBlocks[2] + meanOf16x16SquaredValuesBlocks[3]) >> 2;
-
 
     return (meanOf32x32SquaredValuesBlocks - (meanOf32x32Blocks * meanOf32x32Blocks));
 }
@@ -378,7 +384,6 @@ uint64_t ComputeVariance16x16(
     uint64_t                        *variance8x8,
     EbAsm                         asm_type)
 {
-
     uint32_t blockIndex;
 
     uint64_t mean_of8x8_blocks[4];
@@ -434,8 +439,6 @@ uint64_t ComputeVariance64x64(
     uint64_t                        *variance32x32,
     EbAsm                         asm_type)
 {
-
-
     uint32_t blockIndex;
 
     uint64_t mean_of8x8_blocks[64];
@@ -771,13 +774,10 @@ uint64_t ComputeVariance64x64(
         blockIndex = blockIndex + 8;
         mean_of8x8_blocks[63] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
         meanOf8x8SquaredValuesBlocks[63] = compute_mean_func[1][asm_type](&(input_padded_picture_ptr->buffer_y[blockIndex]), input_padded_picture_ptr->stride_y, 8, 8);
-
     }
-
 
     else {
         if (asm_type == ASM_AVX2) {
-
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[0], &meanOf8x8SquaredValuesBlocks[0]);
 
             // (0,1)
@@ -874,8 +874,6 @@ uint64_t ComputeVariance64x64(
             blockIndex = blockIndex + 32;
 
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[60], &meanOf8x8SquaredValuesBlocks[60]);
-
-
         }
         else {
             mean_of8x8_blocks[0] = compute_sub_mean8x8_sse2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y);
@@ -1195,8 +1193,6 @@ uint64_t ComputeVariance64x64(
             blockIndex = blockIndex + 8;
             mean_of8x8_blocks[63] = compute_sub_mean8x8_sse2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y);
             meanOf8x8SquaredValuesBlocks[63] = compute_subd_mean_of_squared_values8x8_sse2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y);
-
-
         }
     }
 
@@ -1252,12 +1248,10 @@ uint64_t ComputeVariance64x64(
     meanOf32x32SquaredValuesBlocks[2] = (meanOf16x16SquaredValuesBlocks[8] + meanOf16x16SquaredValuesBlocks[9] + meanOf16x16SquaredValuesBlocks[12] + meanOf16x16SquaredValuesBlocks[13]) >> 2;
     meanOf32x32SquaredValuesBlocks[3] = (meanOf16x16SquaredValuesBlocks[10] + meanOf16x16SquaredValuesBlocks[11] + meanOf16x16SquaredValuesBlocks[14] + meanOf16x16SquaredValuesBlocks[15]) >> 2;
 
-
     variance32x32[0] = meanOf32x32SquaredValuesBlocks[0] - (meanOf32x32Blocks[0] * meanOf32x32Blocks[0]);
     variance32x32[1] = meanOf32x32SquaredValuesBlocks[1] - (meanOf32x32Blocks[1] * meanOf32x32Blocks[1]);
     variance32x32[2] = meanOf32x32SquaredValuesBlocks[2] - (meanOf32x32Blocks[2] * meanOf32x32Blocks[2]);
     variance32x32[3] = meanOf32x32SquaredValuesBlocks[3] - (meanOf32x32Blocks[3] * meanOf32x32Blocks[3]);
-
 
     // 64x64
     meanOf64x64Blocks = (meanOf32x32Blocks[0] + meanOf32x32Blocks[1] + meanOf32x32Blocks[2] + meanOf32x32Blocks[3]) >> 2;
@@ -1275,12 +1269,10 @@ uint8_t  getFilteredTypes(uint8_t  *ptr,
     uint32_t a = 0;
 
     if (filterType == 0) {
-
         //Luma
         a = (p[1] +
             p[0 + stride] + 4 * p[1 + stride] + p[2 + stride] +
             p[1 + 2 * stride]) / 8;
-
     }
     else if (filterType == 1) {
         a = (2 * p[1] +
@@ -1293,48 +1285,34 @@ uint8_t  getFilteredTypes(uint8_t  *ptr,
         //a= (a*2730)>>15;
     }
     else if (filterType == 2) {
-
-
         a = (4 * p[1] +
             4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
             4 * p[1 + 2 * stride]) / 20;
     }
     else if (filterType == 3) {
-
         a = (1 * p[0] + 1 * p[1] + 1 * p[2] +
             1 * p[0 + stride] + 4 * p[1 + stride] + 1 * p[2 + stride] +
             1 * p[0 + 2 * stride] + 1 * p[1 + 2 * stride] + 1 * p[2 + 2 * stride]) / 12;
-
-
     }
     else if (filterType == 4) {
-
         //gaussian matrix(Chroma)
         a = (1 * p[0] + 2 * p[1] + 1 * p[2] +
             2 * p[0 + stride] + 4 * p[1 + stride] + 2 * p[2 + stride] +
             1 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] + 1 * p[2 + 2 * stride]) / 16;
-
     }
     else if (filterType == 5) {
-
         a = (2 * p[0] + 2 * p[1] + 2 * p[2] +
             2 * p[0 + stride] + 4 * p[1 + stride] + 2 * p[2 + stride] +
             2 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] + 2 * p[2 + 2 * stride]) / 20;
-
     }
     else if (filterType == 6) {
-
         a = (4 * p[0] + 4 * p[1] + 4 * p[2] +
             4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
             4 * p[0 + 2 * stride] + 4 * p[1 + 2 * stride] + 4 * p[2 + 2 * stride]) / 36;
-
     }
 
-
     return  (uint8_t)CLIP3EQ(0, 255, a);
-
 }
-
 
 /*******************************************
 * noise_extract_luma_strong
@@ -1376,21 +1354,13 @@ void noise_extract_luma_strong(
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1) {
-
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-
-                }
-
             }
         }
     }
-
 }
 /*******************************************
 * noise_extract_chroma_strong
@@ -1417,8 +1387,8 @@ void noise_extract_chroma_strong(
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //Cb
     {
@@ -1434,18 +1404,12 @@ void noise_extract_chroma_strong(
         strideOut = denoised_picture_ptr->stride_cb;
         ptr_denoised = &(denoised_picture_ptr->buffer_cb[inputOriginIndexPad]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 6);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
-
             }
         }
     }
@@ -1465,21 +1429,15 @@ void noise_extract_chroma_strong(
         strideOut = denoised_picture_ptr->stride_cr;
         ptr_denoised = &(denoised_picture_ptr->buffer_cr[inputOriginIndexPad]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 6);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
-
             }
         }
     }
-
 }
 
 /*******************************************
@@ -1508,8 +1466,8 @@ void noise_extract_chroma_weak(
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //Cb
     {
@@ -1527,18 +1485,12 @@ void noise_extract_chroma_weak(
         strideOut = denoised_picture_ptr->stride_cb;
         ptr_denoised = &(denoised_picture_ptr->buffer_cb[inputOriginIndexPad]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
-
             }
         }
     }
@@ -1557,21 +1509,15 @@ void noise_extract_chroma_weak(
         strideOut = denoised_picture_ptr->stride_cr;
         ptr_denoised = &(denoised_picture_ptr->buffer_cr[inputOriginIndexPad]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
-                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1) {
+                if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 4);
-                }
-                else {
+                else
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                }
-
             }
         }
     }
-
 }
 
 /*******************************************
@@ -1619,25 +1565,19 @@ void noise_extract_luma_weak(
         noiseOriginIndex = noise_picture_ptr->origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
         ptr_noise = &(noise_picture_ptr->buffer_y[noiseOriginIndex]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < picWidth; ii++) {
-
                 if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1) {
-
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 0);
                     ptr_noise[ii + jj * strideOut] = CLIP3EQ(0, 255, ptrIn[ii + jj * stride_in] - ptr_denoised[ii + jj * strideOut]);
-
                 }
                 else {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptr_noise[ii + jj * strideOut] = 0;
                 }
-
             }
         }
     }
-
 }
 
 void noise_extract_luma_weak_lcu(
@@ -1682,25 +1622,19 @@ void noise_extract_luma_weak_lcu(
         noiseOriginIndex = noise_picture_ptr->origin_x + sb_origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
         ptr_noise = &(noise_picture_ptr->buffer_y[noiseOriginIndex]);
 
-
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = idx; ii < sb_width; ii++) {
-
                 if ((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && (ii > 0 || sb_origin_x > 0) && (ii + sb_origin_x) < picWidth - 1/* & ii < sb_width - 1*/) {
-
                     ptr_denoised[ii + jj * strideOut] = getFilteredTypes(&ptrIn[ii + jj * stride_in], stride_in, 0);
                     ptr_noise[ii + jj * strideOut] = CLIP3EQ(0, 255, ptrIn[ii + jj * stride_in] - ptr_denoised[ii + jj * strideOut]);
-
                 }
                 else {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptr_noise[ii + jj * strideOut] = 0;
                 }
-
             }
         }
     }
-
 }
 
 EbErrorType ZeroOutChromaBlockMean(
@@ -1708,7 +1642,6 @@ EbErrorType ZeroOutChromaBlockMean(
     uint32_t                       lcuCodingOrder                // input parameter, SB address
 )
 {
-
     EbErrorType return_error = EB_ErrorNone;
     // 16x16 mean
     picture_control_set_ptr->cbMean[lcuCodingOrder][ME_TIER_ZERO_PU_16x16_0] = 0;
@@ -1761,7 +1694,6 @@ EbErrorType ZeroOutChromaBlockMean(
     picture_control_set_ptr->crMean[lcuCodingOrder][ME_TIER_ZERO_PU_64x64] = 0;
 
     return return_error;
-
 }
 /*******************************************
 * ComputeChromaBlockMean
@@ -1776,7 +1708,6 @@ EbErrorType ComputeChromaBlockMean(
     uint32_t                       inputCrOriginIndex,            // input parameter, SB index, used to point to source/reference samples
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t cbBlockIndex, crBlockIndex;
@@ -1789,7 +1720,6 @@ EbErrorType ComputeChromaBlockMean(
 
     uint64_t cbMeanOf64x64Blocks;
     uint64_t crMeanOf64x64Blocks;
-
 
     // (0,0) 16x16 block
     cbBlockIndex = inputCbOriginIndex;
@@ -1887,7 +1817,6 @@ EbErrorType ComputeChromaBlockMean(
         crBlockIndex = crBlockIndex + 8;
         cbMeanOf16x16Blocks[15] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_cb[cbBlockIndex]), input_padded_picture_ptr->stride_cb, 8, 8);
         crMeanOf16x16Blocks[15] = compute_mean_func[0][asm_type](&(input_padded_picture_ptr->buffer_cr[crBlockIndex]), input_padded_picture_ptr->stride_cr, 8, 8);
-
     }
     else {
         (void)(asm_type);
@@ -1995,7 +1924,6 @@ EbErrorType ComputeChromaBlockMean(
     cbMeanOf32x32Blocks[1] = (cbMeanOf16x16Blocks[2] + cbMeanOf16x16Blocks[3] + cbMeanOf16x16Blocks[6] + cbMeanOf16x16Blocks[7]) >> 2;
     crMeanOf32x32Blocks[1] = (crMeanOf16x16Blocks[2] + crMeanOf16x16Blocks[3] + crMeanOf16x16Blocks[6] + crMeanOf16x16Blocks[7]) >> 2;
 
-
     cbMeanOf32x32Blocks[2] = (cbMeanOf16x16Blocks[8] + cbMeanOf16x16Blocks[9] + cbMeanOf16x16Blocks[12] + cbMeanOf16x16Blocks[13]) >> 2;
     crMeanOf32x32Blocks[2] = (crMeanOf16x16Blocks[8] + crMeanOf16x16Blocks[9] + crMeanOf16x16Blocks[12] + crMeanOf16x16Blocks[13]) >> 2;
 
@@ -2058,7 +1986,6 @@ EbErrorType ComputeChromaBlockMean(
     return return_error;
 }
 
-
 /*******************************************
 * ComputeBlockMeanComputeVariance
 *   computes the variance and the block mean of all CUs inside the tree block
@@ -2071,7 +1998,6 @@ EbErrorType ComputeBlockMeanComputeVariance(
     uint32_t                       inputLumaOriginIndex,          // input parameter, SB index, used to point to source/reference samples
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t blockIndex;
@@ -2413,12 +2339,10 @@ EbErrorType ComputeBlockMeanComputeVariance(
         const uint16_t stride_y = input_padded_picture_ptr->stride_y;
 
         if (asm_type == ASM_AVX2) {
-
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[0], &meanOf8x8SquaredValuesBlocks[0]);
 
             // (0,1)
             blockIndex = blockIndex + 32;
-
 
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[4], &meanOf8x8SquaredValuesBlocks[4]);
 
@@ -2453,7 +2377,6 @@ EbErrorType ComputeBlockMeanComputeVariance(
 
             // (3,0)
             blockIndex = inputLumaOriginIndex + (stride_y << 3) + (stride_y << 4);
-
 
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[24], &meanOf8x8SquaredValuesBlocks[24]);
 
@@ -2504,19 +2427,15 @@ EbErrorType ComputeBlockMeanComputeVariance(
             // (6,5)
             blockIndex = blockIndex + 24;
 
-
             // (7,0)
             blockIndex = inputLumaOriginIndex + (stride_y << 3) + (stride_y << 4) + (stride_y << 5);
 
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[56], &meanOf8x8SquaredValuesBlocks[56]);
 
-
             // (7,1)
             blockIndex = blockIndex + 32;
 
             compute_interm_var_four8x8_avx2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y, &mean_of8x8_blocks[60], &meanOf8x8SquaredValuesBlocks[60]);
-
-
         }
         else {
             mean_of8x8_blocks[0] = compute_sub_mean8x8_sse2_intrin(&(input_padded_picture_ptr->buffer_y[blockIndex]), stride_y);
@@ -3102,8 +3021,8 @@ EbErrorType DenoiseInputPicture(
     uint16_t       verticalIdx;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     //use denoised input if the source is extremly noisy
     if (picture_control_set_ptr->pic_noise_class >= PIC_NOISE_CLASS_4) {
@@ -3114,7 +3033,6 @@ EbErrorType DenoiseInputPicture(
 
         //filter Luma
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
@@ -3133,7 +3051,6 @@ EbErrorType DenoiseInputPicture(
                     sb_origin_y,
                     sb_origin_x);
             }
-
         }
 
         //copy Luma
@@ -3145,7 +3062,6 @@ EbErrorType DenoiseInputPicture(
 
         //copy chroma
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
@@ -3164,12 +3080,10 @@ EbErrorType DenoiseInputPicture(
                     sb_origin_y >> subsampling_y,
                     sb_origin_x >> subsampling_x);
             }
-
         }
 
         //copy chroma
         for (verticalIdx = 0; verticalIdx < input_picture_ptr->height >> subsampling_y; ++verticalIdx) {
-
             EB_MEMCPY(input_picture_ptr->buffer_cb + inChromaOffSet + verticalIdx * input_picture_ptr->stride_cb,
                 denoised_picture_ptr->buffer_cb + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cb,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
@@ -3178,10 +3092,8 @@ EbErrorType DenoiseInputPicture(
                 denoised_picture_ptr->buffer_cr + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cr,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
         }
-
     }
     else if (picture_control_set_ptr->pic_noise_class >= PIC_NOISE_CLASS_3_1) {
-
         uint32_t inLumaOffSet = input_picture_ptr->origin_x + input_picture_ptr->origin_y      * input_picture_ptr->stride_y;
         uint32_t inChromaOffSet = (input_picture_ptr->origin_x >> subsampling_x) + (input_picture_ptr->origin_y >> subsampling_y) * input_picture_ptr->stride_cb;
         uint32_t denLumaOffSet = denoised_picture_ptr->origin_x + denoised_picture_ptr->origin_y   * denoised_picture_ptr->stride_y;
@@ -3195,7 +3107,6 @@ EbErrorType DenoiseInputPicture(
 
         //copy chroma
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
@@ -3217,7 +3128,6 @@ EbErrorType DenoiseInputPicture(
         }
 
         for (verticalIdx = 0; verticalIdx < input_picture_ptr->height >> subsampling_y; ++verticalIdx) {
-
             EB_MEMCPY(input_picture_ptr->buffer_cb + inChromaOffSet + verticalIdx * input_picture_ptr->stride_cb,
                 denoised_picture_ptr->buffer_cb + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cb,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
@@ -3226,12 +3136,10 @@ EbErrorType DenoiseInputPicture(
                 denoised_picture_ptr->buffer_cr + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cr,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
         }
-
     }
     else if (context_ptr->pic_noise_variance_float >= 1.0) {
         //Luma : use filtered only for flatNoise LCUs
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             uint32_t  sb_height = MIN(BLOCK_SIZE_64, input_picture_ptr->height - sb_origin_y);
@@ -3240,16 +3148,11 @@ EbErrorType DenoiseInputPicture(
             uint32_t inLumaOffSet = input_picture_ptr->origin_x + sb_origin_x + (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
             uint32_t denLumaOffSet = denoised_picture_ptr->origin_x + sb_origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
 
-
             if (picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] == 1) {
-
-
                 for (verticalIdx = 0; verticalIdx < sb_height; ++verticalIdx) {
-
                     EB_MEMCPY(input_picture_ptr->buffer_y + inLumaOffSet + verticalIdx * input_picture_ptr->stride_y,
                         denoised_picture_ptr->buffer_y + denLumaOffSet + verticalIdx * denoised_picture_ptr->stride_y,
                         sizeof(uint8_t) * sb_width);
-
                 }
             }
         }
@@ -3269,7 +3172,6 @@ EbErrorType DetectInputPictureNoise(
     uint32_t                     picture_width_in_sb,
     EbAsm                        asm_type)
 {
-
     EbErrorType                 return_error = EB_ErrorNone;
     uint32_t                    lcuCodingOrder;
 
@@ -3284,15 +3186,12 @@ EbErrorType DetectInputPictureNoise(
     picNoiseVariance = 0;
     totLcuCount = 0;
 
-
     //Variance calc for noise picture
     for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
         sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
         sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
         inputLumaOriginIndex = (noise_picture_ptr->origin_y + sb_origin_y) * noise_picture_ptr->stride_y +
             noise_picture_ptr->origin_x + sb_origin_x;
-
 
         uint32_t  noiseOriginIndex = noise_picture_ptr->origin_x + sb_origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
 
@@ -3314,12 +3213,9 @@ EbErrorType DetectInputPictureNoise(
                 sb_origin_x);
         }
 
-
-
         //do it only for complete 64x64 blocks
         if (sb_origin_x + 64 <= input_picture_ptr->width && sb_origin_y + 64 <= input_picture_ptr->height)
         {
-
             uint64_t noiseBlkVar32x32[4], denoiseBlkVar32x32[4];
 
             uint64_t noiseBlkVar = ComputeVariance64x64(
@@ -3342,22 +3238,19 @@ EbErrorType DetectInputPictureNoise(
                 denoiseBlkVar32x32,
                 asm_type) >> 16;
 
-            if (denBlkVar < denBlkVarTh && noiseBlkVar > noiseBlkVarTh) {
+            if (denBlkVar < denBlkVarTh && noiseBlkVar > noiseBlkVarTh)
                 picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-            }
-
             totLcuCount++;
         }
-
     }
 
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    if (sequence_control_set_ptr->luma_height <= 720)
+    if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
         noiseTh = 25;
     else
         noiseTh = 0;
@@ -3389,22 +3282,18 @@ EbErrorType DetectInputPictureNoise(
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_3_1;
 
     return return_error;
-
 }
 
 static int32_t apply_denoise_2d(SequenceControlSet        *scs_ptr,
     PictureParentControlSet   *pcs_ptr,
     EbPictureBufferDesc *inputPicturePointer,
     EbAsm asm_type) {
-
-
     if (aom_denoise_and_model_run(pcs_ptr->denoise_and_model, inputPicturePointer,
-        &pcs_ptr->film_grain_params,
+        &pcs_ptr->frm_hdr.film_grain_params,
         scs_ptr->static_config.encoder_bit_depth > EB_8BIT, asm_type)) {
     }
     return 0;
 }
-
 
 EbErrorType denoise_estimate_film_grain(
     SequenceControlSet        *sequence_control_set_ptr,
@@ -3413,19 +3302,20 @@ EbErrorType denoise_estimate_film_grain(
 {
     EbErrorType return_error = EB_ErrorNone;
 
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+
     EbPictureBufferDesc    *input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
-    picture_control_set_ptr->film_grain_params.apply_grain = 0;
+    frm_hdr->film_grain_params.apply_grain = 0;
 
     if (sequence_control_set_ptr->film_grain_denoise_strength) {
         if (apply_denoise_2d(sequence_control_set_ptr, picture_control_set_ptr, input_picture_ptr, asm_type) < 0)
             return 1;
     }
 
-    sequence_control_set_ptr->film_grain_params_present |= picture_control_set_ptr->film_grain_params.apply_grain;
+    sequence_control_set_ptr->seq_header.film_grain_params_present |= frm_hdr->film_grain_params.apply_grain;
 
     return return_error;  //todo: add proper error handling
 }
-
 
 EbErrorType FullSampleDenoise(
     PictureAnalysisContext    *context_ptr,
@@ -3435,7 +3325,6 @@ EbErrorType FullSampleDenoise(
     EbBool                       denoise_flag,
     uint32_t                     picture_width_in_sb,
     EbAsm                        asm_type){
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t                     lcuCodingOrder;
@@ -3444,10 +3333,8 @@ EbErrorType FullSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     DetectInputPictureNoise(
@@ -3463,7 +3350,6 @@ EbErrorType FullSampleDenoise(
 
     if (denoise_flag == EB_TRUE)
     {
-
         DenoiseInputPicture(
             context_ptr,
             sequence_control_set_ptr,
@@ -3476,7 +3362,6 @@ EbErrorType FullSampleDenoise(
     }
 
     return return_error;
-
 }
 
 EbErrorType SubSampleFilterNoise(
@@ -3497,20 +3382,17 @@ EbErrorType SubSampleFilterNoise(
     uint16_t        verticalIdx;
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     if (picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_3_1) {
-
         uint32_t inLumaOffSet = input_picture_ptr->origin_x + input_picture_ptr->origin_y      * input_picture_ptr->stride_y;
         uint32_t inChromaOffSet = (input_picture_ptr->origin_x >> subsampling_x) + (input_picture_ptr->origin_y >> subsampling_y) * input_picture_ptr->stride_cb;
         uint32_t denLumaOffSet = denoised_picture_ptr->origin_x + denoised_picture_ptr->origin_y   * denoised_picture_ptr->stride_y;
         uint32_t denChromaOffSet = (denoised_picture_ptr->origin_x >> subsampling_x) + (denoised_picture_ptr->origin_y >> subsampling_y) * denoised_picture_ptr->stride_cb;
 
-
         //filter Luma
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
@@ -3542,7 +3424,6 @@ EbErrorType SubSampleFilterNoise(
 
         //filter chroma
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
@@ -3561,12 +3442,10 @@ EbErrorType SubSampleFilterNoise(
                     sb_origin_y >> subsampling_y,
                     sb_origin_x >> subsampling_x);
             }
-
         }
 
         //copy chroma
         for (verticalIdx = 0; verticalIdx < input_picture_ptr->height >> subsampling_y; ++verticalIdx) {
-
             EB_MEMCPY(input_picture_ptr->buffer_cb + inChromaOffSet + verticalIdx * input_picture_ptr->stride_cb,
                 denoised_picture_ptr->buffer_cb + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cb,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
@@ -3575,15 +3454,12 @@ EbErrorType SubSampleFilterNoise(
                 denoised_picture_ptr->buffer_cr + denChromaOffSet + verticalIdx * denoised_picture_ptr->stride_cr,
                 sizeof(uint8_t) * input_picture_ptr->width >> subsampling_x);
         }
-
     }
     else if (picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_2) {
-
         uint32_t newTotFN = 0;
 
         //for each SB ,re check the FN information for only the FNdecim ones
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             uint32_t  inputLumaOriginIndex = noise_picture_ptr->origin_x + sb_origin_x + (noise_picture_ptr->origin_y + sb_origin_y) * noise_picture_ptr->stride_y;
@@ -3591,7 +3467,6 @@ EbErrorType SubSampleFilterNoise(
 
             if (sb_origin_x + 64 <= input_picture_ptr->width && sb_origin_y + 64 <= input_picture_ptr->height && picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] == 1)
             {
-
                 weak_luma_filter_lcu_func_ptr_array[asm_type](
                     input_picture_ptr,
                     denoised_picture_ptr,
@@ -3631,26 +3506,20 @@ EbErrorType SubSampleFilterNoise(
                     picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
                     //printf("POC %i (%i,%i) denBlkVar: %i  noiseBlkVar :%i\n", picture_control_set_ptr->picture_number,sb_origin_x,sb_origin_y, denBlkVar, noiseBlkVar);
                     newTotFN++;
-
                 }
-                else {
+                else
                     picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-                }
             }
         }
 
         for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
-
             sb_origin_x = (lcuCodingOrder % picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
             sb_origin_y = (lcuCodingOrder / picture_width_in_sb) * sequence_control_set_ptr->sb_sz;
 
             if (sb_origin_x + 64 <= input_picture_ptr->width && sb_origin_y + 64 <= input_picture_ptr->height)
             {
-
-
                 //use the denoised for FN LCUs
                 if (picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] == 1) {
-
                     uint32_t  sb_height = MIN(BLOCK_SIZE_64, input_picture_ptr->height - sb_origin_y);
                     uint32_t  sb_width = MIN(BLOCK_SIZE_64, input_picture_ptr->width - sb_origin_x);
 
@@ -3658,18 +3527,13 @@ EbErrorType SubSampleFilterNoise(
                     uint32_t denLumaOffSet = denoised_picture_ptr->origin_x + sb_origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
 
                     for (verticalIdx = 0; verticalIdx < sb_height; ++verticalIdx) {
-
                         EB_MEMCPY(input_picture_ptr->buffer_y + inLumaOffSet + verticalIdx * input_picture_ptr->stride_y,
                             denoised_picture_ptr->buffer_y + denLumaOffSet + verticalIdx * denoised_picture_ptr->stride_y,
                             sizeof(uint8_t) * sb_width);
-
                     }
                 }
-
             }
-
         }
-
     }
     return return_error;
 }
@@ -3683,7 +3547,6 @@ EbErrorType QuarterSampleDetectNoise(
     uint32_t                         picture_width_in_sb,
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint64_t                   picNoiseVariance;
@@ -3694,7 +3557,6 @@ EbErrorType QuarterSampleDetectNoise(
 
     picNoiseVariance = 0;
     totLcuCount = 0;
-
 
     uint16_t vert64x64Index;
     uint16_t horz64x64Index;
@@ -3710,7 +3572,6 @@ EbErrorType QuarterSampleDetectNoise(
     // Loop over 64x64 blocks on the downsampled domain (each block would contain 16 LCUs on the full sampled domain)
     for (vert64x64Index = 0; vert64x64Index < (quarter_decimated_picture_ptr->height / 64); vert64x64Index++) {
         for (horz64x64Index = 0; horz64x64Index < (quarter_decimated_picture_ptr->width / 64); horz64x64Index++) {
-
             block64x64X = horz64x64Index * 64;
             block64x64Y = vert64x64Index * 64;
 
@@ -3732,20 +3593,16 @@ EbErrorType QuarterSampleDetectNoise(
                     block64x64X);
             }
 
-
             // Loop over 32x32 blocks (i.e, 64x64 blocks in full resolution)
             for (vert32x32Index = 0; vert32x32Index < 2; vert32x32Index++) {
                 for (horz32x32Index = 0; horz32x32Index < 2; horz32x32Index++) {
-
                     block32x32X = block64x64X + horz32x32Index * 32;
                     block32x32Y = block64x64Y + vert32x32Index * 32;
 
                     //do it only for complete 32x32 blocks (i.e, complete 64x64 blocks in full resolution)
                     if ((block32x32X + 32 <= quarter_decimated_picture_ptr->width) && (block32x32Y + 32 <= quarter_decimated_picture_ptr->height))
                     {
-
                         lcuCodingOrder = ((vert64x64Index * 2) + vert32x32Index) * picture_width_in_sb + ((horz64x64Index * 2) + horz32x32Index);
-
 
                         uint64_t noiseBlkVar8x8[16], denoiseBlkVar8x8[16];
 
@@ -3756,7 +3613,6 @@ EbErrorType QuarterSampleDetectNoise(
                             noiseOriginIndex,
                             noiseBlkVar8x8,
                             asm_type);
-
 
                         picNoiseVariance += (noiseBlkVar >> 16);
 
@@ -3770,10 +3626,8 @@ EbErrorType QuarterSampleDetectNoise(
 
                         uint64_t denBlkVarDecTh;
                         denBlkVarDecTh = NOISE_MIN_LEVEL_DECIM_M6_M7;
-                        if (denBlkVar < FLAT_MAX_VAR_DECIM && noiseBlkVar> denBlkVarDecTh) {
+                        if (denBlkVar < FLAT_MAX_VAR_DECIM && noiseBlkVar> denBlkVarDecTh)
                             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-                        }
-
                         totLcuCount++;
                     }
                 }
@@ -3781,16 +3635,15 @@ EbErrorType QuarterSampleDetectNoise(
         }
     }
 
-
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    //if (sequence_control_set_ptr->luma_height <= 720)
+    //if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
     //    noiseTh = 25;
-    //else if (sequence_control_set_ptr->luma_height <= 1080)
+    //else if (sequence_control_set_ptr->seq_header.max_frame_height <= 1080)
     //    noiseTh = 10;
     //else
     noiseTh = 0;
@@ -3805,13 +3658,8 @@ EbErrorType QuarterSampleDetectNoise(
     else
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_1;   //Noise+Edge information is very small, so no noise nor edge area (action : no denoising)
 
-
-
     return return_error;
-
 }
-
-
 
 EbErrorType SubSampleDetectNoise(
     PictureAnalysisContext    *context_ptr,
@@ -3823,7 +3671,6 @@ EbErrorType SubSampleDetectNoise(
     uint32_t                         picture_width_in_sb,
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint64_t                   picNoiseVariance;
@@ -3834,7 +3681,6 @@ EbErrorType SubSampleDetectNoise(
 
     picNoiseVariance = 0;
     totLcuCount = 0;
-
 
     uint16_t vert64x64Index;
     uint16_t horz64x64Index;
@@ -3850,7 +3696,6 @@ EbErrorType SubSampleDetectNoise(
     // Loop over 64x64 blocks on the downsampled domain (each block would contain 16 LCUs on the full sampled domain)
     for (vert64x64Index = 0; vert64x64Index < (sixteenth_decimated_picture_ptr->height / 64); vert64x64Index++) {
         for (horz64x64Index = 0; horz64x64Index < (sixteenth_decimated_picture_ptr->width / 64); horz64x64Index++) {
-
             block64x64X = horz64x64Index * 64;
             block64x64Y = vert64x64Index * 64;
 
@@ -3872,20 +3717,16 @@ EbErrorType SubSampleDetectNoise(
                     block64x64X);
             }
 
-
             // Loop over 16x16 blocks (i.e, 64x64 blocks in full resolution)
             for (vert16x16Index = 0; vert16x16Index < 4; vert16x16Index++) {
                 for (horz16x16Index = 0; horz16x16Index < 4; horz16x16Index++) {
-
                     block16x16X = block64x64X + horz16x16Index * 16;
                     block16x16Y = block64x64Y + vert16x16Index * 16;
 
                     //do it only for complete 16x16 blocks (i.e, complete 64x64 blocks in full resolution)
                     if (block16x16X + 16 <= sixteenth_decimated_picture_ptr->width && block16x16Y + 16 <= sixteenth_decimated_picture_ptr->height)
                     {
-
                         lcuCodingOrder = ((vert64x64Index * 4) + vert16x16Index) * picture_width_in_sb + ((horz64x64Index * 4) + horz16x16Index);
-
 
                         uint64_t noiseBlkVar8x8[4], denoiseBlkVar8x8[4];
 
@@ -3896,7 +3737,6 @@ EbErrorType SubSampleDetectNoise(
                             noiseOriginIndex,
                             noiseBlkVar8x8,
                             asm_type);
-
 
                         picNoiseVariance += (noiseBlkVar >> 16);
 
@@ -3912,9 +3752,8 @@ EbErrorType SubSampleDetectNoise(
                         uint64_t denBlkVarDecTh = FLAT_MAX_VAR_DECIM;
 
                         noiseBlkVarDecTh = NOISE_MIN_LEVEL_DECIM_M6_M7;
-                        if (denBlkVar < denBlkVarDecTh && noiseBlkVar> noiseBlkVarDecTh) {
+                        if (denBlkVar < denBlkVarDecTh && noiseBlkVar> noiseBlkVarDecTh)
                             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-                        }
                         totLcuCount++;
                     }
                 }
@@ -3922,16 +3761,15 @@ EbErrorType SubSampleDetectNoise(
         }
     }
 
-
-    context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
-
-    picNoiseVariance = picNoiseVariance / totLcuCount;
-
+    if (totLcuCount > 0) {
+        context_ptr->pic_noise_variance_float = (double)picNoiseVariance / (double)totLcuCount;
+        picNoiseVariance = picNoiseVariance / totLcuCount;
+    }
 
     //the variance of a 64x64 noise area tends to be bigger for small resolutions.
-    if (sequence_control_set_ptr->luma_height <= 720)
+    if (sequence_control_set_ptr->seq_header.max_frame_height <= 720)
         noiseTh = 25;
-    else if (sequence_control_set_ptr->luma_height <= 1080)
+    else if (sequence_control_set_ptr->seq_header.max_frame_height <= 1080)
         noiseTh = 10;
     else
         noiseTh = 0;
@@ -3947,7 +3785,6 @@ EbErrorType SubSampleDetectNoise(
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_1;   //Noise+Edge information is very small, so no noise nor edge area (action : no denoising)
 
     return return_error;
-
 }
 
 EbErrorType QuarterSampleDenoise(
@@ -3960,7 +3797,6 @@ EbErrorType QuarterSampleDenoise(
     uint32_t                         picture_width_in_sb,
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t                     lcuCodingOrder;
@@ -3969,10 +3805,8 @@ EbErrorType QuarterSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     decimation_2d(
@@ -3984,7 +3818,6 @@ EbErrorType QuarterSampleDenoise(
         quarter_decimated_picture_ptr->stride_y,
         2);
 
-
     QuarterSampleDetectNoise(
         context_ptr,
         picture_control_set_ptr,
@@ -3995,11 +3828,9 @@ EbErrorType QuarterSampleDenoise(
         asm_type);
 
     if (denoise_flag == EB_TRUE) {
-
         // Turn OFF the de-noiser for Class 2 at QP=29 and lower (for Fixed_QP) and at the target rate of 14Mbps and higher (for RC=ON)
         if ((picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_3_1) ||
             ((picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_2) && ((sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->qp > DENOISER_QP_TH) || (sequence_control_set_ptr->static_config.rate_control_mode != 0 && sequence_control_set_ptr->static_config.target_bit_rate < DENOISER_BITRATE_TH)))) {
-
             SubSampleFilterNoise(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
@@ -4013,9 +3844,7 @@ EbErrorType QuarterSampleDenoise(
     }
 
     return return_error;
-
 }
-
 
 EbErrorType SubSampleDenoise(
     PictureAnalysisContext    *context_ptr,
@@ -4027,7 +3856,6 @@ EbErrorType SubSampleDenoise(
     uint32_t                         picture_width_in_sb,
     EbAsm                         asm_type)
 {
-
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t                     lcuCodingOrder;
@@ -4036,10 +3864,8 @@ EbErrorType SubSampleDenoise(
     EbPictureBufferDesc    *noise_picture_ptr = context_ptr->noise_picture_ptr;
 
     //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+    for (lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
         picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-    }
-
     picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
 
     decimation_2d(
@@ -4062,11 +3888,9 @@ EbErrorType SubSampleDenoise(
         asm_type);
 
     if (denoise_flag == EB_TRUE) {
-
         // Turn OFF the de-noiser for Class 2 at QP=29 and lower (for Fixed_QP) and at the target rate of 14Mbps and higher (for RC=ON)
         if ((picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_3_1) ||
             ((picture_control_set_ptr->pic_noise_class == PIC_NOISE_CLASS_2) && ((sequence_control_set_ptr->static_config.rate_control_mode == 0 && sequence_control_set_ptr->qp > DENOISER_QP_TH) || (sequence_control_set_ptr->static_config.rate_control_mode != 0 && sequence_control_set_ptr->static_config.target_bit_rate < DENOISER_BITRATE_TH)))) {
-
             SubSampleFilterNoise(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
@@ -4080,9 +3904,7 @@ EbErrorType SubSampleDenoise(
     }
 
     return return_error;
-
 }
-
 
 /************************************************
  * Set Picture Parameters based on input configuration
@@ -4093,7 +3915,6 @@ void SetPictureParametersForStatisticsGathering(
     SequenceControlSet            *sequence_control_set_ptr
 )
 {
-
     sequence_control_set_ptr->picture_analysis_number_of_regions_per_width = HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
     sequence_control_set_ptr->picture_analysis_number_of_regions_per_height = HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
 
@@ -4109,19 +3930,10 @@ void SetPictureParametersForStatisticsGathering(
  ************************************************/
 void PicturePreProcessingOperations(
     PictureParentControlSet       *picture_control_set_ptr,
-    EbPictureBufferDesc           *input_picture_ptr,
     SequenceControlSet            *sequence_control_set_ptr,
-    EbPictureBufferDesc           *quarter_decimated_picture_ptr,
-    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-    uint32_t                           sb_total_count,
-    EbAsm                           asm_type) {
-
-    UNUSED(quarter_decimated_picture_ptr);
-    UNUSED(sixteenth_decimated_picture_ptr);
-    UNUSED(input_picture_ptr);
-
+    uint32_t                       sb_total_count,
+    EbAsm                          asm_type) {
     if (sequence_control_set_ptr->film_grain_denoise_strength) {
-
         denoise_estimate_film_grain(
             sequence_control_set_ptr,
             picture_control_set_ptr,
@@ -4129,14 +3941,11 @@ void PicturePreProcessingOperations(
     }
     else {
         //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
-        for (uint32_t lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder) {
+        for (uint32_t lcuCodingOrder = 0; lcuCodingOrder < sb_total_count; ++lcuCodingOrder)
             picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 0;
-        }
         picture_control_set_ptr->pic_noise_class = PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
-        
     }
     return;
-
 }
 
 /**************************************************************
@@ -4149,7 +3958,6 @@ void SubSampleLumaGeneratePixelIntensityHistogramBins(
     EbPictureBufferDesc           *input_picture_ptr,
     uint64_t                          *sumAverageIntensityTotalRegionsLuma,
     EbAsm                           asm_type) {
-
     uint32_t                          regionWidth;
     uint32_t                          regionHeight;
     uint32_t                          regionWidthOffset;
@@ -4165,7 +3973,6 @@ void SubSampleLumaGeneratePixelIntensityHistogramBins(
     // Loop over regions inside the picture
     for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {  // loop over horizontal regions
         for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) { // loop over vertical regions
-
 
             // Initialize bins to 1
             initialize_buffer32bits_func_ptr_array[asm_type](picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0], 64, 0, 1);
@@ -4207,7 +4014,6 @@ void SubSampleChromaGeneratePixelIntensityHistogramBins(
     uint64_t                          *sumAverageIntensityTotalRegionsCb,
     uint64_t                          *sumAverageIntensityTotalRegionsCr,
     EbAsm                           asm_type) {
-
     uint64_t                          sum;
     uint32_t                          regionWidth;
     uint32_t                          regionHeight;
@@ -4226,7 +4032,6 @@ void SubSampleChromaGeneratePixelIntensityHistogramBins(
     for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {  // loop over horizontal regions
         for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) { // loop over vertical regions
 
-
             // Initialize bins to 1
             initialize_buffer32bits_func_ptr_array[asm_type](picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][1], 64, 0, 1);
             initialize_buffer32bits_func_ptr_array[asm_type](picture_control_set_ptr->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][2], 64, 0, 1);
@@ -4238,7 +4043,6 @@ void SubSampleChromaGeneratePixelIntensityHistogramBins(
             regionHeightOffset = (regionInPictureHeightIndex == sequence_control_set_ptr->picture_analysis_number_of_regions_per_height - 1) ?
                 input_picture_ptr->height - (sequence_control_set_ptr->picture_analysis_number_of_regions_per_height * regionHeight) :
                 0;
-
 
             // U Histogram
             CalculateHistogram(
@@ -4280,7 +4084,6 @@ void SubSampleChromaGeneratePixelIntensityHistogramBins(
         }
     }
     return;
-
 }
 
 void EdgeDetectionMeanLumaChroma16x16(
@@ -4288,20 +4091,17 @@ void EdgeDetectionMeanLumaChroma16x16(
     PictureParentControlSet   *picture_control_set_ptr,
     uint32_t                       totalLcuCount)
 {
-
     uint32_t               sb_index;
-
 
     uint32_t maxGrad = 1;
 
     // The values are calculated for every 4th frame
     if ((picture_control_set_ptr->picture_number & 3) == 0) {
         for (sb_index = 0; sb_index < totalLcuCount; sb_index++) {
-
             SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
             EB_MEMSET(sb_stat_ptr, 0, sizeof(SbStat));
-            LcuParameters     *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams     *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->potential_logo_sb &&sb_params->is_complete_sb)
 
             {
@@ -4335,7 +4135,6 @@ void EdgeDetectionMeanLumaChroma16x16(
                     }
                     gradx = gradx / nbcompx;
 
-
                     if (y != 0)
                     {
                         grady += ABS((int32_t)(y_mean_ptr[rasterScanCuIndex]) - (int32_t)(y_mean_ptr[rasterScanCuIndex - 4]));
@@ -4354,28 +4153,25 @@ void EdgeDetectionMeanLumaChroma16x16(
 
                     grady = grady / nbcompy;
                     sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad = (uint32_t)ABS(gradx) + ABS(grady);
-                    if (sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad > maxGrad) {
+                    if (sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad > maxGrad)
                         maxGrad = sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad;
-                    }
                 }
             }
         }
 
         for (sb_index = 0; sb_index < totalLcuCount; sb_index++) {
-            LcuParameters *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+            SbParams *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
             if (sb_params->potential_logo_sb &&sb_params->is_complete_sb) {
                 SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
                 uint32_t rasterScanCuIndex;
-                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
+                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++)
                     sb_stat_ptr->cu_stat_array[rasterScanCuIndex].edge_cu = (uint16_t)MIN(((sb_stat_ptr->cu_stat_array[rasterScanCuIndex].grad * (255 * 3)) / maxGrad), 255) < 30 ? 0 : 1;
-                }
             }
         }
     }
     else {
         for (sb_index = 0; sb_index < totalLcuCount; sb_index++) {
-
             SbStat *sb_stat_ptr = &picture_control_set_ptr->sb_stat_array[sb_index];
 
             EB_MEMSET(sb_stat_ptr, 0, sizeof(SbStat));
@@ -4390,13 +4186,12 @@ void EdgeDetection(
     SequenceControlSet            *sequence_control_set_ptr,
     PictureParentControlSet       *picture_control_set_ptr)
 {
-
     uint16_t  *variancePtr;
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
     uint64_t thrsldLevel0 = (picture_control_set_ptr->pic_avg_variance * 70) / 100;
     uint8_t  *meanPtr;
-    uint32_t picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-    uint32_t picture_height_in_sb = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    uint32_t picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+    uint32_t picture_height_in_sb = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
     uint32_t neighbourLcuIndex = 0;
     uint64_t similarityCount = 0;
     uint64_t similarityCount0 = 0;
@@ -4421,7 +4216,6 @@ void EdgeDetection(
     uint8_t veryLowIntensityTh = 20;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-
         sb_x = sb_index % picture_width_in_sb;
         sb_y = sb_index / picture_width_in_sb;
 
@@ -4431,10 +4225,8 @@ void EdgeDetection(
         picture_control_set_ptr->sharp_edge_sb_flag[sb_index] = 0;
 
         if (sb_x > 0 && sb_x < (uint32_t)(picture_width_in_sb - 1) && sb_y >  0 && sb_y < (uint32_t)(picture_height_in_sb - 1)) {
-
             variancePtr = picture_control_set_ptr->variance[sb_index];
             meanPtr = picture_control_set_ptr->y_mean[sb_index];
-
 
             similarityCount = 0;
 
@@ -4443,24 +4235,17 @@ void EdgeDetection(
             edge_results_ptr[sb_index].edge_block_num = highVarianceLucFlag;
             if (variancePtr[0] > highIntensityTh1) {
                 uint8_t sharpEdge = 0;
-                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++) {
+                for (rasterScanCuIndex = RASTER_SCAN_CU_INDEX_16x16_0; rasterScanCuIndex <= RASTER_SCAN_CU_INDEX_16x16_15; rasterScanCuIndex++)
                     sharpEdge = (variancePtr[rasterScanCuIndex] < veryLowIntensityTh) ? sharpEdge + 1 : sharpEdge;
-
-                }
                 if (sharpEdge > 4)
-                {
                     picture_control_set_ptr->sharp_edge_sb_flag[sb_index] = 1;
-                }
             }
 
-
             if (sb_x > 3 && sb_x < (uint32_t)(picture_width_in_sb - 4) && sb_y >  3 && sb_y < (uint32_t)(picture_height_in_sb - 4)) {
-
                 highIntensityLcuFlag =
                     (meanPtr[RASTER_SCAN_CU_INDEX_64x64] > highIntensityTh) ? EB_TRUE : EB_FALSE;
 
                 if (highIntensityLcuFlag) {
-
                     neighbourLcuIndex = sb_index - 1;
                     neighbourLcuMean = picture_control_set_ptr->y_mean[neighbourLcuIndex][RASTER_SCAN_CU_INDEX_64x64];
 
@@ -4482,8 +4267,6 @@ void EdgeDetection(
                     similarityCount = similarityCount0 + similarityCount1 + similarityCount2 + similarityCount3;
 
                     if (similarityCount > 0) {
-
-
                         for (i = -4; i < 5; i++) {
                             for (j = -4; j < 5; j++) {
                                 neighbourLcuIndex = sb_index + (i * picture_width_in_sb) + j;
@@ -4494,14 +4277,13 @@ void EdgeDetection(
                 }
             }
 
-
-            if (highVarianceLucFlag) {
+            if (highVarianceLucFlag)
                 numberOfEdgeLcu += edge_results_ptr[sb_index].edge_block_num;
-            }
         }
     }
     return;
 }
+
 /******************************************************
 * Calculate the variance of variance to determine Homogeneous regions. Note: Variance calculation should be on.
 ******************************************************/
@@ -4509,117 +4291,31 @@ void DetermineHomogeneousRegionInPicture(
     SequenceControlSet            *sequence_control_set_ptr,
     PictureParentControlSet       *picture_control_set_ptr)
 {
-
     uint16_t  *variancePtr;
     uint32_t sb_index;
-
-    uint32_t cuNum, cu_size, cuIndexOffset, cuH, cuW;
     uint64_t nullVarCnt = 0;
     uint64_t veryLowVarCnt = 0;
     uint64_t varLcuCnt = 0;
     uint32_t sb_total_count = picture_control_set_ptr->sb_total_count;
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-        uint64_t meanSqrVariance32x32Based[4] = { 0 }, meanVariance32x32Based[4] = { 0 };
-
-        uint64_t meanSqrVariance64x64Based = 0, meanVariance64x64Based = 0;
-        uint64_t varOfVar64x64Based = 0;
-
-        LcuParameters sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
-
-        // Initialize
-        picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_TRUE;
-
+        SbParams sb_params = sequence_control_set_ptr->sb_params_array[sb_index];
         variancePtr = picture_control_set_ptr->variance[sb_index];
 
         if (sb_params.is_complete_sb) {
-
             nullVarCnt += (variancePtr[ME_TIER_ZERO_PU_64x64] == 0) ? 1 : 0;
 
             varLcuCnt++;
 
             veryLowVarCnt += ((variancePtr[ME_TIER_ZERO_PU_64x64]) < LCU_LOW_VAR_TH) ? 1 : 0;
-            cu_size = 8;
-            cuIndexOffset = ME_TIER_ZERO_PU_8x8_0;
-            cuNum = 64 / cu_size;
-
-            //Variance of 8x8 blocks in a 32x32
-            for (cuH = 0; cuH < (cuNum / 2); cuH++) {
-                for (cuW = 0; cuW < (cuNum / 2); cuW++) {
-
-                    meanSqrVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-                    meanVariance32x32Based[0] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4])*(variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-                    meanVariance32x32Based[1] += (variancePtr[cuIndexOffset + cuH * cuNum + cuW + 4]);
-
-                    meanSqrVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-                    meanVariance32x32Based[2] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW]);
-
-                    meanSqrVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4])*(variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-                    meanVariance32x32Based[3] += (variancePtr[cuIndexOffset + (cuH + 4)*cuNum + cuW + 4]);
-
-                }
-            }
-
-            meanSqrVariance32x32Based[0] = meanSqrVariance32x32Based[0] >> 4;
-            meanVariance32x32Based[0] = meanVariance32x32Based[0] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = meanSqrVariance32x32Based[0] - meanVariance32x32Based[0] * meanVariance32x32Based[0];
-
-            meanSqrVariance32x32Based[1] = meanSqrVariance32x32Based[1] >> 4;
-            meanVariance32x32Based[1] = meanVariance32x32Based[1] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = meanSqrVariance32x32Based[1] - meanVariance32x32Based[1] * meanVariance32x32Based[1];
-
-            meanSqrVariance32x32Based[2] = meanSqrVariance32x32Based[2] >> 4;
-            meanVariance32x32Based[2] = meanVariance32x32Based[2] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = meanSqrVariance32x32Based[2] - meanVariance32x32Based[2] * meanVariance32x32Based[2];
-
-            meanSqrVariance32x32Based[3] = meanSqrVariance32x32Based[3] >> 4;
-            meanVariance32x32Based[3] = meanVariance32x32Based[3] >> 4;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = meanSqrVariance32x32Based[3] - meanVariance32x32Based[3] * meanVariance32x32Based[3];
-
-            // Compute the 64x64 based variance of variance
-            {
-                uint32_t varIndex;
-                // Loop over all 8x8s in a 64x64
-                for (varIndex = ME_TIER_ZERO_PU_8x8_0; varIndex <= ME_TIER_ZERO_PU_8x8_63; varIndex++) {
-                    meanSqrVariance64x64Based += variancePtr[varIndex] * variancePtr[varIndex];
-                    meanVariance64x64Based += variancePtr[varIndex];
-                }
-
-                meanSqrVariance64x64Based = meanSqrVariance64x64Based >> 6;
-                meanVariance64x64Based = meanVariance64x64Based >> 6;
-
-                // Compute variance
-                varOfVar64x64Based = meanSqrVariance64x64Based - meanVariance64x64Based * meanVariance64x64Based;
-
-                // Turn off detail preservation if the varOfVar is greater than a threshold
-                if (varOfVar64x64Based > VAR_BASED_DETAIL_PRESERVATION_SELECTOR_THRSLHD)
-                {
-                    picture_control_set_ptr->sb_homogeneous_area_array[sb_index] = EB_FALSE;
-                }
-            }
-
-        }
-        else {
-
-            // Should be re-calculated and scaled properly
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][0] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][1] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][2] = 0xFFFFFFFFFFFFFFFF;
-            picture_control_set_ptr->var_of_var32x32_based_sb_array[sb_index][3] = 0xFFFFFFFFFFFFFFFF;
         }
     }
     picture_control_set_ptr->very_low_var_pic_flag = EB_FALSE;
-    if (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > PIC_LOW_VAR_PERCENTAGE_TH))
         picture_control_set_ptr->very_low_var_pic_flag = EB_TRUE;
-    }
-
     picture_control_set_ptr->logo_pic_flag = EB_FALSE;
-    if (((veryLowVarCnt * 100) / varLcuCnt) > 80) {
+    if ((varLcuCnt > 0) && (((veryLowVarCnt * 100) / varLcuCnt) > 80))
         picture_control_set_ptr->logo_pic_flag = EB_TRUE;
-    }
-
     return;
 }
 /************************************************
@@ -4648,7 +4344,7 @@ void ComputePictureSpatialStatistics(
     picTotVariance = 0;
 
     for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-        LcuParameters   *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
+        SbParams   *sb_params = &sequence_control_set_ptr->sb_params_array[sb_index];
 
         sb_origin_x = sb_params->origin_x;
         sb_origin_y = sb_params->origin_y;
@@ -4667,7 +4363,6 @@ void ComputePictureSpatialStatistics(
             asm_type);
 
         if (sb_params->is_complete_sb) {
-
             ComputeChromaBlockMean(
                 sequence_control_set_ptr,
                 picture_control_set_ptr,
@@ -4687,6 +4382,7 @@ void ComputePictureSpatialStatistics(
     }
 
     picture_control_set_ptr->pic_avg_variance = (uint16_t)(picTotVariance / sb_total_count);
+
     // Calculate the variance of variance to determine Homogeneous regions. Note: Variance calculation should be on.
     DetermineHomogeneousRegionInPicture(
         sequence_control_set_ptr,
@@ -4701,7 +4397,6 @@ void ComputePictureSpatialStatistics(
         sequence_control_set_ptr,
         picture_control_set_ptr);
 
-
     return;
 }
 
@@ -4714,7 +4409,6 @@ void CalculateInputAverageIntensity(
     uint64_t                           sumAverageIntensityTotalRegionsCr,
     EbAsm                           asm_type)
 {
-
     if (sequence_control_set_ptr->scd_mode == SCD_MODE_0) {
         uint16_t blockIndexInWidth;
         uint16_t blockIndexInHeight;
@@ -4725,16 +4419,14 @@ void CalculateInputAverageIntensity(
         // Loop over 8x8 blocks and calculates the mean value
         if (sequence_control_set_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
             for (blockIndexInHeight = 0; blockIndexInHeight < input_picture_ptr->height >> 3; ++blockIndexInHeight) {
-                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth) {
+                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth)
                     mean += compute_mean_func[0][asm_type](&(input_picture_ptr->buffer_y[(blockIndexInWidth << 3) + (blockIndexInHeight << 3) * input_picture_ptr->stride_y]), input_picture_ptr->stride_y, 8, 8);
-                }
             }
         }
         else {
             for (blockIndexInHeight = 0; blockIndexInHeight < input_picture_ptr->height >> 3; ++blockIndexInHeight) {
-                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth) {
+                for (blockIndexInWidth = 0; blockIndexInWidth < input_picture_ptr->width >> 3; ++blockIndexInWidth)
                     mean += compute_sub_mean8x8_sse2_intrin(&(input_picture_ptr->buffer_y[(blockIndexInWidth << 3) + (blockIndexInHeight << 3) * stride_y]), stride_y);
-                }
             }
         }
         mean = ((mean + ((input_picture_ptr->height* input_picture_ptr->width) >> 7)) / ((input_picture_ptr->height* input_picture_ptr->width) >> 6));
@@ -4765,7 +4457,6 @@ void GatheringPictureStatistics(
     uint32_t                           sb_total_count,
     EbAsm                           asm_type)
 {
-
     uint64_t                          sumAverageIntensityTotalRegionsLuma = 0;
     uint64_t                          sumAverageIntensityTotalRegionsCb = 0;
     uint64_t                          sumAverageIntensityTotalRegionsCr = 0;
@@ -4800,7 +4491,6 @@ void GatheringPictureStatistics(
         sumAverageIntensityTotalRegionsCr,
         asm_type);
 
-
     ComputePictureSpatialStatistics(
         sequence_control_set_ptr,
         picture_control_set_ptr,
@@ -4822,8 +4512,8 @@ void PadPictureToMultipleOfMinCuSizeDimensions(
     EbBool                          is16BitInput = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     uint32_t color_format = input_picture_ptr->color_format;
-	const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-	const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
+    const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     // Input Picture Padding
     pad_input_picture(
@@ -4888,7 +4578,6 @@ void PadPictureToMultipleOfLcuDimensions(
     EbPictureBufferDesc           *input_padded_picture_ptr
 )
 {
-
     // Generate Padding
     generate_padding(
         &input_padded_picture_ptr->buffer_y[0],
@@ -4904,17 +4593,14 @@ void PadPictureToMultipleOfLcuDimensions(
 /************************************************
 * 1/4 & 1/16 input picture decimation
 ************************************************/
-void DecimateInputPicture(
+void DownsampleDecimationInputPicture(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc           *quarter_decimated_picture_ptr,
     EbPictureBufferDesc           *sixteenth_decimated_picture_ptr) {
-
-
     // Decimate input picture for HME L0 and L1
-    if (picture_control_set_ptr->enable_hme_flag) {
-
-        if (picture_control_set_ptr->enable_hme_level1_flag) {
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
             decimation_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
@@ -4930,31 +4616,28 @@ void DecimateInputPicture(
                 quarter_decimated_picture_ptr->height,
                 quarter_decimated_picture_ptr->origin_x,
                 quarter_decimated_picture_ptr->origin_y);
-
-        }
-
-        if (picture_control_set_ptr->enable_hme_level0_flag) {
-
-            // Sixteenth Input Picture Decimation
-            decimation_2d(
-                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
-                input_padded_picture_ptr->stride_y,
-                input_padded_picture_ptr->width,
-                input_padded_picture_ptr->height,
-                &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x + sixteenth_decimated_picture_ptr->origin_x*sixteenth_decimated_picture_ptr->stride_y],
-                sixteenth_decimated_picture_ptr->stride_y,
-                4);
-
-            generate_padding(
-                &sixteenth_decimated_picture_ptr->buffer_y[0],
-                sixteenth_decimated_picture_ptr->stride_y,
-                sixteenth_decimated_picture_ptr->width,
-                sixteenth_decimated_picture_ptr->height,
-                sixteenth_decimated_picture_ptr->origin_x,
-                sixteenth_decimated_picture_ptr->origin_y);
-
         }
     }
+
+    // Always perform 1/16th decimation as
+    // Sixteenth Input Picture Decimation
+    decimation_2d(
+        &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+        input_padded_picture_ptr->stride_y,
+        input_padded_picture_ptr->width,
+        input_padded_picture_ptr->height,
+        &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x + sixteenth_decimated_picture_ptr->origin_x*sixteenth_decimated_picture_ptr->stride_y],
+        sixteenth_decimated_picture_ptr->stride_y,
+        4);
+
+    generate_padding(
+        &sixteenth_decimated_picture_ptr->buffer_y[0],
+        sixteenth_decimated_picture_ptr->stride_y,
+        sixteenth_decimated_picture_ptr->width,
+        sixteenth_decimated_picture_ptr->height,
+        sixteenth_decimated_picture_ptr->origin_x,
+        sixteenth_decimated_picture_ptr->origin_y);
+
 }
 int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
     int *val_count) {
@@ -4968,20 +4651,59 @@ int av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
         }
     }
     int n = 0;
-    for (int i = 0; i < max_pix_val; ++i) {
+    for (int i = 0; i < max_pix_val; ++i)
         if (val_count[i]) ++n;
-    }
     return n;
 }
+extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
+
+// This is used as a reference when computing the source variance for the
+//  purposes of activity masking.
+// Eventually this should be replaced by custom no-reference routines,
+//  which will be faster.
+const uint8_t AV1_VAR_OFFS[MAX_SB_SIZE] = {
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+  128, 128, 128, 128, 128, 128, 128, 128
+};
+
+unsigned int av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_ptr, //const AV1_COMP *cpi,
+                                           const uint8_t *src,int stride,//const struct buf_2d *ref,
+                                           BlockSize bs) {
+  unsigned int sse;
+  const unsigned int var =
+      //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, AV1_VAR_OFFS, 0, &sse);
+     fn_ptr->vf(src,  stride, AV1_VAR_OFFS, 0, &sse);
+  return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
+}
+
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
-static int is_screen_content(const uint8_t *src, int use_hbd,
-    int stride, int width, int height) {
+static void is_screen_content(
+    PictureParentControlSet     *picture_control_set_ptr,
+    const uint8_t               *src,
+    int                          use_hbd,
+    int                          stride,
+    int                         width,
+    int                         height) {
     assert(src != NULL);
-    int counts = 0;
     const int blk_w = 16;
     const int blk_h = 16;
-    const int limit = 4;
+    // These threshold values are selected experimentally.
+    const int color_thresh = 4;
+    const unsigned int var_thresh = 0;
+    // Counts of blocks with no more than color_thresh colors.
+    int counts_1 = 0;
+    // Counts of blocks with no more than color_thresh colors and variance larger
+    // than var_thresh.
+    int counts_2 = 0;
+
     for (int r = 0; r + blk_h <= height; r += blk_h) {
         for (int c = 0; c + blk_w <= width; c += blk_w) {
             int count_buf[1 << 12];  // Maximum (1 << 12) color levels.
@@ -4990,13 +4712,91 @@ static int is_screen_content(const uint8_t *src, int use_hbd,
                     blk_h, bd, count_buf)*/
                 : av1_count_colors(src + r * stride + c, stride, blk_w, blk_h,
                     count_buf);
-            if (n_colors > 1 && n_colors <= limit) counts++;
+            if (n_colors > 1 && n_colors <= color_thresh) {
+                ++counts_1;
+                //struct buf_2d buf;
+                //buf.stride = stride;
+                //buf.buf = (uint8_t *)src;
+                const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[BLOCK_16X16];
+
+                const unsigned int var = av1_get_sby_perpixel_variance(fn_ptr, src + r * stride + c,stride, BLOCK_16X16);
+                               /* use_hbd
+                ? av1_high_get_sby_perpixel_variance(cpi, &buf, BLOCK_16X16, bd)
+                : */
+                if (var > var_thresh) ++counts_2;
+            }
         }
     }
-    // The threshold is 10%.
-    return counts * blk_h * blk_w * 10 > width * height;
+
+    picture_control_set_ptr->sc_content_detected =
+        (counts_1 * blk_h * blk_w * 10 > width * height) &&
+        ( counts_2 * blk_h * blk_w * 15 > width * height) ;
 }
 
+
+/************************************************
+ * 1/4 & 1/16 input picture downsampling (filtering)
+ ************************************************/
+void DownsampleFilteringInputPicture(
+    PictureParentControlSet       *picture_control_set_ptr,
+    EbPictureBufferDesc           *input_padded_picture_ptr,
+    EbPictureBufferDesc           *quarter_picture_ptr,
+    EbPictureBufferDesc           *sixteenth_picture_ptr) {
+
+    // Downsample input picture for HME L0 and L1
+    if (picture_control_set_ptr->enable_hme_flag || picture_control_set_ptr->tf_enable_hme_flag) {
+        if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag) {
+
+            downsample_2d(
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+                input_padded_picture_ptr->stride_y,
+                input_padded_picture_ptr->width,
+                input_padded_picture_ptr->height,
+                &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_x * quarter_picture_ptr->stride_y],
+                quarter_picture_ptr->stride_y,
+                2);
+            generate_padding(
+                &quarter_picture_ptr->buffer_y[0],
+                quarter_picture_ptr->stride_y,
+                quarter_picture_ptr->width,
+                quarter_picture_ptr->height,
+                quarter_picture_ptr->origin_x,
+                quarter_picture_ptr->origin_y);
+
+        }
+
+        if (picture_control_set_ptr->enable_hme_level0_flag || picture_control_set_ptr->tf_enable_hme_level0_flag) {
+            // Sixteenth Input Picture Downsampling
+            if (picture_control_set_ptr->enable_hme_level1_flag || picture_control_set_ptr->tf_enable_hme_level1_flag)
+                downsample_2d(
+                    &quarter_picture_ptr->buffer_y[quarter_picture_ptr->origin_x + quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
+                    quarter_picture_ptr->stride_y,
+                    quarter_picture_ptr->width,
+                    quarter_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    2);
+            else
+                downsample_2d(
+                    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+                    input_padded_picture_ptr->stride_y,
+                    input_padded_picture_ptr->width,
+                    input_padded_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x + sixteenth_picture_ptr->origin_x*sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    4);
+
+            generate_padding(
+                &sixteenth_picture_ptr->buffer_y[0],
+                sixteenth_picture_ptr->stride_y,
+                sixteenth_picture_ptr->width,
+                sixteenth_picture_ptr->height,
+                sixteenth_picture_ptr->origin_x,
+                sixteenth_picture_ptr->origin_y);
+
+        }
+    }
+}
 
 /************************************************
  * Picture Analysis Kernel
@@ -5020,18 +4820,15 @@ void* picture_analysis_kernel(void *input_ptr)
     EbPaReferenceObject           *paReferenceObject;
 
     EbPictureBufferDesc           *input_padded_picture_ptr;
-    EbPictureBufferDesc           *quarter_decimated_picture_ptr;
-    EbPictureBufferDesc           *sixteenth_decimated_picture_ptr;
     EbPictureBufferDesc           *input_picture_ptr;
 
     // Variance
-    uint32_t                          picture_width_in_sb;
-    uint32_t                          pictureHeighInLcu;
-    uint32_t                          sb_total_count;
-    EbAsm                          asm_type;
+    uint32_t                        picture_width_in_sb;
+    uint32_t                        pictureHeighInLcu;
+    uint32_t                        sb_total_count;
+    EbAsm                           asm_type;
 
     for (;;) {
-
         // Get Input Full Object
         eb_get_full_object(
             context_ptr->resource_coordination_results_input_fifo_ptr,
@@ -5039,97 +4836,92 @@ void* picture_analysis_kernel(void *input_ptr)
 
         inputResultsPtr = (ResourceCoordinationResults*)inputResultsWrapperPtr->object_ptr;
         picture_control_set_ptr = (PictureParentControlSet*)inputResultsPtr->picture_control_set_wrapper_ptr->object_ptr;
-        sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-        input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
-        paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-        input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
-        quarter_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr;
-        sixteenth_decimated_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr;
+        // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
+        if (!picture_control_set_ptr->is_overlay)
+        {
+            sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+            input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
-        // Variance
-        picture_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        pictureHeighInLcu = (sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
-        sb_total_count = picture_width_in_sb * pictureHeighInLcu;
+            paReferenceObject = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            input_padded_picture_ptr = (EbPictureBufferDesc*)paReferenceObject->input_padded_picture_ptr;
+            // Variance
+            picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+            sb_total_count = picture_width_in_sb * pictureHeighInLcu;
 
-        asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
+            asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
-        // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-        SetPictureParametersForStatisticsGathering(
-            sequence_control_set_ptr);
+            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
+            SetPictureParametersForStatisticsGathering(
+                sequence_control_set_ptr);
 
+            // Pad pictures to multiple min cu size
+            PadPictureToMultipleOfMinCuSizeDimensions(
+                sequence_control_set_ptr,
+                input_picture_ptr);
 
-
-        // Pad pictures to multiple min cu size
-        PadPictureToMultipleOfMinCuSizeDimensions(
-            sequence_control_set_ptr,
-            input_picture_ptr);
-
-        // Pre processing operations performed on the input picture
-        PicturePreProcessingOperations(
-            picture_control_set_ptr,
-            input_picture_ptr,
-            sequence_control_set_ptr,
-            quarter_decimated_picture_ptr,
-            sixteenth_decimated_picture_ptr,
-            sb_total_count,
-            asm_type);
-
-        if (input_picture_ptr->color_format >= EB_YUV422) {
-            // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
-            //       Reuse the Y, only add cb/cr in the newly created buffer desc
-            //       NOTE: since denoise may change the src, so this part is after PicturePreProcessingOperations()
-            picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
-            DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
-        } else {
-            picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
-        }
-
-        // Pad input picture to complete border LCUs
-        PadPictureToMultipleOfLcuDimensions(
-            input_padded_picture_ptr);
-
-        // 1/4 & 1/16 input picture decimation
-        DecimateInputPicture(
-            picture_control_set_ptr,
-            input_padded_picture_ptr,
-            quarter_decimated_picture_ptr,
-            sixteenth_decimated_picture_ptr);
-
-        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-        GatheringPictureStatistics(
-            sequence_control_set_ptr,
-            picture_control_set_ptr,
-			picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
-            input_padded_picture_ptr,
-            sixteenth_decimated_picture_ptr,
-            sb_total_count,
-            asm_type);
-
-        picture_control_set_ptr->sc_content_detected = is_screen_content(
-            input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
-            0,
-            input_picture_ptr->stride_y,
-            sequence_control_set_ptr->luma_width, sequence_control_set_ptr->luma_height);       
-        if (picture_control_set_ptr->sc_content_detected) {
-            if (picture_control_set_ptr->pic_avg_variance > 1000)
-                picture_control_set_ptr->sc_content_detected = 1;
+            // Pre processing operations performed on the input picture
+            PicturePreProcessingOperations(
+                picture_control_set_ptr,
+                sequence_control_set_ptr,
+                sb_total_count,
+                asm_type);
+            if (input_picture_ptr->color_format >= EB_YUV422) {
+                // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+                //       Reuse the Y, only add cb/cr in the newly created buffer desc
+                //       NOTE: since denoise may change the src, so this part is after PicturePreProcessingOperations()
+                picture_control_set_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+                DownSampleChroma(input_picture_ptr, picture_control_set_ptr->chroma_downsampled_picture_ptr);
+            }
             else
-                picture_control_set_ptr->sc_content_detected = 0;
+                picture_control_set_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+            // Pad input picture to complete border LCUs
+            PadPictureToMultipleOfLcuDimensions(
+                input_padded_picture_ptr);
+            // 1/4 & 1/16 input picture decimation
+            DownsampleDecimationInputPicture(
+                picture_control_set_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->quarter_decimated_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr);
+
+            // 1/4 & 1/16 input picture downsampling through filtering
+            if (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                DownsampleFilteringInputPicture(
+                    picture_control_set_ptr,
+                    input_padded_picture_ptr,
+                    (EbPictureBufferDesc*)paReferenceObject->quarter_filtered_picture_ptr,
+                    (EbPictureBufferDesc*)paReferenceObject->sixteenth_filtered_picture_ptr);
+            }
+           // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+            GatheringPictureStatistics(
+                sequence_control_set_ptr,
+                picture_control_set_ptr,
+                picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
+                sb_total_count,
+                asm_type);
+
+            if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
+                is_screen_content(
+                    picture_control_set_ptr,
+                    input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y*input_picture_ptr->stride_y,
+                    0,
+                    input_picture_ptr->stride_y,
+                    sequence_control_set_ptr->seq_header.max_frame_width, sequence_control_set_ptr->seq_header.max_frame_height);
+            }
+            else // off / on
+                picture_control_set_ptr->sc_content_detected = sequence_control_set_ptr->static_config.screen_content_mode;
+
+            // Hold the 64x64 variance and mean in the reference frame
+            uint32_t sb_index;
+            for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
+                paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
+                paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
+            }
         }
-
-        
-#if HARD_CODE_SC_SETTING
-        picture_control_set_ptr->sc_content_detected = EB_TRUE;
-#endif
-        // Hold the 64x64 variance and mean in the reference frame
-        uint32_t sb_index;
-        for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-            paReferenceObject->variance[sb_index] = picture_control_set_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64];
-            paReferenceObject->y_mean[sb_index] = picture_control_set_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64];
-
-        }
-
         // Get Empty Results Object
         eb_get_empty_object(
             context_ptr->picture_analysis_results_output_fifo_ptr,
@@ -5143,7 +4935,6 @@ void* picture_analysis_kernel(void *input_ptr)
 
         // Post the Full Results Object
         eb_post_full_object(outputResultsWrapperPtr);
-
     }
     return EB_NULL;
 }

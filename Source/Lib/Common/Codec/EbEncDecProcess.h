@@ -18,6 +18,7 @@
 #include "EbReferenceObject.h"
 #include "EbNeighborArrays.h"
 #include "EbCodingUnit.h"
+#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,14 +41,16 @@ extern "C" {
      **************************************/
     typedef struct EncDecContext
     {
+        EbDctor                              dctor;
         EbFifo                              *mode_decision_input_fifo_ptr;
         EbFifo                              *enc_dec_output_fifo_ptr;
         EbFifo                              *enc_dec_feedback_fifo_ptr;
         EbFifo                              *picture_demux_output_fifo_ptr;   // to picture-manager
-        int16_t                               *transform_inner_array_ptr;
+        int16_t                             *transform_inner_array_ptr;
         MdRateEstimationContext             *md_rate_estimation_ptr;
+        EbBool                               is_md_rate_estimation_ptr_owner;
         ModeDecisionContext                 *md_context;
-        const BlockGeom                       *blk_geom;
+        const BlockGeom                     *blk_geom;
 
         // TMVP
         EbReferenceObject                   *reference_object_write_ptr;
@@ -56,10 +59,6 @@ extern "C" {
         MotionCompensationPredictionContext *mcp_context;
         SsMeContext                         *ss_mecontext;
 
-        // Intra Reference Samples
-        IntraReferenceSamples               *intra_ref_ptr;
-        IntraReference16bitSamples          *intra_ref_ptr16;  //We need a different buffer for ENC pass then the MD one.
-        
         // Coding Unit Workspace---------------------------
         EbPictureBufferDesc                 *residual_buffer;
         EbPictureBufferDesc                 *transform_buffer;
@@ -104,14 +103,10 @@ extern "C" {
         int8_t                                 non_moving_delta_qp;
         EbBool                                 grass_enhancement_flag;
         EbBool                                 backgorund_enhancement;
-#if ADD_DELTA_QP_SUPPORT                       
+#if ADD_DELTA_QP_SUPPORT
         uint16_t                               qpm_qp;
-#else                                          
+#else
         uint8_t                                qpm_qp;
-#endif
-#if !PF_N2_32X32
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_luma;
-        EB_TRANS_COEFF_SHAPE                   trans_coeff_shape_chroma;
 #endif
         EbPmCand                             pm_cand_buffer[5];
         uint16_t                               qp_index;
@@ -123,29 +118,29 @@ extern "C" {
         uint8_t                                upsample_left;
         uint8_t                                upsample_above;
         uint8_t                                upsample_left_chroma;
-        uint8_t                                upsample_above_chroma; 
+        uint8_t                                upsample_above_chroma;
 
         uint16_t                               coded_area_sb;
         uint16_t                               coded_area_sb_uv;
 
-#if ENCDEC_TX_SEARCH
         uint8_t                                is_inter;
         uint8_t                                reduced_tx_set_used;
-#endif
         EbBool                                 evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
+        uint8_t                                md_skip_blk;
     } EncDecContext;
 
     /**************************************
      * Extern Function Declarations
      **************************************/
     extern EbErrorType enc_dec_context_ctor(
-        EncDecContext        **context_dbl_ptr,
+        EncDecContext         *context_ptr,
         EbFifo                *mode_decision_configuration_input_fifo_ptr,
         EbFifo                *packetization_output_fifo_ptr,
         EbFifo                *feedback_fifo_ptr,
         EbFifo                *picture_demux_fifo_ptr,
         EbBool                   is16bit,
         EbColorFormat            color_format,
+        EbBool                   enable_hbd_mode_decision,
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);
 

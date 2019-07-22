@@ -5,7 +5,6 @@
 
 #include "EbTransforms_AVX2.h"
 
-
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -40,7 +39,6 @@ EB_ALIGN(32) const int16_t coeff_tbl_AVX2[48 * 16] =
     13, 4, -38, -13, 61, 22, -78, -31, 13, 4, -38, -13, 61, 22, -78, -31, 88, 38, -90, -46, 85, 54, -73, -61, 88, 38, -90, -46, 85, 54, -73, -61,
     54, 67, -31, -73, 4, 78, 22, -82, 54, 67, -31, -73, 4, 78, 22, -82, -46, 85, 67, -88, -82, 90, 90, -90, -46, 85, 67, -88, -82, 90, 90, -90
 };
-
 
 /*******************************************************************************
 * Requirement: area_size = 4, 8, or area_size % 16 = 0
@@ -188,9 +186,8 @@ void quantize_inv_quantize_nxn_avx2_intrin(
                     x = _mm256_packs_epi32(b0, b1);
                     _mm256_storeu_si256((__m256i *)(recon_coeff + coeff_stride * row + col), x);
                 }
-                else {
+                else
                     _mm256_storeu_si256((__m256i *)(recon_coeff + coeff_stride * row + col), zer);
-                }
                 col += 16;
             } while (col < area_size);
 
@@ -200,7 +197,6 @@ void quantize_inv_quantize_nxn_avx2_intrin(
 
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 7));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
-
 }
 
 void quantize_inv_quantize8x8_avx2_intrin(
@@ -279,7 +275,6 @@ void quantize_inv_quantize8x8_avx2_intrin(
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 7));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
 }
-
 
 // transpose 16x16 block of data
 void transpose16_AVX2_INTRIN(int16_t *src, uint32_t src_stride, int16_t *dst, uint32_t dst_stride)
@@ -1300,7 +1295,6 @@ void PfreqN42DTransform32_AVX2_INTRIN(
         _mm_storeu_si128((__m128i *)(dst + i * dst_stride), _mm256_extracti128_si256(x0, 0));
         _mm_storeu_si128((__m128i *)(dst + (i + 1)*dst_stride), _mm256_extracti128_si256(x0, 1));
 
-
         //_mm256_storeu_si256((__m256i *)(dst+i*dst_stride+0x10), x2);
         //_mm256_storeu_si256((__m256i *)(dst+i*dst_stride+0x18), x3);
     }
@@ -1462,7 +1456,6 @@ EB_EXTERN void low_precision_transform16x16_avx2_intrin(int16_t *src, uint32_t s
 
     transform16_AVX2_INTRIN(dst, dst_stride, intermediate, 16, 9);
     transpose16_AVX2_INTRIN(intermediate, 16, dst, dst_stride);
-
 }
 
 // forward 32x32 transform
@@ -1473,7 +1466,6 @@ EB_EXTERN void low_precision_transform32x32_avx2_intrin(int16_t *src, uint32_t s
 
     transform32_AVX2_INTRIN(dst, dst_stride, intermediate, 32, 9);
     transpose32_AVX2_INTRIN(intermediate, 32, dst, dst_stride);
-
 }
 
 void mat_mult4x4_out_buff_avx2_intrin(
@@ -1517,7 +1509,6 @@ void mat_mult4x4_out_buff_avx2_intrin(
     a0 = _mm256_mullo_epi16(coeffTemp, MaskingMatrix);
     a1 = _mm256_mulhi_epi16(coeffTemp, MaskingMatrix);
 
-
     b0 = _mm256_unpacklo_epi16(a0, a1);
     b1 = _mm256_unpackhi_epi16(a0, a1);
 
@@ -1543,9 +1534,7 @@ void mat_mult4x4_out_buff_avx2_intrin(
 
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 8));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
-
 }
-
 
 /*****************************************************************************************************************************************************************/
 void mat_mult4x4_avx2_intrin(
@@ -1587,7 +1576,6 @@ void mat_mult4x4_avx2_intrin(
     a0 = _mm256_mullo_epi16(coeffTemp, MaskingMatrix);
     a1 = _mm256_mulhi_epi16(coeffTemp, MaskingMatrix);
 
-
     b0 = _mm256_unpacklo_epi16(a0, a1);
     b1 = _mm256_unpackhi_epi16(a0, a1);
 
@@ -1613,7 +1601,6 @@ void mat_mult4x4_avx2_intrin(
 
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 8));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
-
 }
 /*******************************************mat_mult8x8_avx2_intrin**************************************************/
 void mat_mult8x8_avx2_intrin(
@@ -1640,7 +1627,6 @@ void mat_mult8x8_avx2_intrin(
     __m256i offsetREG = _mm256_set1_epi32(offset);
     row = 0;
     do {
-
         //load maskingMatrix_new
         MaskingMatrix = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(maskingMatrix + maskingMatrixStride * row))), _mm_loadu_si128((__m128i*)(maskingMatrix + maskingMatrixStride * (row + 1))), 0x1);
 
@@ -1655,7 +1641,6 @@ void mat_mult8x8_avx2_intrin(
         //Multiply
         a0 = _mm256_mullo_epi16(coeffTemp, MaskingMatrix);
         a1 = _mm256_mulhi_epi16(coeffTemp, MaskingMatrix);
-
 
         b0 = _mm256_unpacklo_epi16(a0, a1);
         b1 = _mm256_unpackhi_epi16(a0, a1);
@@ -1682,7 +1667,6 @@ void mat_mult8x8_avx2_intrin(
 
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 7));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
-
 }
 /***************************************mat_mult_nxn_avx2_intrin****************************************************/
 void mat_mult_nxn_avx2_intrin(
@@ -1695,7 +1679,6 @@ void mat_mult_nxn_avx2_intrin(
     const int32_t         shift_num, //PMP_PRECISION
     uint32_t*              nonzerocoeff)
 {
-
     unsigned row, col;
     __m256i z = _mm256_setzero_si256();
     //__m128i a, b;
@@ -1713,7 +1696,6 @@ void mat_mult_nxn_avx2_intrin(
     do {
         col = 0;
         do {
-
             //load coefftemp
             coeffTemp = _mm256_loadu_si256((__m256i *)(coeff + coeff_stride * row + col));
 
@@ -1728,7 +1710,6 @@ void mat_mult_nxn_avx2_intrin(
             //Multiply
             a0 = _mm256_mullo_epi16(coeffTemp, MaskingMatrix);
             a1 = _mm256_mulhi_epi16(coeffTemp, MaskingMatrix);
-
 
             b0 = _mm256_unpacklo_epi16(a0, a1);
             b1 = _mm256_unpackhi_epi16(a0, a1);
@@ -1757,6 +1738,162 @@ void mat_mult_nxn_avx2_intrin(
 
     z = _mm256_sad_epu8(z, _mm256_srli_si256(z, 7));
     *nonzerocoeff = _mm_cvtsi128_si32(_mm_add_epi32(_mm256_extracti128_si256(z, 0), _mm256_extracti128_si256(z, 1)));
-
 }
 
+static INLINE void EnergyComputation_kernel_avx2(const int32_t *const in,
+    __m256i *const sum256)
+{
+    const __m256i zero = _mm256_setzero_si256();
+    const __m256i input = _mm256_load_si256((__m256i *)in);
+    const __m256i in_lo = _mm256_unpacklo_epi32(input, zero);
+    const __m256i in_hi = _mm256_unpackhi_epi32(input, zero);
+    const __m256i energy_lo = _mm256_mul_epi32(in_lo, in_lo);
+    const __m256i energy_hi = _mm256_mul_epi32(in_hi, in_hi);
+    *sum256 = _mm256_add_epi64(*sum256, energy_lo);
+    *sum256 = _mm256_add_epi64(*sum256, energy_hi);
+}
+
+static INLINE uint64_t hadd64_avx2(const __m256i sum256) {
+    const __m128i sum256_lo = _mm256_castsi256_si128(sum256);
+    const __m128i sum256_hi = _mm256_extracti128_si256(sum256, 1);
+    const __m128i sum128 = _mm_add_epi64(sum256_lo, sum256_hi);
+    const __m128i sum128_hi = _mm_srli_si128(sum128, 8);
+    const __m128i sum = _mm_add_epi64(sum128, sum128_hi);
+
+    return _mm_extract_epi64(sum, 0);
+}
+
+static INLINE uint64_t EnergyComputation_avx2(const int32_t *const in,
+    const uint32_t size)
+{
+    const __m256i zero = _mm256_setzero_si256();
+    uint32_t i = 0;
+    __m256i sum = zero;
+
+    do {
+        EnergyComputation_kernel_avx2(in + i, &sum);
+        i += 8;
+    } while (i < size);
+
+    return hadd64_avx2(sum);
+}
+
+static INLINE uint64_t EnergyComputation64_avx2(const int32_t *in,
+    const uint32_t height)
+{
+    const __m256i zero = _mm256_setzero_si256();
+    uint32_t i = height;
+    __m256i sum = zero;
+
+    do {
+        EnergyComputation_kernel_avx2(in + 0 * 8, &sum);
+        EnergyComputation_kernel_avx2(in + 1 * 8, &sum);
+        EnergyComputation_kernel_avx2(in + 2 * 8, &sum);
+        EnergyComputation_kernel_avx2(in + 3 * 8, &sum);
+        in += 64;
+    } while (--i);
+
+    return hadd64_avx2(sum);
+}
+
+static INLINE void clean_256_bytes_avx2(int32_t *buf, const uint32_t height) {
+    const __m256i zero = _mm256_setzero_si256();
+    uint32_t h = height;
+
+    do {
+        _mm256_store_si256((__m256i *)(buf + 0 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 1 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 2 * 8), zero);
+        _mm256_store_si256((__m256i *)(buf + 3 * 8), zero);
+        buf += 64;
+    } while (--h);
+}
+
+static INLINE void copy_32_bytes_avx2(const int32_t *src, int32_t *dst) {
+    const __m256i val = _mm256_load_si256((__m256i *)(src + 0 * 8));
+    _mm256_store_si256((__m256i *)(dst + 0 * 8), val);
+}
+
+static INLINE void copy_256x_bytes_avx2(const int32_t *src, int32_t *dst,
+    const uint32_t height) {
+    uint32_t h = height;
+
+    do {
+        copy_32_bytes_avx2(src + 0 * 8, dst + 0 * 8);
+        copy_32_bytes_avx2(src + 1 * 8, dst + 1 * 8);
+        copy_32_bytes_avx2(src + 2 * 8, dst + 2 * 8);
+        copy_32_bytes_avx2(src + 3 * 8, dst + 3 * 8);
+        src += 64;
+        dst += 32;
+    } while (--h);
+}
+
+uint64_t HandleTransform16x64_avx2(int32_t *output) {
+    //bottom 16x32 area.
+    const uint64_t three_quad_energy =
+        EnergyComputation_avx2(output + 16 * 32, 16 * 32);
+
+    // Zero out the bottom 16x32 area.
+    memset(output + 16 * 32, 0, 16 * 32 * sizeof(*output));
+
+    return three_quad_energy;
+}
+
+uint64_t HandleTransform32x64_avx2(int32_t *output) {
+    //bottom 32x32 area.
+    const uint64_t three_quad_energy =
+        EnergyComputation_avx2(output + 32 * 32, 32 * 32);
+
+    // Zero out the bottom 32x32 area.
+    memset(output + 32 * 32, 0, 32 * 32 * sizeof(*output));
+
+    return three_quad_energy;
+}
+
+uint64_t HandleTransform64x16_avx2(int32_t *output) {
+    // top - right 32x16 area.
+    const uint64_t three_quad_energy =
+        EnergyComputation64_avx2(output + 32, 16);
+
+    // Zero out right 32x16 area.
+    clean_256_bytes_avx2(output + 32, 16);
+
+    // Re-pack non-zero coeffs in the first 32x16 indices.
+    copy_256x_bytes_avx2(output + 64, output + 32, 15);
+
+    return three_quad_energy;
+}
+
+uint64_t HandleTransform64x32_avx2(int32_t *output) {
+    // top - right 32x32 area.
+    const uint64_t three_quad_energy =
+        EnergyComputation64_avx2(output + 32, 32);
+
+    // Zero out right 32x32 area.
+    clean_256_bytes_avx2(output + 32, 32);
+
+    // Re-pack non-zero coeffs in the first 32x32 indices.
+    copy_256x_bytes_avx2(output + 64, output + 32, 31);
+
+    return three_quad_energy;
+}
+
+uint64_t HandleTransform64x64_avx2(int32_t *output) {
+    uint64_t three_quad_energy;
+
+    // top - right 32x32 area.
+    three_quad_energy = EnergyComputation64_avx2(output + 32, 32);
+    //bottom 64x32 area.
+    three_quad_energy += EnergyComputation_avx2(output + 32 * 64, 64 * 32);
+
+    // Zero out top-right 32x32 area.
+    clean_256_bytes_avx2(output + 32, 32);
+
+    // Zero out the bottom 64x32 area.
+    memset(output + 32 * 64, 0, 32 * 64 * sizeof(*output));
+
+    // Re-pack non-zero coeffs in the first 32x32 indices.
+    copy_256x_bytes_avx2(output + 64, output + 32, 31);
+
+    return three_quad_energy;
+}

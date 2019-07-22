@@ -31,8 +31,6 @@ int32_t aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t h
     AomCodecFrameBuffer *fb,
     aom_get_frame_buffer_cb_fn_t cb, void *cb_priv);
 
-
-
 ///---filter.h
 #define MAX_FILTER_TAP 8
 
@@ -63,9 +61,6 @@ InterpFilterParams av1_get_interp_filter_params_with_block_size(
     const InterpFilter interp_filter, const int32_t w);
 
 void *aom_memset16(void *dest, int32_t val, size_t length);
-
-
-
 
 ///---convolve.h
 #define FILTER_BITS 7
@@ -125,11 +120,13 @@ static INLINE ConvolveParams get_conv_params_wiener(int32_t bd) {
     conv_params.dst_stride = 0;
     conv_params.plane = 0;
 
+    // Initialization
+    conv_params.fwd_offset = 0;
+    conv_params.bck_offset = 0;
+    conv_params.use_jnt_comp_avg = 0;
+
     return conv_params;
 }
-
-
-
 
 void av1_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride,
     uint8_t *dst, ptrdiff_t dst_stride,
@@ -144,18 +141,16 @@ void av1_highbd_wiener_convolve_add_src_c(
     const int16_t *filter_y, int32_t y_step_q4, int32_t w, int32_t h,
     const ConvolveParams *conv_params, int32_t bd);
 
-
 // Returns 1 if a superres upscaled frame is unscaled and 0 otherwise.
 static INLINE int32_t av1_superres_unscaled(const Av1Common *cm) {
     // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
     // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
     // So, the following check is more accurate.
-    return (cm->width == cm->superres_upscaled_width);
+    return (cm->frm_size.frame_width == cm->frm_size.superres_upscaled_width);
 }
 
 void *aom_memalign(size_t align, size_t size);
 void aom_free(void *memblk);
-
 
 // The 's' values are calculated based on original 'r' and 'e' values in the
 // spec using GenSgrprojVtable().
@@ -178,9 +173,9 @@ static AV1PixelRect whole_frame_rect(const Av1Common *cm, int32_t is_uv) {
     int32_t ss_y = is_uv && cm->subsampling_y;
 
     rect.top = 0;
-    rect.bottom = ROUND_POWER_OF_TWO(cm->height, ss_y);
+    rect.bottom = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
     rect.left = 0;
-    rect.right = ROUND_POWER_OF_TWO(cm->superres_upscaled_width, ss_x);
+    rect.right = ROUND_POWER_OF_TWO(cm->frm_size.superres_upscaled_width, ss_x);
     return rect;
 }
 
@@ -224,15 +219,10 @@ EbErrorType av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *
     const int32_t ntiles = 1;
     const int32_t nunits = ntiles * rsi->units_per_tile;
 
-
-
-    EB_MALLOC(RestorationUnitInfo *, rsi->unit_info, sizeof(*rsi->unit_info) * nunits, EB_N_PTR)
+    EB_MALLOC_ARRAY(rsi->unit_info, nunits);
 
         return EB_ErrorNone;
-
 }
-
-
 
 static void extend_frame_lowbd(uint8_t *data, int32_t width, int32_t height, int32_t stride,
     int32_t border_horz, int32_t border_vert) {
@@ -244,9 +234,8 @@ static void extend_frame_lowbd(uint8_t *data, int32_t width, int32_t height, int
         memset(data_p + width, data_p[width - 1], border_horz);
     }
     data_p = data - border_horz;
-    for (i = -border_vert; i < 0; ++i) {
+    for (i = -border_vert; i < 0; ++i)
         memcpy(data_p + i * stride, data_p, width + 2 * border_horz);
-    }
     for (i = height; i < height + border_vert; ++i) {
         memcpy(data_p + i * stride, data_p + (height - 1) * stride,
             width + 2 * border_horz);
@@ -1031,16 +1020,14 @@ void av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t he
     if (highbd) {
         const uint16_t *dgd16 = CONVERT_TO_SHORTPTR(dgd8);
         for (int32_t i = -SGRPROJ_BORDER_VERT; i < height + SGRPROJ_BORDER_VERT; ++i) {
-            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j) {
+            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j)
                 dgd32[i * dgd32_stride + j] = dgd16[i * dgd_stride + j];
-            }
         }
     }
     else {
         for (int32_t i = -SGRPROJ_BORDER_VERT; i < height + SGRPROJ_BORDER_VERT; ++i) {
-            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j) {
+            for (int32_t j = -SGRPROJ_BORDER_HORZ; j < width + SGRPROJ_BORDER_HORZ; ++j)
                 dgd32[i * dgd32_stride + j] = dgd8[i * dgd_stride + j];
-            }
         }
     }
 
@@ -1276,7 +1263,6 @@ void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
         Yv12BufferConfig *dst);
     static const copy_fun copy_funs[3] = { aom_yv12_copy_y_c, aom_yv12_copy_u_c, aom_yv12_copy_v_c };//CHKN SSE
 
-
     Yv12BufferConfig *dst = &cm->rst_frame;
 
     const int32_t frame_width = frame->crop_widths[0];
@@ -1296,10 +1282,8 @@ void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
         RestorationType rtype = rsi->frame_restoration_type;
         rsi->optimized_lr = optimized_lr;
 
-        if (rtype == RESTORE_NONE) {
+        if (rtype == RESTORE_NONE)
             continue;
-        }
-
         const int32_t is_uv = plane > 0;
         const int32_t plane_width = frame->crop_widths[is_uv];
         const int32_t plane_height = frame->crop_heights[is_uv];
@@ -1488,13 +1472,12 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
         segment_index);
 }
 
-
 int32_t av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
     int32_t *rrow1, int32_t *tile_tl_idx) {
     assert(rcol0 && rcol1 && rrow0 && rrow1);
-    if (bsize != cm->p_pcs_ptr->sequence_control_set_ptr->sb_size) return 0;
+    if (bsize != cm->p_pcs_ptr->sequence_control_set_ptr->seq_header.sb_size) return 0;
     if (cm->rst_info[plane].frame_restoration_type == RESTORE_NONE) return 0;
 
     // assert(!cm->all_lossless);
@@ -1587,7 +1570,6 @@ static void save_deblock_boundary_lines(
     const Yv12BufferConfig *frame, const Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,
     RestorationStripeBoundaries *boundaries) {
-
     (void)cm;
     const int32_t is_uv = plane > 0;
     const uint8_t *src_buf = REAL_PTR(use_highbd, frame->buffers[plane]);
@@ -1650,7 +1632,7 @@ static void save_cdef_boundary_lines(const Yv12BufferConfig *frame,
     const int32_t ss_x = is_uv && cm->subsampling_x;
     const int32_t upscaled_width = av1_superres_unscaled(cm)
         ? src_width
-        : (cm->superres_upscaled_width + ss_x) >> ss_x;
+        : (cm->frm_size.superres_upscaled_width + ss_x) >> ss_x;
     const int32_t line_bytes = upscaled_width << use_highbd;
     for (int32_t i = 0; i < RESTORATION_CTX_VERT; i++) {
         // Copy the line at 'row' into both context lines. This is because
@@ -1678,7 +1660,7 @@ static void save_tile_row_boundary_lines(const Yv12BufferConfig *frame,
 
     RestorationStripeBoundaries *boundaries = &cm->rst_info[plane].boundaries;
 
-    int32_t plane_height = ROUND_POWER_OF_TWO(cm->height, ss_y);
+    int32_t plane_height = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
 
     int32_t tile_stripe;
     for (tile_stripe = 0;; ++tile_stripe) {
@@ -1735,17 +1717,14 @@ void av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
     Av1Common *cm, int32_t after_cdef) {
     const int32_t num_planes = 3;// av1_num_planes(cm);
     const int32_t use_highbd = cm->use_highbitdepth;
-    for (int32_t p = 0; p < num_planes; ++p) {
+    for (int32_t p = 0; p < num_planes; ++p)
         save_tile_row_boundary_lines(frame, use_highbd, p, cm, after_cdef);
-    }
 }
-
 
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized
 
 EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
-
-    EbErrorType return_error;
+    EbErrorType return_error = EB_ErrorNone;
     const int32_t num_planes = 3;// av1_num_planes(cm);
     for (int32_t p = 0; p < num_planes; ++p)
         return_error = av1_alloc_restoration_struct(cm, &cm->rst_info[p], p > 0);
@@ -1755,8 +1734,7 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
         //CHKN CHECK_MEM_ERROR(cm, cm->rst_tmpbuf,
        //cm->rst_tmpbuf = (int32_t *)aom_memalign(16, RESTORATION_TMPBUF_SIZE);
 
-
-        EB_MALLOC(int32_t *, cm->rst_tmpbuf, RESTORATION_TMPBUF_SIZE, EB_N_PTR);
+        EB_MALLOC(cm->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
     // For striped loop restoration, we divide each row of tiles into "stripes",
@@ -1767,10 +1745,8 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
     // row <m>?" To make that efficient, we generate the rst_last_stripe array.
     int32_t num_stripes = 0;
     for (int32_t i = 0; i < 1/*cm->tile_rows*/; ++i) {
-
         //TileInfo tile_info;
         //av1_tile_set_row(&tile_info, cm, i);
-
 
         const int32_t mi_h = cm->mi_rows;// tile_info.mi_row_end - tile_info.mi_row_start;
         const int32_t ext_h = RESTORATION_UNIT_OFFSET + (mi_h << MI_SIZE_LOG2);
@@ -1781,7 +1757,7 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
 
     // Now we need to allocate enough space to store the line buffers for the
     // stripes
-    const int32_t frame_w = cm->superres_upscaled_width;
+    const int32_t frame_w = cm->frm_size.superres_upscaled_width;
     const int32_t use_highbd = cm->use_highbitdepth ? 1 : 0;
 
     for (int32_t p = 0; p < num_planes; ++p) {
@@ -1793,10 +1769,9 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
             << use_highbd;
         RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
 
-
         {
-            EB_MALLOC(uint8_t *, boundaries->stripe_boundary_above, buf_size, EB_N_PTR);
-            EB_MALLOC(uint8_t *, boundaries->stripe_boundary_below, buf_size, EB_N_PTR);
+            EB_MALLOC(boundaries->stripe_boundary_above, buf_size);
+            EB_MALLOC(boundaries->stripe_boundary_below, buf_size);
 
             boundaries->stripe_boundary_size = buf_size;
         }
@@ -1804,5 +1779,4 @@ EbErrorType av1_alloc_restoration_buffers(Av1Common *cm) {
     }
 
     return return_error;
-
 }

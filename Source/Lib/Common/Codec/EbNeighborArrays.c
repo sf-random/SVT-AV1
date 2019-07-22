@@ -11,11 +11,19 @@
 #include "EbPictureOperators.h"
 
 #define UNUSED(x) (void)(x)
+
+static void neighbor_array_unit_dctor32(EbPtr p)
+{
+    NeighborArrayUnit32 *obj = (NeighborArrayUnit32*)p;
+    EB_FREE(obj->left_array);
+    EB_FREE(obj->top_array);
+    EB_FREE(obj->top_left_array);
+}
 /*************************************************
  * Neighbor Array Unit Ctor
  *************************************************/
 EbErrorType neighbor_array_unit_ctor32(
-    NeighborArrayUnit32 **na_unit_dbl_ptr,
+    NeighborArrayUnit32 *na_unit_ptr,
     uint32_t   max_picture_width,
     uint32_t   max_picture_height,
     uint32_t   unit_size,
@@ -23,10 +31,7 @@ EbErrorType neighbor_array_unit_ctor32(
     uint32_t   granularity_top_left,
     uint32_t   type_mask)
 {
-    NeighborArrayUnit32 *na_unit_ptr;
-    EB_MALLOC(NeighborArrayUnit32*, na_unit_ptr, sizeof(NeighborArrayUnit32), EB_N_PTR);
-
-    *na_unit_dbl_ptr = na_unit_ptr;
+    na_unit_ptr->dctor = neighbor_array_unit_dctor32;
     na_unit_ptr->unit_size = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal = (uint8_t)(granularity_normal);
     na_unit_ptr->granularity_normal_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
@@ -37,31 +42,29 @@ EbErrorType neighbor_array_unit_ctor32(
     na_unit_ptr->top_left_array_size = (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) ? (max_picture_width + max_picture_height) >> na_unit_ptr->granularity_top_left_log2 : 0);
 
     if (na_unit_ptr->left_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
-    }
-    else {
-        na_unit_ptr->left_array = (uint32_t*)EB_NULL;
+        EB_MALLOC(na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size);
     }
 
     if (na_unit_ptr->top_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
-    }
-    else {
-        na_unit_ptr->top_array = (uint32_t*)EB_NULL;
+        EB_MALLOC(na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size);
     }
 
     if (na_unit_ptr->top_left_array_size) {
-        EB_MALLOC(uint32_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size);
     }
-    else {
-        na_unit_ptr->top_left_array = (uint32_t*)EB_NULL;
-    }
-
     return EB_ErrorNone;
+}
+
+static void neighbor_array_unit_dctor(EbPtr p)
+{
+    NeighborArrayUnit *obj = (NeighborArrayUnit*)p;
+    EB_FREE(obj->left_array);
+    EB_FREE(obj->top_array);
+    EB_FREE(obj->top_left_array);
 }
 
 EbErrorType neighbor_array_unit_ctor(
-    NeighborArrayUnit **na_unit_dbl_ptr,
+    NeighborArrayUnit *na_unit_ptr,
     uint32_t   max_picture_width,
     uint32_t   max_picture_height,
     uint32_t   unit_size,
@@ -69,10 +72,7 @@ EbErrorType neighbor_array_unit_ctor(
     uint32_t   granularity_top_left,
     uint32_t   type_mask)
 {
-    NeighborArrayUnit *na_unit_ptr;
-    EB_MALLOC(NeighborArrayUnit*, na_unit_ptr, sizeof(NeighborArrayUnit), EB_N_PTR);
-
-    *na_unit_dbl_ptr = na_unit_ptr;
+    na_unit_ptr->dctor = neighbor_array_unit_dctor;
     na_unit_ptr->unit_size = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal = (uint8_t)(granularity_normal);
     na_unit_ptr->granularity_normal_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
@@ -83,29 +83,16 @@ EbErrorType neighbor_array_unit_ctor(
     na_unit_ptr->top_left_array_size = (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) ? (max_picture_width + max_picture_height) >> na_unit_ptr->granularity_top_left_log2 : 0);
 
     if (na_unit_ptr->left_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->left_array, na_unit_ptr->unit_size * na_unit_ptr->left_array_size);
     }
-    else {
-        na_unit_ptr->left_array = (uint8_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_array, na_unit_ptr->unit_size * na_unit_ptr->top_array_size);
     }
-    else {
-        na_unit_ptr->top_array = (uint8_t*)EB_NULL;
-    }
-
     if (na_unit_ptr->top_left_array_size) {
-        EB_MALLOC(uint8_t*, na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size, EB_N_PTR);
+        EB_MALLOC(na_unit_ptr->top_left_array, na_unit_ptr->unit_size * na_unit_ptr->top_left_array_size);
     }
-    else {
-        na_unit_ptr->top_left_array = (uint8_t*)EB_NULL;
-    }
-
     return EB_ErrorNone;
 }
-
 
 /*************************************************
  * Neighbor Array Unit Reset
@@ -144,7 +131,6 @@ void neighbor_array_unit_reset(NeighborArrayUnit *na_unit_ptr)
     return;
 }
 
-
 /*************************************************
  * Neighbor Array Unit Get Top Index
  *************************************************/
@@ -173,7 +159,6 @@ void update_recon_neighbor_array(
     uint32_t               block_width,
     uint32_t               block_height)
 {
-
     uint8_t  *dst_ptr;
 
     dst_ptr = na_unit_ptr->top_array +
@@ -182,13 +167,11 @@ void update_recon_neighbor_array(
             pic_origin_x) * na_unit_ptr->unit_size;
     EB_MEMCPY(dst_ptr, src_ptr_top, block_width);
 
-
     dst_ptr = na_unit_ptr->left_array +
         get_neighbor_array_unit_left_index(
             na_unit_ptr,
             pic_origin_y) * na_unit_ptr->unit_size;
     EB_MEMCPY(dst_ptr, src_ptr_left, block_height);
-
 
     //na_unit_ptr->top_left_array[ (MAX_PICTURE_HEIGHT_SIZE>>is_chroma) + pic_origin_x - pic_origin_y] = srcPtr2[block_height-1];
 
@@ -218,7 +201,6 @@ void update_recon_neighbor_array(
     int32_t dstStep;
     int32_t readStep;
     uint32_t count;
-
 
     readPtr = src_ptr_top;//+ ((block_height - 1) * stride);
 
@@ -250,13 +232,65 @@ void update_recon_neighbor_array(
     count = block_height;
 
     for (idx = 0; idx < count; ++idx) {
-
         *dst_ptr = *readPtr;
 
         dst_ptr += dstStep;
         readPtr += readStep;
     }
 
+    return;
+}
+
+void update_recon_neighbor_array16bit(
+    NeighborArrayUnit     *na_unit_ptr,
+    uint16_t              *src_ptr_top,
+    uint16_t              *src_ptr_left,
+    uint32_t               pic_origin_x,
+    uint32_t               pic_origin_y,
+    uint32_t               block_width,
+    uint32_t               block_height)
+{
+    uint16_t *dst_ptr;
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_array +
+        get_neighbor_array_unit_top_index(na_unit_ptr, pic_origin_x) *
+        na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, src_ptr_top, block_width * sizeof(uint16_t));
+
+    dst_ptr = (uint16_t *) (na_unit_ptr->left_array +
+        get_neighbor_array_unit_left_index(na_unit_ptr, pic_origin_y) *
+        na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, src_ptr_left, block_height * sizeof(uint16_t));
+
+    //   Top-left Neighbor Array
+    uint32_t idx;
+    uint16_t *readPtr = src_ptr_top;
+    int32_t dstStep;
+    int32_t readStep;
+    uint32_t count;
+
+    // Copy bottom row
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_left_array +
+        get_neighbor_array_unit_top_left_index(na_unit_ptr, pic_origin_x,
+            pic_origin_y + (block_height - 1)) * na_unit_ptr->unit_size);
+    EB_MEMCPY(dst_ptr, readPtr, block_width * sizeof(uint16_t));
+
+    // Reset readPtr to the right-column
+    readPtr = src_ptr_left;
+
+    // Copy right column
+    dst_ptr = (uint16_t *) (na_unit_ptr->top_left_array +
+        get_neighbor_array_unit_top_left_index(
+        na_unit_ptr, pic_origin_x + (block_width - 1), pic_origin_y) *
+        na_unit_ptr->unit_size);
+
+    dstStep = -1;
+    readStep = 1;
+    count = block_height;
+    for (idx = 0; idx < count; ++idx) {
+        *dst_ptr = *readPtr;
+        dst_ptr += dstStep;
+        readPtr += readStep;
+    }
 
     return;
 }
@@ -288,7 +322,6 @@ void neighbor_array_unit_sample_write(
     src_ptr += ((src_origin_y * stride) + src_origin_x) * na_unit_ptr->unit_size;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         //
         //     ----------12345678---------------------  Top Neighbor Array
         //                ^    ^
@@ -317,17 +350,14 @@ void neighbor_array_unit_sample_write(
         count = block_width;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
             readPtr += readStep;
         }
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         //   Left Neighbor Array
         //
         //    |
@@ -357,17 +387,14 @@ void neighbor_array_unit_sample_write(
         count = block_height;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
             readPtr += readStep;
         }
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //
@@ -416,13 +443,11 @@ void neighbor_array_unit_sample_write(
         count = block_height;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
             readPtr += readStep;
         }
-
     }
 
     return;
@@ -455,7 +480,6 @@ void neighbor_array_unit16bit_sample_write(
     src_ptr += ((src_origin_y * stride) + src_origin_x)/*CHKN  * na_unit_ptr->unit_size*/;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         //
         //     ----------12345678---------------------  Top Neighbor Array
         //                ^    ^
@@ -484,17 +508,14 @@ void neighbor_array_unit16bit_sample_write(
         count = block_width;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += 1;
             readPtr += 1;
         }
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         //   Left Neighbor Array
         //
         //    |
@@ -524,17 +545,14 @@ void neighbor_array_unit16bit_sample_write(
         count = block_height;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
             readPtr += readStep;
         }
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //
@@ -570,7 +588,6 @@ void neighbor_array_unit16bit_sample_write(
         count = block_width;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
@@ -593,13 +610,11 @@ void neighbor_array_unit16bit_sample_write(
         count = block_height;
 
         for (idx = 0; idx < count; ++idx) {
-
             *dst_ptr = *readPtr;
 
             dst_ptr += dstStep;
             readPtr += readStep;
         }
-
     }
 
     return;
@@ -626,7 +641,6 @@ void neighbor_array_unit_mode_write32(
     naUnitSize = 1;//na_unit_ptr->unit_size;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         //
         //     ----------12345678---------------------  Top Neighbor Array
         //                ^    ^
@@ -652,7 +666,6 @@ void neighbor_array_unit_mode_write32(
         count = block_width >> na_unit_ptr->granularity_normal_log2;
 
         for (idx = 0; idx < count; ++idx) {
-
             memset32bit(dst_ptr, value, naUnitSize);
 
             dst_ptr += naUnitSize;
@@ -660,7 +673,6 @@ void neighbor_array_unit_mode_write32(
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         //   Left Neighbor Array
         //
         //    |
@@ -687,7 +699,6 @@ void neighbor_array_unit_mode_write32(
         count = block_height >> na_unit_ptr->granularity_normal_log2;
 
         for (idx = 0; idx < count; ++idx) {
-
             memset32bit(dst_ptr, value, naUnitSize);
 
             dst_ptr += naUnitSize;
@@ -695,7 +706,6 @@ void neighbor_array_unit_mode_write32(
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //
@@ -728,7 +738,6 @@ void neighbor_array_unit_mode_write32(
         count = ((block_width + block_height) >> na_unit_ptr->granularity_top_left_log2) - 1;
 
         for (idx = 0; idx < count; ++idx) {
-
             memset32bit(dst_ptr, value, naUnitSize);
 
             dst_ptr += naUnitSize;
@@ -757,7 +766,6 @@ void neighbor_array_unit_mode_write(
     naUnitSize = na_unit_ptr->unit_size;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         //
         //     ----------12345678---------------------  Top Neighbor Array
         //                ^    ^
@@ -792,7 +800,6 @@ void neighbor_array_unit_mode_write(
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         //   Left Neighbor Array
         //
         //    |
@@ -828,7 +835,6 @@ void neighbor_array_unit_mode_write(
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //
@@ -881,7 +887,6 @@ void copy_neigh_arr(
     uint32_t               bh,
     uint32_t                 neighbor_array_type_mask)
 {
-
     uint32_t idx;
     uint8_t  *dst_ptr, *src_ptr;
 
@@ -893,18 +898,15 @@ void copy_neigh_arr(
     naUnitSize = na_src->unit_size;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         naOffset = get_neighbor_array_unit_top_index(na_src, origin_x);
         src_ptr = na_src->top_array + naOffset * naUnitSize;
         dst_ptr = na_dst->top_array + naOffset * naUnitSize;
         count = bw >> na_src->granularity_normal_log2;
 
         EB_MEMCPY(dst_ptr, src_ptr, naUnitSize*count);
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         naOffset = get_neighbor_array_unit_left_index(na_src, origin_y);
         src_ptr = na_src->left_array + naOffset * naUnitSize;
         dst_ptr = na_dst->left_array + naOffset * naUnitSize;
@@ -914,7 +916,6 @@ void copy_neigh_arr(
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
         /*
         //   Top-left Neighbor Array
         //
@@ -961,7 +962,6 @@ void copy_neigh_arr_32(
     uint32_t               bh,
     uint32_t                 neighbor_array_type_mask)
 {
-
     uint32_t idx;
     uint32_t  *dst_ptr, *src_ptr;
 
@@ -974,18 +974,15 @@ void copy_neigh_arr_32(
     naUnitSize = na_src->unit_size;
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOP_MASK) {
-
         naOffset = get_neighbor_array_unit_top_index32(na_src, origin_x);
         src_ptr = na_src->top_array + naOffset;
         dst_ptr = na_dst->top_array + naOffset;
         count = bw >> na_src->granularity_normal_log2;
 
         EB_MEMCPY(dst_ptr, src_ptr, naUnitSize*count);
-
     }
 
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK) {
-
         naOffset = get_neighbor_array_unit_left_index32(na_src, origin_y);
         src_ptr = na_src->left_array + naOffset;
         dst_ptr = na_dst->left_array + naOffset;
@@ -994,9 +991,6 @@ void copy_neigh_arr_32(
         EB_MEMCPY(dst_ptr, src_ptr, naUnitSize*count);
     }
     if (neighbor_array_type_mask & NEIGHBOR_ARRAY_UNIT_TOPLEFT_MASK) {
-
-
-
         /*
         //   Top-left Neighbor Array
         //
@@ -1058,7 +1052,6 @@ void neighbor_array_unit_mv_write(
     naUnitleftArray = na_unit_ptr->left_array;
     naUnittopLeftArray = na_unit_ptr->top_left_array;
 
-
     //
     //     ----------12345678---------------------  Top Neighbor Array
     //                ^    ^
@@ -1083,12 +1076,10 @@ void neighbor_array_unit_mv_write(
     count = block_size >> 2;
 
     for (idx = 0; idx < count; ++idx) {
-
         EB_MEMCPY(dst_ptr, value, naUnitSize);
 
         dst_ptr += naUnitSize;
     }
-
 
     //   Left Neighbor Array
     //
@@ -1111,14 +1102,11 @@ void neighbor_array_unit_mv_write(
     dst_ptr = naUnitleftArray +
         naOffset * naUnitSize;
 
-
     for (idx = 0; idx < count; ++idx) {
-
         EB_MEMCPY(dst_ptr, value, naUnitSize);
 
         dst_ptr += naUnitSize;
     }
-
 
     /*
     //   Top-left Neighbor Array
@@ -1152,7 +1140,6 @@ void neighbor_array_unit_mv_write(
     count = ((block_size + block_size) >> 2) - 1;
 
     for (idx = 0; idx < count; ++idx) {
-
         EB_MEMCPY(dst_ptr, value, naUnitSize);
 
         dst_ptr += naUnitSize;

@@ -59,14 +59,83 @@ uint32_t fast_loop_nx_m_sad_kernel(
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < width; x++)
-        {
             sad += EB_ABS_DIFF(src[x], ref[x]);
-        }
         src += src_stride;
         ref += ref_stride;
     }
 
     return sad;
+}
+
+uint32_t sad_16b_kernel(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width)                          // input parameter, block width (N)
+{
+    uint32_t x, y;
+    uint32_t sad = 0;
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++)
+            sad += EB_ABS_DIFF(src[x], ref[x]);
+        src += src_stride;
+        ref += ref_stride;
+    }
+
+    return sad;
+}
+
+void sad_loop_kernel_sparse(
+    uint8_t *src,        // input parameter, source samples Ptr
+    uint32_t srcStride,  // input parameter, source stride
+    uint8_t *ref,        // input parameter, reference samples Ptr
+    uint32_t refStride,  // input parameter, reference stride
+    uint32_t height,     // input parameter, block height (M)
+    uint32_t width,      // input parameter, block width (N)
+    uint64_t *bestSad,
+    int16_t *xSearchCenter,
+    int16_t *ySearchCenter,
+    uint32_t srcStrideRaw,  // input parameter, source stride (no line skipping)
+    int16_t searchAreaWidth, int16_t searchAreaHeight) {
+    int16_t xSearchIndex;
+    int16_t ySearchIndex;
+
+    *bestSad = 0xffffff;
+
+    for (ySearchIndex = 0; ySearchIndex < searchAreaHeight; ySearchIndex++) {
+        for (xSearchIndex = 0; xSearchIndex < searchAreaWidth; xSearchIndex++) {
+            uint8_t doThisPoint = 0;
+            uint32_t group = (xSearchIndex / 8);
+            if ((group & 1) == (ySearchIndex & 1))
+                doThisPoint = 1;
+
+            if (doThisPoint) {
+                uint32_t x, y;
+                uint32_t sad = 0;
+
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++)
+                        sad +=
+                            EB_ABS_DIFF(src[y * srcStride + x],
+                                        ref[xSearchIndex + y * refStride + x]);
+                }
+
+                // Update results
+                if (sad < *bestSad) {
+                    *bestSad = sad;
+                    *xSearchCenter = xSearchIndex;
+                    *ySearchCenter = ySearchIndex;
+                }
+            }
+        }
+
+        ref += srcStrideRaw;
+    }
+
+    return;
 }
 
 void sad_loop_kernel(
@@ -98,10 +167,7 @@ void sad_loop_kernel(
             for (y = 0; y < height; y++)
             {
                 for (x = 0; x < width; x++)
-                {
                     sad += EB_ABS_DIFF(src[y*src_stride + x], ref[xSearchIndex + y * ref_stride + x]);
-                }
-
             }
 
             // Update results
@@ -119,7 +185,6 @@ void sad_loop_kernel(
     return;
 }
 
-
 /* Sum the difference between every corresponding element of the buffers. */
 static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
     const uint8_t *b, int b_stride, int width, int height) {
@@ -127,10 +192,8 @@ static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride,
     unsigned int sad = 0;
 
     for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
+        for (x = 0; x < width; x++)
             sad += EB_ABS_DIFF(a[x], b[x]);
-        }
-
         a += a_stride;
         b += b_stride;
     }
@@ -231,4 +294,3 @@ sadMxN(16, 64);
 sadMxNx4D(16, 64);
 sadMxN(64, 16);
 sadMxNx4D(64, 16);
-

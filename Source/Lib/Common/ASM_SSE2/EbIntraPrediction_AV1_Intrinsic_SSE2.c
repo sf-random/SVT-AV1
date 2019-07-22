@@ -5,7 +5,6 @@
 
 #include "EbDefinitions.h"
 #include "emmintrin.h"
-#include "EbIntraPrediction_SSE2.h"
 #include "aom_dsp_rtcd.h"
 
 static INLINE __m128i dc_sum_16(const uint8_t *ref) {
@@ -54,13 +53,12 @@ static INLINE __m128i dc_sum_64(const uint8_t *ref) {
     return _mm_add_epi16(x0, high);
 }
 
-
 static INLINE void dc_store_32xh(const __m128i *row, int32_t height, uint8_t *dst,
     ptrdiff_t stride) {
     int32_t i;
     for (i = 0; i < height; ++i) {
-        _mm_store_si128((__m128i *)dst, *row);
-        _mm_store_si128((__m128i *)(dst + 16), *row);
+        _mm_storeu_si128((__m128i *)dst, *row);
+        _mm_storeu_si128((__m128i *)(dst + 16), *row);
         dst += stride;
     }
 }
@@ -83,8 +81,6 @@ void intra_mode_dc_16x16_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
@@ -98,7 +94,6 @@ void intra_mode_dc_16x16_av1_sse2_intrin(
         sum_left = _mm_shufflelo_epi16(sum_left, 0);
         const __m128i row = _mm_unpacklo_epi64(sum_left, sum_left);
         dc_store_16xh(&row, 16, dst, rowStride * prediction_buffer_stride);
-
     }
     else if (is_above_availble && !is_left_availble) {
         __m128i sum_above = dc_sum_16(&ref_samples[topOffset]);
@@ -122,8 +117,6 @@ void intra_mode_dc_16x16_av1_sse2_intrin(
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
         dc_store_16xh(&row, 16, dst, rowStride * prediction_buffer_stride);
     }
-
-
 }
 static INLINE void dc_store_8xh(const __m128i *row, int32_t height, uint8_t *dst,
     ptrdiff_t stride) {
@@ -148,8 +141,6 @@ void intra_mode_dc_8x8_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
@@ -162,7 +153,6 @@ void intra_mode_dc_8x8_av1_sse2_intrin(
         sum_left = _mm_unpacklo_epi8(sum_left, sum_left);
         const __m128i row = _mm_shufflelo_epi16(sum_left, 0);
         dc_store_8xh(&row, 8, dst, rowStride * prediction_buffer_stride);
-
     }
     else if (is_above_availble && !is_left_availble) {
         __m128i sum_above = dc_sum_8(&ref_samples[topOffset]);
@@ -184,9 +174,7 @@ void intra_mode_dc_8x8_av1_sse2_intrin(
         sum >>= 4;
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
         dc_store_8xh(&row, 8, dst, rowStride * prediction_buffer_stride);
-
     }
-
 }
 static INLINE __m128i dc_sum_4(const uint8_t *ref) {
     __m128i x = _mm_loadl_epi64((__m128i const *)ref);
@@ -212,8 +200,6 @@ void intra_mode_dc_4x4_av1_sse2_intrin(
     const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
     const EbBool  skip)                       //skip half rows
 {
-
-
     uint32_t leftOffset = 0;
     uint32_t topOffset = (size << 1) + 1;
     uint32_t rowStride = skip ? 2 : 1;
@@ -228,7 +214,6 @@ void intra_mode_dc_4x4_av1_sse2_intrin(
 
         const uint32_t pred = _mm_cvtsi128_si32(sum_left);
         dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
-
     }
     else if (is_above_availble && !is_left_availble) {
         __m128i sum_above = dc_sum_4(&ref_samples[topOffset]);
@@ -240,7 +225,6 @@ void intra_mode_dc_4x4_av1_sse2_intrin(
 
         const uint32_t pred = _mm_cvtsi128_si32(sum_above);
         dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
-
     }
     else
     {
@@ -255,11 +239,8 @@ void intra_mode_dc_4x4_av1_sse2_intrin(
         const __m128i row = _mm_set1_epi8((uint8_t)sum);
         const uint32_t pred = _mm_cvtsi128_si32(row);
         dc_store_4x4(pred, dst, rowStride * prediction_buffer_stride);
-
     }
-
 }
-
 
 #define DC_SHIFT2 16
 #define DC_MULTIPLIER_1X2 0x5556
@@ -276,8 +257,8 @@ static INLINE void v_predictor_32xh(uint8_t *dst, ptrdiff_t stride,
     const __m128i row0 = _mm_load_si128((__m128i const *)above);
     const __m128i row1 = _mm_load_si128((__m128i const *)(above + 16));
     for (int32_t i = 0; i < height; ++i) {
-        _mm_store_si128((__m128i *)dst, row0);
-        _mm_store_si128((__m128i *)(dst + 16), row1);
+        _mm_storeu_si128((__m128i *)dst, row0);
+        _mm_storeu_si128((__m128i *)(dst + 16), row1);
         dst += stride;
     }
 }
@@ -286,7 +267,7 @@ static INLINE void h_pred_store_16xh(const __m128i *row, int32_t h, uint8_t *dst
     ptrdiff_t stride) {
     int32_t i;
     for (i = 0; i < h; ++i) {
-        _mm_store_si128((__m128i *)dst, row[i]);
+        _mm_storeu_si128((__m128i *)dst, row[i]);
         dst += stride;
     }
 }
@@ -320,7 +301,6 @@ static INLINE void h_prediction_16x8_1(const __m128i *left, uint8_t *dst,
     repeat_low_4pixels(left, row);
     h_pred_store_16xh(row, 4, dst, stride);
 }
-
 
 // Process 16x8, second 4 rows
 // Use second 8 bytes of left register: 77665544xxxxxxxx
@@ -357,8 +337,8 @@ static INLINE void h_pred_store_32xh(const __m128i *row, int32_t h, uint8_t *dst
     ptrdiff_t stride) {
     int32_t i;
     for (i = 0; i < h; ++i) {
-        _mm_store_si128((__m128i *)dst, row[i]);
-        _mm_store_si128((__m128i *)(dst + 16), row[i]);
+        _mm_storeu_si128((__m128i *)dst, row[i]);
+        _mm_storeu_si128((__m128i *)(dst + 16), row[i]);
         dst += stride;
     }
 }
@@ -381,7 +361,6 @@ static INLINE void h_prediction_32x8_2(const __m128i *left, uint8_t *dst,
     h_pred_store_32xh(row, 4, dst, stride);
 }
 
-
 static INLINE void h_predictor_32xh(uint8_t *dst, ptrdiff_t stride,
     const uint8_t *left, int32_t height) {
     int32_t i = height >> 2;
@@ -391,16 +370,16 @@ static INLINE void h_predictor_32xh(uint8_t *dst, ptrdiff_t stride,
         left4 = _mm_unpacklo_epi8(left4, left4);
         const __m128i r0 = _mm_shuffle_epi32(left4, 0x0);
         const __m128i r1 = _mm_shuffle_epi32(left4, 0x55);
-        _mm_store_si128((__m128i *)dst, r0);
-        _mm_store_si128((__m128i *)(dst + 16), r0);
-        _mm_store_si128((__m128i *)(dst + stride), r1);
-        _mm_store_si128((__m128i *)(dst + stride + 16), r1);
+        _mm_storeu_si128((__m128i *)dst, r0);
+        _mm_storeu_si128((__m128i *)(dst + 16), r0);
+        _mm_storeu_si128((__m128i *)(dst + stride), r1);
+        _mm_storeu_si128((__m128i *)(dst + stride + 16), r1);
         const __m128i r2 = _mm_shuffle_epi32(left4, 0xaa);
         const __m128i r3 = _mm_shuffle_epi32(left4, 0xff);
-        _mm_store_si128((__m128i *)(dst + stride * 2), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 2 + 16), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 3), r3);
-        _mm_store_si128((__m128i *)(dst + stride * 3 + 16), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2 + 16), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3 + 16), r3);
         left += 4;
         dst += stride * 4;
     } while (--i);
@@ -472,9 +451,6 @@ static INLINE void h_predictor_8x16xc(uint8_t *dst, ptrdiff_t stride,
     }
 }
 
-
-
-
 static INLINE void h_predictor_64xh(uint8_t *dst, ptrdiff_t stride,
     const uint8_t *left, int32_t height) {
     int32_t i = height >> 2;
@@ -484,24 +460,24 @@ static INLINE void h_predictor_64xh(uint8_t *dst, ptrdiff_t stride,
         left4 = _mm_unpacklo_epi8(left4, left4);
         const __m128i r0 = _mm_shuffle_epi32(left4, 0x0);
         const __m128i r1 = _mm_shuffle_epi32(left4, 0x55);
-        _mm_store_si128((__m128i *)dst, r0);
-        _mm_store_si128((__m128i *)(dst + 16), r0);
-        _mm_store_si128((__m128i *)(dst + 32), r0);
-        _mm_store_si128((__m128i *)(dst + 48), r0);
-        _mm_store_si128((__m128i *)(dst + stride), r1);
-        _mm_store_si128((__m128i *)(dst + stride + 16), r1);
-        _mm_store_si128((__m128i *)(dst + stride + 32), r1);
-        _mm_store_si128((__m128i *)(dst + stride + 48), r1);
+        _mm_storeu_si128((__m128i *)dst, r0);
+        _mm_storeu_si128((__m128i *)(dst + 16), r0);
+        _mm_storeu_si128((__m128i *)(dst + 32), r0);
+        _mm_storeu_si128((__m128i *)(dst + 48), r0);
+        _mm_storeu_si128((__m128i *)(dst + stride), r1);
+        _mm_storeu_si128((__m128i *)(dst + stride + 16), r1);
+        _mm_storeu_si128((__m128i *)(dst + stride + 32), r1);
+        _mm_storeu_si128((__m128i *)(dst + stride + 48), r1);
         const __m128i r2 = _mm_shuffle_epi32(left4, 0xaa);
         const __m128i r3 = _mm_shuffle_epi32(left4, 0xff);
-        _mm_store_si128((__m128i *)(dst + stride * 2), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 2 + 16), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 2 + 32), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 2 + 48), r2);
-        _mm_store_si128((__m128i *)(dst + stride * 3), r3);
-        _mm_store_si128((__m128i *)(dst + stride * 3 + 16), r3);
-        _mm_store_si128((__m128i *)(dst + stride * 3 + 32), r3);
-        _mm_store_si128((__m128i *)(dst + stride * 3 + 48), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2 + 16), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2 + 32), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 2 + 48), r2);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3 + 16), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3 + 32), r3);
+        _mm_storeu_si128((__m128i *)(dst + stride * 3 + 48), r3);
         left += 4;
         dst += stride * 4;
     } while (--i);
@@ -537,7 +513,6 @@ void aom_h_predictor_16x64_sse2(uint8_t *dst, ptrdiff_t stride,
     h_predictor_16xh(dst, stride, left, 4);
 }
 
-
 void aom_h_predictor_16x32_sse2(uint8_t *dst, ptrdiff_t stride,
     const uint8_t *above, const uint8_t *left) {
     (void)above;
@@ -562,7 +537,6 @@ void aom_h_predictor_32x16_sse2(uint8_t *dst, ptrdiff_t stride,
     dst += stride << 2;
     h_prediction_32x8_2(&left_col_8p, dst, stride);
 }
-
 
 void aom_h_predictor_16x4_sse2(uint8_t *dst, ptrdiff_t stride,
     const uint8_t *above, const uint8_t *left) {
@@ -1271,4 +1245,3 @@ void aom_dc_predictor_32x8_sse2(uint8_t *dst, ptrdiff_t stride,
     const __m128i row = _mm_set1_epi8((uint8_t)sum);
     dc_store_32xh(&row, 8, dst, stride);
 }
-

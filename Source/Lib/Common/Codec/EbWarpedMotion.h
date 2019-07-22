@@ -46,7 +46,6 @@ extern "C" {
 
 #define WARPEDDIFF_PREC_BITS (WARPEDMODEL_PREC_BITS - WARPEDPIXEL_PREC_BITS)
 
-
 #define MAX_PARAMDIM 9
 #define LEAST_SQUARES_SAMPLES_MAX_BITS 3
 #define LEAST_SQUARES_SAMPLES_MAX (1 << LEAST_SQUARES_SAMPLES_MAX_BITS)
@@ -55,6 +54,7 @@ extern "C" {
 #define DEFAULT_WMTYPE AFFINE
 
 extern const int16_t warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8];
+extern const int error_measure_lut[512];
 
 static const uint8_t warp_pad_left[14][16] = {
   { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
@@ -89,6 +89,10 @@ static const uint8_t warp_pad_right[14][16] = {
   { 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 };
+
+static INLINE int error_measure(int err) {
+    return error_measure_lut[255 + err];
+}
 
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.

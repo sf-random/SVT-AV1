@@ -3,6 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
+#include "EbAppString.h"
 #include "EbAppInputy4m.h"
 #define YFM_HEADER_MAX 80
 #define YUV4MPEG2_IND_SIZE 9
@@ -11,7 +12,6 @@
 
 /* copy a string until a specified character or a new line is found */
 char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
-
     rsize_t count = 0;
     char * src_init = src;
 
@@ -20,20 +20,13 @@ char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
         count++;
     }
 
-    if(count > YFM_HEADER_MAX){
-        count = YFM_HEADER_MAX-1;
-    }
-
-    EB_STRNCPY(dst, src_init, count);
-    dst[count] = '\0';
+    EB_STRNCPY(dst, YFM_HEADER_MAX, src_init, count);
 
     return src;
-
 }
 
 /* reads the y4m header and parses the input parameters */
 int32_t read_y4m_header(EbConfig *cfg){
-
     FILE *ptr_in;
     char buffer[YFM_HEADER_MAX];
     char *fresult, *tokstart, *tokend, format_str[YFM_HEADER_MAX];
@@ -47,7 +40,8 @@ int32_t read_y4m_header(EbConfig *cfg){
 
     /* get first line after YUV4MPEG2 */
     fresult = fgets(buffer, sizeof(buffer), ptr_in);
-    assert(fresult != NULL);
+    if(fresult==NULL)
+        return EB_ErrorBadParameter;
 
     /* print header */
     if(PRINT_HEADER) {
@@ -240,12 +234,10 @@ int32_t read_y4m_header(EbConfig *cfg){
         (instead of the encoder bit depth) and chroma format */
 
     return EB_ErrorNone;
-
 }
 
 /* read next line which contains the "FRAME" delimiter */
 int32_t read_y4m_frame_delimiter(EbConfig *cfg){
-
     unsigned char bufferY4Mheader[10];
     char *fresult;
 
@@ -262,18 +254,17 @@ int32_t read_y4m_frame_delimiter(EbConfig *cfg){
     }
 
     return EB_ErrorNone;
-
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
 EbBool check_if_y4m(EbConfig *cfg){
-
     char buffer[YUV4MPEG2_IND_SIZE+1];
     size_t headerReadLength;
 
     /* Parse the header for the "YUV4MPEG2" string */
     headerReadLength = fread(buffer, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
-    assert(headerReadLength == 1);
+    if(headerReadLength != 1)
+        return EB_FALSE;
     buffer[YUV4MPEG2_IND_SIZE] = 0;
 
     if (EB_STRCMP(buffer, "YUV4MPEG2") == 0) {
@@ -286,5 +277,4 @@ EbBool check_if_y4m(EbConfig *cfg){
         }
         return EB_FALSE; /* Not a YUV4MPEG2 file */
     }
-
 }

@@ -10,6 +10,7 @@
 #include "EbPictureOperators_SSE2.h"
 #include "EbPictureOperators_SSE4_1.h"
 #include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_AVX512.h"
 #include "EbHmCode.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
@@ -28,20 +29,6 @@ extern "C" {
         uint32_t  width,
         uint32_t  height,
         EbAsm     asm_type);
-
-    extern EbErrorType picture_copy8_bit(
-        EbPictureBufferDesc  *src,
-        uint32_t                src_luma_origin_index,
-        uint32_t                src_chroma_origin_index,
-        EbPictureBufferDesc  *dst,
-        uint32_t                dst_luma_origin_index,
-        uint32_t                dst_chroma_origin_index,
-        uint32_t                area_width,
-        uint32_t                area_height,
-        uint32_t                chroma_area_width,
-        uint32_t                chroma_area_height,
-        uint32_t                component_mask,
-        EbAsm                   asm_type);
 
     extern EbErrorType picture_full_distortion32_bits(
         EbPictureBufferDesc  *coeff,
@@ -92,7 +79,6 @@ extern "C" {
         uint32_t       width,
         uint32_t       height,
         EbAsm          asm_type);
-
 
     void pack2d_src(
         uint8_t  *in8_bit_buffer,
@@ -247,6 +233,16 @@ extern "C" {
         uint32_t  area_width,
         uint32_t  area_height);
 
+    uint64_t full_distortion_kernel16_bits(
+        uint8_t  *input,
+        uint32_t  input_offset,
+        uint32_t  input_stride,
+        uint8_t  *pred,
+        uint32_t  pred_offset,
+        uint32_t  pred_stride,
+        uint32_t  area_width,
+        uint32_t  area_height);
+
     typedef void(*EbFullDistortionKernelCbfZero32Bits)(
         int32_t  *coeff,
         uint32_t  coeff_stride,
@@ -350,6 +346,17 @@ extern "C" {
         // AVX2
         picture_addition_kernel16bit_sse2_intrin,
     };
+    typedef void(*EB_RESDKERNELSUBSAMPLED_TYPE)(
+        uint8_t  *input,
+        uint32_t  input_stride,
+        uint8_t  *pred,
+        uint32_t  pred_stride,
+        int16_t  *residual,
+        uint32_t  residual_stride,
+        uint32_t  area_width,
+        uint32_t  area_height,
+        uint8_t   last_line
+        );
 
     void residual_kernel16bit(
         uint16_t *input,
@@ -398,45 +405,26 @@ extern "C" {
     };
 
     typedef uint64_t(*EbSpatialFullDistType)(
-        uint8_t  *input,
-        uint32_t  input_stride,
-        uint8_t  *recon,
-        uint32_t  recon_stride,
-        uint32_t  area_width,
-        uint32_t  area_height);
-    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL][6] = {
-        // NON_AVX2
-        {
-            // 4x4
-            spatial_full_distortion_kernel4x4_ssse3_intrin,
-            // 8x8
-            spatial_full_distortion_kernel8x8_ssse3_intrin,
-            // 16x16
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 32x32
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 64x64
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 128x128
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin
-        },
-        // ASM_AVX2
-        {
-            // 4x4
-            spatial_full_distortion_kernel4x4_ssse3_intrin,
-            // 8x8
-            spatial_full_distortion_kernel8x8_ssse3_intrin,
-            // 16x16
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 32x32
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 64x64
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin,
-            // 128x128
-            spatial_full_distortion_kernel16_mx_n_ssse3_intrin
-        },
-    };
+        uint8_t   *input,
+        uint32_t   input_offset,
+        uint32_t   input_stride,
+        uint8_t   *recon,
+        uint32_t   recon_offset,
+        uint32_t   recon_stride,
+        uint32_t   area_width,
+        uint32_t   area_height);
 
+    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL] = {
+        // NON_AVX2
+        spatial_full_distortion_kernel_c,
+#ifndef NON_AVX512_SUPPORT
+        // ASM_AVX512
+        spatial_full_distortion_kernel_avx512
+#else
+        // ASM_AVX2
+        spatial_full_distortion_kernel_avx2
+#endif
+    };
 
     void picture_addition_kernel16_bit(
         uint16_t *pred_ptr,
@@ -448,6 +436,37 @@ extern "C" {
         uint32_t  width,
         uint32_t  height,
         int32_t   bd);
+
+void pic_copy_kernel_8bit(
+    EbByte                     src,
+    uint32_t                   src_stride,
+    EbByte                     dst,
+    uint32_t                   dst_stride,
+    uint32_t                   area_width,
+    uint32_t                   area_height);
+
+void pic_copy_kernel_16bit(
+    uint16_t                  *src,
+    uint32_t                   src_stride,
+    uint16_t                  *dst,
+    uint32_t                   dst_stride,
+    uint32_t                   width,
+    uint32_t                   height);
+
+EbErrorType picture_copy(
+    EbPictureBufferDesc       *src,
+    uint32_t                   src_luma_origin_index,
+    uint32_t                   src_chroma_origin_index,
+    EbPictureBufferDesc       *dst,
+    uint32_t                   dst_luma_origin_index,
+    uint32_t                   dst_chroma_origin_index,
+    uint32_t                   area_width,
+    uint32_t                   area_height,
+    uint32_t                   chroma_area_width,
+    uint32_t                   chroma_area_height,
+    uint32_t                   component_mask,
+    EbBool                     hbd,
+    EbAsm                      asm_type);
 
 #ifdef __cplusplus
 }

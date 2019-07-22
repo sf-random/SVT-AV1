@@ -8,6 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
+#include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,26 +17,29 @@ extern "C" {
      **************************************/
     typedef struct EncDecResults
     {
+        EbDctor         dctor;
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         completed_lcu_row_index_start;
         uint32_t         completed_lcu_row_count;
-
     } EncDecResults;
 
-    typedef struct DlfResults 
+    typedef struct DlfResults
     {
+        EbDctor         dctor;
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         segment_index;
     } DlfResults;
 
     typedef struct CdefResults
     {
+        EbDctor         dctor;
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         segment_index;
     } CdefResults;
 
     typedef struct RestResults
     {
+        EbDctor         dctor;
         EbObjectWrapper *picture_control_set_wrapper_ptr;
         uint32_t         completed_lcu_row_index_start;
         uint32_t         completed_lcu_row_count;
@@ -48,10 +52,9 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType enc_dec_results_ctor(
+    extern EbErrorType enc_dec_results_creator(
         EbPtr *object_dbl_ptr,
         EbPtr object_init_data_ptr);
-
 
 #ifdef __cplusplus
 }

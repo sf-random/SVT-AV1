@@ -37,21 +37,23 @@ void picture_copy_kernel(
 
 // C equivalents
 
-uint64_t spatial_full_distortion_kernel(
+uint64_t spatial_full_distortion_kernel_c(
     uint8_t   *input,
+    uint32_t   input_offset,
     uint32_t   input_stride,
     uint8_t   *recon,
+    uint32_t   recon_offset,
     uint32_t   recon_stride,
     uint32_t   area_width,
     uint32_t   area_height)
 {
     uint32_t  columnIndex;
     uint32_t  row_index = 0;
-
     uint64_t  spatialDistortion = 0;
+    input += input_offset;
+    recon += recon_offset;
 
     while (row_index < area_height) {
-
         columnIndex = 0;
         while (columnIndex < area_width) {
             spatialDistortion += (int64_t)SQR((int64_t)(input[columnIndex]) - (recon[columnIndex]));
@@ -64,8 +66,3 @@ uint64_t spatial_full_distortion_kernel(
     }
     return spatialDistortion;
 }
-
-
-
-
-

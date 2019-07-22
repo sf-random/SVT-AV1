@@ -11,19 +11,35 @@
 #include "EbPictureBufferDesc.h"
 #include "EbSystemResourceManager.h"
 #include "EbSequenceControlSet.h"
-
+#include "EbResourceCoordinationProcess.h"
+#include "EbPictureAnalysisProcess.h"
 #include "EbResourceCoordinationResults.h"
 #include "EbPictureDemuxResults.h"
 #include "EbRateControlResults.h"
+#include "EbPictureDecisionProcess.h"
+#include "EbMotionEstimationProcess.h"
+#include "EbInitialRateControlProcess.h"
+#include "EbSourceBasedOperationsProcess.h"
+#include "EbPictureManagerProcess.h"
+#include "EbRateControlProcess.h"
+#include "EbModeDecisionConfigurationProcess.h"
+#include "EbEncDecProcess.h"
+#include "EbDlfProcess.h"
+#include "EbCdefProcess.h"
+#include "EbRestProcess.h"
+#include "EbEntropyCodingProcess.h"
+#include "EbPacketizationProcess.h"
+#include "EbObject.h"
 
 /**************************************
  * Component Private Data
  **************************************/
 typedef struct EbEncHandle
 {
+    EbDctor                                   dctor;
     // Encode Instances & Compute Segments
     uint32_t                                  encode_instance_total_count;
-    uint32_t                                 *compute_segments_total_count_array;
+    uint32_t                                  compute_segments_total_count_array;
 
     // Config Set Counts
     uint32_t                                  sequence_control_set_pool_total_count;
@@ -35,9 +51,9 @@ typedef struct EbEncHandle
     uint32_t                                  reference_picture_pool_total_count;
 
     // Config Set Pool & Active Array
-    EbSystemResource                     *sequence_control_set_pool_ptr;
-    EbFifo                              **sequence_control_set_pool_producer_fifo_ptr_array;
-    EbSequenceControlSetInstance        **sequence_control_set_instance_array;
+    EbSystemResource                         *sequence_control_set_pool_ptr;
+    EbFifo                                  **sequence_control_set_pool_producer_fifo_ptr_array;
+    EbSequenceControlSetInstance            **sequence_control_set_instance_array;
 
     // Full Results
     EbSystemResource                    **picture_control_set_pool_ptr_array;
@@ -51,6 +67,9 @@ typedef struct EbEncHandle
     EbSystemResource                    **reference_picture_pool_ptr_array;
     EbSystemResource                    **pa_reference_picture_pool_ptr_array;
 
+    // Overlay input picture
+    EbSystemResource                    **overlay_input_picture_pool_ptr_array;
+    EbFifo                             ***overlay_input_picture_pool_producer_fifo_ptr_dbl_array;
     // Picture Buffer Producer Fifos
     EbFifo                             ***reference_picture_pool_producer_fifo_ptr_dbl_array;
     EbFifo                             ***pa_reference_picture_pool_producer_fifo_ptr_dbl_array;
@@ -74,21 +93,21 @@ typedef struct EbEncHandle
     EbHandle                               packetization_thread_handle;
 
     // Contexts
-    EbPtr                                  resource_coordination_context_ptr;
-    EbPtr                                 *picture_analysis_context_ptr_array;
-    EbPtr                                  picture_decision_context_ptr;
-    EbPtr                                 *motion_estimation_context_ptr_array;
-    EbPtr                                  initial_rate_control_context_ptr;
-    EbPtr                                 *source_based_operations_context_ptr_array;
-    EbPtr                                  picture_manager_context_ptr;
-    EbPtr                                  rate_control_context_ptr;
-    EbPtr                                 *mode_decision_configuration_context_ptr_array;
-    EbPtr                                 *enc_dec_context_ptr_array;
-    EbPtr                                 *entropy_coding_context_ptr_array;
-    EbPtr                                 *dlf_context_ptr_array;
-    EbPtr                                 *cdef_context_ptr_array;
-    EbPtr                                 *rest_context_ptr_array;
-    EbPtr                                  packetization_context_ptr;
+    ResourceCoordinationContext            *resource_coordination_context_ptr;
+    PictureAnalysisContext                 **picture_analysis_context_ptr_array;
+    PictureDecisionContext                *picture_decision_context_ptr;
+    MotionEstimationContext_t             **motion_estimation_context_ptr_array;
+    InitialRateControlContext             *initial_rate_control_context_ptr;
+    SourceBasedOperationsContext         **source_based_operations_context_ptr_array;
+    PictureManagerContext                 *picture_manager_context_ptr;
+    RateControlContext                    *rate_control_context_ptr;
+    ModeDecisionConfigurationContext     **mode_decision_configuration_context_ptr_array;
+    EncDecContext                        **enc_dec_context_ptr_array;
+    EntropyCodingContext                 **entropy_coding_context_ptr_array;
+    DlfContext                           **dlf_context_ptr_array;
+    CdefContext_t                        **cdef_context_ptr_array;
+    RestContext                          **rest_context_ptr_array;
+    PacketizationContext                  *packetization_context_ptr;
 
     // System Resource Managers
     EbSystemResource                     *input_buffer_resource_ptr;
@@ -131,7 +150,6 @@ typedef struct EbEncHandle
     EbFifo                              **cdef_results_producer_fifo_ptr_array;
     EbFifo                              **rest_results_producer_fifo_ptr_array;
 
-
     // Inter-Process Consumer Fifos
     EbFifo                              **input_buffer_consumer_fifo_ptr_array;
     EbFifo                             ***output_stream_buffer_consumer_fifo_ptr_dbl_array;
@@ -155,12 +173,6 @@ typedef struct EbEncHandle
     // Callbacks
     EbCallback                          **app_callback_ptr_array;
 
-    // Memory Map
-    EbMemoryMapEntry                       *memory_map;
-    uint32_t                                memory_map_index;
-    uint64_t                                total_lib_memory;
-
 } EbEncHandle;
-
 
 #endif // EbEncHandle_h

@@ -32,23 +32,13 @@
 #include "EbIntraPrediction.h"
 #include "EbBitstreamUnit.h"
 #include "EbPacketizationProcess.h"
-
+#include "EbModeDecisionProcess.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-    /*!\brief OBU types. */
-    typedef enum ATTRIBUTE_PACKED 
-    {
-        OBU_SEQUENCE_HEADER        = 1,
-        OBU_TEMPORAL_DELIMITER     = 2,
-        OBU_FRAME_HEADER           = 3,
-        OBU_TILE_GROUP             = 4,
-        OBU_METADATA               = 5,
-        OBU_FRAME                  = 6,
-        OBU_REDUNDANT_FRAME_HEADER = 7,
-        OBU_PADDING                = 15,
-    } obuType;
 
+#define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
+#define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
     /**************************************
      * Extern Function Declarations
      **************************************/
@@ -59,7 +49,6 @@ extern "C" {
         PictureControlSet     *picture_control_set_ptr,
         EntropyCoder          *entropy_coder_ptr,
         EbPictureBufferDesc   *coeff_ptr);
-
 
     extern EbErrorType encode_slice_finish(
         EntropyCoder        *entropy_coder_ptr);
@@ -74,23 +63,27 @@ extern "C" {
         EB_SLICE               slice_type);
 
     extern EbErrorType av1_tu_estimate_coeff_bits(
-        PictureControlSet                    *picture_control_set_ptr,
-        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
-        CodingUnit                           *cu_ptr,
-        uint32_t                                  tu_origin_index,
-        uint32_t                                  tu_chroma_origin_index,
-        EntropyCoder                         *entropy_coder_ptr,
-        EbPictureBufferDesc                  *coeff_buffer_sb,
-        uint32_t                                 y_eob,
-        uint32_t                                 cb_eob,
-        uint32_t                                 cr_eob,
-        uint64_t                                 *y_tu_coeff_bits,
-        uint64_t                                 *cb_tu_coeff_bits,
-        uint64_t                                 *cr_tu_coeff_bits,
-        TxSize                                 txsize,
-        TxSize                                 txsize_uv,
-        COMPONENT_TYPE                          component_type,
-        EbAsm                                  asm_type);
+        struct ModeDecisionContext         *md_context,
+        uint8_t                             allow_update_cdf,
+        FRAME_CONTEXT                      *ec_ctx,
+        PictureControlSet                  *picture_control_set_ptr,
+        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+        uint32_t                            tu_origin_index,
+        uint32_t                            tu_chroma_origin_index,
+        EntropyCoder                       *entropy_coder_ptr,
+        EbPictureBufferDesc                *coeff_buffer_sb,
+        uint32_t                            y_eob,
+        uint32_t                            cb_eob,
+        uint32_t                            cr_eob,
+        uint64_t                            *y_tu_coeff_bits,
+        uint64_t                            *cb_tu_coeff_bits,
+        uint64_t                            *cr_tu_coeff_bits,
+        TxSize                               txsize,
+        TxSize                               txsize_uv,
+        TxType                               tx_type,
+        TxType                               tx_type_uv,
+        COMPONENT_TYPE                       component_type,
+        EbAsm                                asm_type);
 
     extern EbErrorType copy_rbsp_bitstream_to_payload(
         Bitstream *bitstream_ptr,
@@ -99,30 +92,29 @@ extern "C" {
         uint32_t      *output_buffer_size,
         EncodeContext         *encode_context_ptr);
 
-
     //**********************************************************************************************************//
     //onyxc_int.h
     static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
-        return pcs_ptr->av1_frame_type == KEY_FRAME || pcs_ptr->av1_frame_type == INTRA_ONLY_FRAME;
+        return pcs_ptr->frm_hdr.frame_type == KEY_FRAME || pcs_ptr->frm_hdr.frame_type == INTRA_ONLY_FRAME;
     }
 
     static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
-        return pcs_ptr->av1_frame_type == S_FRAME;
+        return pcs_ptr->frm_hdr.frame_type == S_FRAME;
     }
 
     // Returns 1 if this frame might allow mvs from some reference frame.
 
     static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
         SequenceControlSet    *scs_ptr) {
-        return !pcs_ptr->error_resilient_mode &&
-            scs_ptr->enable_ref_frame_mvs &&
-            scs_ptr->enable_order_hint && !frame_is_intra_only(pcs_ptr);
+        return !pcs_ptr->frm_hdr.error_resilient_mode &&
+            scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
+            scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
     }
 
     // Returns 1 if this frame might use warped_motion
     static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
         SequenceControlSet    *scs_ptr) {
-        return !pcs_ptr->error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
+        return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
             scs_ptr->static_config.enable_warped_motion;
     }
 
@@ -140,7 +132,7 @@ extern "C" {
 
     //*******************************************************************************************//
     // bitwriter_buffer.h
-    struct AomWriteBitBuffer 
+    struct AomWriteBitBuffer
     {
         uint8_t *bit_buffer;
         uint32_t bit_offset;
@@ -177,6 +169,9 @@ extern "C" {
     }
 
     void get_txb_ctx(
+#if INCOMPLETE_SB_FIX
+        SequenceControlSet *sequence_control_set_ptr,
+#endif
         const int32_t               plane,
         NeighborArrayUnit     *dc_sign_level_coeff_neighbor_array,
         uint32_t                  cu_origin_x,
@@ -205,7 +200,7 @@ extern "C" {
         NeighborArrayUnit     *mode_type_neighbor_array,
         NeighborArrayUnit     *inter_pred_dir_neighbor_array,
         NeighborArrayUnit     *ref_frame_type_neighbor_array);
-
+    extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
     // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
     // ALTREF.
     //extern int32_t get_pred_context_brfarf2_or_arf(const MacroBlockD *xd);
@@ -261,7 +256,6 @@ extern "C" {
     // For the bit to signal whether the single reference is ALTREF2_FRAME or
     // BWDREF_FRAME, knowing that it shall be either of these 2 choices.
     extern int32_t av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
-
 
     extern EbErrorType write_frame_header_av1(
         Bitstream *bitstream_ptr,

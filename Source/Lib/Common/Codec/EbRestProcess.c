@@ -19,10 +19,9 @@
 #include "EbRestProcess.h"
 #include "EbEncDecResults.h"
 
-#include "EbEncDecTasks.h"
+#include "EbThreads.h"
 #include "EbPictureDemuxResults.h"
 #include "EbReferenceObject.h"
-
 
 void ReconOutput(
     PictureControlSet    *picture_control_set_ptr,
@@ -32,7 +31,7 @@ void av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
 void CopyStatisticsToRefObject(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
-void PsnrCalculations(
+void psnr_calculations(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
 void PadRefAndSetFlags(
@@ -54,11 +53,21 @@ void restoration_seg_search(
     uint32_t                segment_index);
 void rest_finish_search(Macroblock *x, Av1Common *const cm);
 
+static void rest_context_dctor(EbPtr p)
+{
+    RestContext *obj = (RestContext*)p;
+    EB_DELETE(obj->temp_lf_recon_picture_ptr);
+    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+    EB_DELETE(obj->trial_frame_rst);
+    EB_DELETE(obj->org_rec_frame);
+    EB_FREE(obj->rst_tmpbuf);
+}
+
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
 EbErrorType rest_context_ctor(
-    RestContext **context_dbl_ptr,
+    RestContext           *context_ptr,
     EbFifo                *rest_input_fifo_ptr,
     EbFifo                *rest_output_fifo_ptr ,
     EbFifo                *picture_demux_fifo_ptr,
@@ -68,16 +77,13 @@ EbErrorType rest_context_ctor(
     uint32_t                max_input_luma_height
    )
 {
-    EbErrorType return_error = EB_ErrorNone;
-    RestContext *context_ptr;
-    EB_MALLOC(RestContext*, context_ptr, sizeof(RestContext), EB_N_PTR);
-    *context_dbl_ptr = context_ptr;
+
+    context_ptr->dctor = rest_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->rest_input_fifo_ptr = rest_input_fifo_ptr;
     context_ptr->rest_output_fifo_ptr = rest_output_fifo_ptr;
     context_ptr->picture_demux_fifo_ptr = picture_demux_fifo_ptr;
-
 
     {
         EbPictureBufferDescInitData initData;
@@ -93,25 +99,19 @@ EbErrorType rest_context_ctor(
         initData.bot_padding = AOM_BORDER_IN_PIXELS;
         initData.split_mode = EB_FALSE;
 
-        return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->trial_frame_rst,
+        EB_NEW(
+            context_ptr->trial_frame_rst,
+            eb_picture_buffer_desc_ctor,
             (EbPtr)&initData);
 
-        if (return_error == EB_ErrorInsufficientResources) {
-            return EB_ErrorInsufficientResources;
-        }
+        EB_NEW(
+            context_ptr->org_rec_frame,
+            eb_picture_buffer_desc_ctor,
+            (EbPtr)&initData);
 
-         return_error = eb_picture_buffer_desc_ctor(
-            (EbPtr*)&context_ptr->org_rec_frame,
-                (EbPtr)&initData);
-
-         EB_MALLOC(int32_t *, context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE, EB_N_PTR);
-
-
+         EB_MALLOC(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
-    context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
-    context_ptr->temp_lf_recon_picture_ptr = (EbPictureBufferDesc *)EB_NULL;
     EbPictureBufferDescInitData tempLfReconDescInitData;
     tempLfReconDescInitData.max_width = (uint16_t)max_input_luma_width;
     tempLfReconDescInitData.max_height = (uint16_t)max_input_luma_height;
@@ -126,17 +126,18 @@ EbErrorType rest_context_ctor(
 
     if (is16bit) {
         tempLfReconDescInitData.bit_depth = EB_16BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture16bit_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture16bit_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&tempLfReconDescInitData);
     }
     else {
         tempLfReconDescInitData.bit_depth = EB_8BIT;
-        return_error = eb_recon_picture_buffer_desc_ctor(
-            (EbPtr*)&(context_ptr->temp_lf_recon_picture_ptr),
+        EB_NEW(
+            context_ptr->temp_lf_recon_picture_ptr,
+            eb_recon_picture_buffer_desc_ctor,
             (EbPtr)&tempLfReconDescInitData);
     }
-
 
     return EB_ErrorNone;
 }
@@ -162,13 +163,12 @@ void   get_own_recon(
         uint16_t*  org_ptr_cb = (uint16_t*)org_rec->buffer_cb + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb;
         uint16_t*  org_ptr_cr = (uint16_t*)org_rec->buffer_cr + org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr;
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r) {
-            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width << 1);
-        }
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height; ++r)
+            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->seq_header.max_frame_width << 1);
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2) << 1);
-            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2) << 1);
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height / 2; ++r) {
+            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->seq_header.max_frame_width / 2) << 1);
+            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->seq_header.max_frame_width / 2) << 1);
         }
     }
     else {
@@ -186,17 +186,15 @@ void   get_own_recon(
         uint8_t *  org_ptr_cb = &((org_rec->buffer_cb)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cb]);
         uint8_t *  org_ptr_cr = &((org_rec->buffer_cr)[org_rec->origin_x / 2 + org_rec->origin_y / 2 * org_rec->stride_cr]);
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height; ++r) {
-            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->luma_width);
-        }
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height; ++r)
+            memcpy(org_ptr + r * org_rec->stride_y, rec_ptr + r * recon_picture_ptr->stride_y, sequence_control_set_ptr->seq_header.max_frame_width);
 
-        for (int r = 0; r < sequence_control_set_ptr->luma_height / 2; ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->luma_width / 2));
-            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->luma_width / 2));
+        for (int r = 0; r < sequence_control_set_ptr->seq_header.max_frame_height / 2; ++r) {
+            memcpy(org_ptr_cb + r * org_rec->stride_cb, rec_ptr_cb + r * recon_picture_ptr->stride_cb, (sequence_control_set_ptr->seq_header.max_frame_width / 2));
+            memcpy(org_ptr_cr + r * org_rec->stride_cr, rec_ptr_cr + r * recon_picture_ptr->stride_cr, (sequence_control_set_ptr->seq_header.max_frame_width / 2));
         }
     }
 }
-
 
 /******************************************************
  * Rest Kernel
@@ -207,6 +205,7 @@ void* rest_kernel(void *input_ptr)
     RestContext                            *context_ptr = (RestContext*)input_ptr;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
+    FrameHeader                           *frm_hdr;
 
     //// Input
     EbObjectWrapper                       *cdef_results_wrapper_ptr;
@@ -219,9 +218,7 @@ void* rest_kernel(void *input_ptr)
     PictureDemuxResults                   *picture_demux_results_rtr;
     // SB Loop variables
 
-
     for (;;) {
-
         // Get Cdef Results
         eb_get_full_object(
             context_ptr->rest_input_fifo_ptr,
@@ -230,12 +227,12 @@ void* rest_kernel(void *input_ptr)
         cdef_results_ptr = (CdefResults*)cdef_results_wrapper_ptr->object_ptr;
         picture_control_set_ptr = (PictureControlSet*)cdef_results_ptr->picture_control_set_wrapper_ptr->object_ptr;
         sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+        frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
         uint8_t lcuSizeLog2 = (uint8_t)Log2f(sequence_control_set_ptr->sb_size_pix);
         EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
-
-        if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0)
+        if (sequence_control_set_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0)
         {
             get_own_recon(sequence_control_set_ptr, picture_control_set_ptr, context_ptr, is16bit);
 
@@ -269,7 +266,7 @@ void* rest_kernel(void *input_ptr)
         picture_control_set_ptr->tot_seg_searched_rest++;
         if (picture_control_set_ptr->tot_seg_searched_rest == picture_control_set_ptr->rest_segments_total_count)
         {
-            if (sequence_control_set_ptr->enable_restoration && picture_control_set_ptr->parent_pcs_ptr->allow_intrabc == 0) {
+            if (sequence_control_set_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
                 rest_finish_search(
                     picture_control_set_ptr->parent_pcs_ptr->av1x,
                     picture_control_set_ptr->parent_pcs_ptr->av1_cm);
@@ -300,7 +297,6 @@ void* rest_kernel(void *input_ptr)
             }
             cm->sg_frame_ep = best_ep;
 
-
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
                 CopyStatisticsToRefObject(
@@ -308,86 +304,25 @@ void* rest_kernel(void *input_ptr)
                     sequence_control_set_ptr);
             }
 
-            //// PSNR Calculation
-            //if (sequence_control_set_ptr->static_config.stat_report) {
-            //    PsnrCalculations(
-            //        picture_control_set_ptr,
-            //        sequence_control_set_ptr);
-            //}
+            // PSNR Calculation
+            if (sequence_control_set_ptr->static_config.stat_report)
+                psnr_calculations(
+                    picture_control_set_ptr,
+                    sequence_control_set_ptr);
 
             // Pad the reference picture and set up TMVP flag and ref POC
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 PadRefAndSetFlags(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
-
-            if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
-            {
-                EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-                const uint32_t  SrclumaOffSet = input_picture_ptr->origin_x + input_picture_ptr->origin_y    *input_picture_ptr->stride_y;
-                const uint32_t  SrccbOffset = (input_picture_ptr->origin_x >> 1) + (input_picture_ptr->origin_y >> 1)*input_picture_ptr->stride_cb;
-                const uint32_t  SrccrOffset = (input_picture_ptr->origin_x >> 1) + (input_picture_ptr->origin_y >> 1)*input_picture_ptr->stride_cr;
-
-                EbReferenceObject   *referenceObject = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-                EbPictureBufferDesc *refDenPic = referenceObject->ref_den_src_picture;
-                const uint32_t           ReflumaOffSet = refDenPic->origin_x + refDenPic->origin_y    *refDenPic->stride_y;
-                const uint32_t           RefcbOffset = (refDenPic->origin_x >> 1) + (refDenPic->origin_y >> 1)*refDenPic->stride_cb;
-                const uint32_t           RefcrOffset = (refDenPic->origin_x >> 1) + (refDenPic->origin_y >> 1)*refDenPic->stride_cr;
-
-                uint16_t  verticalIdx;
-
-                for (verticalIdx = 0; verticalIdx < refDenPic->height; ++verticalIdx)
-                {
-                    EB_MEMCPY(refDenPic->buffer_y + ReflumaOffSet + verticalIdx * refDenPic->stride_y,
-                        input_picture_ptr->buffer_y + SrclumaOffSet + verticalIdx * input_picture_ptr->stride_y,
-                        input_picture_ptr->width);
-                }
-
-                for (verticalIdx = 0; verticalIdx < input_picture_ptr->height / 2; ++verticalIdx)
-                {
-                    EB_MEMCPY(refDenPic->buffer_cb + RefcbOffset + verticalIdx * refDenPic->stride_cb,
-                        input_picture_ptr->buffer_cb + SrccbOffset + verticalIdx * input_picture_ptr->stride_cb,
-                        input_picture_ptr->width / 2);
-
-                    EB_MEMCPY(refDenPic->buffer_cr + RefcrOffset + verticalIdx * refDenPic->stride_cr,
-                        input_picture_ptr->buffer_cr + SrccrOffset + verticalIdx * input_picture_ptr->stride_cr,
-                        input_picture_ptr->width / 2);
-                }
-
-                generate_padding(
-                    refDenPic->buffer_y,
-                    refDenPic->stride_y,
-                    refDenPic->width,
-                    refDenPic->height,
-                    refDenPic->origin_x,
-                    refDenPic->origin_y);
-
-                generate_padding(
-                    refDenPic->buffer_cb,
-                    refDenPic->stride_cb,
-                    refDenPic->width >> 1,
-                    refDenPic->height >> 1,
-                    refDenPic->origin_x >> 1,
-                    refDenPic->origin_y >> 1);
-
-                generate_padding(
-                    refDenPic->buffer_cr,
-                    refDenPic->stride_cr,
-                    refDenPic->width >> 1,
-                    refDenPic->height >> 1,
-                    refDenPic->origin_x >> 1,
-                    refDenPic->origin_y >> 1);
-            }
             if (sequence_control_set_ptr->static_config.recon_enabled) {
                 ReconOutput(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
             }
 
-
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
             {
-
                 // Get Empty PicMgr Results
                 eb_get_empty_object(
                     context_ptr->picture_demux_fifo_ptr,
@@ -403,8 +338,6 @@ void* rest_kernel(void *input_ptr)
                 eb_post_full_object(picture_demux_results_wrapper_ptr);
             }
 
-
-
             // Get Empty rest Results to EC
             eb_get_empty_object(
                 context_ptr->rest_output_fifo_ptr,
@@ -412,17 +345,14 @@ void* rest_kernel(void *input_ptr)
             rest_results_ptr = (struct RestResults*)rest_results_wrapper_ptr->object_ptr;
             rest_results_ptr->picture_control_set_wrapper_ptr = cdef_results_ptr->picture_control_set_wrapper_ptr;
             rest_results_ptr->completed_lcu_row_index_start = 0;
-            rest_results_ptr->completed_lcu_row_count = ((sequence_control_set_ptr->luma_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
+            rest_results_ptr->completed_lcu_row_count = ((sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_size_pix - 1) >> lcuSizeLog2);
             // Post Rest Results
             eb_post_full_object(rest_results_wrapper_ptr);
-
         }
         eb_release_mutex(picture_control_set_ptr->rest_search_mutex);
 
-
         // Release input Results
         eb_release_object(cdef_results_wrapper_ptr);
-
     }
 
     return EB_NULL;

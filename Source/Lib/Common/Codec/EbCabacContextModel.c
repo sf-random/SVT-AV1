@@ -856,29 +856,30 @@ static const AomCdfProb default_delta_lf_cdf[CDF_SIZE(DELTA_LF_PROBS + 1)] = {
     AOM_CDF4(28160, 32120, 32677)
 };
 
-//// FIXME(someone) need real defaults here
-//static const AomCdfProb default_seg_tree_cdf[CDF_SIZE(MAX_SEGMENTS)] = {
-//    AOM_CDF8(4096, 8192, 12288, 16384, 20480, 24576, 28672)
-//};
-//
-//static const AomCdfProb
-//default_segment_pred_cdf[SEG_TEMPORAL_PRED_CTXS][CDF_SIZE(2)] = {
-//    { AOM_CDF2(128 * 128) }, { AOM_CDF2(128 * 128) }, { AOM_CDF2(128 * 128) }
-//};
-//
-//static const AomCdfProb
-//default_spatial_pred_seg_tree_cdf[SPATIAL_PREDICTION_PROBS][CDF_SIZE(
-//MAX_SEGMENTS)] = {
-//    {
-//        AOM_CDF8(5622, 7893, 16093, 18233, 27809, 28373, 32533),
-//    },
-//    {
-//        AOM_CDF8(14274, 18230, 22557, 24935, 29980, 30851, 32344),
-//    },
-//    {
-//        AOM_CDF8(27527, 28487, 28723, 28890, 32397, 32647, 32679),
-//    },
-//};
+
+static const AomCdfProb default_seg_tree_cdf[CDF_SIZE(MAX_SEGMENTS)] = {
+    AOM_CDF8(4096, 8192, 12288, 16384, 20480, 24576, 28672)
+};
+
+static const AomCdfProb
+default_segment_pred_cdf[SEG_TEMPORAL_PRED_CTXS][CDF_SIZE(2)] = {
+    { AOM_CDF2(128 * 128) }, { AOM_CDF2(128 * 128) }, { AOM_CDF2(128 * 128) }
+};
+
+static const AomCdfProb
+default_spatial_pred_seg_tree_cdf[SPATIAL_PREDICTION_PROBS][CDF_SIZE(
+MAX_SEGMENTS)] = {
+    {
+        AOM_CDF8(5622, 7893, 16093, 18233, 27809, 28373, 32533),
+    },
+    {
+        AOM_CDF8(14274, 18230, 22557, 24935, 29980, 30851, 32344),
+    },
+    {
+        AOM_CDF8(27527, 28487, 28723, 28890, 32397, 32647, 32679),
+    },
+};
+
 
 static const AomCdfProb default_tx_size_cdf[MAX_TX_CATS][TX_SIZE_CONTEXTS]
 [CDF_SIZE(MAX_TX_DEPTH + 1)] = {
@@ -986,8 +987,8 @@ void init_mode_probs(FRAME_CONTEXT *fc) {
     av1_copy(fc->interintra_cdf, default_interintra_cdf);
     av1_copy(fc->wedge_interintra_cdf, default_wedge_interintra_cdf);
     av1_copy(fc->interintra_mode_cdf, default_interintra_mode_cdf);
-    //   av1_copy(fc->seg.pred_cdf, default_segment_pred_cdf);
-   //    av1_copy(fc->seg.tree_cdf, default_seg_tree_cdf);
+    av1_copy(fc->seg.pred_cdf, default_segment_pred_cdf);
+    av1_copy(fc->seg.tree_cdf, default_seg_tree_cdf);
     av1_copy(fc->filter_intra_cdfs, default_filter_intra_cdfs);
     av1_copy(fc->filter_intra_mode_cdf, default_filter_intra_mode_cdf);
     av1_copy(fc->switchable_restore_cdf, default_switchable_restore_cdf);
@@ -1004,9 +1005,8 @@ void init_mode_probs(FRAME_CONTEXT *fc) {
     av1_copy(fc->skip_mode_cdfs, default_skip_mode_cdfs);
     av1_copy(fc->skip_cdfs, default_skip_cdfs);
     av1_copy(fc->intra_inter_cdf, default_intra_inter_cdf);
-    //    for (int32_t i = 0; i < SPATIAL_PREDICTION_PROBS; i++)
-    //        av1_copy(fc->seg.spatial_pred_seg_cdf[i],
-    //        default_spatial_pred_seg_tree_cdf[i]);
+    for (uint32_t i = 0; i < SPATIAL_PREDICTION_PROBS; i++)
+        av1_copy(fc->seg.spatial_pred_seg_cdf[i], default_spatial_pred_seg_tree_cdf[i]);
     av1_copy(fc->tx_size_cdf, default_tx_size_cdf);
     av1_copy(fc->delta_q_cdf, default_delta_q_cdf);
     av1_copy(fc->delta_lf_cdf, default_delta_lf_cdf);
@@ -4468,9 +4468,8 @@ void av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
 
 static void reset_cdf_symbol_counter(AomCdfProb *cdf_ptr, int32_t num_cdfs,
     int32_t cdf_stride, int32_t nsymbs) {
-    for (int32_t i = 0; i < num_cdfs; i++) {
+    for (int32_t i = 0; i < num_cdfs; i++)
         cdf_ptr[i * cdf_stride + nsymbs] = 0;
-    }
 }
 
 #define RESET_CDF_COUNTER(cname, nsymbs) \
@@ -4550,9 +4549,9 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     reset_nmv_counter(&fc->nmvc);
     reset_nmv_counter(&fc->ndvc);
     RESET_CDF_COUNTER(fc->intrabc_cdf, 2);
-    //  RESET_CDF_COUNTER(fc->seg.tree_cdf, MAX_SEGMENTS);
-    //  RESET_CDF_COUNTER(fc->seg.pred_cdf, 2);
-    //  RESET_CDF_COUNTER(fc->seg.spatial_pred_seg_cdf, MAX_SEGMENTS);
+    RESET_CDF_COUNTER(fc->seg.tree_cdf, MAX_SEGMENTS);
+    RESET_CDF_COUNTER(fc->seg.pred_cdf, 2);
+    RESET_CDF_COUNTER(fc->seg.spatial_pred_seg_cdf, MAX_SEGMENTS);
     RESET_CDF_COUNTER(fc->filter_intra_cdfs, 2);
     RESET_CDF_COUNTER(fc->filter_intra_mode_cdf, FILTER_INTRA_MODES);
     RESET_CDF_COUNTER(fc->switchable_restore_cdf, RESTORE_SWITCHABLE_TYPES);
@@ -4563,15 +4562,12 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
         CDF_SIZE(UV_INTRA_MODES));
     RESET_CDF_COUNTER(fc->uv_mode_cdf[1], UV_INTRA_MODES);
     for (int32_t i = 0; i < PARTITION_CONTEXTS; i++) {
-        if (i < 4) {
+        if (i < 4)
             RESET_CDF_COUNTER_STRIDE(fc->partition_cdf[i], 4, CDF_SIZE(10));
-        }
-        else if (i < 16) {
+        else if (i < 16)
             RESET_CDF_COUNTER(fc->partition_cdf[i], 10);
-        }
-        else {
+        else
             RESET_CDF_COUNTER_STRIDE(fc->partition_cdf[i], 8, CDF_SIZE(10));
-        }
     }
     RESET_CDF_COUNTER(fc->switchable_interp_cdf, SWITCHABLE_FILTERS);
     RESET_CDF_COUNTER(fc->kf_y_cdf, INTRA_MODES);
@@ -4583,9 +4579,8 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     RESET_CDF_COUNTER(fc->tx_size_cdf[3], MAX_TX_DEPTH + 1);
     RESET_CDF_COUNTER(fc->delta_q_cdf, DELTA_Q_PROBS + 1);
     RESET_CDF_COUNTER(fc->delta_lf_cdf, DELTA_LF_PROBS + 1);
-    for (int32_t i = 0; i < FRAME_LF_COUNT; i++) {
+    for (int32_t i = 0; i < FRAME_LF_COUNT; i++)
         RESET_CDF_COUNTER(fc->delta_lf_multi_cdf[i], DELTA_LF_PROBS + 1);
-    }
     RESET_CDF_COUNTER_STRIDE(fc->intra_ext_tx_cdf[1], 7, CDF_SIZE(TX_TYPES));
     RESET_CDF_COUNTER_STRIDE(fc->intra_ext_tx_cdf[2], 5, CDF_SIZE(TX_TYPES));
     RESET_CDF_COUNTER_STRIDE(fc->inter_ext_tx_cdf[1], 16, CDF_SIZE(TX_TYPES));
@@ -4594,7 +4589,6 @@ void av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
     RESET_CDF_COUNTER(fc->cfl_sign_cdf, CFL_JOINT_SIGNS);
     RESET_CDF_COUNTER(fc->cfl_alpha_cdf, CFL_ALPHABET_SIZE);
 }
-
 
 /********************************************************************************************************************************/
 

@@ -13,8 +13,8 @@ extern "C" {
 #include "stdint.h"
 #include "EbSvtAv1.h"
 
-#define  TILES    1
-
+#define TILES    1
+#define ALT_REF_OVERLAY_APP                         1
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
@@ -23,11 +23,9 @@ extern "C" {
 
 #define EB_BUFFERFLAG_EOS           0x00000001  // signals the last packet of the stream
 #define EB_BUFFERFLAG_SHOW_EXT      0x00000002  // signals that the packet contains a show existing frame at the end
-#define EB_BUFFERFLAG_HAS_TD        0x00000004  // signals that the packet contains a show existing frame at the end
-
-#if TILES
-#define EB_BUFFERFLAG_TG            0x00000004  // signals that the packet contains Tile Group header
-#endif
+#define EB_BUFFERFLAG_HAS_TD        0x00000004  // signals that the packet contains a TD
+#define EB_BUFFERFLAG_IS_ALT_REF    0x00000008  // signals that the packet contains an ALT_REF frame
+#define EB_BUFFERFLAG_ERROR_MASK    0xFFFFFFF0  // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
@@ -115,7 +113,6 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 frame_rate_numerator;
-
     /* Frame rate denominator. When zero, the encoder will use -fps if
      * FrameRateNumerator is also zero, otherwise an error is returned.
      *
@@ -162,7 +159,7 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 64. */
     uint32_t                 sb_sz;
 
-    /* Super block size
+    /* Super block size (mm-signal)
     *
     * Default is 128. */
     uint32_t                 super_block_size;
@@ -170,6 +167,11 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 4. */
     uint32_t                 partition_depth;
+
+    /* Instruct the library to calculate the recon to source for PSNR calculation
+    *
+    * Default is 0.*/
+    uint32_t                 stat_report;
 
     // Quantization
     /* Initial quantization parameter for the Intra pictures used under constant
@@ -242,6 +244,11 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 search_area_height;
 
     // MD Parameters
+    /* Enable the use of HBD (10-bit) at the mode decision step
+    *
+    * Default is 0. */
+    EbBool                   enable_hbd_mode_decision;
+
     /* Enable the use of Constrained Intra, which yields sending two picture
      * parameter sets in the elementary streams .
      *
@@ -283,6 +290,16 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 min_qp_allowed;
+
+    /* Flag to signal the content being a screen sharing content type
+    *
+    * Default is 2. */
+    uint32_t                 screen_content_mode;
+
+    /* Enable adaptive quantization within a frame using segmentation.
+     *
+     * Default is FALSE. */
+     EbBool                 enable_adaptive_quantization;
 
     // Tresholds
     /* Flag to signal that the input yuv is HDR10 BT2020 using SMPTE ST2048, requires
@@ -362,18 +379,14 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 0. */
     uint32_t                 recon_enabled;
-#if TILES
     /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
         * into 2
         * Default is 0. */
     int32_t                  tile_columns;
     int32_t                  tile_rows;
-#endif
 
 /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
-
-    uint32_t                 stat_report;
 
     /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
     *
@@ -407,8 +420,13 @@ typedef struct EbSvtAv1EncConfiguration
 
     uint32_t                 ten_bit_format;
 
+    /* Variables to control the use of ALT-REF (temporally filtered frames)
+    */
+    EbBool                   enable_altrefs;
+    uint8_t                  altref_strength;
+    uint8_t                  altref_nframes;
+    EbBool                   enable_overlays;
 } EbSvtAv1EncConfiguration;
-
 
     /* STEP 1: Call the library to construct a Component Handle.
      *
@@ -447,6 +465,13 @@ typedef struct EbSvtAv1EncConfiguration
     EB_API EbErrorType eb_svt_enc_stream_header(
         EbComponentType           *svt_enc_component,
         EbBufferHeaderType       **output_stream_ptr);
+
+    /* OPTIONAL: Release stream headers at init time.
+     *
+     * Parameter:
+     * @ *stream_header_ptr  stream header buffer. */
+    EB_API EbErrorType eb_svt_release_enc_stream_header(
+        EbBufferHeaderType        *stream_header_ptr);
 
     /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
      *

@@ -9,6 +9,8 @@
 #include "EbDefinitions.h"
 #include "EbSyntaxElements.h"
 #include "EbMotionVectorUnit.h"
+#include "EbObject.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +38,7 @@ extern "C" {
 
     typedef struct NeighborArrayUnit
     {
+        EbDctor    dctor;
         uint8_t   *left_array;
         uint8_t   *top_array;
         uint8_t   *top_left_array;
@@ -47,11 +50,11 @@ extern "C" {
         uint8_t    granularity_normal_log2;
         uint8_t    granularity_top_left;
         uint8_t    granularity_top_left_log2;
-
     } NeighborArrayUnit;
 
     typedef struct NeighborArrayUnit32
     {
+        EbDctor    dctor;
         uint32_t   *left_array;
         uint32_t   *top_array;
         uint32_t   *top_left_array;
@@ -63,11 +66,10 @@ extern "C" {
         uint8_t    granularity_normal_log2;
         uint8_t    granularity_top_left;
         uint8_t    granularity_top_left_log2;
-
     } NeighborArrayUnit32;
 
     extern EbErrorType neighbor_array_unit_ctor32(
-        NeighborArrayUnit32 **na_unit_dbl_ptr,
+        NeighborArrayUnit32 *na_unit_ptr,
         uint32_t   max_picture_width,
         uint32_t   max_picture_height,
         uint32_t   unit_size,
@@ -75,9 +77,8 @@ extern "C" {
         uint32_t   granularity_top_left,
         uint32_t   type_mask);
 
-
     extern EbErrorType neighbor_array_unit_ctor(
-        NeighborArrayUnit **na_unit_dbl_ptr,
+        NeighborArrayUnit *na_unit_ptr,
         uint32_t   max_picture_width,
         uint32_t   max_picture_height,
         uint32_t   unit_size,
@@ -88,7 +89,6 @@ extern "C" {
     extern void neighbor_array_unit_reset(NeighborArrayUnit *na_unit_ptr);
 
     extern void neighbor_array_unit_reset32(NeighborArrayUnit32 *na_unit_ptr);
-
 
     /*************************************************
      * Neighbor Array Unit Get Left Index
@@ -150,6 +150,14 @@ extern "C" {
         uint32_t             block_width,
         uint32_t             block_height);
 
+    void update_recon_neighbor_array16bit(
+        NeighborArrayUnit   *na_unit_ptr,
+        uint16_t            *src_ptr_top,
+        uint16_t            *src_ptr_left,
+        uint32_t             pic_origin_x,
+        uint32_t             pic_origin_y,
+        uint32_t             block_width,
+        uint32_t             block_height);
 
     void copy_neigh_arr(
         NeighborArrayUnit *na_src,
