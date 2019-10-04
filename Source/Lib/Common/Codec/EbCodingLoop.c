@@ -2510,12 +2510,12 @@ EB_EXTERN void av1_encode_pass(
 
                                 EbPictureBufferDesc * ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
 
-                                if (is16bit)
-                                    ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
 
-                                if (is16bit)
+                                if (is16bit) {
+                                    ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
                                     av1_inter_prediction_hbd(
                                         picture_control_set_ptr,
+                                        cu_ptr->interp_filters,
                                         cu_ptr->prediction_unit_array->ref_frame_type,
                                         cu_ptr,
                                         &context_ptr->mv_unit,
@@ -2531,38 +2531,39 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->cu_origin_y,
                                         (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth,
                                         asm_type);
-                                else
-                                av1_inter_prediction(
-                                    picture_control_set_ptr,
-                                    cu_ptr->interp_filters,
-                                    cu_ptr,
-                                    cu_ptr->prediction_unit_array->ref_frame_type,
-                                    &context_ptr->mv_unit,
-                                    1,// use_intrabc,
-                                    1,
-                                    &cu_ptr->interinter_comp,
+                                } else {
+                                    av1_inter_prediction(
+                                        picture_control_set_ptr,
+                                        cu_ptr->interp_filters,
+                                        cu_ptr,
+                                        cu_ptr->prediction_unit_array->ref_frame_type,
+                                        &context_ptr->mv_unit,
+                                        1,// use_intrabc,
+                                        1,
+                                        &cu_ptr->interinter_comp,
 #if II_COMP_FLAG
-                                    &sb_ptr->tile_info,
-                                    ep_luma_recon_neighbor_array,
-                                    ep_cb_recon_neighbor_array ,
-                                    ep_cr_recon_neighbor_array ,
-                                    cu_ptr->is_interintra_used,
-                                    cu_ptr->interintra_mode,
-                                    cu_ptr->use_wedge_interintra,
-                                    cu_ptr->interintra_wedge_index,
+                                        &sb_ptr->tile_info,
+                                        ep_luma_recon_neighbor_array,
+                                        ep_cb_recon_neighbor_array ,
+                                        ep_cr_recon_neighbor_array ,
+                                        cu_ptr->is_interintra_used,
+                                        cu_ptr->interintra_mode,
+                                        cu_ptr->use_wedge_interintra,
+                                        cu_ptr->interintra_wedge_index,
 
 #endif
-                                    context_ptr->cu_origin_x,
-                                    context_ptr->cu_origin_y,
-                                    blk_geom->bwidth,
-                                    blk_geom->bheight,
-                                    ref_pic_list0,
-                                    0,
-                                    recon_buffer,
-                                    context_ptr->cu_origin_x,
-                                    context_ptr->cu_origin_y,
-                                    EB_TRUE,
-                                    asm_type);
+                                        context_ptr->cu_origin_x,
+                                        context_ptr->cu_origin_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic_list0,
+                                        0,
+                                        recon_buffer,
+                                        context_ptr->cu_origin_x,
+                                        context_ptr->cu_origin_y,
+                                        EB_TRUE,
+                                        asm_type);
+                                }
                             }
                             else
                             {
@@ -3007,6 +3008,7 @@ EB_EXTERN void av1_encode_pass(
                             if (is16bit) {
                                 av1_inter_prediction_hbd(
                                     picture_control_set_ptr,
+                                    cu_ptr->interp_filters,
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     cu_ptr,
                                     &context_ptr->mv_unit,

@@ -224,6 +224,7 @@ void precompute_intra_pred_for_inter_intra(
     }
 }
 #endif
+
  void combine_interintra(INTERINTRA_MODE mode,
     int8_t use_wedge_interintra, int wedge_index,
     int wedge_sign, BlockSize bsize,
@@ -231,6 +232,7 @@ void precompute_intra_pred_for_inter_intra(
     int compstride, const uint8_t *interpred,
     int interstride, const uint8_t *intrapred,
     int intrastride);
+
 void inter_intra_search(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr,
@@ -285,29 +287,6 @@ void inter_intra_search(
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
 
     pred_desc.buffer_y = tmp_buf;
-
-    //int64_t skip_sse_sb = INT64_MAX;
-    //int32_t skip_txfm_sb = 0;
-    //int32_t rs = 0;
-    //int64_t rd = INT64_MAX;
-
-
-    //interpolation_filter_search(
-    //                picture_control_set_ptr,
-    //                &pred_desc, //output,
-    //                context_ptr,
-    //                candidate_buffer_ptr,
-    //                mv_unit,
-    //                ref_pic_list0,
-    //                ref_pic_list1,
-    //                sequence_control_set_ptr->encode_context_ptr->asm_type,
-    //                &rd,
-    //                &rs,
-    //                &skip_txfm_sb,
-    //                &skip_sse_sb);
-
-
-
 
     //we call the regular inter prediction path here(no compound)
     av1_inter_prediction(
