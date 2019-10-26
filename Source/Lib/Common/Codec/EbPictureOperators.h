@@ -30,6 +30,22 @@ extern "C" {
         uint32_t  height,
         EbAsm     asm_type);
 
+#if PREDICT_NSQ_SHAPE
+    extern EbErrorType picture_copy8_bit(
+        EbPictureBufferDesc  *src,
+        uint32_t                src_luma_origin_index,
+        uint32_t                src_chroma_origin_index,
+        EbPictureBufferDesc  *dst,
+        uint32_t                dst_luma_origin_index,
+        uint32_t                dst_chroma_origin_index,
+        uint32_t                area_width,
+        uint32_t                area_height,
+        uint32_t                chroma_area_width,
+        uint32_t                chroma_area_height,
+        uint32_t                component_mask,
+        EbAsm                   asm_type);
+#endif
+
     extern EbErrorType picture_full_distortion32_bits(
         EbPictureBufferDesc  *coeff,
         uint32_t                coeff_luma_origin_index,
@@ -378,6 +394,17 @@ extern "C" {
         uint32_t  area_width,
         uint32_t  area_height);
 
+    void residual_kernel_subsampled(
+        uint8_t   *input,
+        uint32_t   input_stride,
+        uint8_t   *pred,
+        uint32_t   pred_stride,
+        int16_t  *residual,
+        uint32_t   residual_stride,
+        uint32_t   area_width,
+        uint32_t   area_height,
+        uint8_t    last_line);
+
     static EbZeroCoeffType FUNC_TABLE pic_zero_out_coef_func_ptr_array[ASM_TYPE_TOTAL][5] = {
         // NON_AVX2
         {
@@ -402,28 +429,6 @@ extern "C" {
         compute8x8_satd_u8_sse4,
         // ASM_AVX2
         compute8x8_satd_u8_sse4
-    };
-
-    typedef uint64_t(*EbSpatialFullDistType)(
-        uint8_t   *input,
-        uint32_t   input_offset,
-        uint32_t   input_stride,
-        uint8_t   *recon,
-        uint32_t   recon_offset,
-        uint32_t   recon_stride,
-        uint32_t   area_width,
-        uint32_t   area_height);
-
-    static EbSpatialFullDistType FUNC_TABLE spatial_full_distortion_kernel_func_ptr_array[ASM_TYPE_TOTAL] = {
-        // NON_AVX2
-        spatial_full_distortion_kernel_c,
-#ifndef NON_AVX512_SUPPORT
-        // ASM_AVX512
-        spatial_full_distortion_kernel_avx512
-#else
-        // ASM_AVX2
-        spatial_full_distortion_kernel_avx2
-#endif
     };
 
     void picture_addition_kernel16_bit(

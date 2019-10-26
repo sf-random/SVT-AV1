@@ -6,12 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "EbAppString.h"
 #include "EbAppConfig.h"
 #include "EbAppInputy4m.h"
 
 #ifdef _WIN32
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -28,6 +30,10 @@
 #define OUTPUT_RECON_TOKEN              "-o"
 #define ERROR_FILE_TOKEN                "-errlog"
 #define QP_FILE_TOKEN                   "-qp-file"
+#if TWO_PASS
+#define INPUT_STAT_FILE_TOKEN           "-input-stat-file"
+#define OUTPUT_STAT_FILE_TOKEN          "-output-stat-file"
+#endif
 #define STAT_FILE_TOKEN                 "-stat-file"
 #define WIDTH_TOKEN                     "-w"
 #define HEIGHT_TOKEN                    "-h"
@@ -44,6 +50,9 @@
 #define ENCODER_COLOR_FORMAT            "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN                   "-enc-mode"
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+#define ENCMODE2P_TOKEN                 "-enc-mode-2p"
+#endif
 #define HIERARCHICAL_LEVELS_TOKEN       "-hierarchical-levels" // no Eval
 #define PRED_STRUCT_TOKEN               "-pred-struct"
 #define INTRA_PERIOD_TOKEN              "-intra-period"
@@ -57,6 +66,8 @@
 #define INTRA_REFRESH_TYPE_TOKEN        "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN       "-dlf"
 #define LOCAL_WARPED_ENABLE_TOKEN       "-local-warp"
+#define OBMC_TOKEN                      "-obmc"
+#define FILTER_INTRA_TOKEN              "-filter-intra"
 #define USE_DEFAULT_ME_HME_TOKEN        "-use-default-me-hme"
 #define HME_ENABLE_TOKEN                "-hme"
 #define HME_L0_ENABLE_TOKEN             "-hme-l0"
@@ -85,7 +96,6 @@
 // --- end: ALTREF_FILTERING_SUPPORT
 #define HBD_MD_ENABLE_TOKEN             "-hbd-md"
 #define CONSTRAINED_INTRA_ENABLE_TOKEN  "-constrd-intra"
-#define IMPROVE_SHARPNESS_TOKEN         "-sharp"
 #define HDR_INPUT_TOKEN                 "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN       "-rc"
 #define TARGET_BIT_RATE_TOKEN           "-tbr"
@@ -104,6 +114,7 @@
 #define ASM_TYPE_TOKEN                  "-asm"
 #define THREAD_MGMNT                    "-lp"
 #define TARGET_SOCKET                   "-ss"
+#define UNRESTRICTED_MOTION_VECTOR      "-umv"
 #define CONFIG_FILE_COMMENT_CHAR    '#'
 #define CONFIG_FILE_NEWLINE_CHAR    '\n'
 #define CONFIG_FILE_RETURN_CHAR     '\r'
@@ -122,24 +133,40 @@
 /**********************************
  * Set Cfg Functions
  **********************************/
-static void SetCfgInputFile                     (const char *value, EbConfig *cfg)
+static void SetCfgInputFile(const char *filename, EbConfig *cfg)
 {
-    if (cfg->input_file && cfg->input_file != stdin)
+    if (cfg->input_file && !cfg->input_file_is_fifo)
         fclose(cfg->input_file);
-    if (!strcmp(value, "stdin"))
+
+    if (!filename) {
+        cfg->input_file = NULL;
+        return;
+    }
+
+    if (!strcmp(filename, "stdin"))
         cfg->input_file = stdin;
     else
-        FOPEN(cfg->input_file, value, "rb");
-    /* if input is a YUV4MPEG2 (y4m) file, read header and parse parameters */
-    if(cfg->input_file!=NULL){
-        if(check_if_y4m(cfg) == EB_TRUE)
-            cfg->y4m_input = EB_TRUE;
-        else
-            cfg->y4m_input = EB_FALSE;
-    }else{
+        FOPEN(cfg->input_file, filename, "rb");
+
+    if (cfg->input_file == NULL) {
         cfg->y4m_input = EB_FALSE;
+        cfg->input_file_is_fifo = EB_FALSE;
+        return;
     }
+
+#ifdef _WIN32
+    cfg->input_file_is_fifo =
+    GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
+#else
+    int fd = fileno(cfg->input_file);
+    struct stat statbuf;
+    fstat(fd, &statbuf);
+    cfg->input_file_is_fifo = S_ISFIFO(statbuf.st_mode);
+#endif
+
+    cfg->y4m_input = check_if_y4m(cfg);
 };
+
 static void SetCfgStreamFile                    (const char *value, EbConfig *cfg)
 {
     if (cfg->bitstream_file) { fclose(cfg->bitstream_file); }
@@ -160,6 +187,21 @@ static void SetCfgQpFile                        (const char *value, EbConfig *cf
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file,value, "r");
 };
+#if TWO_PASS
+static void set_input_stat_file(const char *value, EbConfig *cfg)
+{
+    if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
+    FOPEN(cfg->input_stat_file, value, "rb");
+};
+static void set_output_stat_file(const char *value, EbConfig *cfg)
+{
+    if (cfg->output_stat_file) { fclose(cfg->output_stat_file); }
+    FOPEN(cfg->output_stat_file, value, "wb");
+};
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) { cfg->snd_pass_enc_mode = (uint8_t)strtoul(value, NULL, 0); };
+#endif
+#endif
 static void SetCfgStatFile(const char *value, EbConfig *cfg)
 {
     if (cfg->stat_file) { fclose(cfg->stat_file); }
@@ -196,6 +238,8 @@ static void SetCfgUseQpFile                     (const char *value, EbConfig *cf
 static void SetCfgFilmGrain                     (const char *value, EbConfig *cfg) { cfg->film_grain_denoise_strength = strtol(value, NULL, 0); };  //not bool to enable possible algorithm extension in the future
 static void SetDisableDlfFlag                   (const char *value, EbConfig *cfg) {cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableObmcFlag                   (const char *value, EbConfig *cfg) {cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableFilterIntraFlag            (const char *value, EbConfig *cfg) {cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeFlag                    (const char *value, EbConfig *cfg) {cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeLevel0Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetTileRow                          (const char *value, EbConfig *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
@@ -234,7 +278,6 @@ static void SetEnableOverlays                   (const char *value, EbConfig *cf
 // --- end: ALTREF_FILTERING_SUPPORT
 static void SetEnableHBDModeDecision            (const char *value, EbConfig *cfg) {cfg->enable_hbd_mode_decision = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableConstrainedIntra           (const char *value, EbConfig *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};
-static void SetImproveSharpness                 (const char *value, EbConfig *cfg) {cfg->improve_sharpness               = (EbBool)strtol(value,  NULL, 0);};
 static void SetHighDynamicRangeInput            (const char *value, EbConfig *cfg) {cfg->high_dynamic_range_input            = strtol(value,  NULL, 0);};
 static void SetProfile                          (const char *value, EbConfig *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
 static void SetTier                             (const char *value, EbConfig *cfg) {cfg->tier                             = strtol(value,  NULL, 0);};
@@ -258,6 +301,7 @@ static void SetLatencyMode                      (const char *value, EbConfig *cf
 static void SetAsmType                          (const char *value, EbConfig *cfg)  {cfg->asm_type                   = (uint32_t)strtoul(value, NULL, 0);};
 static void SetLogicalProcessors                (const char *value, EbConfig *cfg)  {cfg->logical_processors         = (uint32_t)strtoul(value, NULL, 0);};
 static void SetTargetSocket                     (const char *value, EbConfig *cfg)  {cfg->target_socket              = (int32_t)strtol(value, NULL, 0);};
+static void SetUnrestrictedMotionVector         (const char *value, EbConfig *cfg)  {cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);};
 
 enum cfg_type{
     SINGLE_INPUT,   // Configuration parameters that have only 1 value input
@@ -285,6 +329,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
     { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
     { SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", SetCfgStatFile },
+#if TWO_PASS
+    { SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file },
+    { SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file },
+#endif
 
     // Interlaced Video
     { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
@@ -297,6 +345,9 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", SetBufferedInput },
     { SINGLE_INPUT, BASE_LAYER_SWITCH_MODE_TOKEN, "BaseLayerSwitchMode", SetBaseLayerSwitchMode },
     { SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", SetencMode},
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    { SINGLE_INPUT, ENCMODE2P_TOKEN, "EncoderMode2p", set_snd_pass_enc_mode},
+#endif
     { SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", SetCfgIntraPeriod },
     { SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", SetCfgIntraRefreshType },
     { SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", SetFrameRate },
@@ -325,6 +376,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", SetDisableDlfFlag },
     // LOCAL WARPED MOTION
     { SINGLE_INPUT, LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", SetEnableLocalWarpedMotionFlag },
+    // OBMC
+    { SINGLE_INPUT, OBMC_TOKEN, "Obmc", SetEnableObmcFlag },
+    // Filter Intra
+    { SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", SetEnableFilterIntraFlag },
     // ME Tools
     { SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", SetCfgUseDefaultMeHme },
     { SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", SetEnableHmeFlag },
@@ -337,7 +392,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", SetCfgSearchAreaWidth },
     { SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", SetCfgSearchAreaHeight },
     // HME Parameters
-    { SINGLE_INPUT, NUM_HME_SEARCH_WIDTH_TOKEN, "number_hme_search_region_in_width", SetCfgNumberHmeSearchRegionInWidth },
+    { SINGLE_INPUT, NUM_HME_SEARCH_WIDTH_TOKEN, "NumberHmeSearchRegionInWidth", SetCfgNumberHmeSearchRegionInWidth },
     { SINGLE_INPUT, NUM_HME_SEARCH_HEIGHT_TOKEN, "NumberHmeSearchRegionInHeight", SetCfgNumberHmeSearchRegionInHeight },
     { SINGLE_INPUT, HME_SRCH_T_L0_WIDTH_TOKEN, "HmeLevel0TotalSearchAreaWidth", SetCfgHmeLevel0TotalSearchAreaWidth },
     { SINGLE_INPUT, HME_SRCH_T_L0_HEIGHT_TOKEN, "HmeLevel0TotalSearchAreaHeight", SetCfgHmeLevel0TotalSearchAreaHeight },
@@ -349,9 +404,9 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, THREAD_MGMNT, "logicalProcessors", SetLogicalProcessors },
     { SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", SetTargetSocket },
     // Optional Features
+    { SINGLE_INPUT, UNRESTRICTED_MOTION_VECTOR, "UnrestrictedMotionVector", SetUnrestrictedMotionVector },
 
 //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
-    { SINGLE_INPUT, IMPROVE_SHARPNESS_TOKEN,"ImproveSharpness", SetImproveSharpness},
     { SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", SetHighDynamicRangeInput },
     // Latency
     { SINGLE_INPUT, INJECTOR_TOKEN, "Injector", SetInjector },
@@ -395,6 +450,10 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->error_log_file                         = stderr;
     config_ptr->qp_file                               = NULL;
     config_ptr->stat_file                             = NULL;
+#if TWO_PASS
+    config_ptr->input_stat_file                       = NULL;
+    config_ptr->output_stat_file                      = NULL;
+#endif
 
     config_ptr->frame_rate                            = 30 << 16;
     config_ptr->frame_rate_numerator                   = 0;
@@ -425,15 +484,20 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->max_qp_allowed                       = 63;
     config_ptr->min_qp_allowed                       = 10;
 
-    config_ptr->enable_adaptive_quantization         = EB_FALSE;
+    config_ptr->enable_adaptive_quantization         = 2;
     config_ptr->base_layer_switch_mode               = 0;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    config_ptr->snd_pass_enc_mode                     = MAX_ENC_PRESET + 1;
+#endif
     config_ptr->intra_period                          = -2;
     config_ptr->intra_refresh_type                     = 1;
     config_ptr->hierarchical_levels                   = 4;
     config_ptr->pred_structure                        = 2;
     config_ptr->disable_dlf_flag                     = EB_FALSE;
     config_ptr->enable_warped_motion                 = EB_FALSE;
+    config_ptr->enable_obmc                          = EB_TRUE;
+    config_ptr->enable_filter_intra                  = EB_TRUE;
     config_ptr->ext_block_flag                       = EB_FALSE;
     config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;
@@ -466,14 +530,12 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->hme_level2_search_area_in_height_array[0]  = 1;
     config_ptr->hme_level2_search_area_in_height_array[1]  = 1;
     config_ptr->screen_content_mode                  = 2;
-    config_ptr->enable_hbd_mode_decision             = EB_FALSE;
+    config_ptr->enable_hbd_mode_decision             = EB_TRUE;
     config_ptr->constrained_intra                    = 0;
     config_ptr->film_grain_denoise_strength          = 0;
 
     // Thresholds
     config_ptr->high_dynamic_range_input             = 0;
-
-    config_ptr->improve_sharpness                    = 0;
 
     // Annex A parameters
     config_ptr->profile                              = 0;
@@ -508,6 +570,9 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->performance_context.sum_luma_psnr       = 0;
     config_ptr->performance_context.sum_cr_psnr         = 0;
     config_ptr->performance_context.sum_cb_psnr         = 0;
+    config_ptr->performance_context.sum_luma_sse        = 0;
+    config_ptr->performance_context.sum_cr_sse          = 0;
+    config_ptr->performance_context.sum_cb_sse          = 0;
     config_ptr->performance_context.sum_qp              = 0;
 
     // ASM Type
@@ -520,6 +585,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->processed_byte_count                   = 0;
     config_ptr->tile_rows                            = 0;
     config_ptr->tile_columns                         = 0;
+    config_ptr->unrestricted_motion_vector           = EB_TRUE;
 
     config_ptr->byte_count_since_ivf                 = 0;
     config_ptr->ivf_count                            = 0;
@@ -546,7 +612,8 @@ void eb_config_dtor(EbConfig *config_ptr)
     }
 
     if (config_ptr->input_file) {
-        if (config_ptr->input_file != stdin) fclose(config_ptr->input_file);
+        if (!config_ptr->input_file_is_fifo)
+            fclose(config_ptr->input_file);
         config_ptr->input_file = (FILE *) NULL;
     }
 
@@ -574,6 +641,16 @@ void eb_config_dtor(EbConfig *config_ptr)
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *) NULL;
     }
+#if TWO_PASS
+    if (config_ptr->input_stat_file) {
+        fclose(config_ptr->input_stat_file);
+        config_ptr->input_stat_file = (FILE *)NULL;
+    }
+    if (config_ptr->output_stat_file) {
+        fclose(config_ptr->output_stat_file);
+        config_ptr->output_stat_file = (FILE *)NULL;
+    }
+#endif
     return;
 }
 
@@ -809,7 +886,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         fprintf(config->error_log_file, "Error instance %u: Could not find QP file, UseQpFile is set to 1\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
     if (config->separate_fields > 1) {
         fprintf(config->error_log_file, "Error Instance %u: Invalid SeperateFields Input\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -851,14 +927,22 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         fprintf(config->error_log_file, "Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
+    // OBMC
+    if (config->enable_obmc != 0 && config->enable_obmc != 1) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid OBMC flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
+        return_error = EB_ErrorBadParameter;
+    }
+    // Filter Intra prediction
+    if (config->enable_filter_intra != 0 && config->enable_filter_intra != 1) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
+        return_error = EB_ErrorBadParameter;
+    }
 
     // HBD mode decision
     if (config->enable_hbd_mode_decision != 0 && config->enable_hbd_mode_decision != 1) {
         fprintf(config->error_log_file, "Error instance %u: Invalid HBD mode decision flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->enable_hbd_mode_decision == 1 && config->encoder_bit_depth != 10)
-        config->enable_hbd_mode_decision = 0;
 
     return return_error;
 }
@@ -911,10 +995,10 @@ uint32_t get_help(
     if (FindToken(argc, argv, HELP_TOKEN, config_string) == 0) {
         int32_t token_index = -1;
 
-        printf("\n%-25s\t%-25s\t%-25s\t\n\n" ,"TOKEN", "DESCRIPTION", "INPUT TYPE");
-        printf("%-25s\t%-25s\t%-25s\t\n" ,"-nch", "NumberOfChannels", "Single input");
+        printf("\n%-25s\t%-25s\t%s\n\n" ,"TOKEN", "DESCRIPTION", "INPUT TYPE");
+        printf("%-25s\t%-25s\t%s\n" ,"-nch", "NumberOfChannels", "Single input");
         while (config_entry[++token_index].token != NULL)
-            printf("%-25s\t%-25s\t%-25s\t\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
+            printf("%-25s\t%-25s\t%s\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
         return 1;
     }
     else
@@ -979,10 +1063,10 @@ int32_t ComputeFramesToBeEncoded(
     uint64_t currLoc;
 
     if (config->input_file) {
-        currLoc = ftello64(config->input_file); // get current fp location
-        fseeko64(config->input_file, 0L, SEEK_END);
-        fileSize = ftello64(config->input_file);
-        fseeko64(config->input_file, currLoc, SEEK_SET); // seek back to that location
+        currLoc = ftello(config->input_file); // get current fp location
+        fseeko(config->input_file, 0L, SEEK_END);
+        fileSize = ftello(config->input_file);
+        fseeko(config->input_file, currLoc, SEEK_SET); // seek back to that location
     }
 
     frameSize = config->input_padded_width * config->input_padded_height; // Luma
@@ -1231,8 +1315,8 @@ EbErrorType read_command_line(
 
                 // Assuming no errors, add padding to width and height
                 if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->input_padded_width  = configs[index]->source_width;
-                    configs[index]->input_padded_height = configs[index]->source_height;
+                    configs[index]->input_padded_width = configs[index]->source_width + configs[index]->source_width % 8;
+                    configs[index]->input_padded_height = configs[index]->source_height + configs[index]->source_width % 8;
                 }
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
