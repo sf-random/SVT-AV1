@@ -620,7 +620,6 @@ set_default_svt_configuration (EbSvtAv1EncConfiguration * svt_config)
   svt_config->pred_structure = PROP_PRED_STRUCTURE_DEFAULT;
   svt_config->scene_change_detection = PROP_SCD_DEFAULT;
   svt_config->look_ahead_distance = (uint32_t)~0;
-  svt_config->frames_to_be_encoded = 0;
   svt_config->rate_control_mode = PROP_RC_MODE_DEFAULT;
   svt_config->target_bit_rate = PROP_BITRATE_DEFAULT;
   svt_config->max_qp_allowed = PROP_QP_MAX_DEFAULT;
@@ -676,7 +675,7 @@ set_default_svt_configuration (EbSvtAv1EncConfiguration * svt_config)
   svt_config->super_block_size = 128;
   svt_config->partition_depth = 4;
   svt_config->enable_qp_scaling_flag = 0;
-  svt_config->asm_type = 1;
+  svt_config->use_cpu_flags = CPU_FLAGS_ALL;
 }
 
 GstFlowReturn

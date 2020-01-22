@@ -7,7 +7,8 @@
 #define EbDecStruct_h
 
 #include "EbPictureBufferDesc.h"
-#include "EbPictureControlSet.h"
+//#include "../../Encoder/Codec/EbPictureControlSet.h"
+#include "EbBlockStructures.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbAv1Structs.h"
@@ -17,9 +18,9 @@ extern "C" {
 #endif
 
 /* TO enable some debug checks for coeff producer and consumer */
-#define SVT_DEC_COEFF_DEBUG    0
+#define SVT_DEC_COEFF_DEBUG 0
 
 #ifdef __cplusplus
-    }
+}
 #endif
 #endif // EbDecStruct_h

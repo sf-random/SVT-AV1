@@ -31,7 +31,7 @@
 #include "TxfmRef.h"
 namespace svt_av1_test_reference {
 
-double get_scale_factor(Txfm2DFlipCfg &cfg, const int tx_width,
+double get_scale_factor(Txfm2dFlipCfg &cfg, const int tx_width,
                         const int tx_height) {
     const int8_t *shift = cfg.shift;
     const int amplify_bit = shift[0] + shift[1] + shift[2];
@@ -146,6 +146,7 @@ void reference_idtx_1d(const double *in, double *out, int size) {
     case 8: scale = 2; break;
     case 16: scale = 2 * Sqrt2; break;
     case 32: scale = 4; break;
+    case 64: scale = 4 * Sqrt2; break;
     default: assert(0); break;
     }
 

@@ -6,32 +6,22 @@
 #ifndef EBMCP_H
 #define EBMCP_H
 
-#include "EbMcp_SSE2.h"
-
-#include "EbDefinitions.h"
-#include "EbUtility.h"
-#include "EbPictureBufferDesc.h"
-#include "EbPictureControlSet.h"
-#include "EbSequenceControlSet.h"
-#include "EbMotionEstimationContext.h"
-#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define USE_PRE_COMPUTE             0
+#define USE_PRE_COMPUTE 0
 
-    typedef struct MotionCompensationPredictionContext
-    {
-        EbDctor                  dctor;
-        EbByte                   avc_style_mcp_intermediate_result_buf0;                    // For short filter in MD
-        EbByte                   avc_style_mcp_intermediate_result_buf1;                    // For short filter in MD
+typedef struct MotionCompensationPredictionContext {
+    EbDctor dctor;
+    EbByte  avc_style_mcp_intermediate_result_buf0; // For short filter in MD
+    EbByte  avc_style_mcp_intermediate_result_buf1; // For short filter in MD
 #if !USE_PRE_COMPUTE
-        EbByte                   avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf; // For short filter in MD
+    EbByte avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf; // For short filter in MD
 #endif
-    } MotionCompensationPredictionContext;
+} MotionCompensationPredictionContext;
 
-    /** InterpolationFilter()
+/** InterpolationFilter()
             is generally defined interpolation filter function.
             There is a whole group of these functions, each of which corresponds to a particular
             integer/fractional sample, and the function is indexed in a function pointer array
@@ -58,32 +48,17 @@ extern "C" {
             is_last indicates if there is any further filtering (interpolation filtering)
             afterwards.
      */
-    extern EbErrorType in_loop_me_context_ctor(
-        SsMeContext                         *ss_mecontext);
+extern void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
+                             uint32_t original_src_height, uint32_t padding_width,
+                             uint32_t padding_height);
 
-    extern void generate_padding(
-        EbByte              src_pic,
-        uint32_t            src_stride,
-        uint32_t            original_src_width,
-        uint32_t            original_src_height,
-        uint32_t            padding_width,
-        uint32_t            padding_height);
+extern void generate_padding16_bit(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
+                                   uint32_t original_src_height, uint32_t padding_width,
+                                   uint32_t padding_height);
 
-    extern void generate_padding16_bit(
-        EbByte              src_pic,
-        uint32_t            src_stride,
-        uint32_t            original_src_width,
-        uint32_t            original_src_height,
-        uint32_t            padding_width,
-        uint32_t            padding_height);
-
-    extern void pad_input_picture(
-        EbByte              src_pic,
-        uint32_t            src_stride,
-        uint32_t            original_src_width,
-        uint32_t            original_src_height,
-        uint32_t            pad_right,
-        uint32_t            pad_bottom);
+extern void pad_input_picture(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
+                              uint32_t original_src_height, uint32_t pad_right,
+                              uint32_t pad_bottom);
 
 #ifdef __cplusplus
 }

@@ -54,7 +54,7 @@ static const eb_cdef_filter_block_8x8_16_func
 };
 
 using cdef_dir_param_t =
-    ::testing::tuple<cdef_filter_block_func, cdef_filter_block_func, BlockSize,
+    ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize,
                      int, int, eb_cdef_filter_block_8x8_16_func>;
 
 /**
@@ -234,7 +234,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
 
         prepare_data(0, 1);
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (dir = 0; dir < 8; dir++) {
@@ -267,7 +267,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
             }
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (dir = 0; dir < 8; dir++) {
@@ -300,13 +300,13 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
             }
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -325,8 +325,8 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
     int bsize_;
     int boundary_;
     int bd_;
-    cdef_filter_block_func cdef_tst_;
-    cdef_filter_block_func cdef_ref_;
+    CdefFilterBlockFunc cdef_tst_;
+    CdefFilterBlockFunc cdef_ref_;
     SVTRandom rnd_;
     static const int size_ = 8;
     static const int ysize_ = size_ + 2 * CDEF_VBORDER;
@@ -546,7 +546,7 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
         const int coeff_shift = bd - 8;
         SVTRandom skip_rnd_(0, 1);
         for (int k = 0; k < 100; ++k) {
-            cdef_list dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+            CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
             int cdef_count = 0;
 
             // generate the cdef list randomly
@@ -609,7 +609,7 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
         const int coeff_shift = bd - 8;
         SVTRandom skip_rnd_(0, 1);
         for (int k = 0; k < 100; ++k) {
-            cdef_list dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+            CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
             int cdef_count = 0;
 
             // generate the cdef list randomly
@@ -722,8 +722,8 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
                                                           fast,
                                                           start_gi,
                                                           end_gi);
-                for (int l = 0; l < sizeof(search_one_dual_func_table) /
-                                        sizeof(*search_one_dual_func_table);
+                for (int l = 0; l < (int) (sizeof(search_one_dual_func_table) /
+                                        sizeof(*search_one_dual_func_table));
                      ++l) {
                     uint64_t best_mse_tst =
                         search_one_dual_func_table[l](lvl_luma_tst,
@@ -784,8 +784,8 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
     memset(lvl_luma_tst, 0, sizeof(lvl_luma_tst));
     memset(lvl_chroma_tst, 0, sizeof(lvl_chroma_tst));
 
-    for (int i = 0; i < sizeof(search_one_dual_func_table) /
-                            sizeof(*search_one_dual_func_table);
+    for (int i = 0; i < (int) (sizeof(search_one_dual_func_table) /
+                            sizeof(*search_one_dual_func_table));
          ++i) {
         for (int j = 0; j < nb_strengths; ++j) {
             uint64_t best_mse_ref, best_mse_tst;
@@ -794,7 +794,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
             uint64_t middle_time_seconds, middle_time_useconds;
             uint64_t finish_time_seconds, finish_time_useconds;
             const uint64_t num_loop = 10000;
-            EbStartTime(&start_time_seconds, &start_time_useconds);
+            eb_start_time(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t k = 0; k < num_loop; k++) {
                 best_mse_ref = search_one_dual_c(lvl_luma_ref,
@@ -807,7 +807,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                  end_gi);
             }
 
-            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+            eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t k = 0; k < num_loop; k++) {
                 best_mse_tst = search_one_dual_func_table[i](lvl_luma_tst,
@@ -820,7 +820,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                              end_gi);
             }
 
-            EbStartTime(&finish_time_seconds, &finish_time_useconds);
+            eb_start_time(&finish_time_seconds, &finish_time_useconds);
 
             ASSERT_EQ(best_mse_tst, best_mse_ref)
                 << "search_one_dual_avx2 return different best mse "
@@ -834,12 +834,12 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                     << " nb_strength: " << nb_strengths << " pos " << h;
             }
 
-            EbComputeOverallElapsedTimeMs(start_time_seconds,
+            eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                           start_time_useconds,
                                           middle_time_seconds,
                                           middle_time_useconds,
                                           &time_c);
-            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                           middle_time_useconds,
                                           finish_time_seconds,
                                           finish_time_useconds,
