@@ -131,14 +131,14 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
 };
 
 /* Prediction structure used to construct GOP. There are two main structures
- * supported, which are: Low Delay (P or B) and Random Access.
+ * supported, which are: Low Delay (P or b) and Random Access.
  *
  * In Low Delay structure, pictures within a mini GOP refer to the previously
  * encoded pictures in display order. In other words, pictures with display
  * order N can only be referenced by pictures with display order greater than
  * N, and it can only refer pictures with picture order lower than N. The Low
  * Delay structure can be flat structured (e.g. IPPPPPPP...) or hierarchically
- * structured. B/b pictures can be used instead of P/p pictures. However, the
+ * structured. b/b pictures can be used instead of P/p pictures. However, the
  * reference picture list 0 and the reference picture list 1 will contain the
  * same reference picture.
  *
@@ -148,7 +148,7 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
  * #define EB_PRED_RANDOM_ACCESS   2
  * #define EB_PRED_TOTAL_COUNT     3
 
- * In Random Access structure, the B/b pictures can refer to reference pictures
+ * In Random Access structure, the b/b pictures can refer to reference pictures
  * from both directions (past and future).
  *
  * Default is 2. */
@@ -160,9 +160,9 @@ static const vector<uint8_t> valid_pred_structure = {
 static const vector<uint8_t> invalid_pred_structure = {
     EB_PRED_TOTAL_COUNT, EB_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID};
 
-/* Decides whether to use B picture or P picture in the base layer.
+/* Decides whether to use b picture or P picture in the base layer.
  *
- * 0 = B Picture.
+ * 0 = b Picture.
  * 1 = P Picture.
  *
  * Default is 0. */
@@ -170,7 +170,7 @@ static const vector<uint32_t> default_base_layer_switch_mode = {
     0,
 };
 static const vector<uint32_t> valid_base_layer_switch_mode = {
-    0,  // B Picture.
+    0,  // b Picture.
     1,  // P Picture
 };
 static const vector<uint32_t> invalid_base_layer_switch_mode = {
@@ -386,10 +386,10 @@ static const vector<uint32_t> valid_partition_depth = {
     1,
     2,
     3,
-    EB_MAX_LCU_DEPTH,
+    EB_MAX_SB_DEPTH,
 };
 static const vector<uint32_t> invalid_partition_depth = {
-    (EB_MAX_LCU_DEPTH + 1),
+    (EB_MAX_SB_DEPTH + 1),
 };
 
 // Quantization
@@ -507,6 +507,20 @@ static const vector<EbBool> invalid_enable_warped_motion = {
     // none
 };
 
+/* Global motion
+ *
+ * Default is 1. */
+static const vector<EbBool> default_enable_global_motion = {
+    EB_TRUE,
+};
+static const vector<EbBool> valid_enable_global_motion = {
+    EB_FALSE,
+    EB_TRUE,
+};
+static const vector<EbBool> invalid_enable_global_motion = {
+    // none
+};
+
 /* Flag to enable the use of default ME HME parameters.
  *
  * Default is 1. */
@@ -591,6 +605,21 @@ static const vector<uint32_t> invalid_search_area_height = {
 };
 
 // MD Parameters
+/* Palette Mode
+ *-1:Auto Mode(ON at level6 when SC is detected)
+ * 0:OFF
+ * 1:Slow    NIC=7/4/4
+ * 2:        NIC=7/2/2
+ * 3:        NIC=7/2/2 + No K means for non ref
+ * 4:        NIC=4/2/1
+ * 5:        NIC=4/2/1 + No K means for Inter frame
+ * 6:Fastest NIC=4/2/1 + No K means for non base + step for non base for
+ * most dominant
+ * Default is -1. */
+static const vector<int32_t> default_enable_palette = {-1};
+static const vector<int32_t> valid_enable_palette = {-1, 0, 1, 2, 3, 4, 5, 6};
+static const vector<int32_t> invalid_enable_palette = {-2, 7};
+
 /* Enable the use of Constrained Intra, which yields sending two picture
  * parameter sets in the elementary streams .
  *
@@ -707,7 +736,7 @@ static const vector<uint32_t> invalid_max_qp_allowed = {
  * There is a value check for min_qp_allowed in EbEncHandle.c :
  * else if (config->min_qp_allowed >= MAX_QP_VALUE) {
  *     SVT_LOG("Error instance %u: MinQpAllowed must be [0 - %d]\n",
- *         channelNumber + 1, MAX_QP_VALUE-1); return_error =
+ *         channel_number + 1, MAX_QP_VALUE-1); return_error =
  *         EB_ErrorBadParameter;
  * }
  * The maximum valid value should be MAX_QP_VALUE - 1.
@@ -746,7 +775,7 @@ static const vector<uint32_t> invalid_high_dynamic_range_input = {
     2,
 };
 
-/* Defined set of coding tools to create bitstream.
+/* Defined set of coding tools to create Bitstream.
  *
  * 1 = Main, allows bit depth of 8.
  * 2 = Main 10, allows bit depth of 8 to 10.
@@ -764,7 +793,7 @@ static const vector<uint32_t> invalid_profile = {
     MAX_PROFILES,
 };
 
-/* Constraints for bitstream in terms of max bitrate and max buffer size.
+/* Constraints for Bitstream in terms of max bitrate and max buffer size.
  *
  * 0 = Main, for most applications.
  * 1 = High, for demanding applications.
@@ -781,7 +810,7 @@ static const vector<uint32_t> invalid_tier = {
     2,
 };
 
-/* Constraints for bitstream in terms of max bitrate and max buffer size.
+/* Constraints for Bitstream in terms of max bitrate and max buffer size.
  *
  * 0 = auto determination.
  *
@@ -800,15 +829,29 @@ static const vector<uint32_t> invalid_level = {
  * 1 = up to AVX512, auto-select highest assembly instruction set supported.
  *
  * Default is 1. */
-static const vector<uint32_t> default_asm_type = {
-    1,
+static const vector<CPU_FLAGS> default_use_cpu_flags = {
+    CPU_FLAGS_ALL,
 };
-static const vector<uint32_t> valid_asm_type = {
-    0,
-    1,
+static const vector<CPU_FLAGS> valid_use_cpu_flags = {
+    CPU_FLAGS_MMX,
+    CPU_FLAGS_SSE,
+    CPU_FLAGS_SSE2,
+    CPU_FLAGS_SSE3,
+    CPU_FLAGS_SSSE3,
+    CPU_FLAGS_SSE4_1,
+    CPU_FLAGS_SSE4_2,
+    CPU_FLAGS_AVX,
+    CPU_FLAGS_AVX2,
+    CPU_FLAGS_AVX512F,
+    CPU_FLAGS_AVX512CD,
+    CPU_FLAGS_AVX512DQ,
+    CPU_FLAGS_AVX512ER,
+    CPU_FLAGS_AVX512PF,
+    CPU_FLAGS_AVX512BW,
+    CPU_FLAGS_AVX512VL,
 };
-static const vector<uint32_t> invalid_asm_type = {
-    2,
+static const vector<CPU_FLAGS> invalid_use_cpu_flags = {
+    CPU_FLAGS_INVALID
 };
 
 // Application Specific parameters

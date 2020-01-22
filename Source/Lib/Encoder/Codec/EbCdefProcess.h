@@ -6,37 +6,15 @@
 #ifndef EbCdefProcess_h
 #define EbCdefProcess_h
 
-#include "EbDefinitions.h"
-
 #include "EbSystemResourceManager.h"
-#include "EbPictureBufferDesc.h"
-#include "EbSequenceControlSet.h"
-#include "EbUtility.h"
-#include "EbPsnr.h"
-#include "EbPictureControlSet.h"
 #include "EbObject.h"
-/**************************************
- * Cdef Context
- **************************************/
-typedef struct CdefContext_s
-{
-    EbDctor                       dctor;
-    EbFifo                       *cdef_input_fifo_ptr;
-    EbFifo                       *cdef_output_fifo_ptr;
-} CdefContext_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType cdef_context_ctor(
-    CdefContext_t           *context_ptr,
-    EbFifo                       *cdef_input_fifo_ptr,
-    EbFifo                       *cdef_output_fifo_ptr,
-    EbBool                  is16bit,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height
-   );
+extern EbErrorType cdef_context_ctor(EbThreadContext *  thread_context_ptr,
+                                     const EbEncHandle *enc_handle_ptr, int index);
 
-extern void* cdef_kernel(void *input_ptr);
+extern void *cdef_kernel(void *input_ptr);
 
 #endif

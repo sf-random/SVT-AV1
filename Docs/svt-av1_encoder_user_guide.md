@@ -7,6 +7,8 @@
     - [Input Video Format](#input-video-format)
     - [Compressed 10-bit format](#compressed-10-bit-format)
     - [Running the encoder](#running-the-encoder)
+    - [Sample command lines](#sample-command-lines)
+    - [List of all configuration parameters](#list-of-all-configuration-parameters)
 3. [Legal Disclaimer](#legal-disclaimer)
 
 ## Introduction
@@ -99,7 +101,17 @@ For example, the following command encodes 100 frames of the YUV video sequence 
 
 It should be noted that not all the encoder parameters present in the `Sample.cfg` can be changed using the command line.
 
-#### List of all configuration parameters
+### Sample command lines
+
+Here are some sample encode command lines
+
+#### 1 pass fixed QP at maximum speed from 24fps yuv 1920x1080 input
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 0 -q 30 -enc-mode 8 -b output.ivf`
+
+#### 1 pass VBR 10000 Kbps at medium speed from 24fps yuv 1920x1080 input
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 10000 -enc-mode 5 -b output.ivf`
+
+### List of all configuration parameters
 
 The encoder parameters present in the `Sample.cfg` file are listed in this table below along with their status of support, command line parameter and the range of values that the parameters can take.
 
@@ -128,10 +140,12 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **FrameRateNumerator** | -fps-num | [0 - 2^64 -1] | 0 | Frame rate numerator e.g. 6000 |
 | **FrameRateDenominator** | -fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
 | **HierarchicalLevels** | -hierarchical-levels | [3 – 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
-| **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
+| **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes default. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
+| **TargetBitRate** | -tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
-| **RateControlMode** | -rc | [0 - 3] | 0 | 0 = CQP , 1 = ABR , 2 = ABR , 3 = CVBR |
+| **RateControlMode** | -rc | [0 - 2] | 0 | 0 = CQP , 1 = VBR , 2 = CVBR |
+| **VBVBufSize** | -vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
 | **AdaptiveQuantization** | -adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **UseDefaultMeHme** | -use-default-me-hme | [0 - 1] | 1 | 0 : Overwrite Default ME HME parameters1 : Use default ME HME parameters, dependent on width and height |
 | **HME** | -hme | [0 - 1] | 1 | Enable HME, 0 = OFF, 1 = ON |
@@ -140,6 +154,28 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HMELevel2** | -hme-l2 | [0 - 1] | Depends on input resolution | Enable HME Level 2 , 0 = OFF, 1 = ON |
 | **InLoopMeFlag** | -in-loop-me | [0 - 1] | Depends on –enc-mode | 0=ME on source samples, 1= ME on recon samples |
 | **LocalWarpedMotion** | -local-warp | [0 - 1] | 0 | Enable warped motion use , 0 = OFF, 1 = ON |
+| **RDOQ** | -rdoq | [0/1, -1 for default] | DEFAULT | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
+| **RestorationFilter** | -restoration-filtering | [0/1, -1 for default] | DEFAULT | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **FrameEndCdfUpdate** | -framend-cdf-upd-mode | [0/1, -1 for default] | DEFAULT | Enable frame end cdf update mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **CombineClass12** | -class-12 | [0/1, -1 for default] | DEFAULT | Enable combine MD Class1&2, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **EdgeSkipAngleIntra** | --intra-edge-skp | [0/1, -1 for default] | DEFAULT | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **InterIntraCompound** | -interintra-comp | [0/1, -1 for default] | DEFAULT | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **FractionalSearch64** | -frac-search-64 | [0/1, -1 for default] | DEFAULT | Enable fractional search for 64x64, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Mfmv** | -mfmv | [0/1, -1 for default] | DEFAULT | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **RedundantBlock** | -redundant-blk | [0/1, -1 for default] | DEFAULT | Enable redundant block, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Trellis** | -trellis | [0/1, -1 for default] | DEFAULT | Enable trellis quant coefficient optimization, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **SpatialSSEfl** | -spatial-sse-fl | [0/1, -1 for default] | DEFAULT | Enable spatial sse full loop, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Subpel** | -subpel | [0/1, -1 for default] | DEFAULT | Enable subpel, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **OverBoundryBlock** | -over-bndry-blk | [0/1, -1 for default] | DEFAULT | Enable over boundary block mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **NewNearestCombInjection** | -new-nrst-near-comb | [0/1, -1 for default] | DEFAULT | Enable new nearest near comb injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **nx4ParentMvInjection** | -nx4-4xn-mv-inject | [0/1, -1 for default] | DEFAULT | Enable nx4 4xn parent mv injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **PruneUnipredMe** | -prune-unipred-me | [0/1, -1 for default] | DEFAULT | Enable prune unipred at me, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **PruneRefRecPart** | -prune-ref-rec-part | [0/1, -1 for default] | DEFAULT | Enable prune prune ref frame for rec partitions, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **NsqTable** | --nsq-table-use | [0/1, -1 for default] | DEFAULT | Enable nsq table, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **RestorationFilter** | -restoration-filtering | [0/1, -1 for default] | DEFAULT | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Bipred3x3** | -bipred-3x3 | [0-2, -1 for default] | DEFAULT | Set bipred3x3 injection, 0 = OFF, 1 = ON FULL, 2 = Reduced set, -1 = DEFAULT|
+| **PredMe** | -pred-me | [0-5, -1 for default] | DEFAULT | Set predictive me level: <BR>-1 = DEFAULT<BR>0 = OFF <BR>1 = 7x5 full-pel search + sub-pel refinement off <BR>2 = 7x5 full-pel search +  (H + V) sub-pel refinement only = 4 half-pel + 4 quarter-pel = 8 positions + pred_me_distortion to pa_me_distortion deviation on <BR>3 = 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on <BR>4 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on <BR>5 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off |
+| **CompoundLevel** | -compound | [0-2, -1 for default] | DEFAULT | Set compound mode: <BR>-1 = DEFAULT<BR>0 = OFF: No compond mode search : AVG only <BR>1 = ON: compond mode search: AVG/DIST/DIFF <BR>2 = ON: AVG/DIST/DIFF/WEDGE |
 | **ExtBlockFlag** | -ext-block | [0 - 1] | Depends on –enc-mode | Enable the non-square block 0=OFF, 1= ON |
 | **ScreenContentMode** | -scm | [0 - 2] | 2 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
 | **SearchAreaWidth** | -search-w | [1 - 256] | Depends on input resolution | Search Area in Width |
@@ -158,11 +194,20 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **SceneChangeDetection** | -scd | [0 - 1] | 1 | Enables or disables the scene change detection algorithm |
 | **AsmType** | -asm | [0 - 1] | 1 | Assembly instruction set (0: Automatically select lowest assembly instruction set supported, 1: Automatically select highest assembly instruction set supported,) |
 | **LogicalProcessorNumber** | -lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
+| **UnpinSingleCoreExecution** | -unpin-lp1 | [0, 1] | 1 | Unpin the execution . If logical_processors is set to 1, this option does not set the execution to be pinned to core #0 when set to 1. this allows the execution of multiple encodes on the CPU without having to pin them to a specific mask  0=OFF, 1= ON |
 | **TargetSocket** | -ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
 | **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
 | **UnrestrictedMotionVector** | -umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
+| **PaletteMode** | -palette | [0 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
+| **OlpdRefinement** | -olpd-refinement | [0 - 1] | -1 | Enable open loop partitioning decision refinement (-1: DEFAULT (ON for M0, no SC, OFF otherwise), 0: OFF 1: ON for M0, error otherwise ) |
+| **ChromaMode** | -chroma-mode | [0-3, -1 for default] | DEFAULT | Chroma Mode <br>-1 = DEFAULT<br>0 = Full chroma search @ MD  <br>1 = Fast chroma search @ MD  <br>2 = Chroma blind @ MD + CFL @ EP <br>3 = Chroma blind @ MD + no CFL @ EP |
+| **SquareWeight** | -sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
+| **MDStage1PruneClassThreshold** | -mds1p-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
+| **MDStage1PruneCandThreshold** | -mds1p-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
+| **MDStage2PruneClassThreshold** | -mds2p-class-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2 |
+| **MDStage2PruneCandThreshold** | -mds2p-cand-th | 0 for off and any whole number percentage | 15 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 2 |
 
 ## Appendix A Encoder Parameters
 

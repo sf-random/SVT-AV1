@@ -47,10 +47,10 @@ extern "C" int32_t eb_aom_realloc_frame_buffer(
     Yv12BufferConfig* ybf, int32_t width, int32_t height, int32_t ss_x,
     int32_t ss_y, int32_t use_highbitdepth, int32_t border,
     int32_t byte_alignment, AomCodecFrameBuffer* fb,
-    aom_get_frame_buffer_cb_fn_t cb, void* cb_priv);
+    AomGetFrameBufferCbFn cb, void* cb_priv);
 
 /** setup_test_env is implemented in test/TestEnv.c */
-extern "C" void setup_test_env(EbAsm asm_type);
+extern "C" void setup_test_env();
 
 using SseCalcFunc = int64_t (*)(const Yv12BufferConfig*,
                                 const Yv12BufferConfig*);
@@ -88,7 +88,7 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
         memset(&tst_ref_, 0, sizeof(tst_ref_));
         memset(&lbd_src_, 0, sizeof(lbd_src_));
         memset(&lbd_ref_, 0, sizeof(lbd_ref_));
-        setup_test_env(ASM_AVX2);
+        setup_test_env();
     }
     virtual ~PsnrCalcTest() {
         eb_aom_free_frame_buffer(&tst_src_);

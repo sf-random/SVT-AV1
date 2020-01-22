@@ -142,7 +142,7 @@ class PictureOperatorTest : public ::testing::Test,
                                            tst_stride_,
                                            pu_width_,
                                            pu_height_);
-        picture_average_kernel(tst1_aligned_,
+        picture_average_kernel_c(tst1_aligned_,
                                tst_stride_,
                                tst2_aligned_,
                                tst_stride_,
@@ -166,7 +166,7 @@ class PictureOperatorTest : public ::testing::Test,
 
         picture_average_kernel1_line_sse2_intrin(
             tst1_aligned_, tst2_aligned_, dst1_aligned_, pu_width_);
-        picture_average_kernel_1line_c(
+        picture_average_kernel1_line_c(
             tst1_aligned_, tst2_aligned_, dst2_aligned_, pu_width_);
 
         fail_pixel_count = 0;
@@ -211,8 +211,8 @@ class PictureOperatorTest : public ::testing::Test,
     }
 
     int tst_size;
-    TestPattern test_pattern_;
     uint32_t pu_width_, pu_height_;
+    TestPattern test_pattern_;
     uint32_t tst_stride_;
     uint8_t *tst1_aligned_, *tst2_aligned_;
     uint8_t *dst1_aligned_, *dst2_aligned_;

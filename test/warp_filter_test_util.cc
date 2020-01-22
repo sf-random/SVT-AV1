@@ -20,6 +20,7 @@
 #include "EbUnitTestUtility.h"
 #include "EbWarpedMotion.h"
 #include "warp_filter_test_util.h"
+#include "convolve.h"
 
 using std::make_tuple;
 using std::tuple;
@@ -201,7 +202,7 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t finish_time_seconds, finish_time_useconds;
 
-    EbStartTime(&start_time_seconds, &start_time_useconds);
+    eb_start_time(&start_time_seconds, &start_time_useconds);
 
     for (int i = 0; i < num_loops; ++i)
         test_impl(mat,
@@ -223,8 +224,8 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
                   gamma,
                   delta);
 
-    EbStartTime(&finish_time_seconds, &finish_time_useconds);
-    EbComputeOverallElapsedTimeMs(start_time_seconds,
+    eb_start_time(&finish_time_seconds, &finish_time_useconds);
+    eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   finish_time_seconds,
                                   finish_time_useconds,
@@ -488,12 +489,15 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
     conv_params =
         get_conv_params_no_round(ref, do_average, 0, dsta, out_w, 1, bd);
 
-    const int num_loops = 1000000000 / (out_w + out_h);
-    double elapsed_time;
-    uint64_t start_time_seconds, start_time_useconds;
-    uint64_t finish_time_seconds, finish_time_useconds;
+    const int num_loops = 50000000 / (out_w * out_h);
+    double elapsed_time_tst;
+    double elapsed_time_ref;
+    uint64_t start_time_seconds_tst, start_time_useconds_tst;
+    uint64_t finish_time_seconds_tst, finish_time_useconds_tst;
+    uint64_t start_time_seconds_ref, start_time_useconds_ref;
+    uint64_t finish_time_seconds_ref, finish_time_useconds_ref;
 
-    EbStartTime(&start_time_seconds, &start_time_useconds);
+    eb_start_time(&start_time_seconds_tst, &start_time_useconds_tst);
 
     for (int i = 0; i < num_loops; ++i)
         test_impl(mat,
@@ -516,16 +520,47 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
                   gamma,
                   delta);
 
-    EbStartTime(&finish_time_seconds, &finish_time_useconds);
-    EbComputeOverallElapsedTimeMs(start_time_seconds,
-                                  start_time_useconds,
-                                  finish_time_seconds,
-                                  finish_time_useconds,
-                                  &elapsed_time);
-    printf("highbd warp %3dx%-3d: %7.2f ns\n",
+    eb_start_time(&finish_time_seconds_tst, &finish_time_useconds_tst);
+    eb_compute_overall_elapsed_time_ms(start_time_seconds_tst,
+                                  start_time_useconds_tst,
+                                  finish_time_seconds_tst,
+                                  finish_time_useconds_tst,
+                                  &elapsed_time_tst);
+
+    eb_start_time(&start_time_seconds_ref, &start_time_useconds_ref);
+
+    for (int i = 0; i < num_loops; ++i)
+        eb_av1_highbd_warp_affine_c(mat,
+                                    input,
+                                    w,
+                                    h,
+                                    stride,
+                                    output,
+                                    32,
+                                    32,
+                                    out_w,
+                                    out_h,
+                                    out_w,
+                                    sub_x,
+                                    sub_y,
+                                    bd,
+                                    &conv_params,
+                                    alpha,
+                                    beta,
+                                    gamma,
+                                    delta);
+
+    eb_start_time(&finish_time_seconds_ref, &finish_time_useconds_ref);
+    eb_compute_overall_elapsed_time_ms(start_time_seconds_ref,
+                                  start_time_useconds_ref,
+                                  finish_time_seconds_ref,
+                                  finish_time_useconds_ref,
+                                  &elapsed_time_ref);
+
+    printf("highbd warp %3dx%-3d: %7.2fx faster\n",
            out_w,
            out_h,
-           1000.0 * elapsed_time / num_loops);
+           elapsed_time_ref / elapsed_time_tst);
 
     delete[] input_;
     delete[] output;

@@ -164,7 +164,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
     {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
 
-    {"SpeedControlTest1", {{"SpeedControlFlag", "1"}}, default_test_vectors},
+    {"SpeedControlTest1", {{"speed_control_flag", "1"}}, default_test_vectors},
 
     // Validate by setting a low bitrate and MaxQpAllowed, push the encoder to producing
     // large partitions.
@@ -176,6 +176,29 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"IncompleteSbTest2",
      {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}, {"MixQpAllowed", "10"}},
      parkjoy},
+
+    // test pallete mode
+    {"PaletteModeTest1",
+     {{"PaletteMode", "1"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest2",
+     {{"PaletteMode", "2"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest3",
+     {{"PaletteMode", "3"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest4",
+     {{"PaletteMode", "4"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest5",
+     {{"PaletteMode", "5"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest6",
+     {{"PaletteMode", "6"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
+    {"PaletteModeTest7",
+     {{"PaletteMode", "0"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
+     screen_test_vectors},
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},

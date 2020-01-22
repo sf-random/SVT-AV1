@@ -7,10 +7,9 @@
  * @file ResidualTest.cc
  *
  * @brief Unit test for Residual related functions:
- * - ResidualKernel_avx2
+ * - residual_kernel_avx2
  * - residual_kernel16bit_sse2_intrin
  * - residual_kernel_sub_sampled{w}x{h}_sse_intrin
- * - sum_residual8bit_avx2_intrin
  *
  * @author Cidana-Ivy, Cidana-Wenyao
  *
@@ -117,6 +116,18 @@ class ResidualTestBase : public ::testing::Test {
     uint32_t test_size_;
 };
 
+typedef void (*residual_kernel8bit_func)(uint8_t *input, uint32_t input_stride,
+                                    uint8_t *pred, uint32_t pred_stride,
+                                    int16_t *residual, uint32_t residual_stride,
+                                    uint32_t area_width, uint32_t area_height);
+
+static const residual_kernel8bit_func residual_kernel8bit_func_table[] = {
+    residual_kernel8bit_avx2,
+#ifndef NON_AVX512_SUPPORT
+    residual_kernel8bit_avx512
+#endif
+};
+
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
 AreaSize TEST_AREA_SIZES[] = {
     AreaSize(4, 4),    AreaSize(4, 8),   AreaSize(8, 4),   AreaSize(8, 8),
@@ -174,24 +185,92 @@ class ResidualKernelTest
     void run_test() {
         prepare_data();
 
-        ResidualKernel_avx2(input_,
-                            input_stride_,
-                            pred_,
-                            pred_stride_,
-                            residual1_,
-                            residual_stride_,
-                            area_width_,
-                            area_height_);
-        residual_kernel_c(input_,
+        residual_kernel8bit_c(input_,
                           input_stride_,
                           pred_,
                           pred_stride_,
-                          residual2_,
+                          residual1_,
                           residual_stride_,
                           area_width_,
                           area_height_);
 
-        check_residuals(area_width_, area_height_);
+        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
+                                sizeof(*residual_kernel8bit_func_table));
+             i++) {
+            eb_buf_random_s16(residual2_, test_size_);
+            residual_kernel8bit_func_table[i](input_,
+                                         input_stride_,
+                                         pred_,
+                                         pred_stride_,
+                                         residual2_,
+                                         residual_stride_,
+                                         area_width_,
+                                         area_height_);
+            check_residuals(area_width_, area_height_);
+        }
+    }
+
+    void speed_test() {
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        const uint64_t num_loop = 10000000000 / (area_width_ * area_height_);
+
+        prepare_data();
+
+        eb_start_time(&start_time_seconds, &start_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            residual_kernel8bit_c(input_,
+                          input_stride_,
+                          pred_,
+                          pred_stride_,
+                          residual1_,
+                          residual_stride_,
+                          area_width_,
+                          area_height_);
+        }
+
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+
+        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
+                                sizeof(*residual_kernel8bit_func_table));
+             i++) {
+            eb_buf_random_s16(residual2_, test_size_);
+
+            eb_start_time(&middle_time_seconds, &middle_time_useconds);
+
+            for (uint64_t j = 0; j < num_loop; j++) {
+                residual_kernel8bit_func_table[i](input_,
+                                             input_stride_,
+                                             pred_,
+                                             pred_stride_,
+                                             residual2_,
+                                             residual_stride_,
+                                             area_width_,
+                                             area_height_);
+            }
+            check_residuals(area_width_, area_height_);
+
+            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                              middle_time_useconds,
+                                              finish_time_seconds,
+                                              finish_time_useconds,
+                                              &time_o);
+
+            printf("residual_kernel8bit(%3dx%3d): %6.2f\n",
+                   area_width_,
+                   area_height_,
+                   time_c / time_o);
+        }
     }
 
     void run_16bit_test() {
@@ -205,7 +284,7 @@ class ResidualKernelTest
                                          residual_stride_,
                                          area_width_,
                                          area_height_);
-        residual_kernel16bit(input16bit_,
+        residual_kernel16bit_c(input16bit_,
                              input_stride_,
                              pred16bit_,
                              pred_stride_,
@@ -222,6 +301,10 @@ class ResidualKernelTest
 
 TEST_P(ResidualKernelTest, MatchTest) {
     run_test();
+};
+
+TEST_P(ResidualKernelTest, DISABLED_SpeedTest) {
+    speed_test();
 };
 
 TEST_P(ResidualKernelTest, 16bitMatchTest) {
@@ -243,14 +326,6 @@ typedef struct SubSampledParam {
     AreaSize area_size;
     SUB_SAMPLED_TEST_FUNC test_func;
 } SubSampledParam;
-
-SubSampledParam SUB_SAMPLED_PARAMS[] = {
-    {AreaSize(4, 4), &residual_kernel_sub_sampled4x4_sse_intrin},
-    {AreaSize(8, 8), &residual_kernel_sub_sampled8x8_sse2_intrin},
-    {AreaSize(16, 16), &residual_kernel_sub_sampled16x16_sse2_intrin},
-    {AreaSize(32, 32), &residual_kernel_sub_sampled32x32_sse2_intrin},
-    {AreaSize(64, 64), &residual_kernel_sub_sampled64x64_sse2_intrin}};
-
 typedef std::tuple<TestPattern, SubSampledParam> TestSubParam;
 
 class ResidualSubSampledTest
@@ -278,15 +353,6 @@ class ResidualSubSampledTest
                                area_width_,
                                area_height_,
                                false);
-        residual_kernel_subsampled(input_,
-                                   input_stride_,
-                                   pred_,
-                                   pred_stride_,
-                                   residual2_,
-                                   residual_stride_,
-                                   area_width_,
-                                   area_height_,
-                                   false);
 
         check_residuals(area_width_, area_height_);
     }
@@ -297,11 +363,6 @@ class ResidualSubSampledTest
 TEST_P(ResidualSubSampledTest, MatchTest) {
     run_sub_sample_test();
 };
-
-INSTANTIATE_TEST_CASE_P(
-    ResidualUtil, ResidualSubSampledTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(SUB_SAMPLED_PARAMS)));
 
 typedef std::tuple<int, TestPattern> TestSumParam;
 
@@ -344,29 +405,11 @@ class ResidualSumTest : public ::testing::Test,
         default: break;
         }
     }
-
-    void run_test() {
-        int32_t sum_block1 = 0, sum_block2 = 0;
-        prepare_data();
-
-        sum_block1 =
-            sum_residual8bit_avx2_intrin(residual_, size_, residual_stride_);
-        sum_block2 = sum_residual(residual_, size_, residual_stride_);
-
-        EXPECT_EQ(sum_block1, sum_block2)
-            << "compare sum residual result error";
-    }
-
     uint32_t size_;
     TestPattern test_pattern_;
     int16_t *residual_;
     uint32_t residual_stride_;
 };
-
-TEST_P(ResidualSumTest, MatchTest) {
-    run_test();
-};
-
 INSTANTIATE_TEST_CASE_P(ResidualUtil, ResidualSumTest,
                         ::testing::Combine(::testing::Values(4, 8, 16, 32, 64),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
