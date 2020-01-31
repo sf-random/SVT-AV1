@@ -31,9 +31,10 @@
 #define OUTPUT_RECON_TOKEN "-o"
 #define ERROR_FILE_TOKEN "-errlog"
 #define QP_FILE_TOKEN "-qp-file"
-#define INPUT_STAT_FILE_TOKEN "-input-stat-file"
-#define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
 #define STAT_FILE_TOKEN "-stat-file"
+#define PASSES_TOKEN "-passes"
+#define PASS_TOKEN "-pass"
+#define FPF_TOKEN "-fpf"
 #define WIDTH_TOKEN "-w"
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
@@ -213,13 +214,14 @@ static void set_cfg_qp_file(const char *value, EbConfig *cfg) {
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file, value, "r");
 };
-static void set_input_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
-    FOPEN(cfg->input_stat_file, value, "rb");
+static void set_passes(const char *value, EbConfig *cfg) {
+    cfg->passes = (uint8_t)strtoul(value, NULL, 0);
 };
-static void set_output_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->output_stat_file) { fclose(cfg->output_stat_file); }
-    FOPEN(cfg->output_stat_file, value, "wb");
+static void set_pass(const char *value, EbConfig *cfg) {
+    cfg->pass = (uint8_t)strtoul(value, NULL, 0);
+};
+static void set_fpf(const char *value, EbConfig *cfg) {
+    EB_STRNCPY(cfg->fpf_name, sizeof(cfg->fpf_name), value, sizeof(cfg->fpf_name));
 };
 static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) {
     cfg->snd_pass_enc_mode = (uint8_t)strtoul(value, NULL, 0);
@@ -638,8 +640,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
-    {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file},
-    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file},
+    {SINGLE_INPUT, PASSES_TOKEN , "Passes", set_passes},
+    {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass },
+    {SINGLE_INPUT, FPF_TOKEN, "FirstPassFile", set_fpf},
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
@@ -868,6 +871,11 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->max_qp_allowed      = 63;
     config_ptr->min_qp_allowed      = 10;
 
+    config_ptr->passes              = 1;
+    config_ptr->pass                = 0;
+    memset(config_ptr->fpf_name, 0, sizeof(config_ptr->fpf_name));
+    config_ptr->fpf                 = NULL;
+
     config_ptr->enable_adaptive_quantization              = 2;
     config_ptr->enc_mode                                  = MAX_ENC_PRESET;
     config_ptr->snd_pass_enc_mode                         = MAX_ENC_PRESET + 1;
@@ -998,14 +1006,13 @@ void eb_config_dtor(EbConfig *config_ptr) {
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *)NULL;
     }
-    if (config_ptr->input_stat_file) {
-        fclose(config_ptr->input_stat_file);
-        config_ptr->input_stat_file = (FILE *)NULL;
+
+    if (config_ptr->fpf) {
+        fclose(config_ptr->fpf);
+        config_ptr->fpf = (FILE *)NULL;
+        memset(config_ptr->fpf_name, 0, sizeof(config_ptr->fpf_name));
     }
-    if (config_ptr->output_stat_file) {
-        fclose(config_ptr->output_stat_file);
-        config_ptr->output_stat_file = (FILE *)NULL;
-    }
+
     return;
 }
 
@@ -1278,6 +1285,79 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
+    // Check two pass parameters
+    if ((config->passes < 1) || (config->passes > 2)) {
+        fprintf(config->error_log_file,
+                "Error instance %u: Invalid passes value, which shall be 1 or 2\n",
+                channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->passes == 1) {
+        if (config->pass > 2) {
+            fprintf(config->error_log_file,
+                    "Error instance %u: Invalid pass value, which shall be 0, 1 or 2\n",
+                    channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
+        else if (config->pass == 0) {
+            if (strlen(config->fpf_name) != 0) {
+                fprintf(config->error_log_file,
+                "Warning instance %u: The fpf setting is ignored for single pass\n",
+                channel_number + 1);
+                memset(config->fpf_name, 0, sizeof(config->fpf_name));
+            }
+        }
+        else {
+            char mode[] = "wb";
+            if (config->pass == 2)
+               mode[0] = 'r';
+
+            if (config->fpf) {
+                fclose(config->fpf);
+                config->fpf = NULL;
+            }
+
+            FOPEN(config->fpf, config->fpf_name, mode);
+            if (config->fpf == NULL) {
+                fprintf(config->error_log_file,
+                "Error instance %u: Can't open first pass file\n",
+                channel_number + 1);
+                return_error = EB_ErrorBadParameter;
+            }
+        }
+    }
+    if (config->passes == 2) {
+        if (config->pass != 0) {
+            fprintf(config->error_log_file,
+                    "Error instance %u: Not allowed to specify pass for combined test mode\n",
+                    channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
+
+        if (config->enc_mode >= 4) {
+            fprintf(config->error_log_file,
+                    "Warning instance %u: Two-pass is not supported for enc-mode %u. Run as single pass\n",
+                    channel_number + 1, config->enc_mode);
+            config->passes = 1;
+        } else {
+            if (config->fpf) {
+               fclose(config->fpf);
+               config->fpf = NULL;
+            }
+
+            if (strlen(config->fpf_name) == 0)
+                set_fpf("./stat.bin", config);
+
+            FOPEN(config->fpf, config->fpf_name, "wb");
+            if (config->fpf == NULL) {
+                fprintf(config->error_log_file,
+                        "Error instance %u: Can't open first pass file\n",
+                        channel_number + 1);
+                return_error = EB_ErrorBadParameter;
+            }
+        }
+    }
+
     return return_error;
 }
 
@@ -1353,6 +1433,20 @@ uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
                     (uint32_t)MAX_CHANNEL_NUMBER);
             return 0;
         } else {
+            if (channel_number > 1) {
+                long passes = 1, pass = 0;
+                if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0)
+                    passes = strtol(config_string,  NULL, 0);
+
+                if (find_token(argc, argv, PASS_TOKEN, config_string) == 0)
+                    pass = strtol(config_string,  NULL, 0);
+
+                if ((passes == 2) || (pass >= 1)) {
+                    fprintf(stderr, "Warning: single channel is forced for two pass\n");
+                    channel_number = 1;
+                }
+            }
+
             return channel_number;
         }
     }

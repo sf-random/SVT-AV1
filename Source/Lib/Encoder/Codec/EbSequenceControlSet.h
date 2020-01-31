@@ -200,8 +200,7 @@ typedef struct SequenceControlSet {
     uint8_t   over_boundary_block_mode;
     SeqHeader seq_header;
     uint8_t   compound_mode;
-    EbBool    use_input_stat_file;
-    EbBool    use_output_stat_file;
+    uint8_t   pass;
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

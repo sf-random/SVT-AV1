@@ -16,6 +16,7 @@
  * Includes
  ***************************************/
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <stdint.h>
@@ -40,7 +41,9 @@ extern AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext 
 
 extern AppExitConditionType process_output_recon_buffer(EbConfig *    config,
                                                         EbAppContext *app_call_back);
-
+extern AppExitConditionType process_output_stat_buffer(EbConfig     *config,
+                                                       EbAppContext *app_call_back,
+                                                       EbBool       finished);
 extern AppExitConditionType process_output_stream_buffer(EbConfig *    config,
                                                          EbAppContext *app_call_back,
                                                          uint8_t       pic_send_done);
@@ -71,6 +74,60 @@ void assign_app_thread_group(uint8_t target_socket) {
 
 double get_psnr(double sse, double max);
 
+void config_two_pass(uint64_t             pass,
+                     EbConfig             **configs,
+                     AppExitConditionType *exit_condition_p) {
+    static FILE *saved_recon_file = NULL;
+    static FILE *saved_bitstream_file = NULL;
+
+    // Single-channel is forced for two pass
+    if (pass == 1) {
+        configs[0]->pass = 1;
+
+        configs[0]->snd_pass_enc_mode = configs[0]->enc_mode;
+        if (configs[0]->enc_mode <= 1)
+            configs[0]->enc_mode = 5;
+        else if (configs[0]->enc_mode == 2)
+            configs[0]->enc_mode = 6;
+        else if (configs[0]->enc_mode == 3)
+            configs[0]->enc_mode = 7;
+        else
+            configs[0]->enc_mode = 8;
+
+        saved_recon_file = configs[0]->recon_file;
+        saved_bitstream_file = configs[0]->bitstream_file;
+        configs[0]->recon_file = NULL;
+        configs[0]->bitstream_file = NULL;
+
+        fprintf(stderr, "\n[1st Pass]:\n\n");
+    } else {
+        configs[0]->pass = 2;
+
+        configs[0]->enc_mode = configs[0]->snd_pass_enc_mode;
+
+        fseeko(configs[0]->input_file, 0, SEEK_SET);
+        configs[0]->recon_file = saved_recon_file;
+        configs[0]->bitstream_file = saved_bitstream_file;
+
+        // Reopen the file in reading mode
+        fclose(configs[0]->fpf);
+        FOPEN(configs[0]->fpf, configs[0]->fpf_name, "rb");
+
+        configs[0]->processed_frame_count = 0;
+        configs[0]->processed_byte_count = 0;
+        configs[0]->frames_encoded = 0;
+        configs[0]->stop_encoder = EB_FALSE;
+        configs[0]->byte_count_since_ivf = 0;
+        configs[0]->ivf_count = 0;
+        memset(&configs[0]->performance_context, 0,
+               sizeof(configs[0]->performance_context));
+
+        *exit_condition_p = APP_ExitConditionNone;
+
+        fprintf(stderr, "\n[2nd Pass]:\n\n");
+    }
+}
+
 /***************************************
  * Encoder App Main
  ***************************************/
@@ -87,6 +144,7 @@ int32_t main(int32_t argc, char *argv[]) {
     AppExitConditionType exit_cond[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_output[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_recon[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
+    AppExitConditionType exit_cond_stat[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_input[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
 
     EbBool channel_active[MAX_CHANNEL_NUMBER];
@@ -127,6 +185,7 @@ int32_t main(int32_t argc, char *argv[]) {
             exit_cond[inst_cnt]        = APP_ExitConditionError; // Processing loop exit condition
             exit_cond_output[inst_cnt] = APP_ExitConditionError; // Processing loop exit condition
             exit_cond_recon[inst_cnt]  = APP_ExitConditionError; // Processing loop exit condition
+            exit_cond_stat[inst_cnt]   = APP_ExitConditionError; // Processing loop exit condition
             exit_cond_input[inst_cnt]  = APP_ExitConditionError; // Processing loop exit condition
             channel_active[inst_cnt]   = EB_FALSE;
         }
@@ -140,24 +199,29 @@ int32_t main(int32_t argc, char *argv[]) {
             // Set main thread affinity
             if (configs[0]->target_socket != -1) assign_app_thread_group(configs[0]->target_socket);
 
-            // Init the Encoder
-            for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-                if (return_errors[inst_cnt] == EB_ErrorNone) {
-                    configs[inst_cnt]->active_channel_count = num_channels;
-                    configs[inst_cnt]->channel_id           = inst_cnt;
+            for (uint64_t pass = 1; pass <= configs[0]->passes; ++pass) { // Two pass loop
+                if (configs[0]->passes == 2)
+                    config_two_pass(pass, configs, &exit_condition);
 
-                    start_time(
-                        (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
-                        (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
+                // Init the Encoder
+                for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+                    if (return_errors[inst_cnt] == EB_ErrorNone) {
+                        configs[inst_cnt]->active_channel_count = num_channels;
+                        configs[inst_cnt]->channel_id           = inst_cnt;
 
-                    return_errors[inst_cnt] =
-                        init_encoder(configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
-                    return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
-                } else
-                    channel_active[inst_cnt] = EB_FALSE;
-            }
+                        start_time(
+                            (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
+                            (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
 
-            {
+                        return_errors[inst_cnt] =
+                            init_encoder(configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
+
+                        return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
+                    } else
+                        channel_active[inst_cnt] = EB_FALSE;
+                }
+
+                {
                 // Start the Encoder
                 for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
                     if (return_errors[inst_cnt] == EB_ErrorNone) {
@@ -167,6 +231,7 @@ int32_t main(int32_t argc, char *argv[]) {
                         exit_cond_recon[inst_cnt]  = configs[inst_cnt]->recon_file
                                                         ? APP_ExitConditionNone
                                                         : APP_ExitConditionError;
+                        exit_cond_stat[inst_cnt]  = APP_ExitConditionNone;
                         exit_cond_input[inst_cnt] = APP_ExitConditionNone;
                         channel_active[inst_cnt]  = EB_TRUE;
                         start_time((uint64_t *)&configs[inst_cnt]
@@ -177,6 +242,7 @@ int32_t main(int32_t argc, char *argv[]) {
                         exit_cond[inst_cnt]        = APP_ExitConditionError;
                         exit_cond_output[inst_cnt] = APP_ExitConditionError;
                         exit_cond_recon[inst_cnt]  = APP_ExitConditionError;
+                        exit_cond_stat[inst_cnt]   = APP_ExitConditionError;
                         exit_cond_input[inst_cnt]  = APP_ExitConditionError;
                     }
 
@@ -197,6 +263,11 @@ int32_t main(int32_t argc, char *argv[]) {
                             if (exit_cond_recon[inst_cnt] == APP_ExitConditionNone)
                                 exit_cond_recon[inst_cnt] = process_output_recon_buffer(
                                     configs[inst_cnt], app_callbacks[inst_cnt]);
+                            if (exit_cond_stat[inst_cnt] == APP_ExitConditionNone)
+                                exit_cond_stat[inst_cnt] = process_output_stat_buffer(
+                                    configs[inst_cnt], app_callbacks[inst_cnt],
+                                    ((exit_cond_output[inst_cnt] == APP_ExitConditionFinished) ?
++                                   EB_TRUE : EB_FALSE));
                             if (exit_cond_output[inst_cnt] == APP_ExitConditionNone)
                                 exit_cond_output[inst_cnt] = process_output_stream_buffer(
                                     configs[inst_cnt],
@@ -208,19 +279,22 @@ int32_t main(int32_t argc, char *argv[]) {
                             if (((exit_cond_recon[inst_cnt] == APP_ExitConditionFinished ||
                                   !configs[inst_cnt]->recon_file) &&
                                  exit_cond_output[inst_cnt] == APP_ExitConditionFinished &&
-                                 exit_cond_input[inst_cnt] == APP_ExitConditionFinished) ||
+                                 exit_cond_input[inst_cnt] == APP_ExitConditionFinished &&
+                                 exit_cond_stat[inst_cnt] == APP_ExitConditionFinished) ||
                                 ((exit_cond_recon[inst_cnt] == APP_ExitConditionError &&
                                   configs[inst_cnt]->recon_file) ||
                                  exit_cond_output[inst_cnt] == APP_ExitConditionError ||
-                                 exit_cond_input[inst_cnt] == APP_ExitConditionError)) {
+                                 exit_cond_input[inst_cnt] == APP_ExitConditionError ||
+                                 exit_cond_stat[inst_cnt] == APP_ExitConditionError)) {
                                 channel_active[inst_cnt] = EB_FALSE;
                                 if (configs[inst_cnt]->recon_file)
                                     exit_cond[inst_cnt] = (AppExitConditionType)(
                                         exit_cond_recon[inst_cnt] | exit_cond_output[inst_cnt] |
-                                        exit_cond_input[inst_cnt]);
+                                        exit_cond_input[inst_cnt] | exit_cond_stat[inst_cnt]);
                                 else
                                     exit_cond[inst_cnt] = (AppExitConditionType)(
-                                        exit_cond_output[inst_cnt] | exit_cond_input[inst_cnt]);
+                                        exit_cond_output[inst_cnt] | exit_cond_input[inst_cnt] |
+                                        exit_cond_stat[inst_cnt]);
                             }
                         }
                     }
@@ -363,41 +437,44 @@ int32_t main(int32_t argc, char *argv[]) {
                 }
                 fprintf(stderr, "\n");
                 fflush(stdout);
-            }
-            for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-                if (exit_cond[inst_cnt] == APP_ExitConditionFinished &&
-                    return_errors[inst_cnt] == EB_ErrorNone) {
-                    if (configs[inst_cnt]->stop_encoder == EB_FALSE) {
-                        fprintf(
-                            stderr,
-                            "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
-                            "ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax "
-                            "Latency:\t\t%u ms\n",
-                            (uint32_t)(inst_cnt + 1),
-                            configs[inst_cnt]->performance_context.average_speed,
-                            configs[inst_cnt]->performance_context.total_encode_time * 1000,
-                            configs[inst_cnt]->performance_context.total_execution_time * 1000,
-                            configs[inst_cnt]->performance_context.average_latency,
-                            (uint32_t)(configs[inst_cnt]->performance_context.max_latency));
-                    } else
-                        fprintf(stderr,
+                }
+
+                for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+                    if (exit_cond[inst_cnt] == APP_ExitConditionFinished &&
+                        return_errors[inst_cnt] == EB_ErrorNone) {
+                        if (configs[inst_cnt]->stop_encoder == EB_FALSE) {
+                            fprintf(
+                                stderr,
+                                "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
+                                "ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax "
+                                "Latency:\t\t%u ms\n",
+                                (uint32_t)(inst_cnt + 1),
+                                configs[inst_cnt]->performance_context.average_speed,
+                                configs[inst_cnt]->performance_context.total_encode_time * 1000,
+                                configs[inst_cnt]->performance_context.total_execution_time * 1000,
+                                configs[inst_cnt]->performance_context.average_latency,
+                                (uint32_t)(configs[inst_cnt]->performance_context.max_latency));
+                        } else
+                            fprintf(stderr,
                                 "\nChannel %u Encoding Interrupted\n",
                                 (uint32_t)(inst_cnt + 1));
-                } else if (return_errors[inst_cnt] == EB_ErrorInsufficientResources)
-                    fprintf(
-                        stderr, "Could not allocate enough memory for channel %u\n", inst_cnt + 1);
-                else
-                    fprintf(stderr,
+                    } else if (return_errors[inst_cnt] == EB_ErrorInsufficientResources)
+                        fprintf(
+                            stderr, "Could not allocate enough memory for channel %u\n", inst_cnt + 1);
+                    else
+                        fprintf(stderr,
                             "Error encoding at channel %u! Check error log file for more details "
                             "... \n",
                             inst_cnt + 1);
-            }
-            // DeInit Encoder
-            for (inst_cnt = num_channels; inst_cnt > 0; --inst_cnt) {
-                if (return_errors[inst_cnt - 1] == EB_ErrorNone)
-                    return_errors[inst_cnt - 1] =
-                        de_init_encoder(app_callbacks[inst_cnt - 1], inst_cnt - 1);
-            }
+                }
+
+                // DeInit Encoder
+                for (inst_cnt = num_channels; inst_cnt > 0; --inst_cnt) {
+                    if (return_errors[inst_cnt - 1] == EB_ErrorNone)
+                        return_errors[inst_cnt - 1] =
+                            de_init_encoder(app_callbacks[inst_cnt - 1], inst_cnt - 1);
+                }
+            } // Two pass loop
         } else {
             fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
             fprintf(stderr, "Run %s -help for a list of options\n", argv[0]);

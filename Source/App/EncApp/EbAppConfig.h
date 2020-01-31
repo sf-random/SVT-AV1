@@ -157,10 +157,10 @@ typedef struct EbConfig {
     FILE *        stat_file;
     FILE *        buffer_file;
     FILE *        qp_file;
-    FILE *        input_stat_file;
-    FILE *        output_stat_file;
-    EbBool        use_input_stat_file;
-    EbBool        use_output_stat_file;
+    uint8_t       passes;
+    uint8_t       pass;
+    char          fpf_name[128];
+    FILE          *fpf;
     EbBool        y4m_input;
     unsigned char y4m_buf[9];
     EbBool        use_qp_file;

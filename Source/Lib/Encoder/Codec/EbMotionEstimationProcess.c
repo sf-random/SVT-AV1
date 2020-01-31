@@ -103,7 +103,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                            SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     if (hme_me_level <= ENC_M1) hme_me_level = ENC_M0;
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
@@ -185,7 +185,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     EbErrorType return_error = EB_ErrorNone;
 
     uint8_t enc_mode =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     // Set ME/HME search regions
     if (scs_ptr->static_config.use_default_me_hme)
         set_me_hme_params_oq(
@@ -286,7 +286,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
                               SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
@@ -366,7 +366,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
                                               MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     uint8_t     enc_mode =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     // Set ME/HME search regions
     tf_set_me_hme_params_oq(
         context_ptr->me_context_ptr, pcs_ptr, scs_ptr, scs_ptr->input_resolution);

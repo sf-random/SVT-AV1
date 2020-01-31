@@ -80,7 +80,7 @@ static void configure_picture_edges(SequenceControlSet *scs_ptr, PictureControlS
 
     return;
 }
-void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc);
+void write_stat(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc);
 
 static void picture_manager_context_dctor(EbPtr p) {
     EbThreadContext *      thread_context_ptr = (EbThreadContext *)p;
@@ -1409,9 +1409,9 @@ void *picture_manager_kernel(void *input_ptr) {
                     (reference_entry_ptr->release_enable) &&
                     (reference_entry_ptr->reference_object_ptr)) {
                     // Release the nominal live_count value
-                    if (scs_ptr->use_output_stat_file &&
+                    if (scs_ptr->pass == 1 &&
                         reference_entry_ptr->reference_object_ptr->live_count == 1)
-                        write_stat_to_file(
+                        write_stat(
                             scs_ptr,
                             ((EbReferenceObject *)
                                  reference_entry_ptr->reference_object_ptr->object_ptr)

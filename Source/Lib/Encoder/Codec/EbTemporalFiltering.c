@@ -1961,7 +1961,7 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
             noiselevel_adj = 0;
         else
             noiselevel_adj = 1;
-        if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
+        if (picture_control_set_ptr_central->scs_ptr->pass == 2 &&
             picture_control_set_ptr_central->temporal_layer_index == 0 &&
             picture_control_set_ptr_central->sc_content_detected == 0) {
             if (noiselevel_adj < 0) {

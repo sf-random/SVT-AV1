@@ -8,6 +8,7 @@
  ***************************************/
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
@@ -114,8 +115,8 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
         (EbBool)config->enable_adaptive_quantization;
     callback_data->eb_enc_parameters.qp                   = config->qp;
     callback_data->eb_enc_parameters.use_qp_file          = (EbBool)config->use_qp_file;
-    callback_data->eb_enc_parameters.input_stat_file      = config->input_stat_file;
-    callback_data->eb_enc_parameters.output_stat_file     = config->output_stat_file;
+    callback_data->eb_enc_parameters.passes               = config->passes;
+    callback_data->eb_enc_parameters.pass                 = config->pass;
     callback_data->eb_enc_parameters.stat_report          = (EbBool)config->stat_report;
     callback_data->eb_enc_parameters.disable_dlf_flag     = (EbBool)config->disable_dlf_flag;
     callback_data->eb_enc_parameters.enable_warped_motion = (EbBool)config->enable_warped_motion;
@@ -333,6 +334,18 @@ EbErrorType allocate_input_buffers(EbConfig *config, EbAppContext *callback_data
     if (config->buffered_input == -1)
         allocate_frame_buffer(config, callback_data->input_buffer_pool->p_buffer);
 
+    // Allocate input stat buffer
+    if (config->pass == 2) {
+        EB_APP_MALLOC(uint8_t*, callback_data->input_buffer_pool->p_stat_buffer,
+                      STAT_BUFFER_UNIT, EB_N_PTR, EB_ErrorInsufficientResources);
+        callback_data->input_buffer_pool->n_stat_alloc_len = STAT_BUFFER_UNIT;
+        callback_data->input_buffer_pool->n_stat_filled_len = 0;
+    } else {
+        callback_data->input_buffer_pool->p_stat_buffer = NULL;
+        callback_data->input_buffer_pool->n_stat_alloc_len = 0;
+        callback_data->input_buffer_pool->n_stat_filled_len = 0;
+    }
+
     // Assign the variables
     callback_data->input_buffer_pool->p_app_private = NULL;
     callback_data->input_buffer_pool->pic_type      = EB_AV1_INVALID_PICTURE;
@@ -368,6 +381,26 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     callback_data->recon_buffer->p_app_private = NULL;
 
     return EB_ErrorNone;
+}
+
+EbErrorType allocate_output_stat_buffers(EbConfig *config, EbAppContext *callback_data)
+{
+    EbErrorType return_error = EB_ErrorNone;
+
+    if (config->pass != 1)
+       return return_error;
+
+    EB_APP_MALLOC(EbBufferHeaderType*, callback_data->stat_buffer, sizeof(EbBufferHeaderType), EB_N_PTR, EB_ErrorInsufficientResources);
+
+    memset(callback_data->stat_buffer, 0, sizeof(EbBufferHeaderType));
+
+    // Initialize Header
+    callback_data->stat_buffer->size = sizeof(EbBufferHeaderType);
+    callback_data->stat_buffer->n_alloc_len = (uint32_t)STAT_BUFFER_UNIT;
+    EB_APP_MALLOC(uint8_t*, callback_data->stat_buffer->p_buffer, STAT_BUFFER_UNIT,
+                  EB_N_PTR, EB_ErrorInsufficientResources);
+
+    return return_error;
 }
 
 EbErrorType allocate_output_buffers(EbConfig *config, EbAppContext *callback_data) {
@@ -494,6 +527,11 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     return_error = allocate_output_recon_buffers(config, callback_data);
 
     if (return_error != EB_ErrorNone) return return_error;
+    // STEP 9: Allocate output stat Buffer
+    return_error = allocate_output_stat_buffers(config, callback_data);
+
+    if (return_error != EB_ErrorNone) return return_error;
+
     // Allocate the Sequence Buffer
     if (config->buffered_input != -1) {
         // Preload frames into the ram for a faster yuv access time

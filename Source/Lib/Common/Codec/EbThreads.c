@@ -244,6 +244,47 @@ EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle) {
 }
 
 /***************************************
+ *  * eb_block_on_semaphore_timeout
+ *   ***************************************/
+EbErrorType eb_block_on_semaphore_timeout(EbHandle semaphore_handle, uint32_t millisecond)
+{
+    EbErrorType return_error = EB_ErrorNone;
+
+#ifdef _WIN32
+    return_error = WaitForSingleObject((HANDLE)semaphore_handle, millisecond)
+                       ? EB_ErrorSemaphoreUnresponsive
+                       : EB_ErrorNone;
+#elif __APPLE__
+    {
+       uint32_t loops = millisecond * 1000;
+       do {
+           return_error = sem_trywait((sem_t*)semaphore_handle);
+           --loops;
+       } while(return_error && loops);
+
+       if (return_error)
+           return_error = EB_ErrorSemaphoreUnresponsive;
+       else
+           return_error = EB_ErrorNone;
+    }
+#else
+    {
+        struct timespec ts;
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_nsec += (millisecond % 1000) * 1000;
+        ts.tv_sec += millisecond / 1000;
+
+        return_error = sem_timedwait((sem_t*)semaphore_handle, &ts)
+                           ? EB_ErrorSemaphoreUnresponsive
+                           : EB_ErrorNone;
+    }
+#endif // _WIN32
+
+    return return_error;
+}
+
+/***************************************
  * eb_destroy_semaphore
  ***************************************/
 EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle) {

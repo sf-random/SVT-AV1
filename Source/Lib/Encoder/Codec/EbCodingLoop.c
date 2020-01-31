@@ -3741,7 +3741,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                                           : PICTURE_BUFFER_DESC_LUMA_MASK,
                             is_16bit);
                     // Collect the referenced area per 64x64
-                    if (scs_ptr->use_output_stat_file) {
+                    if (scs_ptr->pass == 1) {
                         if (blk_ptr->prediction_unit_array->ref_frame_index_l0 >= 0) {
                             eb_block_on_mutex(ref_obj_0->referenced_area_mutex);
                             {

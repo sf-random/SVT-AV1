@@ -763,6 +763,9 @@ static void eb_enc_handle_dctor(EbPtr p)
     EB_DELETE(enc_handle_ptr->input_buffer_resource_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_recon_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_statistics_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_DELETE(enc_handle_ptr->resource_coordination_results_resource_ptr);
+    EB_DELETE(enc_handle_ptr->picture_analysis_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->resource_coordination_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->picture_analysis_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->picture_decision_results_resource_ptr);
@@ -838,12 +841,17 @@ EbErrorType eb_output_recon_buffer_header_creator(
     EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr);
 
+EbErrorType eb_output_stat_buffer_header_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr);
+
 EbErrorType eb_output_buffer_header_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr);
 
 void eb_input_buffer_header_destroyer(    EbPtr p);
 void eb_output_recon_buffer_header_destroyer(    EbPtr p);
+void eb_output_stat_buffer_header_destroyer(    EbPtr p);
 void eb_output_buffer_header_destroyer(    EbPtr p);
 
 
@@ -1239,6 +1247,24 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         enc_handle_ptr->output_recon_buffer_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(enc_handle_ptr->output_recon_buffer_resource_ptr_array[0], 0);
     }
 
+    if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->pass == 1) {
+        // EbBufferHeaderType Output Stat
+        EB_ALLOC_PTR_ARRAY(enc_handle_ptr->output_statistics_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
+        for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
+            EB_NEW(
+                enc_handle_ptr->output_statistics_buffer_resource_ptr_array[instance_index],
+                eb_system_resource_ctor,
+                20,
+                1,
+                1,
+                eb_output_stat_buffer_header_creator,
+                enc_handle_ptr->scs_instance_array[0]->scs_ptr,
+                eb_output_stat_buffer_header_destroyer);
+        }
+        enc_handle_ptr->output_stat_buffer_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(enc_handle_ptr->output_statistics_buffer_resource_ptr_array[0], 0);
+    }
+
     // Resource Coordination Results
     {
         ResourceCoordinationResultInitData resource_coordination_result_init_data;
@@ -1465,6 +1491,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->stream_output_fifo_ptr     = eb_system_resource_get_producer_fifo(enc_handle_ptr->output_stream_buffer_resource_ptr_array[instance_index], 0);
         if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.recon_enabled)
             enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->recon_output_fifo_ptr  = eb_system_resource_get_producer_fifo(enc_handle_ptr->output_recon_buffer_resource_ptr_array[instance_index], 0);
+        if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->pass == 1)
+            enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->stat_output_fifo_ptr   = eb_system_resource_get_producer_fifo(enc_handle_ptr->output_statistics_buffer_resource_ptr_array[instance_index], 0);
     }
 
     /************************************
@@ -1919,7 +1947,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
     // In two pass encoding, the first pass uses sb size=64
-    if (scs_ptr->static_config.screen_content_mode == 1 || scs_ptr->use_output_stat_file)
+    if (scs_ptr->static_config.screen_content_mode == 1 || scs_ptr->pass == 1)
         scs_ptr->static_config.super_block_size = 64;
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3 && scs_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
@@ -2040,10 +2068,8 @@ void copy_api_from_app(
     scs_ptr->intra_refresh_type = scs_ptr->static_config.intra_refresh_type;
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
-    scs_ptr->static_config.input_stat_file = ((EbSvtAv1EncConfiguration*)config_struct)->input_stat_file;
-    scs_ptr->static_config.output_stat_file = ((EbSvtAv1EncConfiguration*)config_struct)->output_stat_file;
-    scs_ptr->use_input_stat_file = scs_ptr->static_config.input_stat_file ? 1 : 0;
-    scs_ptr->use_output_stat_file = scs_ptr->static_config.output_stat_file ? 1 : 0;
+    scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;
+    scs_ptr->pass = scs_ptr->static_config.pass;
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
 
@@ -2746,7 +2772,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->superres_mode > 0 && (config->input_stat_file || config->output_stat_file)){
+    if (config->superres_mode > 0 && (config->pass == 1 || config->pass == 2)){
         SVT_LOG("Error instance %u: superres cannot be enabled in 2-pass mode yet \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -2805,6 +2831,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->base_layer_switch_mode = 0;
     config_ptr->enc_mode = MAX_ENC_PRESET;
     config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
+    config_ptr->passes = 1;
+    config_ptr->pass = 0;
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
     config_ptr->hierarchical_levels = 4;
@@ -3311,9 +3339,9 @@ static EbErrorType copy_frame_buffer(
     return return_error;
 }
 static void copy_input_buffer(
-    SequenceControlSet*    sequenceControlSet,
-    EbBufferHeaderType*     dst,
-    EbBufferHeaderType*     src
+    SequenceControlSet *scs_ptr,
+    EbBufferHeaderType *dst,
+    EbBufferHeaderType *src
 )
 {
     // Copy the higher level structure
@@ -3328,7 +3356,25 @@ static void copy_input_buffer(
 
     // Copy the picture buffer
     if (src->p_buffer != NULL)
-        copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
+        copy_frame_buffer(scs_ptr, dst->p_buffer, src->p_buffer);
+
+    // Copy the stat buffer
+    if ((scs_ptr->pass != 2) ||
+        (src->flags == EB_BUFFERFLAG_EOS)) {
+        dst->n_stat_filled_len = 0;
+        return;
+    }
+
+    if ((src->p_stat_buffer != NULL) &&
+        (dst->p_stat_buffer != NULL) &&
+        (dst->n_stat_alloc_len == src->n_stat_alloc_len) &&
+        (src->n_stat_alloc_len == src->n_stat_filled_len)) {
+        EB_MEMCPY(dst->p_stat_buffer,  src->p_stat_buffer, src->n_stat_filled_len);
+        dst->n_stat_filled_len = src->n_stat_filled_len;
+    } else {
+        SVT_LOG("Fail to copy input stat buffer\n");
+        dst->n_stat_filled_len = 0;
+    }
 }
 
 /**********************************
@@ -3476,6 +3522,68 @@ EB_API EbErrorType eb_svt_get_recon(
     return return_error;
 }
 
+static void copy_output_stat_buffer(
+    EbBufferHeaderType *dst,
+    EbBufferHeaderType *src)
+{
+    dst->size = src->size;
+    dst->n_alloc_len = src->n_alloc_len;
+    dst->n_filled_len = src->n_filled_len;
+    dst->pts = src->pts;
+    dst->flags = src->flags;
+
+    if (src->p_buffer)
+        EB_MEMCPY(dst->p_buffer, src->p_buffer, src->n_filled_len);
+}
+
+/**********************************
+ * * Fill This Buffer
+ * **********************************/
+#ifdef __GNUC__
+__attribute__((visibility("default")))
+#endif
+EB_API EbErrorType eb_svt_get_stat(
+    EbComponentType      *svt_enc_component,
+    EbBufferHeaderType   *p_buffer,
+    EbBool               finished)
+{
+    EbErrorType     return_error    = EB_ErrorNone;
+    EbEncHandle     *enc_handle     = (EbEncHandle*)svt_enc_component->p_component_private;
+    EbObjectWrapper *eb_wrapper_ptr = NULL;
+
+    if (enc_handle->scs_instance_array[0]->scs_ptr->pass == 1) {
+        if (finished == EB_FALSE)
+            return_error = eb_get_full_object_non_blocking(
+                enc_handle->output_stat_buffer_consumer_fifo_ptr,
+                &eb_wrapper_ptr);
+        else
+            return_error = eb_get_full_object_timeout(
+                enc_handle->output_stat_buffer_consumer_fifo_ptr,
+                &eb_wrapper_ptr,
+                1000);
+
+        if (return_error != EB_ErrorNone)
+            return return_error; // Time out
+
+        if (eb_wrapper_ptr) {
+            EbBufferHeaderType* obj_ptr = (EbBufferHeaderType*)eb_wrapper_ptr->object_ptr;
+            copy_output_stat_buffer(p_buffer, obj_ptr);
+
+            if (p_buffer->flags != 0)
+                return_error = EB_ErrorMax;
+
+            eb_release_object((EbObjectWrapper *)eb_wrapper_ptr);
+        } else {
+            return_error = EB_NoErrorEmptyQueue;
+        }
+    } else {
+        // stat is not enabled
+        return_error = EB_ErrorMax;
+    }
+
+    return return_error;
+}
+
 /**********************************
 * Encoder Error Handling
 **********************************/
@@ -3610,6 +3718,16 @@ EbErrorType eb_input_buffer_header_creator(
         scs_ptr,
         input_buffer);
 
+    if (scs_ptr->pass == 2) {
+        EB_MALLOC(input_buffer->p_stat_buffer, STAT_BUFFER_UNIT);
+        input_buffer->n_stat_alloc_len = STAT_BUFFER_UNIT;
+        input_buffer->n_stat_filled_len = 0;
+    } else {
+        input_buffer->p_stat_buffer = NULL;
+        input_buffer->n_stat_alloc_len = 0;;
+        input_buffer->n_stat_filled_len = 0;
+    }
+
     input_buffer->p_app_private = NULL;
 
     return EB_ErrorNone;
@@ -3624,6 +3742,10 @@ void eb_input_buffer_header_destroyer(    EbPtr p)
     EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_cr);
 
     EB_DELETE(buf);
+
+    if (obj->p_stat_buffer)
+        EB_FREE(obj->p_stat_buffer);
+
     EB_FREE(obj);
 }
 
@@ -3697,5 +3819,44 @@ void eb_output_recon_buffer_header_destroyer(    EbPtr p)
     EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
     EB_FREE(obj->p_buffer);
     EB_FREE(obj);
+}
+
+/**************************************
+ * * EbBufferHeaderType Constructor
+ * **************************************/
+EbErrorType eb_output_stat_buffer_header_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr)
+{
+    EbBufferHeaderType *stat_buffer = NULL;
+    SequenceControlSet *scs_ptr = (SequenceControlSet*)object_init_data_ptr;
+
+    if (scs_ptr->pass != 1)
+        return EB_ErrorBadParameter;
+
+    EB_CALLOC(stat_buffer, 1, sizeof(EbBufferHeaderType));
+    *object_dbl_ptr = (EbPtr)stat_buffer;
+
+    // Initialize Header
+   stat_buffer->size = sizeof(EbBufferHeaderType);
+
+    // Assign the variables
+    EB_MALLOC(stat_buffer->p_buffer, STAT_BUFFER_UNIT);
+
+    stat_buffer->n_alloc_len = STAT_BUFFER_UNIT;
+    stat_buffer->p_app_private = NULL;
+
+    return EB_ErrorNone;
+}
+
+void eb_output_stat_buffer_header_destroyer(EbPtr p)
+{
+    EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
+
+    if (obj && obj->p_buffer)
+        EB_FREE(obj->p_buffer);
+
+    if (obj)
+        EB_FREE(obj);
 }
 // clang-format on

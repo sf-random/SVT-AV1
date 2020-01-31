@@ -620,6 +620,30 @@ EbErrorType eb_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_
     return return_error;
 }
 
+EbErrorType eb_get_full_object_timeout(EbFifo          *full_fifo_ptr,
+                                       EbObjectWrapper **wrapper_dbl_ptr,
+                                       uint32_t        millisecond) {
+    EbErrorType return_error = EB_ErrorNone;
+
+    // Queue the Fifo requesting the full fifo
+    eb_release_process(full_fifo_ptr);
+
+    // Block on the counting Semaphore until an empty buffer is available
+    return_error = eb_block_on_semaphore_timeout(full_fifo_ptr->counting_semaphore, millisecond);
+    if (return_error != EB_ErrorNone)
+        return return_error;
+
+    // Acquire lockout Mutex
+    eb_block_on_mutex(full_fifo_ptr->lockout_mutex);
+
+    eb_fifo_pop_front(full_fifo_ptr, wrapper_dbl_ptr);
+
+    // Release Mutex
+    eb_release_mutex(full_fifo_ptr->lockout_mutex);
+
+    return return_error;
+}
+
 /**************************************
 * eb_fifo_pop_front
 **************************************/

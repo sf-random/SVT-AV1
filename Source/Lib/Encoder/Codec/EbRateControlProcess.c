@@ -4712,7 +4712,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
     uint32_t            sb_addr;
 
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
-    if (scs_ptr->use_input_stat_file && pcs_ptr->temporal_layer_index <= 0)
+    if (scs_ptr->pass == 2 && pcs_ptr->temporal_layer_index <= 0)
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
     else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
@@ -5094,10 +5094,10 @@ void *rate_control_kernel(void *input_ptr) {
                         qindex, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;
-                    if (!scs_ptr->use_output_stat_file &&
+                    if (!(scs_ptr->pass == 1) &&
                         pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH) {
                         // Content adaptive qp assignment
-                        if (scs_ptr->use_input_stat_file &&
+                        if ((scs_ptr->pass == 2) &&
                             !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
                             pcs_ptr->parent_pcs_ptr->referenced_area_has_non_zero)
                             new_qindex = adaptive_qindex_calc_two_pass(pcs_ptr, &rc, qindex);
@@ -5216,8 +5216,8 @@ void *rate_control_kernel(void *input_ptr) {
             }
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
-                !pcs_ptr->parent_pcs_ptr->sc_content_detected && !scs_ptr->use_output_stat_file)
-                if (scs_ptr->use_input_stat_file &&
+                !pcs_ptr->parent_pcs_ptr->sc_content_detected && !(scs_ptr->pass == 1))
+                if (scs_ptr->pass == 2 &&
                     pcs_ptr->parent_pcs_ptr->referenced_area_has_non_zero)
                     sb_qp_derivation_two_pass(pcs_ptr);
                 else

@@ -63,6 +63,11 @@ typedef struct EbBufferHeaderType {
     uint32_t n_filled_len;
     uint32_t n_alloc_len;
 
+    // input stat buffer
+    uint8_t* p_stat_buffer;
+    uint32_t n_stat_filled_len;
+    uint32_t n_stat_alloc_len;
+
     // pic private data
     void *p_app_private;
     void *wrapper_ptr;

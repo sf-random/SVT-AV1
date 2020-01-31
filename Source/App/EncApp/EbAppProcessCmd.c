@@ -857,6 +857,20 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
     return;
 }
 
+void read_input_stat(EbConfig *config, EbBufferHeaderType *header_ptr) {
+    if (config->pass == 2) {
+        size_t read_size = fread(header_ptr->p_stat_buffer,
+                                   header_ptr->n_stat_alloc_len, 1,
+                                   config->fpf);
+        if (read_size != 1) {
+            fprintf(stderr, "fread on first pass file failed\n");
+            return;
+        }
+
+        header_ptr->n_stat_filled_len = STAT_BUFFER_UNIT;
+    }
+}
+
 void send_qp_on_the_fly(EbConfig *config, EbBufferHeaderType *header_ptr) {
     {
         uint32_t qp_ptr;
@@ -933,6 +947,9 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
     // If there are bytes left to encode, configure the header
     if (remaining_byte_count != 0 && config->stop_encoder == EB_FALSE) {
         read_input_frames(config, is_16bit, header_ptr);
+
+        read_input_stat(config, header_ptr);
+
         if (header_ptr->n_filled_len) {
             // Update the context parameters
             config->processed_byte_count += header_ptr->n_filled_len;
@@ -954,13 +971,16 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
 
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) ||
             config->stop_encoder) {
-            header_ptr->n_alloc_len   = 0;
-            header_ptr->n_filled_len  = 0;
-            header_ptr->n_tick_count  = 0;
-            header_ptr->p_app_private = NULL;
-            header_ptr->flags         = EB_BUFFERFLAG_EOS;
-            header_ptr->p_buffer      = NULL;
-            header_ptr->pic_type      = EB_AV1_INVALID_PICTURE;
+            header_ptr->n_alloc_len       = 0;
+            header_ptr->n_filled_len      = 0;
+            header_ptr->n_tick_count      = 0;
+            header_ptr->p_app_private     = NULL;
+            header_ptr->flags             = EB_BUFFERFLAG_EOS;
+            header_ptr->p_buffer          = NULL;
+            header_ptr->pic_type          = EB_AV1_INVALID_PICTURE;
+            header_ptr->n_stat_alloc_len  = 0;
+            header_ptr->n_stat_filled_len = 0;
+            header_ptr->p_stat_buffer     = NULL;
 
             eb_svt_enc_send_picture(component_handle, header_ptr);
         }
@@ -1138,12 +1158,16 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
     uint32_t *max_latency   = &config->performance_context.max_latency;
 
     // System performance variables
-    static int32_t frame_count = 0;
+    static int32_t frame_count;
 
     // Local variables
     uint64_t finish_s_time = 0;
     uint64_t finish_u_time = 0;
     uint8_t  is_alt_ref    = 1;
+
+    if (config->performance_context.frame_count == 0)
+        frame_count = 0;
+
     while (is_alt_ref) {
         is_alt_ref = 0;
         // non-blocking call until all input frames are sent
@@ -1340,4 +1364,56 @@ AppExitConditionType process_output_recon_buffer(EbConfig *config, EbAppContext 
                                                                : APP_ExitConditionNone;
     }
     return return_value;
+}
+
+AppExitConditionType process_output_stat_buffer(EbConfig *config,
+                                                EbAppContext *app_call_back,
+                                                EbBool finished)
+{
+    EbBufferHeaderType *header_ptr = app_call_back->stat_buffer;
+    EbComponentType *component_handle = (EbComponentType*)app_call_back->svt_encoder_handle;
+    EbErrorType stat_status = EB_ErrorNone;
+
+    if (config->pass != 1)
+        return APP_ExitConditionFinished;
+
+    if (header_ptr == NULL)
+        return APP_ExitConditionError;
+
+    // non-blocking call until all input frames are sent
+    stat_status = eb_svt_get_stat(component_handle, header_ptr, finished);
+
+    if (stat_status == EB_ErrorNone) {
+        size_t returned_value;
+
+        if (config->fpf == NULL) {
+            fprintf(stderr, "Invalid first pass file\n");
+            return APP_ExitConditionError;
+        }
+
+        returned_value = fseeko(config->fpf, header_ptr->pts * STAT_BUFFER_UNIT, SEEK_SET);
+        if (returned_value != 0) {
+            fprintf(stderr, "fseeko on first pass file failed\n");
+            return APP_ExitConditionError;
+        }
+
+        returned_value = fwrite(header_ptr->p_buffer, header_ptr->n_filled_len, 1, config->fpf);
+        if (returned_value != 1) {
+            fprintf(stderr, "fwrite on first pass file failed\n");
+            return APP_ExitConditionError;
+        }
+
+        return APP_ExitConditionNone;
+    } else if (stat_status == EB_NoErrorEmptyQueue) {
+        return APP_ExitConditionNone;
+    } else if (stat_status == EB_ErrorSemaphoreUnresponsive) {
+        return APP_ExitConditionFinished;
+    } else {
+        fprintf(stderr, "\n");
+        log_error_output(
+            config->error_log_file,
+            stat_status);
+
+        return APP_ExitConditionError;
+    }
 }

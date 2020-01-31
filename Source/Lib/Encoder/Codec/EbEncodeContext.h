@@ -53,6 +53,7 @@ typedef struct EncodeContext {
     // Output Buffer Fifos
     EbFifo *stream_output_fifo_ptr;
     EbFifo *recon_output_fifo_ptr;
+    EbFifo *stat_output_fifo_ptr;
 
     // Picture Buffer Fifos
     EbFifo *reference_picture_pool_fifo_ptr;
@@ -142,7 +143,9 @@ typedef struct EncodeContext {
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
     EbHandle         shared_reference_mutex;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
-    EbHandle stat_file_mutex;
+
+    // Two Pass
+    EbHandle stat_mutex;
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

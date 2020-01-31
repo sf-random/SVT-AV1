@@ -113,6 +113,7 @@ struct _EbEncHandle {
     EbFifo *input_buffer_producer_fifo_ptr;
     EbFifo *output_stream_buffer_consumer_fifo_ptr;
     EbFifo *output_recon_buffer_consumer_fifo_ptr;
+    EbFifo *output_stat_buffer_consumer_fifo_ptr;
 };
 
 #endif // EbEncHandle_h

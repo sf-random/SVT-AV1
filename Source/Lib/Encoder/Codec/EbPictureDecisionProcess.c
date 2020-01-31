@@ -789,7 +789,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
-    uint8_t enc_mode_hme = scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+    uint8_t enc_mode_hme = (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     pcs_ptr->enable_hme_flag = enable_hme_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
 
     pcs_ptr->enable_hme_level0_flag = enable_hme_level0_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
@@ -3410,7 +3410,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 ((pcs_ptr->slice_type == I_SLICE && pcs_ptr->sc_content_detected == 0) ||
                                   (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
-                                    || (scs_ptr->use_input_stat_file && pcs_ptr->temporal_layer_index == 1 && pcs_ptr->sc_content_detected == 0)
+                                    || (scs_ptr->pass == 2 && pcs_ptr->temporal_layer_index == 1 && pcs_ptr->sc_content_detected == 0)
                                     ) ) {
                                 int altref_nframes = pcs_ptr->scs_ptr->static_config.altref_nframes;
                                 if (pcs_ptr->idr_flag) {

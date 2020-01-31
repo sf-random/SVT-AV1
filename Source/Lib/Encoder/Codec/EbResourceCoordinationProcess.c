@@ -145,7 +145,7 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
 
     // HME Flags updated @ signal_derivation_multi_processes_oq
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        (scs_ptr->pass == 1) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
     // Derive HME Flag
     if (scs_ptr->static_config.use_default_me_hme) {
         pcs_ptr->enable_hme_flag = enable_hme_flag[0][input_resolution][hme_me_level] ||
@@ -628,23 +628,28 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
  * Read Stat from File
  * reads StatStruct per frame from the file and stores under pcs_ptr
  ******************************************************/
-static void read_stat_from_file(PictureParentControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-
-    int32_t fseek_return_value = fseek(scs_ptr->static_config.input_stat_file,
-                                       (long)pcs_ptr->picture_number * sizeof(StatStruct),
-                                       SEEK_SET);
-
-    if (fseek_return_value != 0) {
-        SVT_LOG("Error in fseek  returnVal %i\n", (int)fseek_return_value);
+static void read_stat(PictureParentControlSet *pcs_ptr,
+                      SequenceControlSet *scs_ptr,
+                      uint8_t *p_stat_buffer,
+                      uint32_t n_stat_filled_len) {
+    if (scs_ptr->pass != 2) {
+        SVT_LOG("Invalid pass to read stat\n");
+        return;
     }
-    size_t fread_return_value = fread(&pcs_ptr->stat_struct,
-                                      (size_t)1,
-                                      sizeof(StatStruct),
-                                      scs_ptr->static_config.input_stat_file);
-    if (fread_return_value != sizeof(StatStruct)) {
-        SVT_LOG("Error in freed  returnVal %i\n", (int)fread_return_value);
+
+    if (p_stat_buffer == NULL) {
+        SVT_LOG("Invalid input stat buffer to read stat\n");
+        return;
     }
+
+    if (n_stat_filled_len == 0) {
+        SVT_LOG("Stat EOS\n");
+        return;
+    }
+
+    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_mutex);
+
+    memcpy(&pcs_ptr->stat_struct, p_stat_buffer, n_stat_filled_len);
 
     uint64_t referenced_area_avg          = 0;
     uint64_t referenced_area_has_non_zero = 0;
@@ -661,7 +666,8 @@ static void read_stat_from_file(PictureParentControlSet *pcs_ptr, SequenceContro
             referenced_area_avg * (scs_ptr->intra_period_length + 1) / TWO_PASS_IR_THRSHLD;
     pcs_ptr->referenced_area_avg          = referenced_area_avg;
     pcs_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
-    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+
+    eb_release_mutex(scs_ptr->encode_context_ptr->stat_mutex);
 }
 
 /***************************************
@@ -945,7 +951,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
             pcs_ptr->snd_pass_enc_mode =
-                (scs_ptr->use_output_stat_file &&
+                (scs_ptr->pass == 1 &&
                  scs_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)
                     ? (EbEncMode)scs_ptr->static_config.snd_pass_enc_mode
                     : pcs_ptr->enc_mode;
@@ -992,8 +998,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             reset_pcs_av1(pcs_ptr);
-            if (scs_ptr->use_input_stat_file && !end_of_sequence_flag)
-                read_stat_from_file(pcs_ptr, scs_ptr);
+            if (scs_ptr->pass == 2 && !end_of_sequence_flag)
+                read_stat(pcs_ptr, scs_ptr,
+                          eb_input_ptr->p_stat_buffer, eb_input_ptr->n_stat_filled_len);
             else {
                 memset(&pcs_ptr->stat_struct, 0, sizeof(StatStruct));
             }

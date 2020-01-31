@@ -1070,7 +1070,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                         pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                        ->stat_struct
                                 : &pcs_ptr->stat_struct;
-                        if (scs_ptr->use_output_stat_file)
+                        if (scs_ptr->pass == 1)
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
                         // Get Empty Results Object
                         eb_get_empty_object(

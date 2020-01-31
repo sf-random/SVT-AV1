@@ -575,7 +575,7 @@ static PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
 /************************************************
  * Prediction Structure Config Array
  ************************************************/
-static const PredictionStructureConfig prediction_structure_config_array[] = {
+static PredictionStructureConfig prediction_structure_config_array[] = {
     {1, flat_pred_struct},
     {2, two_level_hierarchical_pred_struct},
     {4, three_level_hierarchical_pred_struct},
@@ -1959,6 +1959,9 @@ static EbErrorType prediction_structure_ctor(
 static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureGroup *obj = (PredictionStructureGroup *)p;
     EB_DELETE_PTR_ARRAY(obj->prediction_structure_ptr_array, obj->prediction_structure_count);
+
+    EB_FREE(prediction_structure_config_array[4-1].entry_array);
+    EB_FREE(prediction_structure_config_array[5-1].entry_array);
 }
 /*************************************************
  * Prediction Structure Group Ctor
@@ -1991,18 +1994,29 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
     uint8_t ref_count_used       = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
 
+    PredictionStructureConfigEntry *cur_four_level_hierarchical_pred_struct = NULL;
+    PredictionStructureConfigEntry *cur_five_level_hierarchical_pred_struct = NULL;
+    EB_MALLOC(cur_four_level_hierarchical_pred_struct, sizeof(four_level_hierarchical_pred_struct));
+    EB_MALLOC(cur_five_level_hierarchical_pred_struct, sizeof(five_level_hierarchical_pred_struct));
+    EB_MEMCPY(cur_four_level_hierarchical_pred_struct, four_level_hierarchical_pred_struct,
+              sizeof(four_level_hierarchical_pred_struct));
+    EB_MEMCPY(cur_five_level_hierarchical_pred_struct, five_level_hierarchical_pred_struct,
+              sizeof(five_level_hierarchical_pred_struct));
+    prediction_structure_config_array[4-1].entry_array = cur_four_level_hierarchical_pred_struct;
+    prediction_structure_config_array[5-1].entry_array = cur_five_level_hierarchical_pred_struct;
+
     if (ref_count_used > 0 && ref_count_used < MAX_REF_IDX) {
         for (int gop_i = 1; gop_i < 8; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                four_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-                four_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+                cur_four_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
+                cur_four_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
             }
         }
 
         for (int gop_i = 1; gop_i < 16; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                five_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-                five_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+                cur_five_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
+                cur_five_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
             }
         }
     }

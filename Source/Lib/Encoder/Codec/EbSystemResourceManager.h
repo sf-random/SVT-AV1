@@ -280,8 +280,15 @@ extern EbErrorType eb_post_full_object(EbObjectWrapper *object_ptr);
      *   wrapper_dbl_ptr
      *      Double pointer used to pass the pointer to the full
      *      EbObjectWrapper pointer.
+     *
+     *   millisecond
+     *      value of timeout waiting for the full EbObjectWrapper.
      *********************************************************************/
 extern EbErrorType eb_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr);
+
+extern EbErrorType eb_get_full_object_timeout(EbFifo          *full_fifo_ptr,
+                                              EbObjectWrapper **wrapper_dbl_ptr,
+                                              uint32_t        millisecond);
 
 extern EbErrorType eb_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
                                                    EbObjectWrapper **wrapper_dbl_ptr);

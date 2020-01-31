@@ -491,13 +491,32 @@ static EbBool update_entropy_coding_rows(PictureControlSet *pcs_ptr, uint32_t *r
  * Write Stat to File
  * write stat_struct per frame in the first pass
  ******************************************************/
-void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc) {
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-    int32_t fseek_return_value = fseek(
-        scs_ptr->static_config.output_stat_file, (long)ref_poc * sizeof(StatStruct), SEEK_SET);
-    if (fseek_return_value != 0) SVT_LOG("Error in fseek  returnVal %i\n", fseek_return_value);
-    fwrite(&stat_struct, sizeof(StatStruct), (size_t)1, scs_ptr->static_config.output_stat_file);
-    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+void write_stat(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc) {
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    EbObjectWrapper *wrapper_ptr = NULL;
+    EbBufferHeaderType *buffer_ptr = NULL;
+
+    if (scs_ptr->pass != 1) {
+        SVT_LOG("Invalid pass to write stat\n");
+        return;
+    }
+
+    eb_block_on_mutex(encode_context_ptr->stat_mutex);
+
+    eb_get_empty_object(
+        encode_context_ptr->stat_output_fifo_ptr,
+        &wrapper_ptr);
+
+    buffer_ptr = (EbBufferHeaderType*)wrapper_ptr->object_ptr;
+
+    memcpy(buffer_ptr->p_buffer, &stat_struct, STAT_BUFFER_UNIT);
+
+    buffer_ptr->pts = ref_poc;
+    buffer_ptr->n_filled_len = STAT_BUFFER_UNIT;
+
+    eb_post_full_object(wrapper_ptr);
+
+    eb_release_mutex(encode_context_ptr->stat_mutex);
 }
 
 /******************************************************
@@ -681,19 +700,19 @@ void *entropy_coding_kernel(void *input_ptr) {
 
                         //Jing, two pass doesn't work with multi-tile right now
                         // for Non Reference frames
-                        if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                        if (scs_ptr->pass == 1 && tile_cnt == 1 &&
                             !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-                            write_stat_to_file(scs_ptr,
+                            write_stat(scs_ptr,
                                                *pcs_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
                                                pcs_ptr->parent_pcs_ptr->picture_number);
                         if (pic_ready) {
                             // Release the List 0 Reference Pictures
                             for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
-                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                if (scs_ptr->pass == 1 && tile_cnt == 1 &&
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL &&
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
-                                    write_stat_to_file(
+                                    write_stat(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
                                              ->object_ptr)
@@ -709,10 +728,10 @@ void *entropy_coding_kernel(void *input_ptr) {
                             // Release the List 1 Reference Pictures
                             for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
-                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                if (scs_ptr->pass == 1 && tile_cnt == 1 &&
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL &&
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
-                                    write_stat_to_file(
+                                    write_stat(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
                                              ->object_ptr)
@@ -817,18 +836,18 @@ void *entropy_coding_kernel(void *input_ptr) {
                         pcs_ptr->entropy_coding_pic_done = EB_TRUE;
                         encode_slice_finish(pcs_ptr->entropy_coder_ptr);
                         // for Non Reference frames
-                        if (scs_ptr->use_output_stat_file &&
+                        if (scs_ptr->pass == 1 &&
                             !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-                            write_stat_to_file(scs_ptr,
+                            write_stat(scs_ptr,
                                                *pcs_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
                                                pcs_ptr->parent_pcs_ptr->picture_number);
                         // Release the List 0 Reference Pictures
                         for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                              ++ref_idx) {
-                            if (scs_ptr->use_output_stat_file &&
+                            if (scs_ptr->pass == 1 &&
                                 pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL &&
                                 pcs_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
-                                write_stat_to_file(
+                                write_stat(
                                     scs_ptr,
                                     ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
                                          ->object_ptr)
@@ -844,10 +863,10 @@ void *entropy_coding_kernel(void *input_ptr) {
                         // Release the List 1 Reference Pictures
                         for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                              ++ref_idx) {
-                            if (scs_ptr->use_output_stat_file &&
+                            if (scs_ptr->pass == 1 &&
                                 pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL &&
                                 pcs_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
-                                write_stat_to_file(
+                                write_stat(
                                     scs_ptr,
                                     ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
                                          ->object_ptr)

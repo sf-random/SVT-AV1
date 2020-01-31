@@ -30,6 +30,8 @@ extern "C" {
 #define EB_BUFFERFLAG_ERROR_MASK \
     0xFFFFFFF0 // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
+#define STAT_BUFFER_UNIT 11680
+
 // super-res modes
 typedef enum {
     SUPERRES_NONE,     // No frame superres allowed.
@@ -188,14 +190,24 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     EbBool use_qp_file;
-    /* Input stats file */
-    FILE *input_stat_file;
-    /* output stats file */
-    FILE *output_stat_file;
+
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/
     uint32_t enable_qp_scaling_flag;
+
+    /* The two passes switch
+     * 1 for single pass, first or second pass
+     * 2 for two passes
+     * Default is 1 */
+    uint8_t passes;
+
+    /* Specify which pass
+     * 1 for first pass
+     * 2 for second pass
+     * 0 for not-specified
+     * Default is 0 */
+    uint8_t pass;
 
     // Deblock Filter
     /* Flag to disable the Deblocking Loop Filtering.
@@ -679,6 +691,15 @@ EB_API void eb_svt_release_out_buffer(EbBufferHeaderType **p_buffer);
      * @ *p_buffer           Output buffer. */
 EB_API EbErrorType eb_svt_get_recon(EbComponentType *   svt_enc_component,
                                     EbBufferHeaderType *p_buffer);
+
+/* OPTIONAL: Fill buffer with stat data.
+     *
+     * Parameter:
+     * @ *svt_enc_component  Encoder handler.
+     * @ *p_buffer           Output buffer. */
+EB_API EbErrorType eb_svt_get_stat(EbComponentType      *svt_enc_component,
+                                   EbBufferHeaderType   *p_buffer,
+                                   EbBool               finished);
 
 /* STEP 6: Deinitialize encoder library.
      *
