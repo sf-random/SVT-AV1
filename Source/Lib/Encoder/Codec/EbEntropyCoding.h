@@ -45,9 +45,16 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
 struct EntropyCodingContext;
+#if TILES_PARALLEL
+extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
+                            PictureControlSet *pcs_ptr, uint16_t tile_idx,
+                            EntropyCoder *entropy_coder_ptr,
+                            EbPictureBufferDesc *coeff_ptr);
+#else
 extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
                             PictureControlSet *pcs_ptr, EntropyCoder *entropy_coder_ptr,
                             EbPictureBufferDesc *coeff_ptr);
+#endif
 
 extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 
@@ -204,7 +211,7 @@ static INLINE uint32_t have_nearmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEARMV || mode == NEAR_NEARMV || mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
 
-void get_txb_ctx(SequenceControlSet *scs_ptr, const int32_t plane,
+void get_txb_ctx(PictureControlSet *pcs_ptr, const int32_t plane,
                  NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_origin_x,
                  uint32_t blk_origin_y, const BlockSize plane_bsize, const TxSize tx_size,
                  int16_t *const txb_skip_ctx, int16_t *const dc_sign_ctx);

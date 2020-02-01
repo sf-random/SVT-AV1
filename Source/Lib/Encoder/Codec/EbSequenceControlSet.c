@@ -351,6 +351,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->me_segment_row_count_array[i]      = src->me_segment_row_count_array[i];
         dst->enc_dec_segment_col_count_array[i] = src->enc_dec_segment_col_count_array[i];
         dst->enc_dec_segment_row_count_array[i] = src->enc_dec_segment_row_count_array[i];
+#if TILES_PARALLEL
+        dst->tile_group_col_count_array[i] = src->tile_group_col_count_array[i];
+        dst->tile_group_row_count_array[i] = src->tile_group_row_count_array[i];
+#endif
     }
 
     dst->cdef_segment_column_count = src->cdef_segment_column_count;
@@ -372,15 +376,17 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     return EB_ErrorNone;
 }
 
-extern EbErrorType derive_input_resolution(SequenceControlSet *scs_ptr, uint32_t inputSize) {
+extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, uint32_t inputSize) {
     EbErrorType return_error = EB_ErrorNone;
 
-    scs_ptr->input_resolution =
-        (inputSize < INPUT_SIZE_1080i_TH)
-            ? INPUT_SIZE_576p_RANGE_OR_LOWER
-            : (inputSize < INPUT_SIZE_1080p_TH)
-                  ? INPUT_SIZE_1080i_RANGE
-                  : (inputSize < INPUT_SIZE_4K_TH) ? INPUT_SIZE_1080p_RANGE : INPUT_SIZE_4K_RANGE;
+    if(inputSize < INPUT_SIZE_1080i_TH)
+        *input_resolution = INPUT_SIZE_576p_RANGE_OR_LOWER;
+    else if(inputSize < INPUT_SIZE_1080p_TH)
+        *input_resolution = INPUT_SIZE_1080i_RANGE;
+    else if(inputSize < INPUT_SIZE_4K_TH)
+        *input_resolution = INPUT_SIZE_1080p_RANGE;
+    else
+        *input_resolution = INPUT_SIZE_4K_RANGE;
 
     return return_error;
 }

@@ -27,14 +27,21 @@ extern "C" {
 #include "EbCabacContextModel.h"
 
 #include "../../Encoder/Codec/EbPictureControlSet.h"
+#if MC_DYNAMIC_PAD
+
+/* This value is set to 72 to make
+   DEC_PAD_VALUE a multiple of 16. */
+#define DYNIMIC_PAD_VALUE  72
+#define DEC_PAD_VALUE    (DYNIMIC_PAD_VALUE + 8)
+#else
+#define DEC_PAD_VALUE    (128+32)
+#endif
 
 /* Maximum number of frames in parallel */
 #define DEC_MAX_NUM_FRM_PRLL 1
 /** Maximum picture buffers needed **/
 #define MAX_PIC_BUFS (REF_FRAMES + 1 + DEC_MAX_NUM_FRM_PRLL)
 
-/*Optimisation of Coeff Buffer in Single Thread*/
-#define SINGLE_THRD_COEFF_BUF_OPT 0
 /** Picture Structure **/
 typedef struct EbDecPicBuf {
     uint8_t is_free;
@@ -254,6 +261,10 @@ typedef struct DecThreadCtxt {
 
     /* Loop filter information */
     LoopFilterInfoN lf_info;
+
+    /* Temporary block level scratch buffer to
+       store LR output of [SB_Size x 64] block */
+    uint8_t *dst;
 } DecThreadCtxt;
 
 #ifdef __cplusplus

@@ -57,7 +57,11 @@ typedef struct ResourceCoordinationContext {
     EbBool   start_flag;
 } ResourceCoordinationContext;
 
+#if !TILES_PARALLEL
+//Jing: move to EncHandle, since we need to know the tile count to alloc resources in child pcs
 void set_tile_info(PictureParentControlSet *pcs_ptr);
+#endif
+
 static void resource_coordination_context_dctor(EbPtr p) {
     EbThreadContext *thread_contxt_ptr = (EbThreadContext *)p;
     if (thread_contxt_ptr->priv) {
@@ -647,7 +651,7 @@ static void read_stat_from_file(PictureParentControlSet *pcs_ptr, SequenceContro
     for (int sb_addr = 0; sb_addr < scs_ptr->sb_total_count; ++sb_addr) {
         referenced_area_avg +=
             (pcs_ptr->stat_struct.referenced_area[sb_addr] /
-             scs_ptr->sb_params_array[sb_addr].width / scs_ptr->sb_params_array[sb_addr].height);
+             pcs_ptr->sb_params_array[sb_addr].width / pcs_ptr->sb_params_array[sb_addr].height);
         referenced_area_has_non_zero += pcs_ptr->stat_struct.referenced_area[sb_addr];
     }
     referenced_area_avg /= scs_ptr->sb_total_count;
@@ -783,11 +787,14 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         // Init SB Params
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
-            derive_input_resolution(scs_ptr, input_size);
+            derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);
             sb_geom_init(scs_ptr);
             scs_ptr->enable_altrefs = scs_ptr->static_config.enable_altrefs ? EB_TRUE : EB_FALSE;
+
+            // initialize sequence level enable_superres
+            scs_ptr->seq_header.enable_superres = 0;
 
             if (scs_ptr->static_config.inter_intra_compound == DEFAULT) {
                 // Set inter-intra mode      Settings
@@ -847,6 +854,12 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr = (PictureParentControlSet *)pcs_wrapper_ptr->object_ptr;
 
             pcs_ptr->p_pcs_wrapper_ptr = pcs_wrapper_ptr;
+
+            pcs_ptr->sb_params_array = scs_ptr->sb_params_array;
+            pcs_ptr->sb_geom = scs_ptr->sb_geom;
+            pcs_ptr->input_resolution = scs_ptr->input_resolution;
+            pcs_ptr->picture_sb_width = scs_ptr->pic_width_in_sb;
+            pcs_ptr->picture_sb_height = scs_ptr->picture_height_in_sb;
 
             pcs_ptr->overlay_ppcs_ptr = NULL;
             pcs_ptr->is_alt_ref       = 0;
@@ -997,13 +1010,14 @@ void *resource_coordination_kernel(void *input_ptr) {
                 eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
                 eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
-
+#if !TILES_PARALLEL
             set_tile_info(pcs_ptr);
+#endif
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;
                 uint8_t                         pic_width_in_sb =
-                    (uint8_t)((scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) /
+                    (uint8_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) /
                               scs_ptr->sb_size_pix);
                 int       tile_row, tile_col;
                 uint32_t  x_sb_index, y_sb_index;

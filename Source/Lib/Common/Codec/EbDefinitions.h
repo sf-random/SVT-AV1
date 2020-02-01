@@ -32,9 +32,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define MC_DYNAMIC_PAD              1
 #define GLOBAL_WARPED_MOTION 1 // Global warped motion detection and insertion
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
+#endif
+
+#define TILES_PARALLEL 1
+
+#if TILES_PARALLEL
+#define MAX_TILE_CNTS 128 // Annex A.3
 #endif
 
 #define MR_MODE 0
@@ -113,6 +120,7 @@ enum {
 #define ALTREF_MAX_NFRAMES 10
 #define ALTREF_MAX_STRENGTH 6
 #define PAD_VALUE (128 + 32)
+#define PAD_VALUE_SCALED (128+128+32)
 #define NSQ_TAB_SIZE 8
 #define NUMBER_OF_DEPTH 6
 #define NUMBER_OF_SHAPES 10
@@ -177,6 +185,7 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 64
 #define MAX_TILE_COLS 64
+
 #define MAX_VARTX_DEPTH 2
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
@@ -353,6 +362,16 @@ static __inline void mem_put_le16(void *vmem, MEM_VALUE_T val) {
     mem[0] = (MAU_T)((val >> 0) & 0xff);
     mem[1] = (MAU_T)((val >> 8) & 0xff);
 }
+
+#if TILES_PARALLEL
+static __inline void mem_put_le24(void *vmem, MEM_VALUE_T val) {
+    MAU_T *mem = (MAU_T *)vmem;
+
+    mem[0] = (MAU_T)((val >>  0) & 0xff);
+    mem[1] = (MAU_T)((val >>  8) & 0xff);
+    mem[2] = (MAU_T)((val >> 16) & 0xff);
+}
+#endif
 
 static __inline void mem_put_le32(void *vmem, MEM_VALUE_T val) {
     MAU_T *mem = (MAU_T *)vmem;
@@ -2373,6 +2392,9 @@ void(*error_handler)(
 
 #define MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE       ((MAX_PICTURE_WIDTH_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) * \
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
+// super-resolution definitions
+#define MIN_SUPERRES_DENOM                          8
+#define MAX_SUPERRES_DENOM                          16
 
 //***Prediction Structure***
 #define REF_LIST_MAX_DEPTH                          4 // NM - To be specified

@@ -433,6 +433,29 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->me_segment_column_count_array[4] = me_seg_w;
     scs_ptr->me_segment_column_count_array[5] = me_seg_w;
 
+#if TILES_PARALLEL
+    // Jing:
+    // A tile group can be consisted by 1 tile or NxM tiles.
+    // Segments will be parallelized within a tile group
+    // We can use tile group to control the threads/parallelism in ED stage
+    // NOTE:1 col will have better perf for segments for large resolutions
+    uint8_t tile_group_col_count = 1;//(1 << scs_ptr->static_config.tile_columns)
+    uint8_t tile_group_row_count = (1 << scs_ptr->static_config.tile_rows);
+
+    scs_ptr->tile_group_col_count_array[0] = tile_group_col_count;
+    scs_ptr->tile_group_col_count_array[1] = tile_group_col_count;
+    scs_ptr->tile_group_col_count_array[2] = tile_group_col_count;
+    scs_ptr->tile_group_col_count_array[3] = tile_group_col_count;
+    scs_ptr->tile_group_col_count_array[4] = tile_group_col_count;
+    scs_ptr->tile_group_col_count_array[5] = tile_group_col_count;
+
+    scs_ptr->tile_group_row_count_array[0] = tile_group_row_count;
+    scs_ptr->tile_group_row_count_array[1] = tile_group_row_count;
+    scs_ptr->tile_group_row_count_array[2] = tile_group_row_count;
+    scs_ptr->tile_group_row_count_array[3] = tile_group_row_count;
+    scs_ptr->tile_group_row_count_array[4] = tile_group_row_count;
+    scs_ptr->tile_group_row_count_array[5] = tile_group_row_count;
+#endif
     // EncDec segments
     scs_ptr->enc_dec_segment_row_count_array[0] = enc_dec_seg_h;
     scs_ptr->enc_dec_segment_row_count_array[1] = enc_dec_seg_h;
@@ -555,7 +578,12 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->picture_demux_fifo_init_count               = 300;
     scs_ptr->rate_control_tasks_fifo_init_count          = 300;
     scs_ptr->rate_control_fifo_init_count                = 301;
+#if TILES_PARALLEL
+    //Jing: Too many tiles may drain the fifo
+    scs_ptr->mode_decision_configuration_fifo_init_count = 300 * (MIN(9, 1<<scs_ptr->static_config.tile_rows));
+#else
     scs_ptr->mode_decision_configuration_fifo_init_count = 300;
+#endif
     scs_ptr->motion_estimation_fifo_init_count           = 300;
     scs_ptr->entropy_coding_fifo_init_count              = 300;
     scs_ptr->enc_dec_fifo_init_count                     = 300;
@@ -967,6 +995,11 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
         input_data.mrp_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_mode;
         input_data.nsq_present = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->nsq_present;
+#if TILES_PARALLEL
+        input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
+        input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
+        input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1015,6 +1048,12 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
         input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
         input_data.cfg_palette = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.screen_content_mode;
+#if TILES_PARALLEL
+        //Jing: Get tile info from parent_pcs
+        PictureParentControlSet *parent_pcs = (PictureParentControlSet *)enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
+        input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
+        input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1877,7 +1916,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->static_config.source_height = scs_ptr->max_input_luma_height;
 
     derive_input_resolution(
-        scs_ptr,
+        &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
     // In two pass encoding, the first pass uses sb size=64
     if (scs_ptr->static_config.screen_content_mode == 1 || scs_ptr->use_output_stat_file)
@@ -2189,6 +2228,11 @@ void copy_api_from_app(
     scs_ptr->static_config.altref_nframes = config_struct->altref_nframes;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
+    scs_ptr->static_config.superres_mode = config_struct->superres_mode;
+    scs_ptr->static_config.superres_denom = config_struct->superres_denom;
+    scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;
+    scs_ptr->static_config.superres_qthres = config_struct->superres_qthres;
+
     scs_ptr->static_config.sq_weight = config_struct->sq_weight;
     scs_ptr->static_config.enable_auto_max_partition = config_struct->enable_auto_max_partition;
 
@@ -2430,6 +2474,12 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if TILES_PARALLEL
+    if ((1 << config->tile_rows) * (1 << config->tile_columns) > 128 || config->tile_columns > 4) {
+        SVT_LOG("Error Instance %u: MaxTiles is 128 and MaxTileCols is 16 (Annex A.3) \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if (config->unrestricted_motion_vector > 1) {
         SVT_LOG("Error Instance %u : Invalid Unrestricted Motion Vector flag [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2690,6 +2740,32 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->superres_mode > 2) {
+        SVT_LOG("Error instance %u: invalid superres-mode %d, should be in the range [%d - %d], "
+                "only SUPERRES_NONE (0), SUPERRES_FIXED (1) and SUPERRES_RANDOM (2) are currently implemented \n", channel_number + 1, config->superres_mode, 0, 2);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->superres_mode > 0 && (config->input_stat_file || config->output_stat_file)){
+        SVT_LOG("Error instance %u: superres cannot be enabled in 2-pass mode yet \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->superres_qthres > MAX_QP_VALUE) {
+        SVT_LOG("Error instance %u: invalid superres-qthres %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_qthres, MIN_QP_VALUE, MAX_QP_VALUE);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->superres_kf_denom < MIN_SUPERRES_DENOM || config->superres_kf_denom > MAX_SUPERRES_DENOM) {
+        SVT_LOG("Error instance %u: invalid superres-kf-denom %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_kf_denom, MIN_SUPERRES_DENOM, MAX_SUPERRES_DENOM);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->superres_denom < MIN_SUPERRES_DENOM || config->superres_denom > MAX_SUPERRES_DENOM) {
+        SVT_LOG("Error instance %u: invalid superres-denom %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_denom, MIN_SUPERRES_DENOM, MAX_SUPERRES_DENOM);
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -2829,6 +2905,12 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->altref_nframes = 7;
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;
+
+    // Super-resolution default values
+    config_ptr->superres_mode = SUPERRES_NONE;
+    config_ptr->superres_denom = 8;
+    config_ptr->superres_kf_denom = 8;
+    config_ptr->superres_qthres = 43; // random threshold, change
 
     config_ptr->sq_weight = 100;
 
@@ -2996,6 +3078,10 @@ EB_API EbErrorType eb_svt_enc_stream_header(
     EbBufferHeaderType        **output_stream_ptr)
 {
     EbErrorType              return_error = EB_ErrorNone;
+
+    if(!svt_enc_component)
+        return EB_ErrorBadParameter;
+
     EbEncHandle             *enc_handle  = (EbEncHandle*)svt_enc_component->p_component_private;
     SequenceControlSet      *scs_ptr = enc_handle->scs_instance_array[0]->scs_ptr;
     Bitstream                bitstream;
