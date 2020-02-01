@@ -122,6 +122,7 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     MasterFrameBuf  *master_frame_buf = &dec_handle_ptr->master_frame_buf;
     SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
 
+    EbBool is_st = dec_handle_ptr->dec_config.threads == 1 ? EB_TRUE : EB_FALSE;
     ///* 8x8 alignment for various tools like CDEF */
     //int32_t aligned_width   = ALIGN_POWER_OF_TWO(seq_header->max_frame_width, 3);
     //int32_t aligned_height  = ALIGN_POWER_OF_TWO(seq_header->max_frame_height, 3);
@@ -169,14 +170,16 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             dynammically allocate if needed */
             /*TODO : Change to macro */
             /* (16+1) : 1 for Length and 16 for all coeffs in 4x4 */
-#if SINGLE_THRD_COEFF_BUF_OPT
-        /*Size of coeff buf reduced to sb_sizesss*/
-        EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
-            (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-#else
-        EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
-            (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-#endif
+        if (is_st) {
+            /*Size of coeff buf reduced to sb_sizesss*/
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
+                (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+        }
+        else {
+            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_Y],
+                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+        }
+
         /*TODO : Change to macro */
         EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->trans_info[AOM_PLANE_U],
             (num_sb * num_mis_in_sb * sizeof(TransformInfo_t) * 2), EB_N_PTR);
@@ -189,47 +192,62 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         if (seq_header->color_config.subsampling_x == 1 &&
             seq_header->color_config.subsampling_y == 1) // 420
         {
-#if SINGLE_THRD_COEFF_BUF_OPT
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
-#else
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
-#endif
+            if (is_st) {
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2), EB_N_PTR);
+            }
+            else {
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2),
+                    EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 2),
+                    EB_N_PTR);
+            }
         }
         else if (seq_header->color_config.subsampling_x == 1 &&
                  seq_header->color_config.subsampling_y == 0) // 422
         {
-#if SINGLE_THRD_COEFF_BUF_OPT
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
-#else
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
-#endif
+            if (is_st) {
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1), EB_N_PTR);
+            }
+            else {
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1),
+                    EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1) >> 1),
+                    EB_N_PTR);
+            }
         }
         else if (seq_header->color_config.subsampling_x == 0 &&
                  seq_header->color_config.subsampling_y == 0) // 444
         {
-#if SINGLE_THRD_COEFF_BUF_OPT
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-#else
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-            EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
-                (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
-#endif
+            if (is_st) {
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*, cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_mis_in_sb * sizeof(int32_t) * (16 + 1)), EB_N_PTR);
+            }
+            else {
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_U],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)),
+                    EB_N_PTR);
+                EB_MALLOC_DEC(int32_t*,
+                    cur_frame_buf->coeff[AOM_PLANE_V],
+                    (num_sb * num_mis_in_sb * sizeof(int32_t) * (16 + 1)),
+                    EB_N_PTR);
+            }
         }
         else
             assert(0);
@@ -336,6 +354,32 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
         iq_size * sizeof(int32_t), EB_N_PTR);
     av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
+#if MC_DYNAMIC_PAD
+    EbColorConfig *cc = &dec_handle_ptr->seq_header.color_config;
+    uint32_t use_highbd = cc->bit_depth > EB_8BIT;
+    int32_t sb_size = 1 << sb_size_log2;
+    uint16_t *hbd_mc_buf[2];
+    for (int ref = 0; ref < 2; ref++) {
+
+        //EB_MALLOC_DEC(uint8_t**, part_info->mc_buf[ref],
+        //    sizeof(uint8_t*), EB_N_PTR);
+        if (use_highbd) {
+            EB_MALLOC_DEC(uint16_t*, hbd_mc_buf[ref],
+                ((2 * sb_size) + (AOM_INTERP_EXTEND * 2))*
+                ((2 * sb_size) + (AOM_INTERP_EXTEND * 2))*
+                sizeof(uint16_t), EB_N_PTR);
+            p_dec_mod_ctxt->mc_buf[ref] = (uint8_t *)hbd_mc_buf[ref];
+        }
+        else {
+            EB_MALLOC_DEC(uint8_t*, p_dec_mod_ctxt->mc_buf[ref],
+                ((2 * sb_size) + (AOM_INTERP_EXTEND * 2))*
+                ((2 * sb_size) + (AOM_INTERP_EXTEND * 2))*
+                sizeof(uint8_t), EB_N_PTR);
+        }
+    }
+
+#endif //MC_DYNAMIC_PAD
+
     return return_error;
 }
 
@@ -377,10 +421,39 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     LrCtxt *lr_ctxt = (LrCtxt*)dec_handle_ptr->pv_lr_ctxt;
     lr_ctxt->dec_handle_ptr = (void *)dec_handle_ptr;
 
-    EB_MALLOC_DEC(RestorationLineBuffers *, lr_ctxt->rlbs,
-                  sizeof(RestorationLineBuffers), EB_N_PTR)
-    EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf,
-                  RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+    int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->seq_header.
+        max_frame_height + sb_size_h - 1) / sb_size_h;
+    EbBool is_mt = dec_handle_ptr->dec_config.threads > 1;
+
+    picture_height_in_sb = (is_mt == 0) ? 1 : picture_height_in_sb;
+    const int32_t num_planes = av1_num_planes(&dec_handle_ptr->seq_header.
+        color_config);
+
+    uint32_t num_instances = MIN(picture_height_in_sb,
+        dec_handle_ptr->dec_config.threads);
+
+    lr_ctxt->is_thread_min = EB_FALSE;
+    if (num_instances == dec_handle_ptr->dec_config.threads)
+        lr_ctxt->is_thread_min = EB_TRUE;
+    EB_MALLOC_DEC(RestorationLineBuffers ***, lr_ctxt->rlbs,
+        num_instances * sizeof(RestorationLineBuffers**), EB_N_PTR)
+    EB_MALLOC_DEC(int32_t **, lr_ctxt->rst_tmpbuf,
+         num_instances * RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+    for (uint32_t i = 0; i < num_instances; i++) {
+        RestorationLineBuffers **p_rlbs;
+        EB_MALLOC_DEC(RestorationLineBuffers**, lr_ctxt->rlbs[i],
+            num_planes * sizeof(RestorationLineBuffers**), EB_N_PTR);
+        p_rlbs = lr_ctxt->rlbs[i];
+        for (int32_t pli = 0; pli < num_planes; pli++) {
+            EB_MALLOC_DEC(RestorationLineBuffers *, p_rlbs[pli],
+                sizeof(RestorationLineBuffers), EB_N_PTR)
+        }
+    }
+    for (uint32_t i = 0; i < num_instances; i++) {
+        EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf[i],
+            RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+    }
 
     int frame_width = dec_handle_ptr->seq_header.max_frame_width;
     int frame_height = dec_handle_ptr->seq_header.max_frame_height;
@@ -390,7 +463,6 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     const int ext_h = RESTORATION_UNIT_OFFSET + frame_height;
     const int num_stripes = (ext_h + 63) / 64;
     int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > 8);
-    const int num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
 
     for (int plane = 0; plane < num_planes; plane++)
     {
@@ -408,14 +480,8 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
         boundaries->stripe_boundary_size = buf_size;
         boundaries->stripe_boundary_stride = stride;
     }
-
-    // Align dst_width to 16 multiple as wiener(leaf level function)
-    // expects width to be multiple of 16 for filtering.
-    lr_ctxt->dst_stride = ALIGN_POWER_OF_TWO(frame_width, 4);
-
-    EB_MALLOC_DEC(uint8_t *, lr_ctxt->dst, lr_ctxt->dst_stride *
-        (frame_height) * sizeof(uint8_t) << use_highbd, EB_N_PTR);
-
+    EB_MALLOC_DEC(uint8_t *, lr_ctxt->dst, (MAX_SB_SIZE + 8) *
+        RESTORATION_PROC_UNIT_SIZE * sizeof(uint8_t) << use_highbd, EB_N_PTR);
     return return_error;
 }
 

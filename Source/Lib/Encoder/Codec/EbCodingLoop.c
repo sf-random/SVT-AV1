@@ -1434,6 +1434,18 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
         is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
     EbPictureBufferDesc *coeff_buffer_sb = sb_ptr->quantized_coeff;
 
+#if TILES_PARALLEL
+    uint16_t tile_idx = context_ptr->tile_index;
+    NeighborArrayUnit *ep_luma_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_luma_recon_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_cb_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_cb_recon_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_cr_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_cr_recon_neighbor_array[tile_idx];
+#else
     NeighborArrayUnit *ep_luma_recon_neighbor_array =
         is_16bit ? pcs_ptr->ep_luma_recon_neighbor_array16bit
                  : pcs_ptr->ep_luma_recon_neighbor_array;
@@ -1441,6 +1453,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
         is_16bit ? pcs_ptr->ep_cb_recon_neighbor_array16bit : pcs_ptr->ep_cb_recon_neighbor_array;
     NeighborArrayUnit *ep_cr_recon_neighbor_array =
         is_16bit ? pcs_ptr->ep_cr_recon_neighbor_array16bit : pcs_ptr->ep_cr_recon_neighbor_array;
+#endif
 
     EbPictureBufferDesc *residual_buffer           = context_ptr->residual_buffer;
     EbPictureBufferDesc *transform_buffer          = context_ptr->transform_buffer;
@@ -1481,9 +1494,13 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         context_ptr->md_context->luma_txb_skip_context = 0;
         context_ptr->md_context->luma_dc_sign_context  = 0;
-        get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+        get_txb_ctx(pcs_ptr,
                     COMPONENT_LUMA,
+#if TILES_PARALLEL
+                    pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                     pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                     txb_origin_x,
                     txb_origin_y,
                     context_ptr->blk_geom->bsize,
@@ -1690,7 +1707,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
 
             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                 pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                 (uint8_t *)&dc_sign_level_coeff,
                 txb_origin_x,
                 txb_origin_y,
@@ -1717,9 +1738,13 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         context_ptr->md_context->cb_txb_skip_context = 0;
         context_ptr->md_context->cb_dc_sign_context  = 0;
-        get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+        get_txb_ctx(pcs_ptr,
                     COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                    pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                     blk_originx_uv,
                     blk_originy_uv,
                     context_ptr->blk_geom->bsize_uv,
@@ -1729,10 +1754,13 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         context_ptr->md_context->cr_txb_skip_context = 0;
         context_ptr->md_context->cr_dc_sign_context  = 0;
-        get_txb_ctx(
-            pcs_ptr->parent_pcs_ptr->scs_ptr,
+        get_txb_ctx(pcs_ptr,
             COMPONENT_CHROMA,
+#if TILES_PARALLEL
+            pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
             pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
             blk_originx_uv,
             blk_originy_uv,
             context_ptr->blk_geom->bsize_uv,
@@ -2001,7 +2029,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
         {
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                 pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                 (uint8_t *)&dc_sign_level_coeff,
                 ROUND_UV(txb_origin_x) >> 1,
                 ROUND_UV(txb_origin_y) >> 1,
@@ -2014,7 +2046,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
         {
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                 pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                 (uint8_t *)&dc_sign_level_coeff,
                 ROUND_UV(txb_origin_x) >> 1,
                 ROUND_UV(txb_origin_y) >> 1,
@@ -2111,9 +2147,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
         (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     // SB Stats
     uint32_t sb_width =
-        MIN(scs_ptr->sb_size_pix, scs_ptr->seq_header.max_frame_width - sb_origin_x);
+        MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_width - sb_origin_x);
     uint32_t sb_height =
-        MIN(scs_ptr->sb_size_pix, scs_ptr->seq_header.max_frame_height - sb_origin_y);
+        MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_height - sb_origin_y);
     // MV merge mode
     uint32_t              y_has_coeff;
     uint32_t              u_has_coeff;
@@ -2131,6 +2167,27 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     uint64_t              cr_txb_coeff_bits;
     EncodeContext *       encode_context_ptr;
     // Dereferencing early
+#if TILES_PARALLEL
+    uint16_t tile_idx = context_ptr->tile_index;
+    uint16_t total_tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
+        pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
+    NeighborArrayUnit *ep_mode_type_neighbor_array = pcs_ptr->ep_mode_type_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_intra_luma_mode_neighbor_array =
+        pcs_ptr->ep_intra_luma_mode_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_intra_chroma_mode_neighbor_array =
+        pcs_ptr->ep_intra_chroma_mode_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_mv_neighbor_array = pcs_ptr->ep_mv_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_luma_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_luma_recon_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_cb_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_cb_recon_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_cr_recon_neighbor_array =
+        is_16bit ? pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]
+                 : pcs_ptr->ep_cr_recon_neighbor_array[tile_idx];
+    NeighborArrayUnit *ep_skip_flag_neighbor_array = pcs_ptr->ep_skip_flag_neighbor_array[tile_idx];
+#else
     NeighborArrayUnit *ep_mode_type_neighbor_array = pcs_ptr->ep_mode_type_neighbor_array;
     NeighborArrayUnit *ep_intra_luma_mode_neighbor_array =
         pcs_ptr->ep_intra_luma_mode_neighbor_array;
@@ -2145,6 +2202,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     NeighborArrayUnit *ep_cr_recon_neighbor_array =
         is_16bit ? pcs_ptr->ep_cr_recon_neighbor_array16bit : pcs_ptr->ep_cr_recon_neighbor_array;
     NeighborArrayUnit *ep_skip_flag_neighbor_array = pcs_ptr->ep_skip_flag_neighbor_array;
+#endif
 
     EbBool       dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
     const EbBool is_intra_sb     = pcs_ptr->limit_intra ? EB_FALSE : EB_TRUE;
@@ -2301,7 +2359,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     context_ptr->coded_area_sb                = 0;
     context_ptr->coded_area_sb_uv             = 0;
 
+#if TILES_PARALLEL
+    if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 && total_tile_cnt == 1) {
+#else
     if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
+#endif
         if (sb_addr == 0) {
             eb_av1_loop_filter_init(pcs_ptr);
 
@@ -2333,10 +2395,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
             // Update the partition stats
             update_part_stats(pcs_ptr,
                               blk_ptr,
+#if TILES_PARALLEL
+                              tile_idx,
+#endif
                               (sb_origin_y + blk_geom->origin_y) >> MI_SIZE_LOG2,
                               (sb_origin_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
-        if (part != PARTITION_SPLIT && scs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {
+        if (part != PARTITION_SPLIT && pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {
             int32_t offset_d1 = ns_blk_offset[(int32_t)part]; //blk_ptr->best_d1_blk; // TOCKECK
             int32_t num_d1_block =
                 ns_blk_num[(int32_t)part]; // context_ptr->blk_geom->totns; // TOCKECK
@@ -2466,9 +2531,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                             context_ptr->md_context->luma_txb_skip_context = 0;
                             context_ptr->md_context->luma_dc_sign_context  = 0;
-                            get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                            get_txb_ctx(pcs_ptr,
                                         COMPONENT_LUMA,
+#if TILES_PARALLEL
+                                        pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                         pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                                         context_ptr->blk_origin_x,
                                         context_ptr->blk_origin_y,
                                         context_ptr->blk_geom->bsize,
@@ -2479,9 +2548,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             if (context_ptr->blk_geom->has_uv) {
                                 context_ptr->md_context->cb_txb_skip_context = 0;
                                 context_ptr->md_context->cb_dc_sign_context  = 0;
-                                get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                get_txb_ctx(pcs_ptr,
                                             COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                            pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                             pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                             blk_originx_uv,
                                             blk_originy_uv,
                                             context_ptr->blk_geom->bsize_uv,
@@ -2491,9 +2564,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                                 context_ptr->md_context->cr_txb_skip_context = 0;
                                 context_ptr->md_context->cr_dc_sign_context  = 0;
-                                get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                get_txb_ctx(pcs_ptr,
                                             COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                            pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                             pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                             blk_originx_uv,
                                             blk_originy_uv,
                                             context_ptr->blk_geom->bsize_uv,
@@ -2718,7 +2795,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     context_ptr->blk_origin_x,
                                     context_ptr->blk_origin_y,
@@ -2732,7 +2813,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     ROUND_UV(context_ptr->blk_origin_x) >> 1,
                                     ROUND_UV(context_ptr->blk_origin_y) >> 1,
@@ -2746,7 +2831,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     ROUND_UV(context_ptr->blk_origin_x) >> 1,
                                     ROUND_UV(context_ptr->blk_origin_y) >> 1,
@@ -3002,9 +3091,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                             context_ptr->md_context->luma_txb_skip_context = 0;
                             context_ptr->md_context->luma_dc_sign_context  = 0;
-                            get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                            get_txb_ctx(pcs_ptr,
                                         COMPONENT_LUMA,
+#if TILES_PARALLEL
+                                        pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                         pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                                         txb_origin_x,
                                         txb_origin_y,
                                         context_ptr->blk_geom->bsize,
@@ -3017,9 +3110,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 context_ptr->md_context->cb_txb_skip_context = 0;
                                 context_ptr->md_context->cb_dc_sign_context  = 0;
                                 get_txb_ctx(
-                                    pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                    pcs_ptr,
                                     COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                     ROUND_UV(txb_origin_x) >> 1,
                                     ROUND_UV(txb_origin_y) >> 1,
                                     context_ptr->blk_geom->bsize_uv,
@@ -3030,9 +3127,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                                 context_ptr->md_context->cr_txb_skip_context = 0;
                                 context_ptr->md_context->cr_dc_sign_context  = 0;
-                                get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                get_txb_ctx(pcs_ptr,
                                             COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                            pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                             pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                             ROUND_UV(txb_origin_x) >> 1,
                                             ROUND_UV(txb_origin_y) >> 1,
                                             context_ptr->blk_geom->bsize_uv,
@@ -3260,7 +3361,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
 
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     txb_origin_x,
                                     txb_origin_y,
@@ -3276,7 +3381,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     ROUND_UV(txb_origin_x) >> 1,
                                     ROUND_UV(txb_origin_y) >> 1,
@@ -3292,7 +3401,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                    pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                     pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                     (uint8_t *)&dc_sign_level_coeff,
                                     ROUND_UV(txb_origin_x) >> 1,
                                     ROUND_UV(txb_origin_y) >> 1,
@@ -3337,9 +3450,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                         context_ptr->md_context->luma_txb_skip_context = 0;
                         context_ptr->md_context->luma_dc_sign_context  = 0;
                         get_txb_ctx(
-                            pcs_ptr->parent_pcs_ptr->scs_ptr,
+                            pcs_ptr,
                             COMPONENT_LUMA,
+#if TILES_PARALLEL
+                            pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                             pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                             txb_origin_x,
                             txb_origin_y,
                             context_ptr->blk_geom->bsize,
@@ -3351,9 +3468,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             context_ptr->md_context->cb_txb_skip_context = 0;
                             context_ptr->md_context->cb_dc_sign_context  = 0;
                             get_txb_ctx(
-                                pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                pcs_ptr,
                                 COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                 pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                 ROUND_UV(txb_origin_x) >> 1,
                                 ROUND_UV(txb_origin_y) >> 1,
                                 context_ptr->blk_geom->bsize_uv,
@@ -3364,9 +3485,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                             context_ptr->md_context->cr_txb_skip_context = 0;
                             context_ptr->md_context->cr_dc_sign_context  = 0;
-                            get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
+                            get_txb_ctx(pcs_ptr,
                                         COMPONENT_CHROMA,
+#if TILES_PARALLEL
+                                        pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                         pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                         ROUND_UV(txb_origin_x) >> 1,
                                         ROUND_UV(txb_origin_y) >> 1,
                                         context_ptr->blk_geom->bsize_uv,
@@ -3498,7 +3623,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
 
                             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                 pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
+#endif
                                 (uint8_t *)&dc_sign_level_coeff,
                                 txb_origin_x,
                                 txb_origin_y,
@@ -3514,7 +3643,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             uint8_t dc_sign_level_coeff =
                                 (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
                             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                 pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
+#endif
                                 (uint8_t *)&dc_sign_level_coeff,
                                 ROUND_UV(txb_origin_x) >> 1,
                                 ROUND_UV(txb_origin_y) >> 1,
@@ -3530,7 +3663,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             uint8_t dc_sign_level_coeff =
                                 (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
                             neighbor_array_unit_mode_write(
+#if TILES_PARALLEL
+                                pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#else
                                 pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
+#endif
                                 (uint8_t *)&dc_sign_level_coeff,
                                 ROUND_UV(txb_origin_x) >> 1,
                                 ROUND_UV(txb_origin_y) >> 1,
@@ -3621,16 +3758,16 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                                 (context_ptr->mv_unit.mv[REF_LIST_0].y >> 3));
                                     origin_x =
                                         MIN(origin_x,
-                                            scs_ptr->seq_header.max_frame_width - blk_geom->bwidth);
+                                            pcs_ptr->parent_pcs_ptr->aligned_width - blk_geom->bwidth);
                                     origin_y = MIN(
                                         origin_y,
-                                        scs_ptr->seq_header.max_frame_height - blk_geom->bheight);
+                                        pcs_ptr->parent_pcs_ptr->aligned_height - blk_geom->bheight);
                                     uint16_t sb_origin_x =
                                         origin_x / context_ptr->sb_sz * context_ptr->sb_sz;
                                     uint16_t sb_origin_y =
                                         origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
                                     uint32_t pic_width_in_sb =
-                                        (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) /
+                                        (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) /
                                         scs_ptr->sb_sz;
                                     uint16_t sb_index =
                                         sb_origin_x / context_ptr->sb_sz +
@@ -3720,16 +3857,16 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                             (context_ptr->mv_unit.mv[REF_LIST_1].y >> 3));
                                 origin_x =
                                     MIN(origin_x,
-                                        scs_ptr->seq_header.max_frame_width - blk_geom->bwidth);
+                                        pcs_ptr->parent_pcs_ptr->aligned_width - blk_geom->bwidth);
                                 origin_y =
                                     MIN(origin_y,
-                                        scs_ptr->seq_header.max_frame_height - blk_geom->bheight);
+                                        pcs_ptr->parent_pcs_ptr->aligned_height - blk_geom->bheight);
                                 uint16_t sb_origin_x =
                                     origin_x / context_ptr->sb_sz * context_ptr->sb_sz;
                                 uint16_t sb_origin_y =
                                     origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
                                 uint32_t pic_width_in_sb =
-                                    (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) /
+                                    (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) /
                                     scs_ptr->sb_sz;
                                 uint16_t sb_index =
                                     sb_origin_x / context_ptr->sb_sz +
@@ -3814,7 +3951,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     partition.above = partition_context_lookup[blk_geom->bsize].above;
                     partition.left  = partition_context_lookup[blk_geom->bsize].left;
 
+#if TILES_PARALLEL
+                    neighbor_array_unit_mode_write(pcs_ptr->ep_partition_context_neighbor_array[tile_idx],
+#else
                     neighbor_array_unit_mode_write(pcs_ptr->ep_partition_context_neighbor_array,
+#endif
                                                    (uint8_t *)&partition,
                                                    context_ptr->blk_origin_x,
                                                    context_ptr->blk_origin_y,
@@ -3878,11 +4019,16 @@ else blk_it +=
     d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
 } // CU Loop
 // First Pass Deblocking
+#if TILES_PARALLEL
+    if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 && total_tile_cnt == 1) {
+        //Jing: Don't work for tile_parallel since the SB of bottom tile comes early than the bottom SB of top tile
+#else
 if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
+#endif
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[0] ||
         pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {
         uint8_t last_col =
-            ((sb_origin_x) + sb_width == scs_ptr->seq_header.max_frame_width) ? 1 : 0;
+            ((sb_origin_x) + sb_width == pcs_ptr->parent_pcs_ptr->aligned_width) ? 1 : 0;
         loop_filter_sb(
             recon_buffer, pcs_ptr, NULL, sb_origin_y >> 2, sb_origin_x >> 2, 0, 3, last_col);
     }

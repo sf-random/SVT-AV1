@@ -52,6 +52,10 @@ typedef struct DecModCtxt {
 
     /*Mask for Comp mode blending*/
     DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
+#if MC_DYNAMIC_PAD
+    /*MC temp buff for dynamic padding*/
+    uint8_t *mc_buf[2];
+#endif
 } DecModCtxt;
 
 typedef struct LrCtxt {
@@ -67,15 +71,25 @@ typedef struct LrCtxt {
     RestorationStripeBoundaries boundaries[MAX_MB_PLANE];
 
     /* Used to store CDEF line buffer around stripe boundary */
-    RestorationLineBuffers *rlbs;
+    RestorationLineBuffers ***rlbs;
 
     /* Scratch buffer to hold LR output */
+    //uint8_t *dst;
+    //uint16_t dst_stride;
+
+    /* Temporary block level scratch buffer to store
+       LR output of [SB_Size x 64] block */
     uint8_t *dst;
-    uint16_t dst_stride;
 
     /* Pointer to a scratch buffer used by self-guided restoration */
-    int32_t *rst_tmpbuf;
+    int32_t **rst_tmpbuf;
+
+    /* Flag to indicate if the access of buffers must be
+       based on thread index or SB row index */
+    EbBool is_thread_min;
+
 } LrCtxt;
+
 
 void decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
                         SBInfo *sb_info);
