@@ -547,6 +547,9 @@ typedef struct ModeDecisionContext {
     uint64_t best_nsq_default_cost;
     uint64_t default_cost_per_shape[NUMBER_OF_SHAPES];
 #endif
+#if LAMBDA_SCALING
+    uint32_t      blk_full_lambda;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
