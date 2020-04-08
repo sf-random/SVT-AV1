@@ -133,6 +133,7 @@ extern "C" {
 #if PR1157_ADOPTIONS
     #define PALETTE_SPEEDUP 1 //Flag to use optimized version of av1_get_palette_color_index_context()
 #endif
+#define PR1187_ADOPTIONS              1 //Fix valgrind issue highbd_inv_txfm2d_add_h_identity_avx2()
 
 #if FIXED_SQ_WEIGHT_PER_QP
 #define SQ_WEIGHT_PATCH_0 1

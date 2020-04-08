@@ -587,8 +587,8 @@ static INLINE void iidentity4_and_round_shift_avx2(__m256i *input, int32_t shift
     // Input takes 18 bits, can be multiplied with new_sqrt2 in 32 bits space.
     // round_shift(new_sqrt2_bits) and next round_shift(shift) in one pass.
     const __m256i scalar = _mm256_set1_epi32(new_sqrt2);
-    const __m256i rnding =
-        _mm256_set1_epi32((1 << (new_sqrt2_bits - 1)) + (!!(shift) << (shift + new_sqrt2_bits - 1)));
+    const __m256i rnding = _mm256_set1_epi32((1 << (new_sqrt2_bits - 1)) +
+                                             (!!(shift) << (shift + new_sqrt2_bits - 1)));
 
     for (int32_t i = 0; i < 2; i++) {
         input[i] = _mm256_mullo_epi32(input[i], scalar);
@@ -1284,8 +1284,8 @@ static INLINE void iidentity16_and_round_shift_avx2(__m256i *input, int32_t shif
     // and round_shift() by one bit less (new_sqrt2_bits-1).
     // round_shift(new_sqrt2_bits-1) and next round_shift(shift) in one pass.
     const __m256i scalar = _mm256_set1_epi32(new_sqrt2);
-    const __m256i rnding =
-        _mm256_set1_epi32((1 << (new_sqrt2_bits - 2)) + (!!(shift) << (shift + new_sqrt2_bits - 2)));
+    const __m256i rnding = _mm256_set1_epi32((1 << (new_sqrt2_bits - 2)) +
+                                             (!!(shift) << (shift + new_sqrt2_bits - 2)));
 
     for (int32_t i = 0; i < 32; i++) {
         input[i] = _mm256_mullo_epi32(input[i], scalar);
@@ -6189,7 +6189,11 @@ static void highbd_inv_txfm2d_add_h_identity_avx2(const int32_t *input, uint16_t
     for (int32_t i = 0; i < (row_max >> 3); ++i) {
         __m256i        buf0[32];
         const int32_t *input_row = input + i * input_stride * 8;
+#if PR1187_ADOPTIONS
+        for (int32_t j = 0; j < buf_size_nonzero_w_div8; ++j) {
+#else
         for (int32_t j = 0; j < (buf_size_nonzero_w_div8 << 1); ++j) {
+#endif
             __m256i *buf0_cur = buf0 + j * 8;
             load_buffer_32x32_new(input_row + j * 8, buf0_cur, input_stride, 8);
 
