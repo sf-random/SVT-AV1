@@ -23,12 +23,16 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
-
-file(GLOB asm_includes "../ASM_SSE2/x86_abi_support.asm")
+set(all_files
+    aom_subpixel_bilinear_ssse3.asm
+    av1_inv_txfm_ssse3.c
+    av1_inv_txfm_ssse3.h
+    EbAvcStyleMcp_Intrinsic_SSSE3.c
+    EbAvcStyleMcp_SSSE3.h
+    EbHighbdIntraPrediction_Intrinsic_SSSE3.c
+    intrapred_ssse3.c
+    reconinter_ssse3.c
+    )
 
 #list(REMOVE_ITEM all_files ${asm_includes})
 

@@ -33,9 +33,56 @@ link_directories(
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
 
-file(GLOB all_files
-    "Codec/*.h"
-    "Codec/*.c")
+set(all_files
+    Codec/EbDecBitReader.h
+    Codec/EbDecBitstream.c
+    Codec/EbDecBitstream.h
+    Codec/EbDecBitstreamUnit.c
+    Codec/EbDecBitstreamUnit.h
+    Codec/EbDecBlock.h
+    Codec/EbDecCdef.c
+    Codec/EbDecCdef.h
+    Codec/EbDecHandle.c
+    Codec/EbDecHandle.h
+    Codec/EbDecInterPrediction.c
+    Codec/EbDecInterPrediction.h
+    Codec/EbDecIntraPrediction.c
+    Codec/EbDecIntraPrediction.h
+    Codec/EbDecInverseQuantize.c
+    Codec/EbDecInverseQuantize.h
+    Codec/EbDecLF.c
+    Codec/EbDecLF.h
+    Codec/EbDecMemInit.c
+    Codec/EbDecMemInit.h
+    Codec/EbDecNbr.c
+    Codec/EbDecNbr.h
+    Codec/EbDecObmc.c
+    Codec/EbDecObmc.h
+    Codec/EbDecParseBlock.c
+    Codec/EbDecParseFrame.c
+    Codec/EbDecParseFrame.h
+    Codec/EbDecParseHelper.c
+    Codec/EbDecParseHelper.h
+    Codec/EbDecParseInterBlock.c
+    Codec/EbDecParseInterBlock.h
+    Codec/EbDecParseObu.c
+    Codec/EbDecParseObuUtil.h
+    Codec/EbDecPicMgr.c
+    Codec/EbDecPicMgr.h
+    Codec/EbDecProcess.c
+    Codec/EbDecProcess.h
+    Codec/EbDecProcessBlock.c
+    Codec/EbDecProcessBlock.h
+    Codec/EbDecProcessFrame.c
+    Codec/EbDecProcessFrame.h
+    Codec/EbDecRestoration.c
+    Codec/EbDecRestoration.h
+    Codec/EbDecStruct.h
+    Codec/EbDecSuperRes.c
+    Codec/EbDecUtils.c
+    Codec/EbDecUtils.h
+    Codec/EbObuParse.h
+    )
 
 if(UNIX)
     if(NOT APPLE)

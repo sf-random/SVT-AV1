@@ -26,6 +26,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Globals/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
 
 link_directories(
@@ -55,14 +56,6 @@ add_subdirectory(ASM_AVX512)
 add_subdirectory(Codec)
 add_subdirectory(Globals)
 
-#file(GLOB all_files
-#    "Codec/*.h"
-#    "Codec/*.c")
-
-file(GLOB all_files
-    "*.h"
-    "*.c")
-
 if(UNIX)
     if(NOT APPLE)
         find_library(M_LIB name m)
@@ -83,7 +76,6 @@ endif()
 
 # Encoder Lib Source Files
 add_library(SvtAv1Enc
-    ${all_files}
     $<TARGET_OBJECTS:COMMON_CODEC>
     $<TARGET_OBJECTS:FASTFEAT>
     $<TARGET_OBJECTS:COMMON_C_DEFAULT>

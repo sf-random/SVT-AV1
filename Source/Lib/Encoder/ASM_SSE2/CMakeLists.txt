@@ -21,13 +21,20 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
-
-file(GLOB asm_includes
-    "x86_abi_support.asm")
+set(all_files
+    EbCombinedAveragingSAD_Intrinsic_SSE2.c
+    EbComputeMean_Intrinsic_SSE2.c
+    EbComputeMean_SSE2.h
+    EbComputeSAD_SSE2.h
+    EbMeSadCalculation_Intrinsic_SSE2.c
+    EbVariance_SSE2.h
+    encodetxb_sse2.c
+    fft_sse2.c
+    highbd_variance_impl_sse2.asm
+    highbd_variance_sse2.c
+    variance_sse2.c
+    x64RegisterUtil.asm
+    )
 
 #list(REMOVE_ITEM all_files)
 

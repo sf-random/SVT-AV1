@@ -28,11 +28,34 @@ else()
     link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib/msvc)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.cc"
-    "../../Source/App/EncApp/EbAppInputy4m.c"
-    "../../Source/App/EncApp/EbAppString.c")
+set(all_files
+    ../../Source/App/EncApp/EbAppInputy4m.c
+    ../../Source/App/EncApp/EbAppString.c
+    CompareTools.h
+    ConfigEncoder.cc
+    ConfigEncoder.h
+    DummyVideoSource.h
+    E2eTestVectors.h
+    FrameQueue.cc
+    FrameQueue.h
+    ParseUtil.cc
+    ParseUtil.h
+    PerformanceCollect.cc
+    PerformanceCollect.h
+    RefDecoder.cc
+    RefDecoder.h
+    SvtAv1E2EFramework.cc
+    SvtAv1E2EFramework.h
+    SvtAv1E2EParamsTest.cc
+    SvtAv1E2ETest.cc
+    VideoFrame.h
+    VideoSource.cc
+    VideoSource.h
+    Y4mVideoSource.cc
+    Y4mVideoSource.h
+    YuvVideoSource.cc
+    YuvVideoSource.h
+    )
 
 set(lib_list
     SvtAv1Enc

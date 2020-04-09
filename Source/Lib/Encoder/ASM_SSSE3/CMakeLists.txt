@@ -23,12 +23,8 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
-
-file(GLOB asm_includes "x86_abi_support.asm")
-list(REMOVE_ITEM all_files ${asm_includes})
+set(all_files
+    variance_impl_ssse3.c
+    )
 
 add_library(ENCODER_ASM_SSSE3 OBJECT ${all_files})

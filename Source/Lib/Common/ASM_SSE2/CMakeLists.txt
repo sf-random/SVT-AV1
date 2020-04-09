@@ -19,17 +19,29 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
-
-file(GLOB asm_includes
-    "x86_abi_support.asm"
-    "x64Macro.asm"
-    "x64inc.asm"
-    "x86inc.asm")
-
-list(REMOVE_ITEM all_files ${asm_includes})
+set(all_files
+    aom_subpixel_8t_sse2.asm
+    av1_txfm_sse2.h
+    EbAvcStyleMcp_Intrinsic_SSE2.c
+    EbAvcStyleMcp_SSE2.h
+    EbDeblockingFilter_Intrinsic_SSE2.c
+    EbDeblockingFilter_SSE2.h
+    EbHighbdIntraPrediction_SSE2.h
+    EbIntraPrediction_AV1_Intrinsic_SSE2.c
+    EbMcp_Intrinsic_SSE2.c
+    EbMcp_SSE2.h
+    EbPackUnPack_Intrinsic_SSE2.c
+    EbPictureOperators_Intrinsic_SSE2.c
+    EbPictureOperators_SSE2.asm
+    EbPictureOperators_SSE2.h
+    highbd_intrapred_sse2.c
+    highbd_intrapred_sse2_.asm
+    highbd_subtract_sse2.c
+    intrapred_sse2.asm
+    lpf_common_sse2.h
+    subtract_sse2.asm
+    synonyms.h
+    transpose_sse2.h
+    )
 
 add_library(COMMON_ASM_SSE2 OBJECT ${all_files})

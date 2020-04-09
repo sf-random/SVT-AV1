@@ -38,9 +38,18 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    cdef_block_avx512.c
+    convolve_2d_avx512.c
+    convolve_avx512.c
+    convolve_avx512.h
+    EbHighbdIntraPrediction_AVX512.c
+    EbPictureOperators_Intrinsic_AVX512.c
+    highbd_inv_txfm_avx512.c
+    jnt_convolve_2d_avx512.c
+    jnt_convolve_avx512.c
+    synonyms_avx512.h
+    wiener_convolve_avx512.c
+    )
 
 add_library(COMMON_ASM_AVX512 OBJECT ${all_files})

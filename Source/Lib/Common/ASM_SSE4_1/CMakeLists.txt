@@ -23,9 +23,15 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    EbBlend_a64_mask_sse4.c
+    EbBlend_sse4.h
+    EbIntraPrediction16bit_Intrinsic_SSE4_1.c
+    EbMemory_SSE4_1.h
+    filterintra_sse4.c
+    highbd_inv_txfm_sse4.c
+    highbd_txfm_utility_sse4.h
+    highbd_warp_plane_sse4.c
+    )
 
 add_library(COMMON_ASM_SSE4_1 OBJECT ${all_files})

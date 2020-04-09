@@ -10,8 +10,15 @@ include_directories(../../../API
         ../../Encoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/)
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    EbComputeSAD_C.c
+    EbComputeSAD_C.h
+    EbComputeVariance_C.c
+    EbComputeVariance_C.h
+    EncodeTxbRef_C.c
+    EncodeTxbRef_C.h
+    sad_av1
+    variance.c
+    )
 
 add_library(ENCODER_C_DEFAULT OBJECT ${all_files})

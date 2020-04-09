@@ -9,10 +9,17 @@
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
-file(GLOB all_files
-    "*.h"
-    "../API/*.h"
-    "*.c")
+set(all_files
+    EbDecAppMain.c
+    EbDecParamParser.c
+    EbDecParamParser.h
+    EbDecTime.c
+    EbDecTime.h
+    EbFileUtils.c
+    EbFileUtils.h
+    EbMD5Utility.c
+    EbMD5Utility.h
+    )
 
 # App Source Files
 add_executable(SvtAv1DecApp

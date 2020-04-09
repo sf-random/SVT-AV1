@@ -23,9 +23,15 @@ endif()
 
 test_apply_compiler_flags(${flags_to_test})
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    av1_txfm1d_sse4.h
+    av1_txfm_sse4.h
+    EbComputeSAD_Intrinsic_SSE4_1.c
+    EbTemporalFiltering_constants.h
+    EbTemporalFiltering_highbd_sse4.c
+    EbTemporalFiltering_sse4.c
+    highbd_fwd_txfm_sse4.c
+    obmc_variance_sse4.c
+    )
 
 add_library(ENCODER_ASM_SSE4_1 OBJECT ${all_files})

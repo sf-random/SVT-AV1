@@ -17,9 +17,10 @@ include_directories(../../../API
         ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
         )
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    EbEncHandle.c
+    EbEncHandle.h
+    )
 
 add_library(ENCODER_GLOBALS OBJECT ${all_files})
 
