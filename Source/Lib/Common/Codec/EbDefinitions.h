@@ -193,6 +193,7 @@ extern "C" {
 #define ADD_MAX_HME_SIGNAL 1 // Add a signal for MAX HME size
 #define NEW_HME_ME_SIZES 1 // New HME/ME size adoptions
 #define CLASS_MERGING       1 // merge classes into class 0 to 4
+#define TXT_CONTROL 1 // Add control signals to optimize txt search
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
