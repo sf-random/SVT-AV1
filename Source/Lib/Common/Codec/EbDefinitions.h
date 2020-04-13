@@ -37,6 +37,66 @@ extern "C" {
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
 #endif
+
+
+/////** Towards Faster_M8 **///////
+// disallow_nsq fixes
+#define DISALLOW_NSQ_FIX_0 1
+#define DISALLOW_NSQ_FIX_1 1
+#define M8_BYPASS_USELESS 1
+
+// ME (if needed)
+#define M8_FRACTIONAL_SEARCH_METHOD 0
+#define M8_ME_FILTERED_DOWNSAMPLED 0
+
+// MRP
+#define M8_MRP 1
+
+// MD
+#define M8_FULL_LOOP_ESCAPE 1
+#define M8_COMPOUND 1
+#define M8_BIPRED_3x3 1
+#define M8_PRED_ME 1
+#define M8_IFS 1
+#define M8_SPATIAL_SSE 1
+#define M8_RDOQ 1
+#define M8_INTRA_MODE 1
+#define M8_MVF 1
+#define M8_CDF 1
+#define M8_WM 1
+#define M8_MD_EXIT 1
+#define M8_CHROMA 1
+#define M8_TXT 1
+#define M8_OBMC 1
+
+// Filtering
+#define M8_SG 1
+#define M8_WN 1
+#define M8_RESTORATION 1
+#define M8_LOOP_FILTER 1
+#define M8_CDEF 1
+// Part
+#define M8_4x4 1
+#define M8_NSQ 1
+#define M8_SB_SIZE 1
+// SC 
+#define M8_PALETTE 1
+#define M8_IBC 1
+
+// Part
+#define M8_MPPD 0
+#define M8_MPPD_I_SLICE 0
+#define M8_NEW_MPPD 1
+
+// Debugging flags
+#define UNIFIED_ME_HME_SETTINGS 1
+#define UNIFIED_PART 1
+#define UNIFIED_NICS 1
+#define UNIFIED_MD_STAGING 1
+
+#define MPPD_PROFILNG 1
+///////** Towards Faster_M8 **///////
+
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
 
 #define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
@@ -81,10 +141,14 @@ extern "C" {
 #define FIX_MR_PD1                        1 // Disable PD1 refinement changes for MR.
 #define PME_SORT_REF                      1 //add reference sorting of pme results
 #define OBMC_FAST                         1 //faster obmc mode (3). cleaner obmc signalling.
+#if !M8_MD_EXIT
 #define REMOVE_MD_EXIT                    1 // remove md_exit
+#endif
 #define MAR16_M8_ADOPTIONS                1 // M8 adoption for TH value
+#if !M8_CHROMA
 #define ADDED_CFL_OFF                     1
 #define ADOPT_CHROMA_MODE1_CFL_OFF        1
+#endif
 #define PIC_BASED_RE_OFF                  1
 #define MR_MODE_FOR_PIC_MULTI_PASS_PD_MODE_1 1 // shut SQ vs. NSQ if MR (for multi_pass_pd_level = PIC_MULTI_PASS_PD_MODE_1 or PIC_MULTI_PASS_PD_MODE_2 or PIC_MULTI_PASS_PD_MODE_3)
 #define ADD_SAD_AT_PME_SIGNAL      1 // Add signal for using SAD at PME
