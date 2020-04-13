@@ -95,6 +95,20 @@ extern "C" {
 #define UNIFIED_MD_STAGING 1
 
 #define MPPD_PROFILNG 1
+
+// Recent adoptions
+#define TEST_1 1
+#if TEST_1
+#define MULTI_PASS_PD_FOR_INCOMPLETE 1
+#define INJECT_BACKUP_CANDIDATE 1
+#endif
+
+#define TEST_3_C 1
+#if TEST_3_C
+#define SHUT_PALETTE_BC_PD_PASS_0_1 1
+#endif
+
+#define OVER_BOUNDARY_MODE 1 
 ///////** Towards Faster_M8 **///////
 
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
@@ -190,7 +204,6 @@ extern "C" {
 #define SHUT_SQ_WEIGHT_INTRA_FILTER   1
 #define SHUT_SQ_WEIGHT_H4_V4_FILTER   0
 #define APR02_ADOPTIONS               1 // adoptions in all modes
-#define MULTI_PASS_PD_FOR_INCOMPLETE  0
 #define APR08_ADOPTIONS               1 // adoptions in all modes
 
 
