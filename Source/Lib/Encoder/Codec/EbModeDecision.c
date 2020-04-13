@@ -6208,9 +6208,10 @@ EbErrorType generate_md_stage_0_cand(
                 context_ptr,
                 &cand_total_cnt);
 #if SHUT_PALETTE_BC_PD_PASS_0_1
-    if(context_ptr->pd_pass == PD_PASS_2) {
-#endif
+    if(context_ptr->md_allow_intrabc)
+#else
     if (frm_hdr->allow_intrabc)
+#endif
         inject_intra_bc_candidates(
             pcs_ptr,
             context_ptr,
@@ -6219,12 +6220,19 @@ EbErrorType generate_md_stage_0_cand(
             &cand_total_cnt
         );
 
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    if (context_ptr->md_palette_mode) {
+#endif
     //can be removed later if need be
     for (uint16_t i = 0; i < cand_total_cnt; i++) {
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] == 0);
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
     }
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize)) {
+#else
     if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize)) {
+#endif
         inject_palette_candidates(
             pcs_ptr,
             context_ptr,
@@ -6508,7 +6516,11 @@ uint32_t product_full_mode_decision(
         if (blk_ptr->prediction_mode_flag == INTRA_MODE)
         {
             memcpy(&blk_ptr->palette_info.pmi, &candidate_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+            if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize))
+#else
             if(svt_av1_allow_palette(context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
+#endif
                memcpy(blk_ptr->palette_info.color_idx_map, candidate_ptr->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
         }
         else {
