@@ -37,10 +37,10 @@ extern "C" {
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
 #endif
-#define UNIFIED_PART 1
+#define UNIFIED_PART 0
 #define UNIFIED_FILTERING          0
 #define UNIFIED_TF                 0
-#define UNIFIED_NICS               1
+#define UNIFIED_NICS               0
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
 #if UNIFIED_FILTERING
