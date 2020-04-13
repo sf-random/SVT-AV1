@@ -42,7 +42,7 @@ extern "C" {
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
-#define DISALLOW_NSQ_FIX_0 0
+#define DISALLOW_NSQ_FIX_0 1
 #define DISALLOW_NSQ_FIX_1 1
 #define M8_BYPASS_USELESS 1
 // MD and ME
