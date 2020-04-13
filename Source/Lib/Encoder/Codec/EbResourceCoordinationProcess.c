@@ -855,6 +855,11 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         // Init SB Params
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
+#if ENC_STATS
+            for(int8_t i = 0; i < 6; i++)
+                for(int8_t j = 0; j < 20; j++)
+                    scs_ptr->pd0_sb_cost[i][j] = 0;
+#endif
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);

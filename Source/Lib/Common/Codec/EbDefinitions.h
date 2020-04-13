@@ -180,8 +180,11 @@ extern "C" {
 
 #define APR02_ADOPTIONS 1 // adoptions in all modes
 
-#define MULTI_PASS_PD_FOR_INCOMPLETE 1
+#define MULTI_PASS_PD_FOR_INCOMPLETE 0
 
+#define HIGH_COMPLEX_SB_DETECT              0
+#define SB_STAT 0
+#define ENC_STATS                           0 // STATS
 #endif
 
 // END  BEYOND_CS2 /////////////////////////////////////////////////////////

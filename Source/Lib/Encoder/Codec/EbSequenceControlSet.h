@@ -200,6 +200,9 @@ typedef struct SequenceControlSet {
     uint32_t cdef_process_init_count;
     uint32_t rest_process_init_count;
     uint32_t total_process_init_count;
+#if SB_STAT
+    uint64_t      pd0_sb_cost[6][20];
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

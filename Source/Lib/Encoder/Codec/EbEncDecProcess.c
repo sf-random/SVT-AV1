@@ -4708,6 +4708,272 @@ static uint64_t generate_best_part_cost(
     }
     return best_part_cost;
 }
+#if HIGH_COMPLEX_SB_DETECT
+static uint8_t determine_sb_class(
+    SequenceControlSet  *scs_ptr,
+    PictureControlSet   *pcs_ptr,
+    ModeDecisionContext *context_ptr,
+    uint32_t             sb_index) {
+    uint32_t  blk_index = 0;
+    uint64_t best_part_cost = 0;
+    uint64_t has_coeff_sb = 0;
+    uint64_t count_non_zero_coeffs = 0;
+    uint64_t small_block_size = 0;
+    uint64_t total_block = 0;
+    uint64_t intra_block_cnt = 0;
+    uint64_t chroma_cfl_cnt = 0;
+    EbBool split_flag;
+    while (blk_index < scs_ptr->max_block_cnt) {
+        const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
+        // if the parent square is inside inject this block
+        uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
+            (blk_geom->sq_size < 128) ? 1 : 0;
+        // derive split_flag
+        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
+            is_blk_allowed) {
+            if (blk_geom->shape == PART_N) {
+                if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
+                    //best_part_cost += context_ptr->md_local_blk_unit[blk_index].cost;
+                    //has_coeff_sb += context_ptr->md_blk_arr_nsq[blk_index].block_has_coeff != 0 ? (blk_geom->bwidth*blk_geom->bheight) : 0;
+                    count_non_zero_coeffs += context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
+                    //if (count_non_zero_coeffs > (128*128)) printf("error- count_non_zero_coeffs\n");
+                    //small_block_size += blk_geom->bwidth <= 32 && blk_geom->bheight <= 32 ? (blk_geom->bwidth*blk_geom->bheight) : 0;
+                    //intra_block_cnt += (context_ptr->md_blk_arr_nsq[blk_index].prediction_mode_flag == INTRA_MODE) ? (blk_geom->bwidth*blk_geom->bheight) : 0;
+                    //chroma_cfl_cnt += (context_ptr->md_blk_arr_nsq[blk_index].prediction_unit_array->intra_chroma_mode == INTRA_MODE) ? (blk_geom->bwidth*blk_geom->bheight) : 0;
+                    total_block += (blk_geom->bwidth*blk_geom->bheight);
+                }
+            }
+        }
+        blk_index += split_flag ?
+            d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] :
+            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+    }
+    /*uint8_t is_high_comp = 0;
+    uint8_t high_cost_sb = best_part_cost > 100000000 ? 1 : 0;
+    uint8_t all_blocks_have_coeff = (has_coeff_sb == total_block) ? 1 : 0;
+    uint8_t all_blocks_are_small_sizes = (small_block_size == total_block) ? 1 : 0;
+    int8_t most_blocks_are_intra = ((total_block - intra_block_cnt) * 100 < (50 * total_block)) ? INTRA_MODE : (intra_block_cnt == 0) ? INTER_MODE :  -1;
+    uint8_t mostly_cfl_sb = ((total_block - chroma_cfl_cnt) * 100) < 30 * total_block;
+  
+    is_high_comp = high_cost_sb && all_blocks_have_coeff && all_blocks_have_coeff && all_blocks_are_small_sizes ? 1 : 0;
+    is_high_comp = is_high_comp && most_blocks_are_intra == INTRA_MODE ? 2 :
+        is_high_comp && most_blocks_are_intra == INTER_MODE ? 1 : 0;*/
+#if SB_STAT
+#if 1
+    if (count_non_zero_coeffs < ((total_block * 1)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (count_non_zero_coeffs < ((total_block * 2)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (count_non_zero_coeffs < ((total_block * 3)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (count_non_zero_coeffs < ((total_block * 4)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (count_non_zero_coeffs < ((total_block * 5)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (count_non_zero_coeffs < ((total_block * 6)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (count_non_zero_coeffs < ((total_block * 7)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (count_non_zero_coeffs < ((total_block * 8)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (count_non_zero_coeffs < ((total_block * 9)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (count_non_zero_coeffs < ((total_block * 10)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (count_non_zero_coeffs < ((total_block * 11)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (count_non_zero_coeffs < ((total_block * 12)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (count_non_zero_coeffs < ((total_block * 13)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (count_non_zero_coeffs < ((total_block * 14)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (count_non_zero_coeffs < ((total_block * 15)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (count_non_zero_coeffs < ((total_block * 16)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (count_non_zero_coeffs < ((total_block * 17)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (count_non_zero_coeffs < ((total_block * 18)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (count_non_zero_coeffs < ((total_block * 19)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#elif 0 
+    if (intra_block_cnt < ((total_block * 1)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (intra_block_cnt < ((total_block * 2)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (intra_block_cnt < ((total_block * 3)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (intra_block_cnt < ((total_block * 4)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (intra_block_cnt < ((total_block * 5)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (intra_block_cnt < ((total_block * 6)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (intra_block_cnt < ((total_block * 7)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (intra_block_cnt < ((total_block * 8)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (intra_block_cnt < ((total_block * 9)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (intra_block_cnt < ((total_block * 10)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (intra_block_cnt < ((total_block * 11)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (intra_block_cnt < ((total_block * 12)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (intra_block_cnt < ((total_block * 13)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (intra_block_cnt < ((total_block * 14)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (intra_block_cnt < ((total_block * 15)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (intra_block_cnt < ((total_block * 16)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (intra_block_cnt < ((total_block * 17)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (intra_block_cnt < ((total_block * 18)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (intra_block_cnt < ((total_block * 19)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#elif 0 
+    if (small_block_size < ((total_block * 1)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (small_block_size < ((total_block * 2)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (small_block_size < ((total_block * 3)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (small_block_size < ((total_block * 4)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (small_block_size < ((total_block * 5)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (small_block_size < ((total_block * 6)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (small_block_size < ((total_block * 7)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (small_block_size < ((total_block * 8)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (small_block_size < ((total_block * 9)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (small_block_size < ((total_block * 10)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (small_block_size < ((total_block * 11)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (small_block_size < ((total_block * 12)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (small_block_size < ((total_block * 13)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (small_block_size < ((total_block * 14)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (small_block_size < ((total_block * 15)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (small_block_size < ((total_block * 16)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (small_block_size < ((total_block * 17)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (small_block_size < ((total_block * 18)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (small_block_size < ((total_block * 19)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#elif 0 
+    if (has_coeff_sb < ((total_block * 1)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (has_coeff_sb < ((total_block * 2)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (has_coeff_sb < ((total_block * 3)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (has_coeff_sb < ((total_block * 4)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (has_coeff_sb < ((total_block * 5)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (has_coeff_sb < ((total_block * 6)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (has_coeff_sb < ((total_block * 7)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (has_coeff_sb < ((total_block * 8)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (has_coeff_sb < ((total_block * 9)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (has_coeff_sb < ((total_block * 10)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (has_coeff_sb < ((total_block * 11)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (has_coeff_sb < ((total_block * 12)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (has_coeff_sb < ((total_block * 13)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (has_coeff_sb < ((total_block * 14)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (has_coeff_sb < ((total_block * 15)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (has_coeff_sb < ((total_block * 16)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (has_coeff_sb < ((total_block * 17)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (has_coeff_sb < ((total_block * 18)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (has_coeff_sb < ((total_block * 19)/20))
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#else
+    if (best_part_cost < 50000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (best_part_cost < 100000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (best_part_cost < 150000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (best_part_cost < 200000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (best_part_cost < 250000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (best_part_cost < 300000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (best_part_cost < 350000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (best_part_cost < 400000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (best_part_cost < 450000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (best_part_cost < 500000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (best_part_cost < 550000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (best_part_cost < 600000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (best_part_cost < 650000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (best_part_cost < 700000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (best_part_cost < 750000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (best_part_cost < 800000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (best_part_cost < 850000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (best_part_cost < 900000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (best_part_cost < 950000000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#endif
+#endif
+
+    uint8_t sb_class = 0;
+    if (count_non_zero_coeffs > ((total_block * 19) / 20))
+        sb_class = 3;
+    return sb_class;
+}
+#endif
 static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                           ModeDecisionContext *context_ptr, uint32_t sb_index) {
 #if DEPTH_PART_CLEAN_UP
@@ -5335,6 +5601,11 @@ void *enc_dec_kernel(void *input_ptr) {
             scs_ptr) : 0;
 #endif
 
+#if SB_STAT
+    for(int8_t i = 0; i < 6; i++)
+        for(int8_t j = 0; j < 20; j++)
+            context_ptr->md_context->pd0_sb_cost[i][j]=0;
+#endif
         // Segment-loop
         while (assign_enc_dec_segments(segments_ptr,
                                        &segment_index,
@@ -5412,7 +5683,9 @@ void *enc_dec_kernel(void *input_ptr) {
                     mdc_ptr               = &pcs_ptr->mdc_sb_array[sb_index];
 #endif
                     context_ptr->sb_index = sb_index;
-
+#if HIGH_COMPLEX_SB_DETECT
+                    context_ptr->md_context->sb_class = 0;
+#endif
                     if (pcs_ptr->update_cdf) {
 
 #if !RATE_MEM_OPT
@@ -5609,6 +5882,11 @@ void *enc_dec_kernel(void *input_ptr) {
                                          sb_origin_y,
                                          sb_index,
                                          context_ptr->md_context);
+#if HIGH_COMPLEX_SB_DETECT
+                        if(pcs_ptr->slice_type != I_SLICE)
+                            context_ptr->md_context->sb_class = determine_sb_class(
+                                scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
 
                         // Perform Pred_0 depth refinement - Add blocks to be considered in the next stage(s) of PD based on depth cost.
                         perform_pred_depth_refinement(
@@ -5743,6 +6021,14 @@ void *enc_dec_kernel(void *input_ptr) {
         pcs_ptr->below32_coded_area += (uint32_t)context_ptr->tot_below32_coded_area;
 #endif
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
+
+#if ENC_STATS
+    for(int8_t i = 0; i < 6; i++) {
+        for(int8_t j = 0; j < 20; j++) {
+            scs_ptr->pd0_sb_cost[i][j] += context_ptr->md_context->pd0_sb_cost[i][j];
+        }
+    }
+#endif
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
         eb_release_mutex(pcs_ptr->intra_mutex);
 

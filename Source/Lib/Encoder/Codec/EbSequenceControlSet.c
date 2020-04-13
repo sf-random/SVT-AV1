@@ -10,6 +10,44 @@
 
 static void eb_sequence_control_set_dctor(EbPtr p) {
     SequenceControlSet *obj = (SequenceControlSet *)p;
+#if ENC_STATS
+        //    printf("\n");
+        //for (TxType txt = 0 ; txt < TX_TYPES ; ++txt)
+        //        printf("\t:%i ",txt);
+        //for (TxSize txs = 0 ; txs < TX_SIZES_ALL ; ++txs)
+        //        printf("\n:%i ",txs);
+        //        scs_ptr->tx_type[txs][txt] += context_ptr->tx_type[txs][txt];
+        uint64_t total = 0;
+        //for (TxSize txs = 0; txs < TX_SIZES_ALL; ++txs)
+        //    for (TxType txt = 0; txt < TX_TYPES; ++txt)
+        //        total+= obj->tx_type[txs][txt];
+        //if (total > 0) {
+        //    printf("\n TXT_STATS \t");
+        //    for (TxSize txs = 0; txs < TX_SIZES_ALL; ++txs) {
+        //        for (TxType txt = 0; txt < TX_TYPES; ++txt) {
+        //          // if (txt == 0) printf("\n");
+        //            //printf("%5.1f,", (float)obj->tx_type[txs][txt] * 100 / (float)total);
+        //            printf("%5d,", obj->tx_type[txs][txt]);
+        //        }
+        //    }
+        //}
+        for(int8_t i = 0; i < 6; i++)
+                for(int8_t j = 0; j < 20; j++)
+                     total+= obj->pd0_sb_cost[i][j];
+
+        if (total > 0) {
+            printf("\n SB_COST_STATS \n");
+            for(int8_t i = 0; i < 6; i++) {
+                for(int8_t j = 0; j < 20; j++) {
+                  // if (txt == 0) printf("\n");
+                    //printf("%5.1f,", (float)obj->tx_type[txs][txt] * 100 / (float)total);
+                    printf("%5d\t", obj->pd0_sb_cost[i][j]);
+                }
+                printf("\n");
+            }
+        }
+
+#endif
     EB_FREE_ARRAY(obj->sb_params_array);
     EB_FREE_ARRAY(obj->sb_geom);
 }

@@ -7369,6 +7369,13 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                                               &cb_coeff_bits,
                                                               &cr_coeff_bits,
                                                               context_ptr->blk_geom->bsize);
+#if HIGH_COMPLEX_SB_DETECT
+        uint16_t txb_count = context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
+        candidate_ptr->count_non_zero_coeffs = 0;
+        for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
+            candidate_ptr->count_non_zero_coeffs+= count_non_zero_coeffs[0][txb_itr];
+
+#endif
 }
 void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                 ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
@@ -10016,6 +10023,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     Part     nsq_shape_table[NUMBER_OF_SHAPES] = {
         PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S};
     uint8_t skip_next_depth = 0;
+#if HIGH_COMPLEX_SB_DETECT
+    uint8_t default_md_tx_size_search_mode = context_ptr->md_tx_size_search_mode;
+    uint8_t default_tx_weight = context_ptr->tx_weight;
+    uint8_t default_tx_search_reduced_set = context_ptr->tx_search_reduced_set;
+    uint8_t default_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
+    uint8_t default_enable_rdoq = context_ptr->enable_rdoq;
+    if (context_ptr->sb_class == 3) {
+        context_ptr->md_tx_size_search_mode = 0;
+        context_ptr->tx_weight = 102;
+        context_ptr->tx_search_reduced_set = 1;
+        context_ptr->spatial_sse_full_loop = EB_FALSE;
+        context_ptr->enable_rdoq = EB_FALSE;
+    }
+#endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
 
@@ -10393,6 +10414,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         blk_index++;
     } while (blk_index < leaf_count); // End of CU loop
 
+#if HIGH_COMPLEX_SB_DETECT
+    context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
+    context_ptr->tx_weight = default_tx_weight;
+    context_ptr->tx_search_reduced_set = default_tx_search_reduced_set;
+    context_ptr->spatial_sse_full_loop = default_spatial_sse_full_loop;
+    context_ptr->enable_rdoq = default_enable_rdoq;
+#endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 
     for (uint8_t depth_idx = 0; depth_idx < NUMBER_OF_DEPTH; depth_idx++) {

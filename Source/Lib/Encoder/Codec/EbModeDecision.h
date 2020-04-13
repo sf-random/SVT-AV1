@@ -68,7 +68,7 @@ typedef struct ModeDecisionCandidate {
 
     uint8_t     skip_flag;
     EbBool      merge_flag;
-    uint16_t    count_non_zero_coeffs;
+    uint32_t    count_non_zero_coeffs;
     uint8_t     type;
     PaletteInfo palette_info;
     // MD Rate Estimation Ptr
