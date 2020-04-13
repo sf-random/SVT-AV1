@@ -131,7 +131,11 @@ void* set_me_hme_params_oq(
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 225;
     else if (pcs_ptr->enc_mode <= ENC_M3)
 #if MAR30_ADOPTIONS
+#if HOME_4K_1
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+#else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 120;
+#endif
 #else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 150;
 #endif

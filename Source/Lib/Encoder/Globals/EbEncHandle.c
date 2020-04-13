@@ -2060,7 +2060,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if MAR3_M2_ADOPTIONS
 #if MAR4_M3_ADOPTIONS
 #if MAR10_ADOPTIONS
+#if HOME_4K_0
+            scs_ptr->mfmv_enabled = 0;
+#else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
+#endif
 #else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
 #endif

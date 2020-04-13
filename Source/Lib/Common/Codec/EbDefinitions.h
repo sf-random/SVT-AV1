@@ -200,6 +200,9 @@ extern "C" {
 #define SHUT_TXT_NSC_ONLY 1
 #endif
 
+#define HOME_4K_0 0
+#define HOME_4K_1 0
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
