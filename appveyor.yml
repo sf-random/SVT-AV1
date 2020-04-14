@@ -58,6 +58,8 @@ for:
       - make -j 10
       - ffmpeg -i ../akiyo_cif.y4m -c:v libsvt_av1 akiyo.mp4
       - cd ..
+      - mkdir Build\Bin\%CONFIGURATION%
+      - cp Build\Bin\* Build\Bin\%CONFIGURATION%\
       - ps: if ($env:APPVEYOR_REPO_BRANCH -eq "master" -and $null -eq $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { Push-AppveyorArtifact -FileName ffmpeg.exe $(Get-ChildItem "ffmpeg\ffmpeg.exe").FullName }
 
   - branches:
@@ -68,13 +70,13 @@ for:
         - generator: Visual Studio 2019
           configuration: Release
     artifacts:
-      - path: bin\Release\SvtAv1EncApp.exe
+      - path: Build\Bin\Release\SvtAv1EncApp.exe
         name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1Enc.dll
+      - path: Build\Bin\Release\SvtAv1Enc.dll
         name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1DecApp.exe
+      - path: Build\Bin\Release\SvtAv1DecApp.exe
         name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1Dec.dll
+      - path: Build\Bin\Release\SvtAv1Dec.dll
         name: $(APPVEYOR_PROJECT_NAME)
     deploy:
       - provider: GitHub
@@ -91,8 +93,8 @@ build:
   project: Build\svt-av1.sln
 
 test_script:
-  - Bin\%CONFIGURATION%\SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3
-  - Bin\%CONFIGURATION%\SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150
+  - Build\Bin\%CONFIGURATION%\SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3
+  - Build\Bin\%CONFIGURATION%\SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150
 
 cache:
   - 'C:\msys64\home\appveyor\.ccache'

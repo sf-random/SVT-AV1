@@ -67,7 +67,7 @@ jobs:
         .ci/ci.sh
     - name: Compress SVT-AV1 binaries
       if: matrix.compiler == 'gcc-9'
-      run: tar czf ./svtav1-current.tar.gz ./Bin/Release/*
+      run: tar czf ./svtav1-current.tar.gz ./Build/linux/Release/Bin/*
     - name: Upload artifact SVT-AV1 (current)
       if: matrix.compiler == 'gcc-9'
       uses: actions/upload-artifact@v1
@@ -122,10 +122,10 @@ jobs:
         $HOME/master/Build/linux/build.sh static
     - name: Encode videos (master)
       run: |
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-master-8bit-m8.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-master-8bit-m0.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-master-10bit-m8.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-master-10bit-m0.ivf
+        $HOME/master/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-master-8bit-m8.ivf
+        $HOME/master/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-master-8bit-m0.ivf
+        $HOME/master/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-master-10bit-m8.ivf
+        $HOME/master/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-master-10bit-m0.ivf
     - name: Download artifact SVT-AV1 (current)
       uses: actions/download-artifact@v1
       with:
@@ -136,10 +136,10 @@ jobs:
         tar xf svtav1-current/svtav1-current.tar.gz -C $HOME/current
     - name: Encode videos (current)
       run: |
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-pr-8bit-m8.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-pr-8bit-m0.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-pr-10bit-m8.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-pr-10bit-m0.ivf
+        $HOME/current/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-pr-8bit-m8.ivf
+        $HOME/current/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-pr-8bit-m0.ivf
+        $HOME/current/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-pr-10bit-m8.ivf
+        $HOME/current/Build/linux/Release/Bin/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-pr-10bit-m0.ivf
     - name: Binary compare
       id: binary_compare
       continue-on-error: true
@@ -157,7 +157,7 @@ jobs:
         echo ::set-output name=status::success
     - name: On fail, compress SVT-AV1 (master)
       if: steps.binary_compare.outputs.status != 'success'
-      run: tar czf ./svtav1-master.tar.gz $HOME/master/Bin/Release/*
+      run: tar czf ./svtav1-master.tar.gz $HOME/master/Bin/*
     - name: On fail, upload artifact SVT-AV1 (master)
       if: steps.binary_compare.outputs.status != 'success'
       uses: actions/upload-artifact@v1
@@ -194,7 +194,7 @@ jobs:
           chmod +x .ci/ci.sh
           .ci/ci.sh
       - name: Run unit tests shard
-        run: env GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Bin/Release/SvtAv1UnitTests
+        run: env GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Build/linux/Release/Bin/SvtAv1UnitTests
 
   e2e-tests:
     runs-on: [ubuntu-18.04]
@@ -227,7 +227,7 @@ jobs:
           make TestVectors
           popd
       - name: Run unit tests shard
-        run: env SVT_AV1_TEST_VECTOR_PATH="./test/vectors" GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
+        run: env SVT_AV1_TEST_VECTOR_PATH="./test/vectors" GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Build/linux/Release/Bin/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
 
   gstreamer-patch:
     runs-on: [ubuntu-18.04]
