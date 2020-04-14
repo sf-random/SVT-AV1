@@ -44,6 +44,7 @@ extern "C" {
 #define DISALLOW_NSQ_FIX_0 1
 #define DISALLOW_NSQ_FIX_1 1
 #define M8_BYPASS_USELESS 1
+#define TEMPORAL_FILTERING_FIX 1
 
 // ME (if needed)
 #define M8_FRACTIONAL_SEARCH_METHOD 0
