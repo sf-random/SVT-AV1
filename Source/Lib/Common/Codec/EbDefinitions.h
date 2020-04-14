@@ -92,8 +92,8 @@ extern "C" {
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
 //#define UNIFIED_PART 1
-#define UNIFIED_NICS 1
-#define UNIFIED_MD_STAGING 1
+//#define UNIFIED_NICS 1
+//#define UNIFIED_MD_STAGING 1
 
 #define MPPD_PROFILNG 1
 
