@@ -8648,7 +8648,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
 EbBool is_block_allowed(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     if((context_ptr->blk_geom->sq_size <=  8 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
        (context_ptr->blk_geom->sq_size <= 16 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_16x16) ||
-#if REDUCE_COMPLEX_CLIP_CYCLES
+#if REDUCE_COMPLEX_CLIP_CYCLES || HIGH_COMPLEX_SB_DETECT
        (context_ptr->blk_geom->shape != PART_N && context_ptr->md_disallow_nsq) ||
 #else
        (context_ptr->blk_geom->shape != PART_N  && pcs_ptr->parent_pcs_ptr->disallow_nsq) ||
@@ -10029,13 +10029,18 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint8_t default_tx_search_reduced_set = context_ptr->tx_search_reduced_set;
     uint8_t default_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
     uint8_t default_enable_rdoq = context_ptr->enable_rdoq;
+    uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
     if (pcs_ptr->slice_type != I_SLICE) {
         if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+#if !SAME_ACTION
             context_ptr->md_tx_size_search_mode = 0;
             context_ptr->tx_weight = 102;
             context_ptr->tx_search_reduced_set = 1;
             context_ptr->spatial_sse_full_loop = EB_FALSE;
             context_ptr->enable_rdoq = EB_FALSE;
+#else
+            context_ptr->md_disallow_nsq = 1;
+#endif
         }
     }
 #endif
@@ -10108,7 +10113,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         uint8_t  redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
 #if DEPTH_PART_CLEAN_UP
-#if REDUCE_COMPLEX_CLIP_CYCLES
+#if REDUCE_COMPLEX_CLIP_CYCLES || HIGH_COMPLEX_SB_DETECT
         if (!context_ptr->md_disallow_nsq)
 #else
         if (!pcs_ptr->parent_pcs_ptr->disallow_nsq)
@@ -10120,7 +10125,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         context_ptr->similar_blk_avail = 0;
 #if DEPTH_PART_CLEAN_UP
-#if REDUCE_COMPLEX_CLIP_CYCLES
+#if REDUCE_COMPLEX_CLIP_CYCLES || HIGH_COMPLEX_SB_DETECT
         if (!context_ptr->md_disallow_nsq)
 #else
         if (!pcs_ptr->parent_pcs_ptr->disallow_nsq)
@@ -10345,7 +10350,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 depth_cost[scs_ptr->static_config.super_block_size == 128
                                ? context_ptr->blk_geom->depth
                                : context_ptr->blk_geom->depth + 1] += nsq_cost[nsq_shape_table[0]];
+#if SAME_ACTION
+                if (!context_ptr->md_disallow_nsq && context_ptr->skip_depth && scs_ptr->sb_geom[sb_addr].is_complete_sb) {
+#else
                 if (context_ptr->skip_depth && scs_ptr->sb_geom[sb_addr].is_complete_sb) {
+#endif
                     if (context_ptr->pd_pass > PD_PASS_1) {
                         uint64_t sq_cost = nsq_cost[0]; // sq cost
                         uint64_t best_nsq_cost = MAX_CU_COST;
@@ -10417,11 +10426,15 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     } while (blk_index < leaf_count); // End of CU loop
 
 #if HIGH_COMPLEX_SB_DETECT
+#if !SAME_ACTION
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
     context_ptr->tx_weight = default_tx_weight;
     context_ptr->tx_search_reduced_set = default_tx_search_reduced_set;
     context_ptr->spatial_sse_full_loop = default_spatial_sse_full_loop;
     context_ptr->enable_rdoq = default_enable_rdoq;
+#else
+    context_ptr->md_disallow_nsq = default_md_disallow_nsq;
+#endif
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 

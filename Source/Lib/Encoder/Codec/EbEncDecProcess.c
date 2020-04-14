@@ -1810,6 +1810,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      context_ptr->md_disallow_nsq = context_ptr->pic_class == 2 ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
 
+#if HIGH_COMPLEX_SB_DETECT
+     context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
+#endif
     // Set the full loop escape level
     // Level                Settings
     // 0                    Off

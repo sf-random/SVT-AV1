@@ -538,7 +538,7 @@ typedef struct ModeDecisionContext {
     uint8_t reduce_complex_clip_cycles_level;
     PicComplexControls pic_complexity_ctrls;
 #endif
-#if REDUCE_COMPLEX_CLIP_CYCLES
+#if REDUCE_COMPLEX_CLIP_CYCLES || HIGH_COMPLEX_SB_DETECT
     uint8_t       md_disallow_nsq;
 #endif
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2

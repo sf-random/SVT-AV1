@@ -184,6 +184,7 @@ extern "C" {
 
 #define HIGH_COMPLEX_SB_DETECT              0
 #define SB_CLASS_TH                         0
+#define SAME_ACTION                         0
 #define SB_STAT 0
 #define ENC_STATS                           0 // STATS
 #endif
