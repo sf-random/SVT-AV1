@@ -44,7 +44,7 @@ extern "C" {
 #define DISALLOW_NSQ_FIX_0 1
 #define DISALLOW_NSQ_FIX_1 1
 #define M8_BYPASS_USELESS 1
-#define TEMPORAL_FILTERING_FIX 1
+//#define TEMPORAL_FILTERING_FIX 1
 
 // ME (if needed)
 #define M8_FRACTIONAL_SEARCH_METHOD 0
@@ -91,23 +91,23 @@ extern "C" {
 
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
-//#define UNIFIED_PART 1
-//#define UNIFIED_NICS 1
-//#define UNIFIED_MD_STAGING 1
+#define UNIFIED_PART 1
+#define UNIFIED_NICS 1
+#define UNIFIED_MD_STAGING 1
 
 #define MPPD_PROFILNG 1
 
 // Recent adoptions
-#define TEST_1 1
-#if TEST_1
-#define MULTI_PASS_PD_FOR_INCOMPLETE 1
-#define INJECT_BACKUP_CANDIDATE 1
-#endif
-
-#define TEST_3_C 1
-#if TEST_3_C
-#define SHUT_PALETTE_BC_PD_PASS_0_1 1
-#endif
+//#define TEST_1 1
+//#if TEST_1
+//#define MULTI_PASS_PD_FOR_INCOMPLETE 1
+//#define INJECT_BACKUP_CANDIDATE 1
+//#endif
+//
+//#define TEST_3_C 1
+//#if TEST_3_C
+//#define SHUT_PALETTE_BC_PD_PASS_0_1 1
+//#endif
 
 //#define OVER_BOUNDARY_MODE 1 
 ///////** Towards Faster_M8 **///////
