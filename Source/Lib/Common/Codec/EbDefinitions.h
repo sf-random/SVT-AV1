@@ -98,18 +98,18 @@ extern "C" {
 #define MPPD_PROFILNG 1
 
 // Recent adoptions
-#define TEST_1 1
-#if TEST_1
-#define MULTI_PASS_PD_FOR_INCOMPLETE 1
-#define INJECT_BACKUP_CANDIDATE 1
-#endif
+//#define TEST_1 1
+//#if TEST_1
+//#define MULTI_PASS_PD_FOR_INCOMPLETE 1
+//#define INJECT_BACKUP_CANDIDATE 1
+//#endif
+//
+//#define TEST_3_C 1
+//#if TEST_3_C
+//#define SHUT_PALETTE_BC_PD_PASS_0_1 1
+//#endif
 
-#define TEST_3_C 1
-#if TEST_3_C
-#define SHUT_PALETTE_BC_PD_PASS_0_1 1
-#endif
-
-#define OVER_BOUNDARY_MODE 1 
+//#define OVER_BOUNDARY_MODE 1 
 ///////** Towards Faster_M8 **///////
 
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
