@@ -1702,17 +1702,17 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
                // if (pcs_ptr->picture_number == 16)
-                SVT_LOG(
-                        "kelvinirc ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
-                        "mc_dep=%lld\tbeta=%f\n",
-                        pcs_ptr->picture_number,
-                        sb_x,
-                        sb_y,
-                        pcs_ptr->r0,
-                        rk,
-                        intra_cost,
-                        mc_dep_cost,
-                        beta);
+                //SVT_LOG(
+                //        "kelvinirc ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
+                //        "mc_dep=%lld\tbeta=%f\n",
+                //        pcs_ptr->picture_number,
+                //        sb_x,
+                //        sb_y,
+                //        pcs_ptr->r0,
+                //        rk,
+                //        intra_cost,
+                //        mc_dep_cost,
+                //        beta);
                 assert(beta > 0.0);
             }
             //printf("generate_r0beta sbxy=%d %d, rk=%f beta=%f\n", sb_x, sb_y, rk, beta);
@@ -1980,7 +1980,7 @@ void update_mc_flow(
             generate_r0beta(pcs_array[start_idx]);
            // SVT_LOG("kelvin ---> BetaGen2 start_idx=%d, reordered picture_number=%d\n", start_idx, pcs_array[start_idx]->picture_number);
 
-#if 0 //AMIR_PRINT
+#if 0//AMIR_PRINT
             for (frame_idx = 0; frame_idx <= sw_length - 1; frame_idx++)
             {
                 PictureParentControlSet         *pcs_ptr_tmp = pcs_array_reorder[frame_idx];
@@ -2307,7 +2307,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_cutree_in_la &&
                             pcs_ptr->temporal_layer_index == 0) {
-                          //  SVT_LOG("kelvin --------> before update_mc_flow picture_number=%d\n", pcs_ptr->picture_number);
+                            //  SVT_LOG("kelvin --------> before update_mc_flow picture_number=%d\n", pcs_ptr->picture_number);
                             update_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
 #endif
