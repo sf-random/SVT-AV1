@@ -1174,7 +1174,7 @@ void cutree_mc_flow_dispenser(
     mb_plane.zbin_qtx        = pcs_ptr->quants_bd.y_zbin[qIndex];
     mb_plane.round_qtx       = pcs_ptr->quants_bd.y_round[qIndex];
     mb_plane.dequant_qtx     = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
-    //printf("cutree_mc_flow_dispenser begin poc=%d qp=%d qIndex=%d zbin_qtx[0~3]=%d %d %d %d\n", pcs_ptr->picture_number, scs_ptr->static_config.qp, qIndex, mb_plane.zbin_qtx[0], mb_plane.zbin_qtx[1], mb_plane.zbin_qtx[2], mb_plane.zbin_qtx[3]);
+    //printf("dispenser begin poc=%d qp=%d qIndex=%d zbin_qtx[0~3]=%d %d %d %d\n", pcs_ptr->picture_number, scs_ptr->static_config.qp, qIndex, mb_plane.zbin_qtx[0], mb_plane.zbin_qtx[1], mb_plane.zbin_qtx[2], mb_plane.zbin_qtx[3]);
     pcs_ptr->base_rdmult = av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 
     // Walk the first N entries in the sliding window
@@ -1438,11 +1438,15 @@ if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin
 #if 0
 if(pcs_ptr->picture_number == 16 && frame_idx == 0)
 {
-    FILE *output_file = fopen("svtcutree_rec16.yuv", "wb");
+    char filename[256];
+    sprintf(filename, "svtcutree_rec%d.yuv", pcs_ptr->picture_number);
+    FILE *output_file = fopen(filename, "wb");
     const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
     uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] + dst_basic_offset;
     printf("dumpfile svtcutree_rec%d.yuv stride*height=%d %d\n", pcs_ptr->picture_number, input_picture_ptr->stride_y, input_picture_ptr->height);
     fwrite(dst_buffer, 1, input_picture_ptr->stride_y*(input_picture_ptr->height), output_file);
+    //for (int kk=0; kk<input_picture_ptr->height; kk++)
+    //    fwrite(dst_buffer+kk*input_picture_ptr->stride_y, 1, input_picture_ptr->width, output_file);
     fclose(output_file);
 }
 #endif
