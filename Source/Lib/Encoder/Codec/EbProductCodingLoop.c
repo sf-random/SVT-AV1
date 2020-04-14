@@ -743,8 +743,14 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     context_ptr->blk_ptr = &context_ptr->md_blk_arr_nsq[last_blk_index_mds];
     uint8_t avail_blk_flag = context_ptr->md_local_blk_unit[last_blk_index_mds].avail_blk_flag;
 
-    mode_decision_update_neighbor_arrays(
-        pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
+#if PR1154_ADOPTIONS
+    if (avail_blk_flag) {
+#endif
+        mode_decision_update_neighbor_arrays(
+            pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
+#if PR1154_ADOPTIONS
+    }
+#endif
 
     update_mi_map(context_ptr,
                   context_ptr->blk_ptr,
@@ -6464,7 +6470,11 @@ static INLINE int max_block_wide(const MacroBlockD *xd, BlockSize bsize, int pla
     const struct macroblockd_plane *const pd              = &xd->plane[plane];
 
     if (xd->mb_to_right_edge < 0)
+#if PR1154_ADOPTIONS
+        max_blocks_wide += xd->mb_to_right_edge >> (3 + (plane == 0 ? 0 : 1));
+#else
         max_blocks_wide += xd->mb_to_right_edge >> (3 + pd->subsampling_x);
+#endif
 
     // Scale the width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
@@ -6475,7 +6485,11 @@ static INLINE int max_block_high(const MacroBlockD *xd, BlockSize bsize, int pla
     const struct macroblockd_plane *const pd              = &xd->plane[plane];
 
     if (xd->mb_to_bottom_edge < 0)
+#if PR1154_ADOPTIONS
+        max_blocks_high += xd->mb_to_bottom_edge >> (3 + (plane == 0 ? 0 : 1));
+#else
         max_blocks_high += xd->mb_to_bottom_edge >> (3 + pd->subsampling_y);
+#endif
 
     // Scale the height in the transform block unit.
     return max_blocks_high >> tx_size_high_log2[0];

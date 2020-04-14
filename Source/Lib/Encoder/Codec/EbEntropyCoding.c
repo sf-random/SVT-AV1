@@ -5017,7 +5017,11 @@ static INLINE int max_block_wide(const MacroBlockD *xd, BlockSize bsize, int pla
     const struct macroblockd_plane *const pd              = &xd->plane[plane];
 
     if (xd->mb_to_right_edge < 0)
+#if PR1154_ADOPTIONS
+        max_blocks_wide += xd->mb_to_right_edge >> (3 + (plane == 0 ? 0 : 1));
+#else
         max_blocks_wide += xd->mb_to_right_edge >> (3 + pd->subsampling_x);
+#endif
 
     // Scale the width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
@@ -5028,7 +5032,11 @@ static INLINE int max_block_high(const MacroBlockD *xd, BlockSize bsize, int pla
     const struct macroblockd_plane *const pd              = &xd->plane[plane];
 
     if (xd->mb_to_bottom_edge < 0)
+#if PR1154_ADOPTIONS
+        max_blocks_high += xd->mb_to_bottom_edge >> (3 + (plane == 0 ? 0 : 1));
+#else
         max_blocks_high += xd->mb_to_bottom_edge >> (3 + pd->subsampling_y);
+#endif
 
     // Scale the height in the transform block unit.
     return max_blocks_high >> tx_size_high_log2[0];

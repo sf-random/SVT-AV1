@@ -128,7 +128,7 @@ extern "C" {
 #define APR02_ADOPTIONS               1 // adoptions in all modes
 #define MULTI_PASS_PD_FOR_INCOMPLETE  0
 #define APR08_ADOPTIONS               1 // adoptions in all modes
-
+#define PR1154_ADOPTIONS              1 // PR1154 (Fix valgrind errors)
 
 #if FIXED_SQ_WEIGHT_PER_QP
 #define SQ_WEIGHT_PATCH_0 1

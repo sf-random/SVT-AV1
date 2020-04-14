@@ -1261,10 +1261,18 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
 #if BIPRED_3x3_REF_MASKING
             if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
 #endif
+
+#if PR1154_ADOPTIONS
+            if (inter_direction == 2) {
+                if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
+                    list1_ref_index > context_ptr->md_max_ref_count - 1)
+                    continue;
+#else
             if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                 list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
             if (inter_direction == 2) {
+#endif
                 // (Best_L0, 8 Best_L1 neighbors)
                 for (bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS;
                      ++bipred_index) {
