@@ -2566,9 +2566,9 @@ static int is_smooth_luma(uint8_t mode) {
     return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED || mode == SMOOTH_H_PRED);
 }
 
-void filter_intra_edge(PictureParentControlSet *picture_control_set_ptr, OisMbResults *ois_mb_results_ptr, uint8_t mode, 
-                              int32_t p_angle, uint32_t cu_origin_x, uint32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+void filter_intra_edge(PictureParentControlSet *pcs_ptr, OisMbResults *ois_mb_results_ptr, uint8_t mode,
+                              int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     uint32_t mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
     uint32_t mb_height = (scs_ptr->seq_header.max_frame_height + 15) / 16;
     const int txwpx = tx_size_wide[TX_16X16];
@@ -2580,11 +2580,12 @@ void filter_intra_edge(PictureParentControlSet *picture_control_set_ptr, OisMbRe
     int need_above_left = extend_modes[mode] & NEED_ABOVELEFT;
     int ab_sm = (cu_origin_y > 0 && (ois_mb_results_ptr - mb_stride)) ? is_smooth_luma((ois_mb_results_ptr - mb_stride)->intra_mode) : 0;
     int le_sm = (cu_origin_x > 0 && (ois_mb_results_ptr - 1)) ? is_smooth_luma((ois_mb_results_ptr - 1)->intra_mode) : 0;
+    ab_sm = 0; //force to 0 for neighbor may not be ready at segment boundary
+    le_sm = 0; //force to 0 for neighbor may not be ready at segment boundary
     const int filt_type = (ab_sm || le_sm) ? 1 : 0;
     int n_top_px  = cu_origin_y > 0 ? AOMMIN(txwpx, (mb_stride * 16 - cu_origin_x + txwpx)) : 0;
     int n_left_px = cu_origin_x > 0 ? AOMMIN(txhpx, (mb_height * 16 - cu_origin_y + txhpx)) : 0;
 
-#if 1
     if (av1_is_directional_mode((PredictionMode)mode)) {
         if (p_angle <= 90)
             need_above = 1, need_left = 0, need_above_left = 1;
@@ -2593,7 +2594,6 @@ void filter_intra_edge(PictureParentControlSet *picture_control_set_ptr, OisMbRe
         else
             need_above = 0, need_left = 1, need_above_left = 1;
     }
-#endif
 
     if (p_angle != 90 && p_angle != 180) {
         const int ab_le = need_above_left ? 1 : 0;

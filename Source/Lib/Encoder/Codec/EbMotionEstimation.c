@@ -12564,7 +12564,7 @@ EbErrorType open_loop_intra_search_mb(
                     EB_MEMCPY(above_data, above0_data, sizeof(uint8_t)*(MAX_TX_SIZE * 2 + 32));
                     above_row = above_data + 16;
                     left_col  = left_data + 16;
-                    filter_intra_edge(pcs_ptr, ois_mb_results_ptr, ois_intra_mode, p_angle, cu_origin_x, cu_origin_y, above_row, left_col);
+                    filter_intra_edge(pcs_ptr, ois_mb_results_ptr, ois_intra_mode, p_angle, (int32_t)cu_origin_x, (int32_t)cu_origin_y, above_row, left_col);
                 } else {
                     above_row = above0_row;
                     left_col  = left0_col;
