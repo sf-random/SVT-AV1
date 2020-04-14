@@ -189,6 +189,9 @@ extern "C" {
 
 #if MAY2020
 #define TXT_CONTROL                  1
+#if TXT_CONTROL
+#define MAX_TX_WEIGHT                500
+#endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
