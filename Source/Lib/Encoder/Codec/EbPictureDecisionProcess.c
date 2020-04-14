@@ -4513,7 +4513,11 @@ void derive_tf_window_params(
     EncodeContext *encode_context_ptr,
     PictureParentControlSet *pcs_ptr,
     uint32_t out_stride_diff64) {
+#if SHORT_WINDOWS
+    int altref_nframes = TF_WINDOWS_SIZE;
+#else
     int altref_nframes = scs_ptr->static_config.altref_nframes;
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -4521,8 +4525,11 @@ void derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-
+#if SHORT_WINDOWS
+        uint32_t num_future_pics = altref_nframes - 1;
+#else
         uint32_t num_future_pics = 6;
+#endif
         uint32_t num_past_pics = 0;
         uint32_t pic_i;
         //search reord-queue to get the future pictures
@@ -5478,11 +5485,16 @@ void* picture_decision_kernel(void *input_ptr)
                                 (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                  pcs_ptr->sc_content_detected == 0 &&
                                  scs_ptr->static_config.hierarchical_levels >= 1) &&
+#if TEMPORAL_FILTERING_BASE_ONLY
+                                 (pcs_ptr->slice_type == I_SLICE ||
+                                (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0))
+                                ? 1 : 0;
+#else
                                 ( pcs_ptr->slice_type == I_SLICE ||
                                   (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)||
                                   (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                                 ? 1 : 0;
-
+#endif
                             if (perform_filtering){
                                 derive_tf_window_params(
                                     scs_ptr,
