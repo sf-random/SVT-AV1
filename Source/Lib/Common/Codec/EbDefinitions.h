@@ -129,6 +129,10 @@ extern "C" {
 #define MULTI_PASS_PD_FOR_INCOMPLETE  0
 #define APR08_ADOPTIONS               1 // adoptions in all modes
 #define PR1154_ADOPTIONS              1 // PR1154 (Fix valgrind errors)
+#define PR1157_ADOPTIONS              1 // PR1157 (AVX2 kernel impl)
+#if PR1157_ADOPTIONS
+    #define PALETTE_SPEEDUP 1 //Flag to use optimized version of av1_get_palette_color_index_context()
+#endif
 
 #if FIXED_SQ_WEIGHT_PER_QP
 #define SQ_WEIGHT_PATCH_0 1
