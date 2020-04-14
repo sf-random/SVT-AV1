@@ -167,7 +167,7 @@ extern "C" {
 #endif
 #define MAR30_ADOPTIONS           1 // Adoptions in all modes; create a new M1
 
-#define REDUCE_COMPLEX_CLIP_CYCLES       1 // Add picture classifier
+#define REDUCE_COMPLEX_CLIP_CYCLES       0 // Add picture classifier
 
 #define BLOCK_REDUCTION_ALGORITHM_1 1 // block_based_depth_reduction (1)
 #define BLOCK_REDUCTION_ALGORITHM_2 1 // block_based_depth_reduction (2)
@@ -183,6 +183,7 @@ extern "C" {
 #define MULTI_PASS_PD_FOR_INCOMPLETE 0
 
 #define HIGH_COMPLEX_SB_DETECT              0
+#define SB_CLASS_TH                         0
 #define SB_STAT 0
 #define ENC_STATS                           0 // STATS
 #endif

@@ -10025,16 +10025,18 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint8_t skip_next_depth = 0;
 #if HIGH_COMPLEX_SB_DETECT
     uint8_t default_md_tx_size_search_mode = context_ptr->md_tx_size_search_mode;
-    uint8_t default_tx_weight = context_ptr->tx_weight;
+    uint64_t default_tx_weight = context_ptr->tx_weight;
     uint8_t default_tx_search_reduced_set = context_ptr->tx_search_reduced_set;
     uint8_t default_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
     uint8_t default_enable_rdoq = context_ptr->enable_rdoq;
-    if (context_ptr->sb_class == 3) {
-        context_ptr->md_tx_size_search_mode = 0;
-        context_ptr->tx_weight = 102;
-        context_ptr->tx_search_reduced_set = 1;
-        context_ptr->spatial_sse_full_loop = EB_FALSE;
-        context_ptr->enable_rdoq = EB_FALSE;
+    if (pcs_ptr->slice_type != I_SLICE) {
+        if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+            context_ptr->md_tx_size_search_mode = 0;
+            context_ptr->tx_weight = 102;
+            context_ptr->tx_search_reduced_set = 1;
+            context_ptr->spatial_sse_full_loop = EB_FALSE;
+            context_ptr->enable_rdoq = EB_FALSE;
+        }
     }
 #endif
     do {

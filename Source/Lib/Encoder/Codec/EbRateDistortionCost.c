@@ -2042,6 +2042,9 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, total_distortion);
+#if 0//HIGH_COMPLEX_SB_DETECT
+    candidate_buffer_ptr->candidate_ptr->full_distortion = total_distortion;
+#endif
     return return_error;
 }
 
@@ -2208,6 +2211,9 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     }
     // Assigne full cost
     *candidate_buffer_ptr->full_cost_ptr       = (skip_cost <= merge_cost) ? skip_cost : merge_cost;
+#if 0//HIGH_COMPLEX_SB_DETECT
+    candidate_buffer_ptr->candidate_ptr->full_distortion = (skip_cost <= merge_cost) ? skip_distortion : merge_distortion;
+#endif
     *candidate_buffer_ptr->full_cost_merge_ptr = merge_cost;
     *candidate_buffer_ptr->full_cost_skip_ptr  = skip_cost;
     // Assigne merge flag

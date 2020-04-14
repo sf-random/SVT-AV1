@@ -4722,6 +4722,7 @@ static uint8_t determine_sb_class(
     uint64_t total_block = 0;
     uint64_t intra_block_cnt = 0;
     uint64_t chroma_cfl_cnt = 0;
+    uint64_t energy = 0;
     EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
@@ -4737,6 +4738,7 @@ static uint8_t determine_sb_class(
                     //best_part_cost += context_ptr->md_local_blk_unit[blk_index].cost;
                     //has_coeff_sb += context_ptr->md_blk_arr_nsq[blk_index].block_has_coeff != 0 ? (blk_geom->bwidth*blk_geom->bheight) : 0;
                     count_non_zero_coeffs += context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
+                    energy += context_ptr->md_local_blk_unit[blk_index].full_distortion;
                     //if (count_non_zero_coeffs > (128*128)) printf("error- count_non_zero_coeffs\n");
                     //small_block_size += blk_geom->bwidth <= 32 && blk_geom->bheight <= 32 ? (blk_geom->bwidth*blk_geom->bheight) : 0;
                     //intra_block_cnt += (context_ptr->md_blk_arr_nsq[blk_index].prediction_mode_flag == INTRA_MODE) ? (blk_geom->bwidth*blk_geom->bheight) : 0;
@@ -4761,6 +4763,47 @@ static uint8_t determine_sb_class(
         is_high_comp && most_blocks_are_intra == INTER_MODE ? 1 : 0;*/
 #if SB_STAT
 #if 1
+    if (energy < 50000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
+    else if (energy < 100000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][1]++;
+    else if (energy < 150000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][2]++;
+    else if (energy < 200000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][3]++;
+    else if (energy < 250000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][4]++;
+    else if (energy < 300000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][5]++;
+    else if (energy < 350000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][6]++;
+    else if (energy < 400000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][7]++;
+    else if (energy < 450000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][8]++;
+    else if (energy < 500000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][9]++;
+    else if (energy < 550000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][10]++;
+    else if (energy < 600000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][11]++;
+    else if (energy < 650000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][12]++;
+    else if (energy < 700000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][13]++;
+    else if (energy < 750000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][14]++;
+    else if (energy < 800000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][15]++;
+    else if (energy < 850000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][16]++;
+    else if (energy < 900000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][17]++;
+    else if (energy < 950000)
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][18]++;
+    else
+        context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][19]++;
+#elif 0
     if (count_non_zero_coeffs < ((total_block * 1)/20))
         context_ptr->pd0_sb_cost[pcs_ptr->temporal_layer_index][0]++;
     else if (count_non_zero_coeffs < ((total_block * 2)/20))
@@ -4969,7 +5012,7 @@ static uint8_t determine_sb_class(
 #endif
 
     uint8_t sb_class = 0;
-    if (count_non_zero_coeffs > ((total_block * 19) / 20))
+    if (count_non_zero_coeffs > ((total_block * SB_CLASS_TH) / 20))
         sb_class = 3;
     return sb_class;
 }
