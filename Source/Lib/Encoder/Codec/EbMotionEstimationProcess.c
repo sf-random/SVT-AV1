@@ -146,7 +146,11 @@ void* set_me_hme_params_oq(
     else if (pcs_ptr->enc_mode <= ENC_M7)
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
     else
+#if ME_HME_15_SC
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 15;
+#else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 25;
+#endif
 #else
     else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;

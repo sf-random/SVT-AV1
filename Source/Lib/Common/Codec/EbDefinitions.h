@@ -97,6 +97,9 @@ extern "C" {
 
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
+#if UNIFIED_ME_HME_SETTINGS
+#define ME_HME_15_SC 1
+#endif
 #define UNIFIED_PART 0
 #define UNIFIED_NICS 1
 #define UNIFIED_MD_STAGING 1
