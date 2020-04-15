@@ -2350,7 +2350,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT)
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR17_ADOPTIONS
-#if M8_RDOQ
+#if M8_RDOQ_SC
                 if (enc_mode <= ENC_M7)
 #else
                 if (enc_mode <= ENC_M8)
@@ -2367,7 +2367,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                     context_ptr->enable_rdoq = EB_FALSE;
 #if MAR4_M6_ADOPTIONS
 #if MAR10_ADOPTIONS
-#if M8_RDOQ
+#if M8_RDOQ_NSC
             else if (enc_mode <= ENC_M7)
 #else
             else if (enc_mode <= ENC_M8)

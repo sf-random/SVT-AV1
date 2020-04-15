@@ -59,26 +59,27 @@ extern "C" {
 #define M8_MRP 1
 
 // MD
-#define M8_FULL_LOOP_ESCAPE 1
+#define M8_FULL_LOOP_ESCAPE 0
 #define M8_COMPOUND 1
 #define M8_BIPRED_3x3 1
 #define M8_PRED_ME 1
-#define M8_IFS 1
-#define M8_SPATIAL_SSE 1
-#define M8_RDOQ 1
-#define M8_INTRA_MODE 1
-#define M8_MVF 1
+#define M8_IFS 0
+#define M8_SPATIAL_SSE 0
+#define M8_RDOQ_NSC 0
+#define M8_RDOQ_SC 1
+#define M8_INTRA_MODE 0
+#define M8_MVF 0
 #define M8_CDF 1
-#define M8_WM 1
-#define M8_MD_EXIT 1
-#define M8_CHROMA 1
+#define M8_WM 0
+#define M8_MD_EXIT 0
+#define M8_CHROMA 0
 #define M8_TXT 1
 #define M8_OBMC 1
 
 // Filtering
 #define M8_SG 1
 #define M8_WN 1
-#define M8_RESTORATION 1
+#define M8_RESTORATION 0
 #define M8_LOOP_FILTER 1
 #define M8_CDEF 1
 // Part
