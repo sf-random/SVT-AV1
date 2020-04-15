@@ -107,7 +107,7 @@ extern "C" {
 
 // NIC
 #if FASTEST_M8_V2
-#define M8_NIC 0
+#define M8_NIC 1
 #endif
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
