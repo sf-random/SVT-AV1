@@ -2963,11 +2963,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             (context_ptr->md_stage_2_count[CAND_CLASS_8] + 1) >> 1;
 
 #if FASTEST_M8_V3
+#if 0
         for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
             if (context_ptr->md_stage_1_count[i] == 1 || context_ptr->md_stage_1_count[i] == context_ptr->md_stage_2_count[i]) {
                 context_ptr->bypass_md_stage_1[i] = 1;
             }
         }
+#endif
 #endif
 #if UNIFIED_NICS
         context_ptr->md_stage_1_count[CAND_CLASS_0] = 1;

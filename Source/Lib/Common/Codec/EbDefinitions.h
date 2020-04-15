@@ -72,7 +72,9 @@ extern "C" {
 #define M8_COMPOUND 1
 #define M8_BIPRED_3x3 1
 #define M8_PRED_ME 1
+#if !FASTEST_M8_V3
 #define M8_IFS 1
+#endif
 #if !FASTEST_M8_V0
 #define M8_SPATIAL_SSE 1// Backup_0
 #endif
