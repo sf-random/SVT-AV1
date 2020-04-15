@@ -10030,8 +10030,23 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint8_t default_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
     uint8_t default_enable_rdoq = context_ptr->enable_rdoq;
     uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
+    uint8_t default_tx_search_level = context_ptr->tx_search_level;
     if (pcs_ptr->slice_type != I_SLICE) {
         if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+#if SENSITIVE_TOOLS
+#if DISABLE_TXS
+    context_ptr->md_tx_size_search_mode = 0;
+#endif
+#if DISABLE_TXT
+    context_ptr->tx_search_level = TX_SEARCH_OFF;
+#endif
+#if DISABLE_RDOQ
+    context_ptr->enable_rdoq = EB_FALSE;
+#endif
+#if DISABLE_SSSE
+    context_ptr->spatial_sse_full_loop = EB_FALSE;
+#endif
+#else
 #if !SAME_ACTION
             context_ptr->md_tx_size_search_mode = 0;
             context_ptr->tx_weight = 102;
@@ -10040,6 +10055,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             context_ptr->enable_rdoq = EB_FALSE;
 #else
             context_ptr->md_disallow_nsq = 1;
+#endif
 #endif
         }
     }
@@ -10432,6 +10448,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     context_ptr->tx_search_reduced_set = default_tx_search_reduced_set;
     context_ptr->spatial_sse_full_loop = default_spatial_sse_full_loop;
     context_ptr->enable_rdoq = default_enable_rdoq;
+    context_ptr->tx_search_level = default_tx_search_level;
 #else
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
 #endif

@@ -184,6 +184,13 @@ extern "C" {
 
 #define HIGH_COMPLEX_SB_DETECT              0
 #define SB_CLASS_TH                         0
+#define SENSITIVE_TOOLS                     0 // 17, 14, 10 (85%, 70%, 50%)
+#if SENSITIVE_TOOLS
+#define DISABLE_TXS                         0
+#define DISABLE_TXT                         0
+#define DISABLE_RDOQ                        0
+#define DISABLE_SSSE                        0
+#endif
 #define SAME_ACTION                         0
 #define SB_STAT 0
 #define ENC_STATS                           0 // STATS
