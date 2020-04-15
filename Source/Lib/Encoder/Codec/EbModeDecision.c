@@ -5678,6 +5678,10 @@ void  inject_intra_candidates(
 #if ADDED_CFL_OFF
     disable_cfl_flag = context_ptr->md_disable_cfl ? EB_TRUE : disable_cfl_flag;
 #endif
+#if CFL_C0
+    if (pcs_ptr->slice_type != I_SLICE)
+        disable_cfl_flag = EB_TRUE;
+#endif
     uint8_t                     disable_z2_prediction;
     uint8_t                     disable_angle_refinement;
     uint8_t                     disable_angle_prediction;
@@ -5747,7 +5751,10 @@ void  inject_intra_candidates(
         disable_angle_prediction    = 0;
         angle_delta_candidate_count = disable_angle_refinement ? 1: angle_delta_candidate_count;
     }
-
+#if PRED_ANGULAR_C0
+    if (pcs_ptr->slice_type != I_SLICE)
+        disable_angle_prediction = 1;
+#endif
     for (open_loop_intra_candidate = intra_mode_start; open_loop_intra_candidate <= intra_mode_end ; ++open_loop_intra_candidate) {
         if (av1_is_directional_mode((PredictionMode)open_loop_intra_candidate)) {
             if (!disable_angle_prediction &&
@@ -6192,26 +6199,69 @@ EbErrorType generate_md_stage_0_cand(
 
         if (cand_ptr->type == INTRA_MODE) {
             // Intra prediction
-                if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
-                  if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#if !REMOVE_C6 && !THREE_CLASS_ONLY
+            if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
+#endif
+#if !REMOVE_C7 && !THREE_CLASS_ONLY
+                if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
-                  }
-                  else {
-                     cand_ptr->cand_class = CAND_CLASS_7;
-                     context_ptr->md_stage_0_count[CAND_CLASS_7]++;
-                  }
+#if !REMOVE_C7 && !THREE_CLASS_ONLY
                 }
                 else {
-                    cand_ptr->cand_class = CAND_CLASS_6;
-                    context_ptr->md_stage_0_count[CAND_CLASS_6]++;
+                    cand_ptr->cand_class = CAND_CLASS_7;
+                    context_ptr->md_stage_0_count[CAND_CLASS_7]++;
                 }
+#endif
+#if !REMOVE_C6 && !THREE_CLASS_ONLY
+            }
+            else {
+                cand_ptr->cand_class = CAND_CLASS_6;
+                context_ptr->md_stage_0_count[CAND_CLASS_6]++;
+            }
+#endif
+        }
+#if THREE_CLASS_ONLY
+        else if (cand_ptr->is_interintra_used && cand_ptr->is_compound == 0) {
+            // InterIntra
+            cand_ptr->cand_class = CAND_CLASS_4;
+            context_ptr->md_stage_0_count[CAND_CLASS_4]++;
 
-        } else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
-            cand_ptr->cand_class = CAND_CLASS_8;
-            context_ptr->md_stage_0_count[CAND_CLASS_8]++;
+        }
+        else {// InterIntra
+            cand_ptr->cand_class = CAND_CLASS_1;
+            context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+        }
+    }
+#else
+#if REMOVE_C3P
+        
+        else  if (cand_ptr->is_new_mv) {
+            cand_ptr->cand_class = CAND_CLASS_1;
+            context_ptr->md_stage_0_count[CAND_CLASS_1]++;
         }
         else {
+            cand_ptr->cand_class = CAND_CLASS_2;
+            context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+        }
+    }
+
+#else
+
+#if !REMOVE_C8
+         else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
+#if REMOVE_C8_V2
+            cand_ptr->cand_class = CAND_CLASS_1;
+            context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+#else
+            cand_ptr->cand_class = CAND_CLASS_8;
+            context_ptr->md_stage_0_count[CAND_CLASS_8]++;
+
+#endif
+        }
+#endif
+         else {
             // Inter pred
             if (cand_ptr->motion_mode == OBMC_CAUSAL) {
                 // OBMC
@@ -6234,7 +6284,11 @@ EbErrorType generate_md_stage_0_cand(
                 }
 #endif
                 else {
+#if REMOVE_C8
+                    if (cand_ptr->is_new_mv || cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
+#else
                     if (cand_ptr->is_new_mv) {
+#endif
                         // ME pred
                         cand_ptr->cand_class = CAND_CLASS_1;
                         context_ptr->md_stage_0_count[CAND_CLASS_1]++;
@@ -6253,6 +6307,8 @@ EbErrorType generate_md_stage_0_cand(
             }
         }
     }
+#endif
+#endif
     uint32_t fast_accum = 0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         fast_accum += context_ptr->md_stage_0_count[cand_class_it];

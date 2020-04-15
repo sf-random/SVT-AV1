@@ -1462,6 +1462,131 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_6] = is_ref ? 5 : 2;
         context_ptr->md_stage_3_count[CAND_CLASS_7] = 7;
         context_ptr->md_stage_3_count[CAND_CLASS_8] = 1;
+#if REMOVE_C6
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+#endif
+#if REMOVE_C7
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+#endif
+#if REMOVE_C8 || REMOVE_C8_V2
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_8];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_8];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_8];
+#if REMOVE_C8_75
+        uint8_t i ;
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
+#if REMOVE_C3P
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_5]/2 ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_5]/2 ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_5]/2 ;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_8];
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_8];
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_8];
+
+        
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_4]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_4]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_4]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_4]/2  ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_4]/2  ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_4]/2  ;
+        
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_3]/2 ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_3]/2 ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_3]/2 ;
+#if REMOVE_C3P_75
+
+        uint8_t i ;
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_2;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
+#if THREE_CLASS_ONLY
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+            context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+            context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+            context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+        }
+
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_2];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_2];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_2];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5];
+#if THREE_CLASS_ONLY_75 || THREE_CLASS_ONLY_50
+        uint8_t i ;
+#if THREE_CLASS_ONLY_50
+        uint32_t scaling_num = 1;
+        uint32_t scaling_denom = 2;
+#else
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+#endif
+
+        i = CAND_CLASS_0;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_4;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
     } else {
         // nics_level
         //  0               old settings
@@ -1727,6 +1852,135 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 context_ptr->md_stage_2_count[CAND_CLASS_1] =
                     context_ptr->md_stage_2_count[CAND_CLASS_1] * 2;
             }
+#endif
+
+#if REMOVE_C6
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+#endif
+#if REMOVE_C7
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+#endif
+
+#if REMOVE_C8 || REMOVE_C8_V2
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_8];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_8];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_8];
+#if REMOVE_C8_75
+        uint8_t i ;
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
+#if REMOVE_C3P
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_5]/2 ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_5]/2 ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_5]/2 ;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_8];
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_8];
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_8];
+
+        
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_4]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_4]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_4]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_4]/2  ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_4]/2  ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_4]/2  ;
+        
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3]/2;
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3]/2;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3]/2;
+
+        context_ptr->md_stage_1_count[CAND_CLASS_2] += context_ptr->md_stage_1_count[CAND_CLASS_3]/2 ;
+        context_ptr->md_stage_2_count[CAND_CLASS_2] += context_ptr->md_stage_2_count[CAND_CLASS_3]/2 ;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] += context_ptr->md_stage_3_count[CAND_CLASS_3]/2 ;
+#if REMOVE_C3P_75
+
+        uint8_t i ;
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_2;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
+#if THREE_CLASS_ONLY
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+            context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+            context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+            context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+        }
+
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_2];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_2];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_2];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5];
+
+#if THREE_CLASS_ONLY_75 || THREE_CLASS_ONLY_50
+        uint8_t i ;
+#if THREE_CLASS_ONLY_50
+        uint32_t scaling_num = 1;
+        uint32_t scaling_denom = 2;
+#else
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+#endif
+
+            i = CAND_CLASS_0;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+            i = CAND_CLASS_1;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+            i = CAND_CLASS_4;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+
 #endif
             ////MULT
 #if APR02_ADOPTIONS
@@ -2916,6 +3170,67 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 #endif
         // Set md_stage_3 NICs
+#if NIC_S1_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_stage_1_count[CAND_CLASS_0] =
+                (context_ptr->md_stage_1_count[CAND_CLASS_0] + 1) >> 1;
+#endif
+#if NIC_LS_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_stage_2_count[CAND_CLASS_0] =
+                (context_ptr->md_stage_2_count[CAND_CLASS_0] + 1) >> 1;
+#endif
+#if NICS_SIM_S1
+        
+            uint8_t division_factor_num   = 1;
+            uint8_t division_factor_denum = 1;
+#if NICS_SIM_S1_12
+            division_factor_num   = 1;
+            division_factor_denum = 2;
+#endif
+#if NICS_SIM_S1_14
+            division_factor_num   = 1;
+            division_factor_denum = 4;
+#endif
+#if NICS_SIM_S1_18
+            division_factor_num   = 1;
+            division_factor_denum = 8;
+#endif
+            if (pcs_ptr->slice_type != I_SLICE) {
+                context_ptr->md_stage_1_count[CAND_CLASS_0] =
+                    (uint32_t)round((division_factor_num * ((float)context_ptr->md_stage_1_count[CAND_CLASS_0])) /
+                        division_factor_denum);
+                context_ptr->md_stage_1_count[CAND_CLASS_0] = MAX(context_ptr->md_stage_1_count[CAND_CLASS_0], 1);
+            }
+
+
+#endif
+#if NICS_SIM_LS
+        
+            uint8_t division_factor_num   = 1;
+            uint8_t division_factor_denum = 1;
+#if NICS_SIM_LS_12
+            division_factor_num   = 1;
+            division_factor_denum = 2;
+#endif
+#if NICS_SIM_LS_14
+            division_factor_num   = 1;
+            division_factor_denum = 4;
+#endif
+#if NICS_SIM_LS_34
+            division_factor_num   = 3;
+            division_factor_denum = 4;
+#endif
+            if (pcs_ptr->slice_type != I_SLICE) {
+                context_ptr->md_stage_2_count[CAND_CLASS_0] =
+                    (uint32_t)round((division_factor_num * ((float)context_ptr->md_stage_2_count[CAND_CLASS_0])) /
+                        division_factor_denum);
+                context_ptr->md_stage_2_count[CAND_CLASS_0] = MAX(context_ptr->md_stage_2_count[CAND_CLASS_0], 1);
+            }
+
+
+#endif
+
 
         context_ptr->md_stage_3_count[CAND_CLASS_0] =
             (context_ptr->md_stage_2_count[CAND_CLASS_0] + 1) >> 1;
@@ -7461,7 +7776,19 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
              candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7)
                 ? 2
                 : 1;
+#if TXT_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_tx_search =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 0 :context_ptr->md_staging_tx_search ;
+#endif
+
+
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
+#if RDOQ_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_skip_rdoq =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 1 : context_ptr->md_staging_skip_rdoq ;
+#endif
         context_ptr->md_staging_skip_full_chroma          = EB_TRUE;
         context_ptr->md_staging_skip_full_pred            = EB_TRUE;
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
@@ -7534,16 +7861,35 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7) ? 1 : 0;
 #endif
+#if TXS_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_tx_size_mode =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 0 :context_ptr->md_staging_tx_size_mode ;
+#endif
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
              candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7)
                 ? 2
                 : 1;
+#if TXT_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_tx_search =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 0 :context_ptr->md_staging_tx_search ;
+#endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
+#if RDOQ_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_skip_rdoq =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 1 : context_ptr->md_staging_skip_rdoq ;
+#endif
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
-
+#if SSSE_C0
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->md_staging_spatial_sse_full_loop =
+                (candidate_ptr->cand_class == CAND_CLASS_0 ) ? 0 : context_ptr->md_staging_spatial_sse_full_loop ;
+#endif
         if (pcs_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) &&
                 best_inter_luma_zero_coeff == 0) {
@@ -7602,6 +7948,16 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                                                candidate_ptr->angle_delta[PLANE_TYPE_Y]]))
                                     : 0;
                         }
+#if CFL_C0
+                        if (candidate_ptr->intra_chroma_mode != intra_chroma_mode ||
+                            candidate_ptr->angle_delta[PLANE_TYPE_UV] != angle_delta) {
+                            uint8_t uv_search_path = context_ptr->uv_search_path;
+                            context_ptr->uv_search_path = 1;
+                            product_prediction_fun_table[candidate_ptr->type](
+                                context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+                            context_ptr->uv_search_path = uv_search_path;
+                        }
+#endif
                         candidate_ptr->intra_chroma_mode = intra_chroma_mode;
                         candidate_ptr->angle_delta[PLANE_TYPE_UV] = angle_delta;
                         candidate_ptr->is_directional_chroma_mode_flag = is_directional_chroma_mode_flag;

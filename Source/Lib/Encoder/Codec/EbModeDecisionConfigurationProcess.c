@@ -1105,7 +1105,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         pcs_ptr->pic_filter_intra_mode = 1;
     else
         pcs_ptr->pic_filter_intra_mode = 0;
-
+#if FILTER_INTRA_OFF
+    if (pcs_ptr->slice_type != I_SLICE)
+        pcs_ptr->pic_filter_intra_mode = 0;
+#endif
     // High Precision
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv =

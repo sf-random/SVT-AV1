@@ -37,8 +37,50 @@ extern "C" {
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
 #endif
-// START  BEYOND_CS2 /////////////////////////////////////////////////////////
 
+    // DISABLE CLASS prune
+#define DISBALE_CLASS_PRUNE      0
+
+    // CLASS REMOVAL
+#define REMOVE_C6               0
+#define REMOVE_C7               0// pallette 
+#define REMOVE_C8               0
+#define REMOVE_C8_75            0
+#define REMOVE_C8_V2            0
+#define REMOVE_C3P              0  //5 classes configuration: INTRA / PALLETTE/ FILTER INTRA / ME / MVP
+#define REMOVE_C3P_75           0
+#define THREE_CLASS_ONLY        0  //3 classes configuration: INTRA / ME / MVP 
+#define THREE_CLASS_ONLY_75     0
+#define THREE_CLASS_ONLY_50     0
+
+
+
+    // INTRA SIMs 
+#define CHROMA_LAST_STAGE       0
+
+#define CHROMA_SEARCH           0
+#define CFL_C0                  0
+#define TXT_C0                  0
+#define TXS_C0                  0
+#define PRED_ANGULAR_C0         0
+#define FILTER_INTRA_OFF        0
+#define RDOQ_C0                 0
+#define SSSE_C0                 0
+#define NIC_S1_C0               0
+#define NIC_LS_C0               0
+
+#define NICS_SIM_S1             0
+#define NICS_SIM_S1_12          0
+#define NICS_SIM_S1_14          0
+#define NICS_SIM_S1_18          0
+ 
+    
+#define NICS_SIM_LS                 0
+#define NICS_SIM_LS_12              0
+#define NICS_SIM_LS_14              0
+#define NICS_SIM_LS_34              0
+    
+// START  BEYOND_CS2 /////////////////////////////////////////////////////////
 #define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
 
 #if BEYOND_CS2
@@ -180,7 +222,7 @@ extern "C" {
 
 #define APR02_ADOPTIONS 1 // adoptions in all modes
 
-#define MULTI_PASS_PD_FOR_INCOMPLETE 1
+#define MULTI_PASS_PD_FOR_INCOMPLETE 0
 
 #endif
 

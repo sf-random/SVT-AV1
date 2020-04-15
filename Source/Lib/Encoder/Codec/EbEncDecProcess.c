@@ -1726,7 +1726,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             ? CHROMA_MODE_2
 #endif
             : CHROMA_MODE_3;
-
+#if CHROMA_SEARCH
+        if (pcs_ptr->slice_type != I_SLICE)
+            context_ptr->chroma_level = CHROMA_MODE_1;
+#endif
     }
     else // use specified level
         context_ptr->chroma_level =
@@ -1742,6 +1745,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
     context_ptr->chroma_at_last_md_stage =
         MR_MODE ? 0 : (context_ptr->chroma_level == CHROMA_MODE_0 && !pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 1 : 0;
+#endif
+#if CHROMA_LAST_STAGE
+
+    context_ptr->chroma_at_last_md_stage = 0;
 #endif
 #if M5_CHROMA_NICS
     // Chroma independent modes nics
@@ -2474,6 +2481,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_1_class_prune_th = 100;
     else
+#if DISBALE_CLASS_PRUNE
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+#else
 #if MAR12_ADOPTIONS
         if (enc_mode <= ENC_M3 ||
             pcs_ptr->parent_pcs_ptr->sc_content_detected)
@@ -2490,7 +2500,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
-
+#endif
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
     // md_stage_2_3_cand_prune_th
@@ -2525,6 +2535,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_2_3_class_prune_th = 25;
     else
+#if DISBALE_CLASS_PRUNE
+        context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
+#else
 #if MAR10_ADOPTIONS && !MAR18_MR_TESTS_ADOPTIONS
         if (MR_MODE)
             context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
@@ -2551,7 +2564,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_2_3_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_2_3_class_prune_th;
-
+#endif
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
     // shapes should be skipped. Namely:
