@@ -45,6 +45,9 @@ extern "C" {
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
 #define DISALLOW_NSQ_FIX_0 1
+#if DISALLOW_NSQ_FIX_0
+#define FIX_DISALLOW_NSQ_FIX_0 0
+#endif
 #define DISALLOW_NSQ_FIX_1 1
 #define M8_BYPASS_USELESS 1
 #define TEMPORAL_FILTERING_FIX 1
