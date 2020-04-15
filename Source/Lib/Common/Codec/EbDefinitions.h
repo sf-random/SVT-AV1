@@ -38,6 +38,7 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define FASTEST_M8_V0 1
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
@@ -59,20 +60,28 @@ extern "C" {
 #define M8_MRP 1
 
 // MD
-#define M8_FULL_LOOP_ESCAPE 0 // Backup_0
+#if !FASTEST_M8_V0
+#define M8_FULL_LOOP_ESCAPE 1 // Backup_0
+#endif
 #define M8_COMPOUND 1
 #define M8_BIPRED_3x3 1
 #define M8_PRED_ME 1
 #define M8_IFS 1
-#define M8_SPATIAL_SSE 0// Backup_0
+#if !FASTEST_M8_V0
+#define M8_SPATIAL_SSE 1// Backup_0
+#endif
 #define M8_RDOQ_NSC 1
 #define M8_RDOQ_SC 1
 #define M8_INTRA_MODE 1
-#define M8_MVF 0// Backup_0
+#if !FASTEST_M8_V0
+#define M8_MVF 1// Backup_0
+#endif
 #define M8_CDF 1
 #define M8_WM 1
-#define M8_MD_EXIT 0// Backup_0
-#define M8_CHROMA 0// Backup_0
+#if !FASTEST_M8_V0
+#define M8_MD_EXIT 1// Backup_0
+#define M8_CHROMA 1// Backup_0
+#endif
 #define M8_TXT 1
 #define M8_OBMC 1
 
@@ -98,7 +107,9 @@ extern "C" {
 #if UNIFIED_ME_HME_SETTINGS
 #define ME_HME_15_SC 0
 #endif
-#define UNIFIED_PART 0 // Backup_0
+#if !FASTEST_M8_V0
+#define UNIFIED_PART 1 // Backup_0
+#endif
 #define UNIFIED_NICS 1
 #define UNIFIED_MD_STAGING 1
 
