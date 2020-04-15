@@ -1462,6 +1462,57 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_6] = is_ref ? 5 : 2;
         context_ptr->md_stage_3_count[CAND_CLASS_7] = 7;
         context_ptr->md_stage_3_count[CAND_CLASS_8] = 1;
+
+#if THREE_CLASS_ONLY
+        context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+        context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+        context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+            context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+            context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+            context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+        }
+
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_2];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_2];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_2];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3];
+
+        context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5];
+        context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5];
+        context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5];
+#if THREE_CLASS_ONLY_75 || THREE_CLASS_ONLY_50
+        uint8_t i;
+#if THREE_CLASS_ONLY_50
+        uint32_t scaling_num = 1;
+        uint32_t scaling_denom = 2;
+#else
+        uint32_t scaling_num = 3;
+        uint32_t scaling_denom = 4;
+#endif
+
+        i = CAND_CLASS_0;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_1;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+        i = CAND_CLASS_4;
+        context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+        context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+        context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+        context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+#endif
     } else {
         // nics_level
         //  0               old settings
@@ -1727,6 +1778,58 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 context_ptr->md_stage_2_count[CAND_CLASS_1] =
                     context_ptr->md_stage_2_count[CAND_CLASS_1] * 2;
             }
+#endif
+#if THREE_CLASS_ONLY
+            context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_6];
+            context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_6];
+            context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_6];
+            if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+                context_ptr->md_stage_1_count[CAND_CLASS_0] += context_ptr->md_stage_1_count[CAND_CLASS_7];
+                context_ptr->md_stage_2_count[CAND_CLASS_0] += context_ptr->md_stage_2_count[CAND_CLASS_7];
+                context_ptr->md_stage_3_count[CAND_CLASS_0] += context_ptr->md_stage_3_count[CAND_CLASS_7];
+            }
+
+
+            context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_2];
+            context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_2];
+            context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_2];
+
+            context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_3];
+            context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_3];
+            context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_3];
+
+            context_ptr->md_stage_1_count[CAND_CLASS_1] += context_ptr->md_stage_1_count[CAND_CLASS_5];
+            context_ptr->md_stage_2_count[CAND_CLASS_1] += context_ptr->md_stage_2_count[CAND_CLASS_5];
+            context_ptr->md_stage_3_count[CAND_CLASS_1] += context_ptr->md_stage_3_count[CAND_CLASS_5];
+
+#if THREE_CLASS_ONLY_75 || THREE_CLASS_ONLY_50
+            uint8_t i;
+#if THREE_CLASS_ONLY_50
+            uint32_t scaling_num = 1;
+            uint32_t scaling_denom = 2;
+#else
+            uint32_t scaling_num = 3;
+            uint32_t scaling_denom = 4;
+#endif
+
+            i = CAND_CLASS_0;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+            i = CAND_CLASS_1;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+            i = CAND_CLASS_4;
+            context_ptr->md_stage_1_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_1_count[i])) / scaling_denom);
+            context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
+            context_ptr->md_stage_2_count[i] = (uint32_t)round((scaling_num * ((float)context_ptr->md_stage_2_count[i])) / scaling_denom);
+            context_ptr->md_stage_2_count[i] = MAX(context_ptr->md_stage_2_count[i], 1);
+
+#endif
+
 #endif
             ////MULT
 #if APR02_ADOPTIONS

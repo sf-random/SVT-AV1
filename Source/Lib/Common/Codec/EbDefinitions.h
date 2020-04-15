@@ -42,7 +42,8 @@ extern "C" {
 
 #define FASTEST_M8_V2 1
 #define FASTEST_M8_V3 1
-#define FASTEST_M8_V4 1
+#define FASTEST_M8_V4 0
+#define FASTEST_M8_V5 1
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
@@ -116,6 +117,12 @@ extern "C" {
 #if FASTEST_M8_V2
 #define M8_NIC 1
 #endif
+#if FASTEST_M8_V5
+#define THREE_CLASS_ONLY        1  //3 classes configuration: INTRA / ME / MVP 
+#define THREE_CLASS_ONLY_75     0
+#define THREE_CLASS_ONLY_50     0
+#endif
+
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
 #if UNIFIED_ME_HME_SETTINGS

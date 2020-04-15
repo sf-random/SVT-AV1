@@ -6272,22 +6272,46 @@ EbErrorType generate_md_stage_0_cand(
 
         if (cand_ptr->type == INTRA_MODE) {
             // Intra prediction
-                if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
-                  if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#if !THREE_CLASS_ONLY
+            if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
+#endif
+#if !THREE_CLASS_ONLY
+                if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
-                  }
-                  else {
-                     cand_ptr->cand_class = CAND_CLASS_7;
-                     context_ptr->md_stage_0_count[CAND_CLASS_7]++;
-                  }
+#if !THREE_CLASS_ONLY
                 }
                 else {
-                    cand_ptr->cand_class = CAND_CLASS_6;
-                    context_ptr->md_stage_0_count[CAND_CLASS_6]++;
+                    cand_ptr->cand_class = CAND_CLASS_7;
+                    context_ptr->md_stage_0_count[CAND_CLASS_7]++;
                 }
+#endif
 
-        } else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
+#if !THREE_CLASS_ONLY
+            }
+            else {
+                cand_ptr->cand_class = CAND_CLASS_6;
+                context_ptr->md_stage_0_count[CAND_CLASS_6]++;
+            }
+#endif
+
+
+#if THREE_CLASS_ONLY
+        }
+    else if (cand_ptr->is_interintra_used && cand_ptr->is_compound == 0) {
+        // InterIntra
+        cand_ptr->cand_class = CAND_CLASS_4;
+        context_ptr->md_stage_0_count[CAND_CLASS_4]++;
+
+    }
+    else {// InterIntra
+        cand_ptr->cand_class = CAND_CLASS_1;
+        context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+    }
+    }
+#else
+    } else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
             cand_ptr->cand_class = CAND_CLASS_8;
             context_ptr->md_stage_0_count[CAND_CLASS_8]++;
         }
@@ -6333,6 +6357,7 @@ EbErrorType generate_md_stage_0_cand(
             }
         }
     }
+#endif
     uint32_t fast_accum = 0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         fast_accum += context_ptr->md_stage_0_count[cand_class_it];
