@@ -47,7 +47,7 @@ extern "C" {
 // disallow_nsq fixes
 #define DISALLOW_NSQ_FIX_0 1
 #if DISALLOW_NSQ_FIX_0
-#define FIX_DISALLOW_NSQ_FIX_0 0
+#define FIX_DISALLOW_NSQ_FIX_0 1
 #endif
 #define DISALLOW_NSQ_FIX_1 1
 #define M8_BYPASS_USELESS 1
