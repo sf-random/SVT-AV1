@@ -39,9 +39,10 @@ extern "C" {
 #endif
 
 #define FASTEST_M8_V0 1
-#define FASTEST_M8_V1 0
+
 #define FASTEST_M8_V2 1
 #define FASTEST_M8_V3 1
+#define FASTEST_M8_V4 1
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
@@ -140,7 +141,7 @@ extern "C" {
 #if TEST_3_C
 #define SHUT_PALETTE_BC_PD_PASS_0_1 1
 #endif
-#if FASTEST_M8_V1
+#if FASTEST_M8_V4
 #define OVER_BOUNDARY_MODE 1 
 #endif
 
