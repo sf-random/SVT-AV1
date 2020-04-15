@@ -39,6 +39,7 @@ extern "C" {
 #endif
 
 #define FASTEST_M8_V0 1
+#define FASTEST_M8_V1 1
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
