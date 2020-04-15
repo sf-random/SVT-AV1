@@ -5258,8 +5258,11 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
         int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
+#if FIX_DISALLOW_NSQ_FIX_0
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_allowed[blk_index] && is_block_tagged) {
+#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-
+#endif
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
                 blk_geom->sq_size == 128
                 ? 17
