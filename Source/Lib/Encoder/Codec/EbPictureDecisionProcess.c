@@ -1328,9 +1328,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
 #if MAR17_ADOPTIONS
 #if M8_CDEF
-#if 0//FASTEST_M8_V1
-        pcs_ptr->cdef_filter_mode = 1;
-#else
         if (pcs_ptr->sc_content_detected)
             pcs_ptr->cdef_filter_mode = 5;
         else
@@ -1338,7 +1335,6 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_filter_mode = 5;
             else
                 pcs_ptr->cdef_filter_mode = 2;
-#endif
 #else
         pcs_ptr->cdef_filter_mode = 5;
 #endif

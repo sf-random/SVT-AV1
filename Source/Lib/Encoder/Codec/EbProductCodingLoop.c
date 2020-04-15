@@ -1815,7 +1815,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     intra_scaling_denom = 1;
                 }
 #if MAR25_ADOPTIONS
+#if M8_NIC
+                else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
                 else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
                 else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
@@ -1876,7 +1880,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     intra_scaling_denom = 1;
                 }
 #if MAR25_ADOPTIONS
+#if M8_NIC
+                else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
                 else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
                 else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
@@ -1888,12 +1896,21 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     intra_scaling_denom = 1;
                 }
                 else {
+#if M8_NIC
                     // INTER
                     inter_scaling_num = 1;
                     inter_scaling_denom = 4;
                     // INTRA
                     intra_scaling_num = 1;
                     intra_scaling_denom = 4;
+#else
+                    // INTER
+                    inter_scaling_num = 1;
+                    inter_scaling_denom = 4;
+                    // INTRA
+                    intra_scaling_num = 1;
+                    intra_scaling_denom = 4;
+#endif
                 }
 
                 for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {

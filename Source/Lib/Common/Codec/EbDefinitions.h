@@ -40,6 +40,7 @@ extern "C" {
 
 #define FASTEST_M8_V0 1
 #define FASTEST_M8_V1 0
+#define FASTEST_M8_V2 1
 
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
@@ -103,6 +104,11 @@ extern "C" {
 // Part
 #define M8_NEW_MPPD 1
 
+
+// NIC
+#if FASTEST_M8_V2
+#define M8_NIC 0
+#endif
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
 #if UNIFIED_ME_HME_SETTINGS
@@ -111,9 +117,10 @@ extern "C" {
 #if !FASTEST_M8_V0
 #define UNIFIED_PART 1 // Backup_0
 #endif
+#if !FASTEST_M8_V2
 #define UNIFIED_NICS 1
 #define UNIFIED_MD_STAGING 1
-
+#endif
 #define MPPD_PROFILNG 1
 
 // Recent adoptions
