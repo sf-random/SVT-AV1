@@ -1728,6 +1728,16 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     context_ptr->md_stage_2_count[CAND_CLASS_1] * 2;
             }
 #endif
+#if HALF_NICS
+            if (pcs_ptr->slice_type != I_SLICE) {
+                if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+                    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+                        context_ptr->md_stage_1_count[cidx] = (context_ptr->md_stage_1_count[cidx] + 1) / 2;
+                        context_ptr->md_stage_2_count[cidx] = (context_ptr->md_stage_2_count[cidx] + 1) / 2;
+                    }
+                }
+            }
+#endif
             ////MULT
 #if APR02_ADOPTIONS
             if ((((pcs_ptr->enc_mode <= ENC_M1) || (pcs_ptr->enc_mode <= ENC_M3 && pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)) && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
@@ -2935,6 +2945,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             (context_ptr->md_stage_2_count[CAND_CLASS_7] + 1) >> 1;
         context_ptr->md_stage_3_count[CAND_CLASS_8] =
             (context_ptr->md_stage_2_count[CAND_CLASS_8] + 1) >> 1;
+
     }
 
     // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC

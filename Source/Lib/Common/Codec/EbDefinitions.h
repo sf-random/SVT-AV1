@@ -191,6 +191,7 @@ extern "C" {
 #define DISABLE_RDOQ                        0
 #define DISABLE_SSSE                        0
 #define DISABLE_NSQ                         0
+#define HALF_NICS                           0
 #endif
 #define SAME_ACTION                         0
 #define SB_STAT 0
