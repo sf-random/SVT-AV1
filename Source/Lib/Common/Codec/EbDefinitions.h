@@ -63,14 +63,14 @@ extern "C" {
 #define M8_COMPOUND 1
 #define M8_BIPRED_3x3 1
 #define M8_PRED_ME 1
-#define M8_IFS 0
+#define M8_IFS 1
 #define M8_SPATIAL_SSE 0
-#define M8_RDOQ_NSC 0
+#define M8_RDOQ_NSC 1
 #define M8_RDOQ_SC 1
-#define M8_INTRA_MODE 0
+#define M8_INTRA_MODE 1
 #define M8_MVF 0
 #define M8_CDF 1
-#define M8_WM 0
+#define M8_WM 1
 #define M8_MD_EXIT 0
 #define M8_CHROMA 0
 #define M8_TXT 1
@@ -79,7 +79,7 @@ extern "C" {
 // Filtering
 #define M8_SG 1
 #define M8_WN 1
-#define M8_RESTORATION 0
+#define M8_RESTORATION 1
 #define M8_LOOP_FILTER 1
 #define M8_CDEF 1
 // Part
@@ -98,7 +98,7 @@ extern "C" {
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
 #if UNIFIED_ME_HME_SETTINGS
-#define ME_HME_15_SC 1
+#define ME_HME_15_SC 0
 #endif
 #define UNIFIED_PART 0
 #define UNIFIED_NICS 1
