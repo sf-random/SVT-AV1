@@ -10046,6 +10046,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if DISABLE_SSSE
     context_ptr->spatial_sse_full_loop = EB_FALSE;
 #endif
+#if DISABLE_NSQ
+    context_ptr->md_disallow_nsq = 1;
+#endif
 #else
 #if !SAME_ACTION
             context_ptr->md_tx_size_search_mode = 0;
@@ -10442,16 +10445,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     } while (blk_index < leaf_count); // End of CU loop
 
 #if HIGH_COMPLEX_SB_DETECT
-#if !SAME_ACTION
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
     context_ptr->tx_weight = default_tx_weight;
     context_ptr->tx_search_reduced_set = default_tx_search_reduced_set;
     context_ptr->spatial_sse_full_loop = default_spatial_sse_full_loop;
     context_ptr->enable_rdoq = default_enable_rdoq;
     context_ptr->tx_search_level = default_tx_search_level;
-#else
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
-#endif
+
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 
