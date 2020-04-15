@@ -119,7 +119,7 @@ extern "C" {
 #endif
 #if FASTEST_M8_V5
 #define THREE_CLASS_ONLY        1  //3 classes configuration: INTRA / ME / MVP 
-#define THREE_CLASS_ONLY_75     0
+#define THREE_CLASS_ONLY_75     1
 #define THREE_CLASS_ONLY_50     0
 #endif
 
