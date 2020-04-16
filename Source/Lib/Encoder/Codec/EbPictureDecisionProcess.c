@@ -1353,6 +1353,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->cdef_filter_mode = 0;
 
+#if FASTER_CDEF
+    pcs_ptr->cdef_filter_mode = 0;
+#endif
     // SG Level                                    Settings
     // 0                                            OFF
     // 1                                            0 step refinement
@@ -1403,7 +1406,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         cm->sg_filter_mode = 1;
 #endif
-
+#if FASTER_SG
+    cm->sg_filter_mode = 0;
+#endif
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
@@ -5494,6 +5499,9 @@ void* picture_decision_kernel(void *input_ptr)
                                   (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)||
                                   (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                                 ? 1 : 0;
+#endif
+#if FASTER_TF
+                            perform_filtering = 0;
 #endif
                             if (perform_filtering){
                                 derive_tf_window_params(

@@ -45,6 +45,18 @@ extern "C" {
 #define FASTEST_M8_V4 0
 #define FASTEST_M8_V5 0
 
+#define FASTEST_M8_V11 0
+#if FASTEST_M8_V11
+#define FASTER_TF 1 // tf off
+#define FASTER_MPPD 1
+#define FASTER_HME_ME 1 // w=h=10
+#define FASTER_TXT 1 // txt=off
+
+// Filtering
+#define FASTER_CDEF 1 // CDEF OFF
+#define FASTER_SG 1 // SG OFF
+#endif
+
 /////** Towards Faster_M8 **///////
 // disallow_nsq fixes
 #define DISALLOW_NSQ_FIX_0 1
@@ -125,9 +137,6 @@ extern "C" {
 
 // Debugging flags
 #define UNIFIED_ME_HME_SETTINGS 1
-#if UNIFIED_ME_HME_SETTINGS
-#define ME_HME_15_SC 0
-#endif
 #if !FASTEST_M8_V0
 #define UNIFIED_PART 1 // Backup_0
 #endif

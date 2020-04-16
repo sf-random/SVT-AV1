@@ -146,8 +146,8 @@ void* set_me_hme_params_oq(
     else if (pcs_ptr->enc_mode <= ENC_M7)
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
     else
-#if ME_HME_15_SC
-        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 15;
+#if FASTER_HME_ME
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 10;
 #else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 25;
 #endif

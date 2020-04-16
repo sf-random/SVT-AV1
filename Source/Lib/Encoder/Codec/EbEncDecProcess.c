@@ -1543,6 +1543,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #endif
+
+#if FASTER_TXT
+    context_ptr->tx_search_level = TX_SEARCH_OFF;
+#endif
     // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
     if (pd_pass == PD_PASS_0)
         context_ptr->tx_weight = MAX_MODE_COST;
@@ -4983,8 +4987,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
                         }
                         else {
+#if FASTER_MPPD
+                            s_depth = 0;
+                            e_depth = 0;
+#else
                             s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0 : -1;
                             e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
+#endif
                         }
 #endif
                     } else if (context_ptr->pd_pass == PD_PASS_1) {
