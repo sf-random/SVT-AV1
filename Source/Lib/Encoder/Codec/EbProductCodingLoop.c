@@ -10118,6 +10118,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if SQ_PARENT_CLASS 
     //init block class
     context_ptr->block_class = 0;
+    uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
 #endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
@@ -10156,7 +10157,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         blk_ptr->best_d1_blk = blk_idx_mds;
 #endif
 #if SQ_PARENT_CLASS 
-        uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
+        context_ptr->md_disallow_nsq = default_md_disallow_nsq;
         if (pcs_ptr->slice_type != I_SLICE) {
             if (context_ptr->pd_pass == 2) {
                 if(context_ptr->block_class == 3)
