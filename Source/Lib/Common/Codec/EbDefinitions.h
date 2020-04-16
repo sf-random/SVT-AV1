@@ -44,19 +44,18 @@ extern "C" {
 #define FASTEST_M8_V3 1
 #define FASTEST_M8_V4 0
 #define FASTEST_M8_V5 0 // class merge techniques
+#define FASTEST_M8_V6 0 // add INTRA on top of 14_IFS  
 
-#define FASTEST_M8_V6 1 // add INTRA on top of 14_IFS  
-
-#define FASTEST_M8_V11 0
+#define FASTEST_M8_V11 1
 #if FASTEST_M8_V11
-#define FASTER_TF 1 // tf off
-#define FASTER_MPPD 1
-#define FASTER_HME_ME 1 // w=h=10
-#define FASTER_TXT 1 // txt=off
+#define FASTER_TF 0 // tf off
+#define FASTER_MPPD 0 // pred only
+#define FASTER_HME_ME 0 // w=h=10
+#define FASTER_TXT 0 // txt=off
 
 // Filtering
-#define FASTER_CDEF 1 // CDEF OFF
-#define FASTER_SG 1 // SG OFF
+#define FASTER_CDEF 0 // CDEF OFF
+#define FASTER_SG 0 // SG OFF
 #endif
 
 /////** Towards Faster_M8 **///////
