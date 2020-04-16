@@ -3076,14 +3076,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             // Check that md_stage_1_count does not exceed md_stage_0_count, if yes then clip
             context_ptr->md_stage_1_count[i] = MIN(context_ptr->md_stage_0_count[i], context_ptr->md_stage_1_count[i]);
 
+            // bypass md_stage_1 if 1 NIC @ md_stage_1
+            if (context_ptr->md_stage_1_count[i] == 1)
+                context_ptr->bypass_md_stage_1[i] = 1;
+
             // Then set final stage count to 2
             context_ptr->md_stage_2_count[i] = context_ptr->md_stage_3_count[i] = 1;
-#if 0
-        for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
-            if (context_ptr->md_stage_1_count[i] == 1 || context_ptr->md_stage_1_count[i] == context_ptr->md_stage_2_count[i]) {
-                context_ptr->bypass_md_stage_1[i] = 1;
-            }
-#endif
+
         }
 #endif
 #if UNIFIED_NICS
