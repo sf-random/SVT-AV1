@@ -48,11 +48,11 @@ extern "C" {
 
 #define FASTEST_M8_V11 1
 #if FASTEST_M8_V11
-#define FASTER_TF 1 // tf off
+#define FASTER_TF 0 // tf off
 #define FASTER_MPPD 0 // pred only
 #define FASTER_HME_ME 0 // w=h=10
 #define FASTER_TXT 0 // txt=off
-
+#define FASTER_NIC 1
 // Filtering
 #define FASTER_CDEF 0 // CDEF OFF
 #define FASTER_SG 0 // SG OFF
