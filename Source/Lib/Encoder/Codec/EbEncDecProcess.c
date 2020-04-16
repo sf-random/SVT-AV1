@@ -1810,7 +1810,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      context_ptr->md_disallow_nsq = context_ptr->pic_class == 2 ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
 
-#if HIGH_COMPLEX_SB_DETECT
+#if HIGH_COMPLEX_SB_DETECT || FIX_SKIP
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
     // Set the full loop escape level
@@ -5928,7 +5928,7 @@ void *enc_dec_kernel(void *input_ptr) {
                                          sb_origin_y,
                                          sb_index,
                                          context_ptr->md_context);
-#if HIGH_COMPLEX_SB_DETECT
+#if HIGH_COMPLEX_SB_DETECT && ! SQ_PARENT_CLASS && !BLOCK_CLASS
                         if(pcs_ptr->slice_type != I_SLICE)
                             context_ptr->md_context->sb_class = determine_sb_class(
                                 scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);

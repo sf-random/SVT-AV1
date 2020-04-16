@@ -181,9 +181,10 @@ extern "C" {
 #define APR02_ADOPTIONS 1 // adoptions in all modes
 
 #define MULTI_PASS_PD_FOR_INCOMPLETE 0
+#define FIX_SKIP                            1
 
 #define HIGH_COMPLEX_SB_DETECT              0
-#define SB_CLASS_TH                         0 // 17, 14, 10 (85%, 70%, 50%)
+#define SB_CLASS_TH                         0
 #define SENSITIVE_TOOLS                     0 
 #if SENSITIVE_TOOLS
 #define DISABLE_TXS                         0
@@ -193,6 +194,9 @@ extern "C" {
 #define DISABLE_NSQ                         0
 #define HALF_NICS                           0
 #endif
+#define SQ_PARENT_CLASS                     0
+#define BLOCK_CLASS                         0
+
 #define SAME_ACTION                         0
 #define SB_STAT 0
 #define ENC_STATS                           0 // STATS
