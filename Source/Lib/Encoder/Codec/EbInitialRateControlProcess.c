@@ -1196,7 +1196,18 @@ void cutree_mc_flow_dispenser(
                 const CodedBlockStats *blk_stats_ptr;
                 blk_stats_ptr = get_coded_blk_stats(pa_blk_index);
                 uint8_t bsize = blk_stats_ptr->size;
-                if(bsize != 16) {
+                EbBool small_boundary_blk = EB_FALSE;
+
+                //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
+                if(1)
+                {
+                    uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+                    uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+                    if ((blk_stats_ptr->origin_x % 16) == 0 && (blk_stats_ptr->origin_y % 16) == 0 &&
+                            ((pcs_ptr->enhanced_picture_ptr->width - cu_origin_x) < 16 || (pcs_ptr->enhanced_picture_ptr->height - cu_origin_y) < 16))
+                        small_boundary_blk = EB_TRUE;
+                }
+                if(bsize != 16 && !small_boundary_blk) {
                     pa_blk_index++;
                     continue;
                 }
