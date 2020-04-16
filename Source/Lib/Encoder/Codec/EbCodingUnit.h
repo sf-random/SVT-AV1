@@ -509,6 +509,11 @@ typedef struct OisSbResults {
 typedef struct OisMbResults {
     int64_t intra_cost;
     int32_t intra_mode;
+} OisMbResults;
+
+typedef struct CutreeStats {
+    int64_t intra_cost;
+    int32_t intra_mode;
     int64_t inter_cost;
     int64_t srcrf_dist;
     int64_t recrf_dist;
@@ -518,7 +523,7 @@ typedef struct OisMbResults {
     int64_t mc_dep_dist;
     MV mv;
     uint64_t ref_frame_poc;
-} OisMbResults;
+} CutreeStats;
 #endif
 
 typedef struct SuperBlock {

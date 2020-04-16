@@ -590,6 +590,8 @@ typedef struct PictureParentControlSet {
     OisCandidate **ois_candicate;
 #if CUTREE_LA
     OisMbResults **ois_mb_results;
+    CutreeStats  **cutree_stats;
+    int          is_720p_or_larger;
     int32_t      base_rdmult;
     double       r0;
     double       *cutree_beta;

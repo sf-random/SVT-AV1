@@ -821,17 +821,16 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
-    //int tpl_stride = tpl_frame->stride;
-    double intra_cost = 0.0;
-    double mc_dep_cost = 0.0;
-    const int step = 4; //1 << cpi->tpl_stats_block_mis_log2;
-    const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
+    const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+    //const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
+    const int mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
 
     const int block_size = BLOCK_16X16;
     const int num_mi_w = mi_size_wide[block_size];
     const int num_mi_h = mi_size_high[block_size];
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    const int stride   = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
     const double c = 1.2;
     int dbg = 0;
     if (pcs_ptr->picture_number == 0 && 0) {
@@ -841,24 +840,31 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     //printf("[%ld], r0 is %f\n", pcs_ptr->picture_number, pcs_ptr->r0);
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
+            double intra_cost = 0.0;
+            double mc_dep_cost = 0.0;
             const int index = row * num_cols + col;
-            //OisMbResults *ois_mb_results_ptr =
-            //    pcs_ptr->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
-            OisMbResults *ois_mb_results_ptr =
-                pcs_ptr->ois_mb_results[index];
-            int64_t mc_dep_delta =
-                RDCOST(pcs_ptr->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist);
-            intra_cost  = (double)(ois_mb_results_ptr->recrf_dist << RDDIV_BITS);
-            mc_dep_cost = (double)(ois_mb_results_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+            for (int mi_row = row * num_mi_h; mi_row < (row + 1) * num_mi_h; mi_row += step) {
+                for (int mi_col = col * num_mi_w; mi_col < (col + 1) * num_mi_w; mi_col += step) {
+                    if (mi_row >= cm->mi_rows || mi_col >= mi_cols_sr) continue;
+
+                    const int index1 = (mi_row >> (1 + pcs_ptr->is_720p_or_larger)) * stride + (mi_col >> (1 + pcs_ptr->is_720p_or_larger));
+                    CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[index1];
+                    int64_t mc_dep_delta =
+                        RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
+                    intra_cost  += (double)(cutree_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost += (double)(cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                    if (dbg) {
+                        printf("\t(%d, %d): intra_cost %f, mc_dep_cost %f, base_rdmult %d, mc rate %ld, mc dist %ld, mc delta %ld\n",
+                                mi_col*4, mi_row*4, intra_cost, mc_dep_cost,
+                                pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist, mc_dep_delta);
+                    }
+                }
+            }
 
             const double rk = intra_cost / mc_dep_cost;
-
             pcs_ptr->tpl_rdmult_scaling_factors[index] = rk / pcs_ptr->r0 + c;
-            if (dbg) {
-                printf("\t(%d, %d): intra_cost %f, mc_dep_cost %f, base_rdmult %d, mc rate %ld, mc dist %ld, mc delta %ld\n",
-                        col*16, row*16, intra_cost, mc_dep_cost,
-                        pcs_ptr->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist, mc_dep_delta);
 
+            if (dbg) {
                 printf("\tIndex %d, r0 %f, rk %f, factor %f\n",
                         index, pcs_ptr->r0, rk, pcs_ptr->tpl_rdmult_scaling_factors[index]);
             }
@@ -904,18 +910,20 @@ static int rate_estimator(tran_low_t *qcoeff, int eob, TxSize tx_size) {
   return (rate_cost << AV1_PROB_COST_SHIFT);
 }
 
-static void result_model_store(PictureParentControlSet *pcs_ptr, OisMbResults *ois_mb_results_ptr,
+static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *cutree_stats_ptr,
         uint32_t mb_origin_x, uint32_t mb_origin_y, uint32_t picture_width_in_mb) {
   const int mi_height = mi_size_high[BLOCK_16X16];
   const int mi_width = mi_size_wide[BLOCK_16X16];
-  const int step = 1 << 2;//cpi->tpl_stats_block_mis_log2; //is_720p_or_larger ? 2 : 1;
+  const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+  const int shift = 3 + pcs_ptr->is_720p_or_larger;
+  const int aligned16_width = ((pcs_ptr->aligned_width + 15) / 16) << 4;
 
-  int64_t intra_cost = ois_mb_results_ptr->intra_cost / (mi_height * mi_width);
-  int64_t inter_cost = ois_mb_results_ptr->inter_cost / (mi_height * mi_width);
-  int64_t srcrf_dist = ois_mb_results_ptr->srcrf_dist / (mi_height * mi_width);
-  int64_t recrf_dist = ois_mb_results_ptr->recrf_dist / (mi_height * mi_width);
-  int64_t srcrf_rate = ois_mb_results_ptr->srcrf_rate / (mi_height * mi_width);
-  int64_t recrf_rate = ois_mb_results_ptr->recrf_rate / (mi_height * mi_width);
+  int64_t intra_cost = cutree_stats_ptr->intra_cost / (mi_height * mi_width);
+  int64_t inter_cost = cutree_stats_ptr->inter_cost / (mi_height * mi_width);
+  int64_t srcrf_dist = cutree_stats_ptr->srcrf_dist / (mi_height * mi_width);
+  int64_t recrf_dist = cutree_stats_ptr->recrf_dist / (mi_height * mi_width);
+  int64_t srcrf_rate = cutree_stats_ptr->srcrf_rate / (mi_height * mi_width);
+  int64_t recrf_rate = cutree_stats_ptr->recrf_rate / (mi_height * mi_width);
 
   intra_cost = AOMMAX(1, intra_cost);
   inter_cost = AOMMAX(1, inter_cost);
@@ -925,9 +933,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, OisMbResults *o
   recrf_rate = AOMMAX(1, recrf_rate);
 
   for (int idy = 0; idy < mi_height; idy += step) {
-    //TplDepStats *tpl_ptr =
-    //    &tpl_stats_ptr[av1_tpl_ptr_pos(cpi, mi_row + idy, mi_col, stride)];
-    OisMbResults *dst_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
+    CutreeStats *dst_ptr = pcs_ptr->cutree_stats[((mb_origin_y >> shift) + (idy >> 1)) * (aligned16_width >> shift) + (mb_origin_x >> shift)];
     for (int idx = 0; idx < mi_width; idx += step) {
       dst_ptr->intra_cost = intra_cost;
       dst_ptr->inter_cost = inter_cost;
@@ -935,8 +941,8 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, OisMbResults *o
       dst_ptr->recrf_dist = recrf_dist;
       dst_ptr->srcrf_rate = srcrf_rate;
       dst_ptr->recrf_rate = recrf_rate;
-      dst_ptr->mv = ois_mb_results_ptr->mv;
-      dst_ptr->ref_frame_poc = ois_mb_results_ptr->ref_frame_poc;
+      dst_ptr->mv = cutree_stats_ptr->mv;
+      dst_ptr->ref_frame_poc = cutree_stats_ptr->ref_frame_poc;
       ++dst_ptr;
     }
   }
@@ -1081,6 +1087,7 @@ void cutree_mc_flow_dispenser(
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     int64_t recon_error = 1, sse = 1;
+    CutreeStats  cutree_stats;
 
     (void)scs_ptr;
 
@@ -1212,6 +1219,7 @@ void cutree_mc_flow_dispenser(
                     uint8_t best_mode = DC_PRED;
                     uint8_t *src_mb = input_picture_ptr->buffer_y + input_picture_ptr->origin_x + mb_origin_x +
                                      (input_picture_ptr->origin_y + mb_origin_y) * input_picture_ptr->stride_y;
+                    memset(&cutree_stats, 0, sizeof(cutree_stats));
 #if USE_ORIGIN_YUV
                     if(pcs_ptr->temporal_layer_index == 0) {
                         src_mb = pcs_ptr->save_enhanced_picture_ptr[0] + pcs_ptr->enhanced_picture_ptr->origin_x + mb_origin_x +
@@ -1301,7 +1309,7 @@ void cutree_mc_flow_dispenser(
                         uint16_t eob;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
                         int rate_cost = rate_estimator(qcoeff, eob, tx_size);
-                        ois_mb_results_ptr->srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                        cutree_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
                     best_intra_cost = AOMMAX(best_intra_cost, 1);
 #if 0
@@ -1317,10 +1325,10 @@ if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin
                         best_inter_cost = 0;
                     else
                         best_inter_cost = AOMMIN(best_intra_cost, best_inter_cost);
-                    ois_mb_results_ptr->inter_cost = best_inter_cost << TPL_DEP_COST_SCALE_LOG2;
-                    ois_mb_results_ptr->intra_cost = best_intra_cost << TPL_DEP_COST_SCALE_LOG2;
+                    cutree_stats.inter_cost = best_inter_cost << TPL_DEP_COST_SCALE_LOG2;
+                    cutree_stats.intra_cost = best_intra_cost << TPL_DEP_COST_SCALE_LOG2;
 
-                    ois_mb_results_ptr->srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                    cutree_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
@@ -1395,31 +1403,31 @@ if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin
                             av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0 /*lossless*/);
                     }
 
-                    ois_mb_results_ptr->recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
-                    ois_mb_results_ptr->recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                    cutree_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                    cutree_stats.recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     if (best_mode != NEWMV) {
-                        ois_mb_results_ptr->srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
-                        ois_mb_results_ptr->srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                        cutree_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                        cutree_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
-                    ois_mb_results_ptr->recrf_dist = AOMMAX(ois_mb_results_ptr->srcrf_dist, ois_mb_results_ptr->recrf_dist);
-                    ois_mb_results_ptr->recrf_rate = AOMMAX(ois_mb_results_ptr->srcrf_rate, ois_mb_results_ptr->recrf_rate);
+                    cutree_stats.recrf_dist = AOMMAX(cutree_stats.srcrf_dist, cutree_stats.recrf_dist);
+                    cutree_stats.recrf_rate = AOMMAX(cutree_stats.srcrf_rate, cutree_stats.recrf_rate);
 
                     if (pcs_ptr->picture_number != 0 && best_rf_idx != -1) {
-                        ois_mb_results_ptr->mv = final_best_mv;
-                        ois_mb_results_ptr->ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                        cutree_stats.mv = final_best_mv;
+                        cutree_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
                     }
 #if 0
-//if(pcs_ptr->picture_number == 16 && mb_origin_y == 0)
+if(pcs_ptr->picture_number == 16 && mb_origin_y == 0)
 {
-    //if(mb_origin_x==0)
-    //    printf("mbline%d poc%d, frame_idx=%d\n", mb_origin_y>>4, pcs_ptr->picture_number, frame_idx);
-    //printf("%d %d isinterwinner%d\n", ois_mb_results_ptr->srcrf_dist, ois_mb_results_ptr->recrf_dist, best_mode == NEWMV);
-    //printf("%d %d %d\n", ois_mb_results_ptr->inter_cost, ois_mb_results_ptr->recrf_dist, ois_mb_results_ptr->recrf_rate);
-    //printf("%d %d\n", ois_mb_results_ptr->intra_cost, ois_mb_results_ptr->inter_cost);
+    if(mb_origin_x==0)
+        printf("mbline%d poc%d, frame_idx=%d\n", mb_origin_y>>4, pcs_ptr->picture_number, frame_idx);
+    printf("%d %d isinterwinner%d\n", cutree_stats.srcrf_dist, cutree_stats.recrf_dist, best_mode == NEWMV);
+    //printf("%d %d %d\n", cutree_stats.inter_cost, cutree_stats.srcrf_dist, cutree_stats.recrf_rate);
+    printf("%d %d\n", cutree_stats.intra_cost, cutree_stats.inter_cost);
 }
 #endif
                     // Motion flow dependency dispenser.
-                    result_model_store(pcs_ptr, ois_mb_results_ptr, mb_origin_x, mb_origin_y, picture_width_in_mb);
+                    result_model_store(pcs_ptr, &cutree_stats, mb_origin_x, mb_origin_y, picture_width_in_mb);
                 }
                 pa_blk_index++;
             }
@@ -1521,14 +1529,14 @@ static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist,
   return rate_cost;
 }
 
-static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_picture_control_set_ptr, PictureParentControlSet *pcs_ptr,
-                                          int32_t frame_idx, OisMbResults *ois_mb_results_ptr,
+static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, PictureParentControlSet *pcs_ptr,
+                                          int32_t frame_idx, CutreeStats *cutree_stats_ptr,
                                           int mi_row, int mi_col,
                                           const int/*BLOCK_SIZE*/ bsize) {
-  Av1Common *ref_cm = ref_picture_control_set_ptr->av1_cm;
-  OisMbResults *ref_ois_mb_results_ptr;
+  Av1Common *ref_cm = ref_pcs_ptr->av1_cm;
+  CutreeStats *ref_cutree_stats_ptr;
 
-  const FULLPEL_MV full_mv = get_fullmv_from_mv(&ois_mb_results_ptr->mv);
+  const FULLPEL_MV full_mv = get_fullmv_from_mv(&cutree_stats_ptr->mv);
   const int ref_pos_row = mi_row * MI_SIZE + full_mv.row;
   const int ref_pos_col = mi_col * MI_SIZE + full_mv.col;
 
@@ -1537,28 +1545,32 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_picture_c
   const int mi_height = mi_size_high[bsize];
   const int mi_width = mi_size_wide[bsize];
   const int pix_num = bw * bh;
+  const int shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
+  const int mi_cols_sr = ((ref_pcs_ptr->aligned_width + 15) / 16) << 2;
 
   // top-left on grid block location in pixel
   int grid_pos_row_base = round_floor(ref_pos_row, bh) * bh;
   int grid_pos_col_base = round_floor(ref_pos_col, bw) * bw;
   int block;
 
-  int64_t cur_dep_dist = ois_mb_results_ptr->recrf_dist - ois_mb_results_ptr->srcrf_dist;
+  int64_t cur_dep_dist = cutree_stats_ptr->recrf_dist - cutree_stats_ptr->srcrf_dist;
   int64_t mc_dep_dist = (int64_t)(
-      ois_mb_results_ptr->mc_dep_dist *
-      ((double)(ois_mb_results_ptr->recrf_dist - ois_mb_results_ptr->srcrf_dist) /
-       ois_mb_results_ptr->recrf_dist));
-  int64_t delta_rate = ois_mb_results_ptr->recrf_rate - ois_mb_results_ptr->srcrf_rate;
+      cutree_stats_ptr->mc_dep_dist *
+      ((double)(cutree_stats_ptr->recrf_dist - cutree_stats_ptr->srcrf_dist) /
+       cutree_stats_ptr->recrf_dist));
+  int64_t delta_rate = cutree_stats_ptr->recrf_rate - cutree_stats_ptr->srcrf_rate;
   int64_t mc_dep_rate =
-      delta_rate_cost(ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->recrf_dist,
-                      ois_mb_results_ptr->srcrf_dist, pix_num);
+      delta_rate_cost(cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->recrf_dist,
+                      cutree_stats_ptr->srcrf_dist, pix_num);
 #if 0
-if(pcs_ptr->picture_number == 15 && frame_idx == 16 && mi_row == 0) {
+//if(pcs_ptr->picture_number == 15 && frame_idx == 16 && mi_row == 0)
+//if(pcs_ptr->picture_number == 15 && frame_idx == 15)
+if(pcs_ptr->picture_number == 0 && frame_idx == 0)
+{
     if(mi_col==0)
-        printf("mbline%d poc%d mi_cols=%d\n", mi_row>>2, pcs_ptr->picture_number,  pcs_ptr->av1_cm->mi_cols);
-    //printf("%d %d ref_poc%d\n", ois_mb_results_ptr->srcrf_dist, ois_mb_results_ptr->recrf_dist, ref_picture_control_set_ptr->picture_number);
-    //printf("%d %d \n", cur_dep_dist, mc_dep_dist);
-    //printf("%d %d \n", ois_mb_results_ptr->mv.col, ois_mb_results_ptr->mv.row);
+        printf("mbline%d poc%d mi_row=%d mi_cols=%d\n", mi_row>>2, pcs_ptr->picture_number, mi_row, pcs_ptr->av1_cm->mi_cols);
+    printf("mbxy=%d %d, %d %d %d ref_poc%d\n", mi_col>>2, mi_row>>2, cutree_stats_ptr->srcrf_dist, cutree_stats_ptr->recrf_dist, cutree_stats_ptr->mc_dep_dist, ref_pcs_ptr->picture_number);
+    //printf("%d %d \n", cutree_stats_ptr->mv.col, cutree_stats_ptr->mv.row);
 }
 #endif
 
@@ -1572,16 +1584,16 @@ if(pcs_ptr->picture_number == 15 && frame_idx == 16 && mi_row == 0) {
           grid_pos_row, grid_pos_col, ref_pos_row, ref_pos_col, block, bsize);
       int ref_mi_row = round_floor(grid_pos_row, bh) * mi_height;
       int ref_mi_col = round_floor(grid_pos_col, bw) * mi_width;
-      const int step = 1 << 2;//cpi->tpl_stats_block_mis_log2;
+      const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
 
       for (int idy = 0; idy < mi_height; idy += step) {
         for (int idx = 0; idx < mi_width; idx += step) {
-          ref_ois_mb_results_ptr = ref_picture_control_set_ptr->ois_mb_results[((ref_mi_row + idy) >> 2) * (ref_cm->mi_cols >> 2)  + ((ref_mi_col + idx) >> 2)]; //cpi->tpl_stats_block_mis_log2;
-          ref_ois_mb_results_ptr->mc_dep_dist +=
+          ref_cutree_stats_ptr = ref_pcs_ptr->cutree_stats[((ref_mi_row + idy) >> shift) * (mi_cols_sr >> shift)  + ((ref_mi_col + idx) >> shift)];
+          ref_cutree_stats_ptr->mc_dep_dist +=
               ((cur_dep_dist + mc_dep_dist) * overlap_area) / pix_num;
-          ref_ois_mb_results_ptr->mc_dep_rate +=
+          ref_cutree_stats_ptr->mc_dep_rate +=
               ((delta_rate + mc_dep_rate) * overlap_area) / pix_num;
-//if(pcs_ptr->picture_number == 31 && mi_row == 0 && ref_picture_control_set_ptr->picture_number == 30)
+//if(pcs_ptr->picture_number == 31 && mi_row == 0 && ref_pcs_ptr->picture_number == 30)
 //    printf("block%d, refmbxy %d %d, overlap_area%d pix_num%d cur_dep_dist=%d, mc_dep_dist=%d\n", block, (ref_mi_col + idx)>>2, (ref_mi_row + idy)>>2, overlap_area, pix_num, cur_dep_dist, mc_dep_dist);
 
           assert(overlap_area >= 0);
@@ -1594,27 +1606,21 @@ if(pcs_ptr->picture_number == 15 && frame_idx == 16 && mi_row == 0) {
 static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[60], int32_t frame_idx, int mi_row, int mi_col, const int/*BLOCK_SIZE*/ bsize, uint8_t frames_in_sw) {
   const int mi_height = mi_size_high[bsize];
   const int mi_width = mi_size_wide[bsize];
-  const int step = 1 << 2; //cpi->tpl_stats_block_mis_log2;
-  const int/*BLOCK_SIZE*/ block_size = BLOCK_16X16; //convert_length_to_bsize(MI_SIZE << cpi->tpl_stats_block_mis_log2);
   PictureParentControlSet *pcs_ptr = pcs_array[frame_idx];
+  const int/*BLOCK_SIZE*/ block_size = pcs_ptr->is_720p_or_larger ? BLOCK_16X16 : BLOCK_8X8;
+  const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+  const int shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
+  const int mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
   int i = 0;
 
   for (int idy = 0; idy < mi_height; idy += step) {
     for (int idx = 0; idx < mi_width; idx += step) {
-      OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(((mi_row + idy) * pcs_ptr->av1_cm->mi_cols) >> 4) + ((mi_col + idx) >> 2)];
-#if 0
-if(pcs_ptr->picture_number == 0 && mi_row >=176) {
-    if(mi_col==0)
-        printf("mbline%d poc%d\n", mi_row>>2, pcs_ptr->picture_number);
-    //printf("%d %d \n", ois_mb_results_ptr->srcrf_dist, ois_mb_results_ptr->recrf_dist);
-    //printf("%d %d \n", ois_mb_results_ptr->mv.col, ois_mb_results_ptr->mv.row);
-}
-#endif
-      while(i<frames_in_sw && pcs_array[i]->picture_number != ois_mb_results_ptr->ref_frame_poc)
-        i++;
+      CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[(((mi_row + idy) >> shift) * (mi_cols_sr >> shift)) + ((mi_col + idx) >> shift)];
 
+      while(i<frames_in_sw && pcs_array[i]->picture_number != cutree_stats_ptr->ref_frame_poc)
+        i++;
       if(i<frames_in_sw)
-        tpl_model_update_b(pcs_array[i], pcs_ptr, frame_idx, ois_mb_results_ptr, mi_row + idy, mi_col + idx, block_size);
+        tpl_model_update_b(pcs_array[i], pcs_ptr, frame_idx, cutree_stats_ptr, mi_row + idy, mi_col + idx, block_size);
     }
   }
 }
@@ -1643,16 +1649,17 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     int64_t intra_cost_base = 0;
     int64_t mc_dep_cost_base = 0;
-    const int step = 4; //1 << cpi->tpl_stats_block_mis_log2;
-    const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
+    const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+    const int mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
+    const int shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
 
     for (int row = 0; row < cm->mi_rows; row += step) {
         for (int col = 0; col < mi_cols_sr; col += step) {
-            OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
+            CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
             int64_t mc_dep_delta =
-                RDCOST(pcs_ptr->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist);
-            intra_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS);
-            mc_dep_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
+            intra_cost_base  += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
+            mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
         }
     }
 
@@ -1672,26 +1679,29 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     const uint32_t picture_sb_height = (uint32_t)((scs_ptr->seq_header.max_frame_height + sb_sz - 1) / sb_sz);
     const uint32_t picture_width_in_mb  = (scs_ptr->seq_header.max_frame_width  + 16 - 1) / 16;
     const uint32_t picture_height_in_mb = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+    const uint32_t blks = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (128 >> (3 + pcs_ptr->is_720p_or_larger))
+                                                                       : (64  >> (3 + pcs_ptr->is_720p_or_larger));
     for (uint32_t sb_y = 0; sb_y < picture_sb_height; ++sb_y) {
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
             int64_t intra_cost = 0;
             int64_t mc_dep_cost = 0;
-            for (int mby_offset = 0; mby_offset < (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4); mby_offset++) {
-                for (int mbx_offset = 0; mbx_offset < (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4); mbx_offset++) {
-                    uint32_t mbx = ((sb_x * sb_sz) / 16) + mbx_offset;
-                    uint32_t mby = ((sb_y * sb_sz) / 16) + mby_offset;
-                    if(mbx>=picture_width_in_mb || mby>= picture_height_in_mb)
+            for (int blky_offset = 0; blky_offset < blks; blky_offset++) {
+                for (int blkx_offset = 0; blkx_offset < blks; blkx_offset++) {
+                    uint32_t blkx = ((sb_x * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blkx_offset;
+                    uint32_t blky = ((sb_y * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blky_offset;
+                    if((blkx >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_width_in_mb ||
+                       (blky >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_height_in_mb)
                         continue;
-                    OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[mby * picture_width_in_mb + mbx];
+                    CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[blky * (mi_cols_sr >> shift) + blkx];
                     int64_t mc_dep_delta =
-                        RDCOST(pcs_ptr->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist);
-                    intra_cost  += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS);
-                    mc_dep_cost += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                        RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
+                    intra_cost  += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
 
                 }
             }                    
-          //  if(pcs_ptr->picture_number == 16)
-          //      printf(" ---> poc%ld sb_x=%d sb_y=%d intraC=%lld mc_dep=%lld\n", pcs_ptr->picture_number, sb_x, sb_y, intra_cost, mc_dep_cost);
+            //if(pcs_ptr->picture_number == 16)
+            //    printf(" ---> poc%ld sb_x=%d sb_y=%d intraC=%lld mc_dep=%lld\n", pcs_ptr->picture_number, sb_x, sb_y, intra_cost, mc_dep_cost);
             double beta = 1.0;
             double rk = -1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
@@ -1701,7 +1711,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
             //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS) ){
                 rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
-               // if (pcs_ptr->picture_number == 16)
+                //if (pcs_ptr->picture_number == 16)
                 //SVT_LOG(
                 //        "kelvinirc ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
                 //        "mc_dep=%lld\tbeta=%f\n",
@@ -1739,6 +1749,7 @@ void update_mc_flow(
 
     uint32_t                         inputQueueIndex;
     int32_t                          frame_idx, i;
+    uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width  + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
 
@@ -1784,22 +1795,9 @@ void update_mc_flow(
             if(frame_idx == 1 && pcs_array[frame_idx]->picture_number >= 32) {
 #if CU_TREE_REENCODE
                 int32_t frame_idx_tmp = 0;
-                // memset all stats execpt for intra_cost and intra_mode
-                for (uint32_t mb_y = 0; mb_y < picture_height_in_mb; mb_y++) {
-                    for (uint32_t mb_x = 0; mb_x < picture_width_in_mb; mb_x++) {
-                        OisMbResults *ois_mb_results_ptr = pcs_array[frame_idx_tmp]->ois_mb_results[mb_y * picture_width_in_mb + mb_x];
-                        ois_mb_results_ptr->inter_cost = 0;
-                        ois_mb_results_ptr->srcrf_dist = 0;
-                        ois_mb_results_ptr->recrf_dist = 0;
-                        ois_mb_results_ptr->srcrf_rate = 0;
-                        ois_mb_results_ptr->recrf_rate = 0;
-                        ois_mb_results_ptr->mv.row = 0;
-                        ois_mb_results_ptr->mv.col = 0;
-                        ois_mb_results_ptr->mc_dep_dist = 0;
-                        ois_mb_results_ptr->mc_dep_rate = 0;
-                        ois_mb_results_ptr->ref_frame_poc = 0;
-                    }
-                }
+                // memset all stats before dispenser
+                for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
+                    memset(pcs_array[frame_idx_tmp]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
                // SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx_tmp, pcs_array[frame_idx_tmp]->picture_number, pcs_array[frame_idx_tmp]->decode_order);
                 cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, 1);
 #else
@@ -1811,22 +1809,9 @@ void update_mc_flow(
                 memcpy(dst_buffer, input_picture_ptr->buffer_y, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
 #endif
             }
-            // memset all stats execpt for intra_cost and intra_mode
-            for (uint32_t mb_y = 0; mb_y < picture_height_in_mb; mb_y++) {
-                for (uint32_t mb_x = 0; mb_x < picture_width_in_mb; mb_x++) {
-                    OisMbResults *ois_mb_results_ptr = pcs_array[frame_idx]->ois_mb_results[mb_y * picture_width_in_mb  + mb_x];
-                    ois_mb_results_ptr->inter_cost = 0;
-                    ois_mb_results_ptr->srcrf_dist = 0;
-                    ois_mb_results_ptr->recrf_dist = 0;
-                    ois_mb_results_ptr->srcrf_rate = 0;
-                    ois_mb_results_ptr->recrf_rate = 0;
-                    ois_mb_results_ptr->mv.row = 0;
-                    ois_mb_results_ptr->mv.col = 0;
-                    ois_mb_results_ptr->mc_dep_dist = 0;
-                    ois_mb_results_ptr->mc_dep_rate = 0;
-                    ois_mb_results_ptr->ref_frame_poc = 0;
-                }
-            }
+            // memset all stats before dispenser
+            for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
+                memset(pcs_array[frame_idx]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
 #if !UPDATE_SW
             if(pcs_array[frame_idx]->picture_number > 32 &&
               (frame_idx == 17 || frame_idx == 26 || frame_idx == 27)) {
@@ -1864,16 +1849,16 @@ void update_mc_flow(
                 //int tpl_stride = tpl_frame->stride;
                 int64_t intra_cost_base = 0;
                 int64_t mc_dep_cost_base = 0;
-                const int step = 4; //1 << cpi->tpl_stats_block_mis_log2;
+                const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
                 const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
 
                 for (int row = 0; row < cm->mi_rows; row += step) {
                     for (int col = 0; col < mi_cols_sr; col += step) {
-                        OisMbResults *ois_mb_results_ptr = pcs_ptr_tmp->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                        CutreeStats *cutree_stats_ptr = pcs_ptr_tmp->cutree_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
                         int64_t mc_dep_delta =
-                            RDCOST(pcs_ptr_tmp->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist);
-                        intra_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS);
-                        mc_dep_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                            RDCOST(pcs_ptr_tmp->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
+                        intra_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
+                        mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                     }
                 }
 
@@ -1904,22 +1889,9 @@ void update_mc_flow(
             if(pcs_array_reorder[0]->picture_number == 16) {
 #if CU_TREE_REENCODE
                 int32_t frame_idx_tmp = 0;
-                // memset all stats execpt for intra_cost and intra_mode
-                for (uint32_t mb_y = 0; mb_y < picture_height_in_mb; mb_y++) {
-                    for (uint32_t mb_x = 0; mb_x < picture_width_in_mb; mb_x++) {
-                        OisMbResults *ois_mb_results_ptr = pcs_array[frame_idx_tmp]->ois_mb_results[mb_y * picture_width_in_mb + mb_x];
-                        ois_mb_results_ptr->inter_cost = 0;
-                        ois_mb_results_ptr->srcrf_dist = 0;
-                        ois_mb_results_ptr->recrf_dist = 0;
-                        ois_mb_results_ptr->srcrf_rate = 0;
-                        ois_mb_results_ptr->recrf_rate = 0;
-                        ois_mb_results_ptr->mv.row = 0;
-                        ois_mb_results_ptr->mv.col = 0;
-                        ois_mb_results_ptr->mc_dep_dist = 0;
-                        ois_mb_results_ptr->mc_dep_rate = 0;
-                        ois_mb_results_ptr->ref_frame_poc = 0;
-                    }
-                }
+                // memset all stats before dispenser
+                for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
+                    memset(pcs_array[frame_idx_tmp]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
              //   SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx_tmp, pcs_array[frame_idx_tmp]->picture_number, pcs_array[frame_idx_tmp]->decode_order);
                 cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, 1);
 #else
@@ -1935,22 +1907,9 @@ void update_mc_flow(
 
                 for(frame_idx = 1; frame_idx < 29; frame_idx++) {
 #endif
-                    // memset all stats execpt for intra_cost and intra_mode
-                    for (uint32_t mb_y = 0; mb_y < picture_height_in_mb; mb_y++) {
-                        for (uint32_t mb_x = 0; mb_x < picture_width_in_mb; mb_x++) {
-                            OisMbResults *ois_mb_results_ptr = pcs_array[frame_idx]->ois_mb_results[mb_y * picture_width_in_mb  + mb_x];
-                            ois_mb_results_ptr->inter_cost = 0;
-                            ois_mb_results_ptr->srcrf_dist = 0;
-                            ois_mb_results_ptr->recrf_dist = 0;
-                            ois_mb_results_ptr->srcrf_rate = 0;
-                            ois_mb_results_ptr->recrf_rate = 0;
-                            ois_mb_results_ptr->mv.row = 0;
-                            ois_mb_results_ptr->mv.col = 0;
-                            ois_mb_results_ptr->mc_dep_dist = 0;
-                            ois_mb_results_ptr->mc_dep_rate = 0;
-                            ois_mb_results_ptr->ref_frame_poc = 0;
-                        }
-                    }
+                    // memset all stats before dispenser
+                    for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
+                        memset(pcs_array[frame_idx]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
 #if !UPDATE_SW
                     if (frame_idx == 17 || frame_idx == 26 || frame_idx == 27) {
                         //printf("calling2 dispenser disable P%d as ref for frame_idx %d\n", pcs_array[frame_idx]->picture_number, frame_idx);
@@ -1989,16 +1948,16 @@ void update_mc_flow(
                 //int tpl_stride = tpl_frame->stride;
                 int64_t intra_cost_base = 0;
                 int64_t mc_dep_cost_base = 0;
-                const int step = 4; //1 << cpi->tpl_stats_block_mis_log2;
+                const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
                 const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
 
                 for (int row = 0; row < cm->mi_rows; row += step) {
                     for (int col = 0; col < mi_cols_sr; col += step) {
-                        OisMbResults *ois_mb_results_ptr = pcs_ptr_tmp->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                        CutreeStats *cutree_stats_ptr = pcs_ptr_tmp->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
                         int64_t mc_dep_delta =
-                            RDCOST(pcs_ptr_tmp->base_rdmult, ois_mb_results_ptr->mc_dep_rate, ois_mb_results_ptr->mc_dep_dist);
-                        intra_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS);
-                        mc_dep_cost_base += (ois_mb_results_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                            RDCOST(pcs_ptr_tmp->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
+                        intra_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
+                        mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                     }
                 }
 
