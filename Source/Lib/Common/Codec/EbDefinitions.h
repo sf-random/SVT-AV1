@@ -43,7 +43,9 @@ extern "C" {
 #define FASTEST_M8_V2 1
 #define FASTEST_M8_V3 1
 #define FASTEST_M8_V4 0
-#define FASTEST_M8_V5 0
+#define FASTEST_M8_V5 0 // class merge techniques
+
+#define FASTEST_M8_V6 1 // add INTRA on top of 14_IFS  
 
 #define FASTEST_M8_V11 0
 #if FASTEST_M8_V11
@@ -94,7 +96,9 @@ extern "C" {
 #endif
 #define M8_RDOQ_NSC 1
 #define M8_RDOQ_SC 1
+#if !FASTEST_M8_V6
 #define M8_INTRA_MODE 1
+#endif
 #if !FASTEST_M8_V0
 #define M8_MVF 1// Backup_0
 #endif
