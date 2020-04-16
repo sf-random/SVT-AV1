@@ -10027,10 +10027,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     EbBool all_blk_init = (pcs_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE);
 #endif
     init_sq_nsq_block(scs_ptr, context_ptr);
-
+#if LAMBDA_SCALING
+    uint32_t full_lambda = context_ptr->blk_full_lambda;
+#else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     // Mode Decision Neighbor Arrays
     context_ptr->intra_luma_mode_neighbor_array =
         pcs_ptr->md_intra_luma_mode_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];

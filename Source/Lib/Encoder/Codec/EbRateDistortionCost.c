@@ -2772,8 +2772,13 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
     uint32_t                 txb_index                = context_ptr->txb_itr;
     MdRateEstimationContext *md_rate_estimation_ptr   = context_ptr->md_rate_estimation_ptr;
 #if QP2QINDEX
+    // AMIR LAMBDA
+#if LAMBDA_SCALING
+    uint32_t lambda = context_ptr-> md_context->blk_full_lambda;
+#else
     uint64_t lambda = context_ptr->md_context->
                         full_lambda_md[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD];
+#endif
 #else
     uint64_t                 lambda                   = context_ptr->full_lambda;
 #endif

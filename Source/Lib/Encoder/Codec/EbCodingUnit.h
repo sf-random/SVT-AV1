@@ -547,7 +547,7 @@ typedef struct SuperBlock {
     int16_t        delta_qp;
 #endif
 #if CUTREE_LA
-    int32_t        rdmult;
+    //int32_t        rdmult;
 #endif
     uint32_t       total_bits;
 

@@ -5646,7 +5646,6 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
             base_block_count += 1.0;
         }
     }
-
     const int orig_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx]:
         av1_lambda_mode_decision8_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx];
@@ -5780,12 +5779,11 @@ static void sb_qp_derivation_tpl_la(
             offset = AOMMIN(offset,  pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 - 1);
             offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 + 1);
 
-#if 0 //QP2QINDEX
-            sb_qindex = CLIP3(
+#if QP2QINDEX
+            sb_ptr->qindex = CLIP3(
                 0,
                 255,
-                ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)delta_qp));
-            sb_ptr->qindex = sb_qindex;
+                ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
 
 #else
             delta_qp = offset>>2;
@@ -5823,7 +5821,7 @@ static void sb_qp_derivation_tpl_la(
 #if LAMBDA_SCALING
 			sb_setup_lambda(pcs_ptr, sb_ptr);
 #endif
-
+#if 0
             //int qp_index = quantizer_to_qindex[sb_ptr->qp];
             int qp_index = quantizer_to_qindex[(int)pcs_ptr->parent_pcs_ptr->picture_qp];
             //pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? (uint8_t)quantizer_to_qindex[sb_qp] : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
@@ -5845,7 +5843,8 @@ static void sb_qp_derivation_tpl_la(
             }
 #endif
             if (rdmult < 1) rdmult = 1;
-            pcs_ptr->sb_ptr_array[sb_addr]->rdmult = rdmult;
+                pcs_ptr->sb_ptr_array[sb_addr]->rdmult = rdmult;
+#endif
         }
     }
     else {

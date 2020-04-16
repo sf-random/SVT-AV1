@@ -831,7 +831,7 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
     const int stride   = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
-    const double c = 1.2;
+    const double c = 2;
     int dbg = 0;
     if (pcs_ptr->picture_number == 0 && 0) {
         dbg = 1;
@@ -860,8 +860,10 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
                     }
                 }
             }
-
-            const double rk = intra_cost / mc_dep_cost;
+            double rk = 0;
+            if (mc_dep_cost > 0 && intra_cost > 0) {
+                rk = intra_cost / mc_dep_cost;
+            }
             pcs_ptr->tpl_rdmult_scaling_factors[index] = rk / pcs_ptr->r0 + c;
 
             if (dbg) {
