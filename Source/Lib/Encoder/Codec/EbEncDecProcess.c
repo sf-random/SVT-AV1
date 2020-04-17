@@ -4991,8 +4991,20 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             s_depth = 0;
                             e_depth = 0;
 #else
+#if COEFF_BASED_REFINMENT
+                            int percentage_non_zero_coeff = (context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs * 100) / (blk_geom->sq_size * blk_geom->sq_size);
+                            if (percentage_non_zero_coeff < 25) {
+                                s_depth = 0;
+                                e_depth = 0;
+                            }
+                            else {
+                                s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0 : -1;
+                                e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
+                             }
+#else
                             s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0 : -1;
                             e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
+#endif
 #endif
                         }
 #endif
