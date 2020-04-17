@@ -52,7 +52,7 @@ extern "C" {
 #define FASTER_MPPD 0 // pred only
 #define FASTER_HME_ME 0 // w=h=10
 #define FASTER_TXT 0 // txt=off
-#define FASTER_NIC 1
+#define FASTER_NIC 0
 // Filtering
 #define FASTER_CDEF 0 // CDEF OFF
 #define FASTER_SG 0 // SG OFF
