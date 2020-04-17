@@ -7554,7 +7554,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                                               &cb_coeff_bits,
                                                               &cr_coeff_bits,
                                                               context_ptr->blk_geom->bsize);
-#if COEFF_BASED_REFINMENT
+#if COEFF_BASED_REFINMENT || COEFF_BASED_REFINMENT
         uint16_t txb_count = context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
         candidate_ptr->count_non_zero_coeffs = 0;
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
@@ -9982,8 +9982,13 @@ void block_based_depth_reduction(
             }
 
             // Get sq_to_best_nsq_deviation
+#if COEFF_BASED_INTER_DEPTH_SKIP
+            int64_t sq_to_best_nsq_deviation = MAX_SIGNED_VALUE;
+            if(context_ptr->best_nsq_default_cost != MAX_MODE_COST)
+                sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
+#else
             int64_t sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
-
+#endif
             if (current_depth_has_coeff == EB_FALSE && //current_depth_block_energy <= context_ptr->depth_reduction_ctrls.quant_coeff_energy_th &&
                 sq_to_best_nsq_deviation <= context_ptr->depth_reduction_ctrls.sq_to_best_nsq_deviation_th &&
                 current_to_parent_deviation >= context_ptr->depth_reduction_ctrls.current_to_parent_deviation_th) {
