@@ -6182,6 +6182,10 @@ EbErrorType generate_md_stage_0_cand(
 }
     //----------------------
     // Intra
+
+#if FAST_PD_PASS_0_0
+    if(context_ptr->pd_pass == PD_PASS_2 || slice_type == I_SLICE) {
+#endif
     if (context_ptr->blk_geom->sq_size < 128) {
         if (!context_ptr->dc_cand_only_flag && !coeff_based_nsq_cand_reduction && pcs_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
             inject_intra_candidates_ois(
@@ -6205,6 +6209,9 @@ EbErrorType generate_md_stage_0_cand(
                 pcs_ptr,
                 context_ptr,
                 &cand_total_cnt);
+#if FAST_PD_PASS_0_0
+    }
+#endif
 #if SHUT_PALETTE_BC_PD_PASS_0_1
     if (context_ptr->md_allow_intrabc)
 #else

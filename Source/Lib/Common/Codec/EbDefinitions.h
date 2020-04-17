@@ -50,6 +50,9 @@ extern "C" {
 #if FASTEST_M8_V11
 #define FASTER_TF 0 // tf off
 #define FASTER_MPPD 0 // pred only
+
+#define FAST_PD_PASS_0_0 1
+
 #define FASTER_HME_ME 0 // w=h=10
 #define FASTER_TXT 0 // txt=off
 #define FASTER_NIC 0
