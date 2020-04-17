@@ -1464,7 +1464,7 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->enabled = 1;
 
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
-        depth_reduction_ctrls->current_to_parent_deviation_th = MIN_SIGNED_VALUE;
+        depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = MAX_SIGNED_VALUE;
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
 
@@ -4581,11 +4581,8 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
-#if FIX_DISALLOW_NSQ_FIX_0
-        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && is_block_tagged) {
-#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-#endif
+
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
                 blk_geom->sq_size == 128
                 ? 17
@@ -5301,11 +5298,8 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
         int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
-#if FIX_DISALLOW_NSQ_FIX_0
-        if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_allowed[blk_index] && is_block_tagged) {
-#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-#endif
+
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
                 blk_geom->sq_size == 128
                 ? 17
