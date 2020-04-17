@@ -7554,6 +7554,13 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                                               &cb_coeff_bits,
                                                               &cr_coeff_bits,
                                                               context_ptr->blk_geom->bsize);
+#if COEFF_BASED_REFINMENT
+        uint16_t txb_count = context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
+        candidate_ptr->count_non_zero_coeffs = 0;
+        for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
+            candidate_ptr->count_non_zero_coeffs += count_non_zero_coeffs[0][txb_itr];
+
+#endif
 }
 void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                 ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
