@@ -5781,8 +5781,8 @@ static void sb_qp_derivation_tpl_la(
 
 #if QP2QINDEX
             sb_ptr->qindex = CLIP3(
-                0,
-                255,
+                pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
+                255 - pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
                 ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
 
 #else
