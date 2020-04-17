@@ -5017,6 +5017,11 @@ static uint8_t determine_sb_class(
     uint8_t sb_class = 0;
     if (count_non_zero_coeffs >= ((total_block * SB_CLASS_TH) / 20))
         sb_class = 3;
+    else if (count_non_zero_coeffs >= ((total_block * (SB_CLASS_TH-2)) / 20))
+        sb_class = 2;
+    else if (count_non_zero_coeffs >= ((total_block * (SB_CLASS_TH-4)) / 20))
+        sb_class = 1;
+
     return sb_class;
 }
 #endif

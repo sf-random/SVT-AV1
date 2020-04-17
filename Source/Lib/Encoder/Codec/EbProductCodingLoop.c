@@ -1730,7 +1730,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 #if HALF_NICS
             if (pcs_ptr->slice_type != I_SLICE) {
-                if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+                if (context_ptr->sb_class == 1 && context_ptr->pd_pass == PD_PASS_2) {
                     for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
                         context_ptr->md_stage_1_count[cidx] = (context_ptr->md_stage_1_count[cidx] + 1) / 2;
                         context_ptr->md_stage_2_count[cidx] = (context_ptr->md_stage_2_count[cidx] + 1) / 2;
@@ -10084,10 +10084,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
     uint8_t default_tx_search_level = context_ptr->tx_search_level;
     if (pcs_ptr->slice_type != I_SLICE) {
-        if (context_ptr->sb_class == 3 && context_ptr->pd_pass == PD_PASS_2) {
+        if (context_ptr->sb_class && context_ptr->pd_pass == PD_PASS_2) {
 #if SENSITIVE_TOOLS
 #if DISABLE_TXS
-    context_ptr->md_tx_size_search_mode = 0;
+            if (context_ptr->sb_class == 2)
+                context_ptr->md_tx_size_search_mode = 0;
 #endif
 #if DISABLE_TXT
     context_ptr->tx_search_level = TX_SEARCH_OFF;
@@ -10099,7 +10100,8 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     context_ptr->spatial_sse_full_loop = EB_FALSE;
 #endif
 #if DISABLE_NSQ
-    context_ptr->md_disallow_nsq = 1;
+    if (context_ptr->sb_class == 3)
+        context_ptr->md_disallow_nsq = 1;
 #endif
 #else
 #if !SAME_ACTION
