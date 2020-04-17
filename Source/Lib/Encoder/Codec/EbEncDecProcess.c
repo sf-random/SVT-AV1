@@ -1458,7 +1458,22 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->h_v_to_h4_v4_th = 0;
 
         break;
+#if M8_DEPTH_REDUCTION
+    case 3:
 
+        depth_reduction_ctrls->enabled = 1;
+
+        depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
+        depth_reduction_ctrls->current_to_parent_deviation_th = MIN_SIGNED_VALUE;
+        depth_reduction_ctrls->sq_to_best_nsq_deviation_th = MAX_SIGNED_VALUE;
+        depth_reduction_ctrls->quant_coeff_energy_th = 0;
+
+        depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 1;
+        depth_reduction_ctrls->sq_to_4_sq_children_th = 0;
+        depth_reduction_ctrls->h_v_to_h4_v4_th = 0;
+
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -2947,8 +2962,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M1)
 #endif
             context_ptr->block_based_depth_reduction_level = 1;
+#if M8_DEPTH_REDUCTION
+        else if (enc_mode <= ENC_M7)
+            context_ptr->block_based_depth_reduction_level = 2;
+        else 
+            context_ptr->block_based_depth_reduction_level = 3;
+#else
         else
             context_ptr->block_based_depth_reduction_level = 2;
+#endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
 #endif
     // Set max_ref_count @ MD

@@ -55,8 +55,9 @@ extern "C" {
 
 #define COEFF_BASED_REFINMENT 0
 #define COEFF_BASED_INTER_DEPTH_SKIP 1
-
-
+#if COEFF_BASED_INTER_DEPTH_SKIP
+#define M8_DEPTH_REDUCTION 1
+#endif
 #define FASTER_HME_ME 0 // w=h=10
 #define FASTER_TXT 0 // txt=off
 #define FASTER_NIC 0
