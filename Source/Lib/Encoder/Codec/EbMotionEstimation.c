@@ -12685,7 +12685,6 @@ EbErrorType open_loop_intra_search_mb(
         EbBool small_boundary_blk = EB_FALSE;
 
         //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
-        if(1)
         {
             cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
             cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
