@@ -4896,6 +4896,10 @@ static uint8_t determine_sb_class(
         sb_class = MEDIUM_COMPLEX_CLASS;
     else if (count_non_zero_coeffs >= ((total_samples * sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS]) / 20))
         sb_class = LOW_COMPLEX_CLASS;
+#if IMPROVE_LOW_COMPLEX_SB
+    if (count_non_zero_coeffs <= ((total_samples * LOW_COMP_SB_TH) / 20))
+        sb_class = 4;
+#endif
     return sb_class;
 }
 #endif
@@ -5228,7 +5232,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
                         }
                     }
-
+#if IMPROVE_LOW_COMPLEX_SB && P2M2_DEPTH
+                    if (context_ptr->coeffcients_area_based_cycles_allocation_level) {
+                        if (context_ptr->sb_class == 4) {
+                            s_depth = -2;
+                            s_depth = 2;
+                        }
+                    }
+#endif
 #if ADOPT_SKIPPING_PD1
                     // Check that the start and end depth are in allowed range, given other features
                     // which restrict allowable depths

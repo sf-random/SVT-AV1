@@ -1794,6 +1794,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
         }
 #endif
+
             ////MULT
 #if APR02_ADOPTIONS
             if ((((pcs_ptr->enc_mode <= ENC_M1) || (pcs_ptr->enc_mode <= ENC_M3 && pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)) && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
@@ -1931,8 +1932,14 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 uint32_t inter_scaling_denom = 1;
                 uint32_t intra_scaling_num = 1;
                 uint32_t intra_scaling_denom = 1;
+
 #if MAR12_ADOPTIONS
+#if IMPROVE_LOW_COMPLEX_SB && MR_NIC
+                uint8_t use_mr = MR_MODE || context_ptr->sb_class == 4 ? 1 : 0;
+                if (use_mr) {             
+#else
                 if (MR_MODE) {
+#endif
                     // INTER
                     inter_scaling_num = 3;
                     inter_scaling_denom = 2;
@@ -7776,7 +7783,17 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
 #else
 #if CLASS_MERGING
+#if IMPROVE_LOW_COMPLEX_SB && MR_TXS
+    uint8_t default_sq_weight = context_ptr->sq_weight;
+    if (context_ptr->coeffcients_area_based_cycles_allocation_level) {
+        if (context_ptr->sb_class == 4)
+            context_ptr->md_staging_tx_size_mode = EB_TRUE;
+        else
+            context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+    }
+#else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+#endif
 #else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7) ? 1 : 0;
 #endif
@@ -10282,6 +10299,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
             context_ptr->md_disallow_nsq = 1;
     }
+#if IMPROVE_LOW_COMPLEX_SB && MR_NSQ_WEIGHT
+    uint8_t default_sq_weight = context_ptr->sq_weight;
+    if (context_ptr->coeffcients_area_based_cycles_allocation_level) {
+        if (context_ptr->sb_class == 4) {
+            context_ptr->sq_weight = scs_ptr->static_config.sq_weight + 15;
+        }
+    }
+#endif
 #endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
@@ -10667,6 +10692,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     // Restor the default settings
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
+#if IMPROVE_LOW_COMPLEX_SB
+    context_ptr->sq_weight = default_sq_weight;
+#endif
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 

@@ -200,6 +200,14 @@ extern "C" {
 #if TXT_CONTROL
 #define MAX_TX_WEIGHT 500
 #define SB_CLASSIFIER       1 // Classify the SBs based on the PD0 output and apply specific settings for the detected SBs
+#define IMPROVE_LOW_COMPLEX_SB  0
+#if IMPROVE_LOW_COMPLEX_SB
+#define LOW_COMP_SB_TH 4
+#define MR_NIC        1
+#define MR_NSQ_WEIGHT 1
+#define MR_TXS        1
+#define P2M2_DEPTH    1
+#endif
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
