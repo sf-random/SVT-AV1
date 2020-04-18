@@ -5844,8 +5844,8 @@ void *enc_dec_kernel(void *input_ptr) {
                                 scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
                         }
 
-                        if(context_ptr->md_context->sb_class)
-                            printf("sb_class %d\n", context_ptr->md_context->sb_class);              
+                        /*if(context_ptr->md_context->sb_class)
+                            printf("sb_class %d\n", context_ptr->md_context->sb_class); */             
 #endif
                         // Perform Pred_0 depth refinement - Add blocks to be considered in the next stage(s) of PD based on depth cost.
                         perform_pred_depth_refinement(
