@@ -1436,8 +1436,11 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = 0;
+#if M8_DEPTH_REDUCTION
+        depth_reduction_ctrls->percentage_non_zero_coeff_th = 0;
+#else
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
-
+#endif
         depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 0;
         depth_reduction_ctrls->sq_to_4_sq_children_th = 0;
         depth_reduction_ctrls->h_v_to_h4_v4_th = 0;
@@ -1451,8 +1454,11 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = 0;
+#if M8_DEPTH_REDUCTION
+        depth_reduction_ctrls->percentage_non_zero_coeff_th = 0;
+#else
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
-
+#endif
         depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->sq_to_4_sq_children_th = 0;
         depth_reduction_ctrls->h_v_to_h4_v4_th = 0;
@@ -1466,8 +1472,11 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = MAX_SIGNED_VALUE;
+#if M8_DEPTH_REDUCTION
+        depth_reduction_ctrls->percentage_non_zero_coeff_th = 50;
+#else
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
-
+#endif
         depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->sq_to_4_sq_children_th = 0;
         depth_reduction_ctrls->h_v_to_h4_v4_th = 0;

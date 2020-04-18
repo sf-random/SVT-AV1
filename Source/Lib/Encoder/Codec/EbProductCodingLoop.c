@@ -7554,7 +7554,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                                               &cb_coeff_bits,
                                                               &cr_coeff_bits,
                                                               context_ptr->blk_geom->bsize);
-#if COEFF_BASED_REFINMENT || COEFF_BASED_REFINMENT
+#if COEFF_BASED_REFINMENT || M8_DEPTH_REDUCTION
         uint16_t txb_count = context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
         candidate_ptr->count_non_zero_coeffs = 0;
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
@@ -9952,18 +9952,30 @@ void block_based_depth_reduction(
     if (context_ptr->depth_reduction_ctrls.cost_sq_vs_nsq_energy_based_depth_reduction_enabled) {
 #endif
         if (context_ptr->blk_geom->sq_size <= 64) {
+#if M8_DEPTH_REDUCTION
+            // Get the current_depth_count_non_zero_coeffs (normalized)
+            uint64_t count_non_zero_coeffs = 0;         
+#else
             // Get the current_depth_block_energy (normalized)
             uint64_t current_depth_block_energy = 0;
+#endif
             uint32_t current_depth_best_d1_blk_mds = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].best_d1_blk;
             BlkStruct *current_depth_best_d1_blk_ptr = &(context_ptr->md_blk_arr_nsq[current_depth_best_d1_blk_mds]);
             for (int32_t d1_itr = 0; d1_itr < get_blk_geom_mds(current_depth_best_d1_blk_mds)->totns; d1_itr++) {
+#if M8_DEPTH_REDUCTION
+                count_non_zero_coeffs += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].count_non_zero_coeffs;
+#else
                 current_depth_block_energy += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].luma_quant_coeff_energy;
                 current_depth_block_energy += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].cb_quant_coeff_energy;
                 current_depth_block_energy += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].cr_quant_coeff_energy;
+#endif
             }
+#if M8_DEPTH_REDUCTION
+            uint64_t percentage_non_zero_coeff = (count_non_zero_coeffs * 100) / (context_ptr->blk_geom->sq_size * context_ptr->blk_geom->sq_size);          
+#else
             current_depth_block_energy = (current_depth_block_energy * ((MAX_SB_SIZE * MAX_SB_SIZE) + (MAX_SB_SIZE * MAX_SB_SIZE))) / // to do not loose precision
                 ((context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight) + (context_ptr->blk_geom->bwidth_uv * context_ptr->blk_geom->bheight_uv));
-
+#endif
 
 #if 1
             EbBool current_depth_has_coeff = EB_FALSE;
@@ -9989,7 +10001,11 @@ void block_based_depth_reduction(
 #else
             int64_t sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
 #endif
+#if M8_DEPTH_REDUCTION
+            if (percentage_non_zero_coeff <= context_ptr->depth_reduction_ctrls.percentage_non_zero_coeff_th &&
+#else
             if (current_depth_has_coeff == EB_FALSE && //current_depth_block_energy <= context_ptr->depth_reduction_ctrls.quant_coeff_energy_th &&
+#endif
                 sq_to_best_nsq_deviation <= context_ptr->depth_reduction_ctrls.sq_to_best_nsq_deviation_th &&
                 current_to_parent_deviation >= context_ptr->depth_reduction_ctrls.current_to_parent_deviation_th) {
                 set_child_to_be_skipped(
