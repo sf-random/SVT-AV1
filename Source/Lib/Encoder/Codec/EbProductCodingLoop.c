@@ -10692,7 +10692,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     // Restor the default settings
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
-#if IMPROVE_LOW_COMPLEX_SB
+#if MR_NSQ_WEIGHT
     context_ptr->sq_weight = default_sq_weight;
 #endif
 #endif
