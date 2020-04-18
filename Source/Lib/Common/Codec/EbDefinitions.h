@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
     // DISABLE CLASS prune
-#define DISBALE_CLASS_PRUNE      0
+#define DISBALE_CLASS_PRUNE      0 //
 
     // CLASS REMOVAL
 #define REMOVE_C6               0
