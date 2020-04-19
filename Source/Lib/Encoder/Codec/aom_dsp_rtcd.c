@@ -649,10 +649,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     //SET_AVX2(svt_av1_apply_temporal_filter_planewise,
     //         svt_av1_apply_temporal_filter_planewise_c,
     //         svt_av1_apply_temporal_filter_planewise_avx2);
-#endif
     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
              svt_av1_apply_temporal_filter_planewise_c,
              svt_av1_apply_temporal_filter_planewise_c);
+#endif
     SET_SSE41(svt_av1_apply_filtering_highbd,
               svt_av1_apply_filtering_highbd_c,
               svt_av1_highbd_apply_temporal_filter_sse4_1);
