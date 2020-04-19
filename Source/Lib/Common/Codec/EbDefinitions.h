@@ -250,6 +250,7 @@ extern "C" {
 #define M8_CLEAN_UP 1 // remove full loop escape
 
 #define M8_MPPD 1
+#define FASTER_MPPD 1
 #define M8_INTRA_MODE 1
 #define M8_TXT 1
 #endif
