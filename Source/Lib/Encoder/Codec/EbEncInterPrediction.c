@@ -4389,7 +4389,7 @@ EbErrorType av1_inter_prediction(
                                       200);
 
     ScaleFactors ref0_scale_factors;
-    if(ref_pic_list0 != EB_NULL && picture_control_set_ptr!=EB_NULL){
+    if(ref_pic_list0 != NULL && picture_control_set_ptr!=NULL){
         av1_setup_scale_factors_for_frame(&ref0_scale_factors,
                                           ref_pic_list0->width,
                                           ref_pic_list0->height,
@@ -4398,7 +4398,7 @@ EbErrorType av1_inter_prediction(
     }
 
     ScaleFactors ref1_scale_factors;
-    if(ref_pic_list1 != EB_NULL && picture_control_set_ptr != EB_NULL){
+    if(ref_pic_list1 != NULL && picture_control_set_ptr != NULL){
         av1_setup_scale_factors_for_frame(&ref1_scale_factors,
                                           ref_pic_list1->width,
                                           ref_pic_list1->height,
@@ -4692,7 +4692,7 @@ EbErrorType av1_inter_prediction(
         uint32_t ss_y = 0;
 
         /*ScaleFactor*/
-        const struct ScaleFactors *const sf = use_intrabc || picture_control_set_ptr == EB_NULL ?
+        const struct ScaleFactors *const sf = use_intrabc || picture_control_set_ptr == NULL ?
                                                 &sf_identity :
                                                 &ref0_scale_factors;
 
@@ -4866,7 +4866,7 @@ EbErrorType av1_inter_prediction(
         uint32_t ss_y = 0;
 
         /*ScaleFactor*/
-        const struct ScaleFactors *const sf = use_intrabc || picture_control_set_ptr == EB_NULL ?
+        const struct ScaleFactors *const sf = use_intrabc || picture_control_set_ptr == NULL ?
                                                 &sf_identity :
                                                 &ref1_scale_factors;
 
@@ -6370,7 +6370,7 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                             ->object_ptr)
                                     ->reference_picture;
         else
-            ref_pic_list0 = (EbPictureBufferDesc *)EB_NULL;
+            ref_pic_list0 = (EbPictureBufferDesc *)NULL;
 
         if (ref_idx_l1 >= 0)
             ref_pic_list1 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr
@@ -6382,15 +6382,15 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                             ->object_ptr)
                                     ->reference_picture;
         else
-            ref_pic_list1 = (EbPictureBufferDesc *)EB_NULL;
+            ref_pic_list1 = (EbPictureBufferDesc *)NULL;
 
         // Use scaled references if resolution of the reference is different from that of the input
-        if(ref_pic_list0 != EB_NULL)
+        if(ref_pic_list0 != NULL)
             use_scaled_rec_refs_if_needed(picture_control_set_ptr,
                                           picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                           (EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][list_idx0]->object_ptr,
                                           &ref_pic_list0);
-        if(ref_pic_list1 != EB_NULL)
+        if(ref_pic_list1 != NULL)
             use_scaled_rec_refs_if_needed(picture_control_set_ptr,
                                           picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                           (EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr,
