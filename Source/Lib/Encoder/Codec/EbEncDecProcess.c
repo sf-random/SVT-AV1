@@ -1906,7 +1906,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #endif
-
+#if M8_4x4
+     // Set disallow_4x4
+     context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+     SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[context_ptr->sb_index];
+     // If SB non-multiple of 4, then disallow_4x4 could not be used
+     // To guarantee disallow_4x4 for all SBs, the input should be a multiple of 4 (padding @ init time) 
+     if (sb_params->width % 4 != 0 || sb_params->height % 4 != 0) {
+         context_ptr->disallow_4x4 = EB_FALSE;
+     }
+#endif
 #if SB_CLASSIFIER
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #elif REDUCE_COMPLEX_CLIP_CYCLES
@@ -4730,7 +4739,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             : 1;
 
         // split_flag is f(min_sq_size)
-        int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
+        int32_t min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
@@ -5010,7 +5019,7 @@ void derive_start_end_depth(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint
         *e_depth = 1;
     else
         *e_depth = 0;
-#if DEPTH_PART_CLEAN_UP  // refinement rest
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_1  // refinement rest
     *s_depth =  MAX((sb_size == BLOCK_128X128 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated ? 1 : 0) - blk_geom->depth, *s_depth);
     *e_depth = MIN((pcs_ptr->parent_pcs_ptr->disallow_4x4 ? 4 :5) - blk_geom->depth, *e_depth);
 #endif
@@ -5164,6 +5173,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
 #if MAR30_ADOPTIONS
                         else if ((pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M1)) {
+
+#if DISALLOW_NSQ_FIX_1
+                            s_depth = -3;
+                            e_depth =  3;
+#else
                             s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0
                                     : (blk_geom->sq_size == 32 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? -1
                                     : (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? -2
@@ -5172,6 +5186,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                     : (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 1
                                     : (blk_geom->sq_size == 32 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 2
                                     : 3;
+#endif
                         }
 #endif
                         else if (best_part_cost < early_exit_th && pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_LEVEL_0) {
@@ -5206,11 +5221,16 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if MAR23_ADOPTIONS
                         if (pcs_ptr->slice_type == I_SLICE) {
 #if MAR25_ADOPTIONS
+#if DISALLOW_NSQ_FIX_1
+                            s_depth =  -1;
+                            e_depth =  (MR_MODE_MULTI_PASS_PD || pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 3 : 2;
+#else
                             s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0 : -1;
                             e_depth = (blk_geom->sq_size == 8  && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0
                                     : (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 1
                                     : (blk_geom->sq_size == 32 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 2
                                     : (MR_MODE_MULTI_PASS_PD || pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 3 : 2;
+#endif
 #else
                             s_depth = -1;
                             e_depth = 2;
@@ -5387,8 +5407,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #else
                             if (MR_MODE_MULTI_PASS_PD) { // Active when multi_pass_pd_level = PIC_MULTI_PASS_PD_MODE_1 or PIC_MULTI_PASS_PD_MODE_2 or PIC_MULTI_PASS_PD_MODE_3
 #endif
+#if DISALLOW_NSQ_FIX_1
+                                s_depth = -1;
+                                e_depth =  1;
+#else
                                 s_depth = (blk_geom->sq_size == 64 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated) ? 0 : -1;
                                 e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
+#endif
                             }
                             else
 #endif
@@ -5406,7 +5431,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         } else {
                             s_depth = 0;
 #if DEPTH_PART_CLEAN_UP // refinement rest
+#if DISALLOW_NSQ_FIX_1
+                            e_depth = 1;
+#else
                             e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
+#endif
 #else
                             e_depth = 1;
 #endif
@@ -5422,7 +5451,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 : (blk_geom->sq_size == 16) ? MAX(-2, s_depth)
                                 : s_depth;
                     }
+#if DISALLOW_NSQ_FIX_1
+                    if (context_ptr->disallow_4x4) {
+#else
                     if (pcs_ptr->parent_pcs_ptr->disallow_4x4) {
+#endif
                         e_depth = (blk_geom->sq_size == 8) ? 0
                                 : (blk_geom->sq_size == 16) ? MIN(1, e_depth)
                                 : (blk_geom->sq_size == 32) ? MIN(2, e_depth)
@@ -5471,12 +5504,12 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->sb_64x64_simulated)) ||
-            (blk_geom->sq_size == 4 && pcs_ptr->parent_pcs_ptr->disallow_4x4)
+            (blk_geom->sq_size == 4 && context_ptr->md_context->disallow_4x4)
             ? 0
             : 1;
 
         // split_flag is f(min_sq_size)
-        int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
+        int32_t min_sq_size = (context_ptr->md_context->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
@@ -5865,7 +5898,11 @@ void *enc_dec_kernel(void *input_ptr) {
 #else
                     mdc_ptr               = &pcs_ptr->mdc_sb_array[sb_index];
 #endif
+#if M8_4x4
+                    context_ptr->sb_index = context_ptr->md_context->sb_index = sb_index;
+#else
                     context_ptr->sb_index = sb_index;
+#endif
 #if SB_CLASSIFIER
                     context_ptr->md_context->sb_class = NONE_CLASS;
 #endif

@@ -208,7 +208,10 @@ extern "C" {
 
 // 
 #define DISALLOW_NSQ_FIX_0 1
+#define DISALLOW_NSQ_FIX_1 1
 
+// 
+#define TEMPORAL_FILTERING_FIX 1
 // Part
 #define M8_4x4 1
 #define M8_NSQ 1

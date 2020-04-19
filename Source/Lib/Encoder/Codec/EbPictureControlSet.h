@@ -618,8 +618,9 @@ typedef struct PictureParentControlSet {
 #if DEPTH_PART_CLEAN_UP
     MultiPassPdLevel multi_pass_pd_level;
     EbBool sb_64x64_simulated;
+#if !M8_4x4
     EbBool disallow_4x4;
-
+#endif
     EbBool disallow_nsq;
     EbBool disallow_all_nsq_blocks_below_8x8;
     EbBool disallow_all_nsq_blocks_below_16x16;

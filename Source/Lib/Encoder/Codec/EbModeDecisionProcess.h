@@ -306,6 +306,9 @@ typedef struct ModeDecisionContext {
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
     uint8_t          sb_sz;
+#if M8_4x4
+    uint32_t         sb_index;
+#endif
     uint32_t         sb_origin_x;
     uint32_t         sb_origin_y;
     uint32_t         round_origin_x;
@@ -557,6 +560,9 @@ typedef struct ModeDecisionContext {
     uint8_t pic_class;
     uint8_t reduce_complex_clip_cycles_level;
     PicComplexControls pic_complexity_ctrls;
+#endif
+#if M8_4x4
+    uint8_t disallow_4x4;
 #endif
 #if REDUCE_COMPLEX_CLIP_CYCLES || SB_CLASSIFIER
     uint8_t       md_disallow_nsq;
