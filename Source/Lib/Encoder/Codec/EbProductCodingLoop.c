@@ -3060,6 +3060,26 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_8] =
             (context_ptr->md_stage_2_count[CAND_CLASS_8] + 1) >> 1;
 #endif
+
+#if FASTER_NIC
+
+        for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
+
+            // Then set md_stage_1_count to 2 
+            context_ptr->md_stage_1_count[i] = 2;
+
+            // Check that md_stage_1_count does not exceed md_stage_0_count, if yes then clip
+            context_ptr->md_stage_1_count[i] = MIN(context_ptr->md_stage_0_count[i], context_ptr->md_stage_1_count[i]);
+
+            // bypass md_stage_1 if 1 NIC @ md_stage_1
+            if (context_ptr->md_stage_1_count[i] == 1)
+                context_ptr->bypass_md_stage_1[i] = 1;
+
+            // Then set final stage count to 2
+            context_ptr->md_stage_2_count[i] = context_ptr->md_stage_3_count[i] = 1;
+
+        }
+#endif
     }
 
     // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC
@@ -10055,7 +10075,7 @@ void block_based_depth_reduction(
 #if BLOCK_REDUCTION_ALGORITHM_1
     if (context_ptr->depth_reduction_ctrls.cost_sq_vs_nsq_energy_based_depth_reduction_enabled) {
         if (context_ptr->blk_geom->sq_size <= 64) {
-#if M8_CLEAN_UP
+#if !M8_CLEAN_UP
             // Get the current_depth_block_energy (normalized)
             uint64_t current_depth_block_energy = 0;
 #endif

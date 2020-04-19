@@ -204,21 +204,22 @@ extern "C" {
 #define SB_CLASSIFIER       1 // Classify the SBs based on the PD0 output and apply specific settings for the detected SBs
 #endif
 #define PRESETS_SHIFT 1 // Shift M4->M3, M5->M4, M8->M5 to avoid empty presets
-
-
-#define TF_LEVELS 1
-#define RDOQ_LEVELS 1
-
-// 
-#define DISALLOW_NSQ_FIX_0 1
-#define DISALLOW_NSQ_FIX_1 1
-
-// 
-#define TEMPORAL_FILTERING_FIX 1
 // Part
 #define M8_4x4 1
 #define M8_NSQ 1
 #define M8_SB_SIZE 1
+#define DISALLOW_NSQ_FIX_0 1
+#define DISALLOW_NSQ_FIX_1 1
+#if 1
+#define TF_LEVELS 1
+#define RDOQ_LEVELS 1
+
+// 
+
+
+// 
+#define TEMPORAL_FILTERING_FIX 1
+
 
 // MRP
 #define M8_MRP 1
@@ -242,7 +243,7 @@ extern "C" {
 
 // NIC
 #define M8_NIC 1
-
+#define FASTER_NIC 1
 // HME/ME
 #define M8_HME_ME 1
 
@@ -251,7 +252,7 @@ extern "C" {
 #define M8_MPPD 1
 #define M8_INTRA_MODE 1
 #define M8_TXT 1
-
+#endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
