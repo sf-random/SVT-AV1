@@ -810,6 +810,7 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         break;
     case 3:
         tf_ctrls->enabled = 0;
+        tf_ctrls->window_size = 3;
         break;
     default:
         assert(0);

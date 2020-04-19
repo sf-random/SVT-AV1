@@ -246,6 +246,7 @@ extern "C" {
 // HME/ME
 #define M8_HME_ME 1
 
+#define M8_REMOVE_USELESS_OPERATION 1
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

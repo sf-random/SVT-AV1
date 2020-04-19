@@ -4200,8 +4200,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             context_ptr->ref_filtering_res[li][ri].valid_ref = EB_FALSE;
         }
     }
-
+#if M8_REMOVE_USELESS_OPERATION
+    if ((!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled) || (pcs_ptr->parent_pcs_ptr->ref_list0_count_try == 1 && pcs_ptr->parent_pcs_ptr->ref_list1_count_try == 1))
+#else
     if (!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled)
+#endif
         return;
 
     // Distortion measure
@@ -10052,10 +10055,18 @@ void block_based_depth_reduction(
 #if BLOCK_REDUCTION_ALGORITHM_1
     if (context_ptr->depth_reduction_ctrls.cost_sq_vs_nsq_energy_based_depth_reduction_enabled) {
         if (context_ptr->blk_geom->sq_size <= 64) {
+#if M8_REMOVE_USELESS_OPERATION
             // Get the current_depth_block_energy (normalized)
             uint64_t current_depth_block_energy = 0;
+#endif
             uint32_t current_depth_best_d1_blk_mds = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].best_d1_blk;
             BlkStruct *current_depth_best_d1_blk_ptr = &(context_ptr->md_blk_arr_nsq[current_depth_best_d1_blk_mds]);
+#if M8_REMOVE_USELESS_OPERATION
+            EbBool current_depth_has_coeff = EB_FALSE;
+            for (int32_t d1_itr = 0; d1_itr < get_blk_geom_mds(current_depth_best_d1_blk_mds)->totns; d1_itr++) {
+                current_depth_has_coeff |= (current_depth_best_d1_blk_ptr[d1_itr].block_has_coeff);
+            }
+#else
             for (int32_t d1_itr = 0; d1_itr < get_blk_geom_mds(current_depth_best_d1_blk_mds)->totns; d1_itr++) {
                 current_depth_block_energy += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].luma_quant_coeff_energy;
                 current_depth_block_energy += context_ptr->md_local_blk_unit[current_depth_best_d1_blk_mds + d1_itr].cb_quant_coeff_energy;
@@ -10071,6 +10082,7 @@ void block_based_depth_reduction(
                 current_depth_has_coeff |= (current_depth_best_d1_blk_ptr[d1_itr].block_has_coeff);
             }
 #endif
+#endif
             // Get current_to_parent_deviation
             uint32_t parent_depth_sqi_mds =
                 (context_ptr->blk_geom->sqi_mds -
@@ -10082,9 +10094,16 @@ void block_based_depth_reduction(
             }
 
             // Get sq_to_best_nsq_deviation
+#if M8_REMOVE_USELESS_OPERATION
+            int64_t sq_to_best_nsq_deviation = MAX_SIGNED_VALUE;
+            if (context_ptr->best_nsq_default_cost != MAX_MODE_COST)
+                sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
+            if (current_depth_has_coeff == EB_FALSE &&
+#else
             int64_t sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
 
             if (current_depth_has_coeff == EB_FALSE && //current_depth_block_energy <= context_ptr->depth_reduction_ctrls.quant_coeff_energy_th &&
+#endif
                 sq_to_best_nsq_deviation <= context_ptr->depth_reduction_ctrls.sq_to_best_nsq_deviation_th &&
                 current_to_parent_deviation >= context_ptr->depth_reduction_ctrls.current_to_parent_deviation_th) {
                 set_child_to_be_skipped(
