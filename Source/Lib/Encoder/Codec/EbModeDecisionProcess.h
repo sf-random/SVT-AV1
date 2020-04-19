@@ -163,6 +163,12 @@ typedef struct  ObmcControls {
     uint8_t near_count;    //how many near to consider injecting obmc 0..3
 }ObmcControls;
 #endif
+#if RDOQ_LEVELS
+typedef struct RdoqControls {
+    uint8_t enabled;
+    uint8_t fast_mode;
+}RdoqControls;
+#endif
 #if REDUCE_COMPLEX_CLIP_CYCLES
 typedef struct PicComplexControls {
     uint8_t base_intra_th;// Threshold for intra coded area
@@ -414,7 +420,12 @@ typedef struct ModeDecisionContext {
     uint16_t *           cfl_temp_luma_recon16bit;
     EbBool               spatial_sse_full_loop;
     EbBool               blk_skip_decision;
+#if RDOQ_LEVELS
+    uint8_t rdoq_level;
+    RdoqControls rdoq_ctrls;
+#else
     EbBool               enable_rdoq;
+#endif
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
     int16_t              best_spatial_pred_mv[2][4][2];
     int8_t               valid_refined_mv[2][4];
