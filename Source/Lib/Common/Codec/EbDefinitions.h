@@ -205,6 +205,10 @@ extern "C" {
 #endif
 #define PRESETS_SHIFT 1 // Shift M4->M3, M5->M4, M8->M5 to avoid empty presets
 
+
+// 
+#define DISALLOW_NSQ_FIX_0 1
+
 // Part
 #define M8_4x4 1
 #define M8_NSQ 1

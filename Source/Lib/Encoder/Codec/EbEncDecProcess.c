@@ -4710,6 +4710,64 @@ static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_inde
     }
 }
 
+#if DISALLOW_NSQ_FIX_0
+static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    uint32_t sb_index) {
+
+    MdcSbData *results_ptr = context_ptr->mdc_sb_array;
+    results_ptr->leaf_count = 0;
+    uint32_t blk_index = 0;
+    uint32_t d1_blocks_accumlated, tot_d1_blocks = 0, d1_block_idx;
+
+    while (blk_index < scs_ptr->max_block_cnt) {
+        tot_d1_blocks = 0;
+        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+
+        // SQ/NSQ block(s) filter based on the SQ size
+        uint8_t is_block_tagged =
+            (blk_geom->sq_size == 128 && (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->sb_64x64_simulated))
+            ? 0
+            : 1;
+
+        // split_flag is f(min_sq_size)
+        int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
+
+        // SQ/NSQ block(s) filter based on the block validity
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+
+            tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
+                blk_geom->sq_size == 128
+                ? 17
+                : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+
+            d1_blocks_accumlated = 0;
+            for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++)
+                d1_blocks_accumlated +=
+                results_ptr->leaf_data_array[blk_index + d1_block_idx].consider_block ? 1 : 0;
+
+            for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
+                if (results_ptr->leaf_data_array[blk_index].consider_block) {
+
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
+                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = results_ptr->leaf_data_array[blk_index].refined_split_flag;
+
+                }
+                blk_index++;
+            }
+            blk_index +=
+                (d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] -
+                    tot_d1_blocks);
+        }
+        else {
+            blk_index +=
+                (blk_geom->sq_size > min_sq_size)
+                ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
+                : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+        }
+    }
+}
+#else
 #if DEPTH_PART_CLEAN_UP
 static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint32_t sb_index) {
@@ -4771,7 +4829,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
 #endif
     }
 }
-
+#endif
 uint64_t  pd_level_tab[2][9][2][3] =
 {
     {
@@ -5400,7 +5458,64 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                 : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
 }
+#if DISALLOW_NSQ_FIX_0
+void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    EncDecContext *context_ptr, MdcSbData *results_ptr) {
+    results_ptr->leaf_count = 0;
+    uint32_t blk_index = 0;
+    uint32_t tot_d1_blocks;
+    while (blk_index < scs_ptr->max_block_cnt) {
+        tot_d1_blocks = 0;
+        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
+        // SQ/NSQ block(s) filter based on the SQ size
+        uint8_t is_block_tagged =
+            (blk_geom->sq_size == 128 && (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->sb_64x64_simulated)) ||
+            (blk_geom->sq_size == 4 && pcs_ptr->parent_pcs_ptr->disallow_4x4)
+            ? 0
+            : 1;
+
+        // split_flag is f(min_sq_size)
+        int32_t min_sq_size = (pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 8 : 4;
+
+        // SQ/NSQ block(s) filter based on the block validity
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+
+            tot_d1_blocks = (context_ptr->md_context->md_disallow_nsq) ? 1 :
+                blk_geom->sq_size == 128
+                ? 17
+                : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+
+            for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
+                blk_geom = get_blk_geom_mds(blk_index);
+
+                if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index]) {
+
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
+
+                    if (blk_geom->sq_size > min_sq_size)
+                        results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
+                        EB_TRUE;
+                    else
+                        results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
+                        EB_FALSE;
+                }
+                blk_index++;
+            }
+            blk_index +=
+                (d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] -
+                    tot_d1_blocks);
+        }
+        else {
+            blk_index +=
+                (blk_geom->sq_size > min_sq_size)
+                ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
+                : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+        }
+    }
+}
+#else
 #if DEPTH_PART_CLEAN_UP
 // Build the t=0 cand_block_array
 void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, EncDecContext *context_ptr, MdcSbData *results_ptr) {
@@ -5440,7 +5555,7 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
     pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
 }
 #endif
-
+#endif
 #if REDUCE_COMPLEX_CLIP_CYCLES
 #define MAX_CX_PERCENTAGE_TH  100
 uint8_t get_pic_class(ModeDecisionContext *context_ptr, PictureControlSet * pcs_ptr,
@@ -5885,7 +6000,7 @@ void *enc_dec_kernel(void *input_ptr) {
                     // Configure the SB
                     mode_decision_configure_sb(
                         context_ptr->md_context, pcs_ptr, (uint8_t)sb_ptr->qp);
-#if DEPTH_PART_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
                     // Build the t=0 cand_block_array
                     build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
 #endif
@@ -5936,6 +6051,10 @@ void *enc_dec_kernel(void *input_ptr) {
                         signal_derivation_enc_dec_kernel_oq(
                             scs_ptr, pcs_ptr, context_ptr->md_context);
 
+#if DISALLOW_NSQ_FIX_0
+                        // Build the t=0 cand_block_array
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
+#endif
                         // [PD_PASS_0] Mode Decision - Reduce the total number of partitions to be tested in later stages.
                         // Input : mdc_blk_ptr built @ mdc process (up to 4421)
                         // Output: md_blk_arr_nsq reduced set of block(s)
@@ -6033,7 +6152,11 @@ void *enc_dec_kernel(void *input_ptr) {
                                                   sb_origin_y);
                         }
                     }
-
+#if DISALLOW_NSQ_FIX_0
+                    // Build the t=0 cand_block_array
+                    else 
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
+#endif
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);

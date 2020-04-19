@@ -8935,7 +8935,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
     }
 }
 
-#if DEPTH_PART_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
 EbBool is_block_allowed(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     if((context_ptr->blk_geom->sq_size <=  8 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
        (context_ptr->blk_geom->sq_size <= 16 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_16x16) ||
@@ -8984,7 +8984,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
 
-#if DEPTH_PART_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
     if (is_block_allowed(pcs_ptr, context_ptr)) {
 #endif
     const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
@@ -9614,7 +9614,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
-#if DEPTH_PART_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
     } else {
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost         = MAX_MODE_COST;
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
