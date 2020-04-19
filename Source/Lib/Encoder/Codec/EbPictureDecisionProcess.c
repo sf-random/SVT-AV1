@@ -41,7 +41,12 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
-
+#if TF_LEVELS
+typedef struct  TfControls {
+    uint8_t enabled;
+    uint8_t window_size;
+}TfControls;
+#endif
 /**************************************
  * Context
  **************************************/
@@ -82,6 +87,10 @@ typedef struct PictureDecisionContext
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
+#if TF_LEVELS
+    uint8_t tf_level;
+    TfControls tf_ctrls;
+#endif
 } PictureDecisionContext;
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
@@ -780,14 +789,49 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
+#if TF_LEVELS
+void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
+
+    TfControls *tf_ctrls = &context_ptr->tf_ctrls;
+
+    switch (tf_level)
+    {
+    case 0:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 7;
+        break;
+    case 1:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 5;
+        break;
+    case 2:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        break;
+    case 3:
+        tf_ctrls->enabled = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
+#if TF_LEVELS
+EbErrorType signal_derivation_multi_processes_oq(
+    SequenceControlSet *scs_ptr,
+    PictureParentControlSet *pcs_ptr,
+    PictureDecisionContext *context_ptr) {
+#else
 EbErrorType signal_derivation_multi_processes_oq(
     SequenceControlSet        *scs_ptr,
     PictureParentControlSet   *pcs_ptr) {
+#endif
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
@@ -1807,7 +1851,23 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->prune_ref_based_me = 1;
 #endif
 #endif
-
+#if TF_LEVELS
+    uint8_t perform_filtering =
+        (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && pcs_ptr->sc_content_detected == 0 && scs_ptr->static_config.hierarchical_levels >= 1) &&
+        (pcs_ptr->temporal_layer_index == 0 ||(pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+        ? 1 : 0;
+    if (perform_filtering) {
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+            context_ptr->tf_level = 0;
+        }
+        else {
+            context_ptr->tf_level = 2;
+        }
+    }
+    else 
+        context_ptr->tf_level = 3;
+    set_tf_controls(context_ptr, context_ptr->tf_level);
+#endif
     return return_error;
 }
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
@@ -4529,8 +4589,15 @@ void derive_tf_window_params(
     SequenceControlSet *scs_ptr,
     EncodeContext *encode_context_ptr,
     PictureParentControlSet *pcs_ptr,
+#if TF_LEVELS
+    PictureDecisionContext *context_ptr,
+#endif
     uint32_t out_stride_diff64) {
+#if TF_LEVELS
+    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size);
+#else
     int altref_nframes = scs_ptr->static_config.altref_nframes;
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -5339,10 +5406,16 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
+#if TF_LEVELS
+                                signal_derivation_multi_processes_oq(
+                                    scs_ptr,
+                                    pcs_ptr,
+                                    context_ptr);
+#else
                                 signal_derivation_multi_processes_oq(
                                 scs_ptr,
                                     pcs_ptr);
-
+#endif
                             // Set tx_mode
                             frm_hdr->tx_mode = (pcs_ptr->tx_size_search_mode) ?
                                 TX_MODE_SELECT :
@@ -5491,6 +5564,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
+#if TF_LEVELS
+                            if(context_ptr->tf_ctrls.enabled) {
+#else
                             uint8_t perform_filtering =
                                 (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                  pcs_ptr->sc_content_detected == 0 &&
@@ -5501,10 +5577,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 ? 1 : 0;
 
                             if (perform_filtering){
+#endif
                                 derive_tf_window_params(
                                     scs_ptr,
                                     encode_context_ptr,
                                     pcs_ptr,
+#if TF_LEVELS
+                                    context_ptr,
+#endif
                                     out_stride_diff64);
                                 pcs_ptr->temp_filt_prep_done = 0;
 

@@ -205,6 +205,8 @@ extern "C" {
 #endif
 #define PRESETS_SHIFT 1 // Shift M4->M3, M5->M4, M8->M5 to avoid empty presets
 
+// Temporal Filtering
+#define TF_LEVELS 1
 
 // 
 #define DISALLOW_NSQ_FIX_0 1
