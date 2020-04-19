@@ -1552,21 +1552,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->intra_pred_mode = 2;
 #endif
 #if MAR17_ADOPTIONS
-#if M8_INTRA_MODE
-            else if (pcs_ptr->enc_mode <= ENC_M5)
-                if (pcs_ptr->temporal_layer_index == 0)
-                    pcs_ptr->intra_pred_mode = 2;
-                else
-                    pcs_ptr->intra_pred_mode = 3;
-            else                
-                pcs_ptr->intra_pred_mode = 4;
-#else
             else
                 if (pcs_ptr->temporal_layer_index == 0)
                     pcs_ptr->intra_pred_mode = 2;
                 else
                     pcs_ptr->intra_pred_mode = 3;
-#endif
 #else
             else if (pcs_ptr->enc_mode <= ENC_M6)
                 if (pcs_ptr->temporal_layer_index == 0)
@@ -1591,11 +1581,21 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
             pcs_ptr->intra_pred_mode = 0;
 #if MAR2_M8_ADOPTIONS
+#if M8_INTRA_MODE
+        else if (pcs_ptr->enc_mode <= ENC_M5)
+            if (pcs_ptr->temporal_layer_index == 0)
+                pcs_ptr->intra_pred_mode = 1;
+            else
+                pcs_ptr->intra_pred_mode = 3;
+        else
+            pcs_ptr->intra_pred_mode = 4;
+#else
         else
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M7)
 
@@ -4623,8 +4623,11 @@ void derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-
+#if TF_LEVELS
+        uint32_t num_future_pics = altref_nframes - 1;
+#else
         uint32_t num_future_pics = 6;
+#endif
         uint32_t num_past_pics = 0;
         uint32_t pic_i;
         //search reord-queue to get the future pictures
