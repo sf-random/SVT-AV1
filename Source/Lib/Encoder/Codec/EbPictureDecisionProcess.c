@@ -984,7 +984,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 
     // Set disallow_nsq
+#if M8_NSQ
+    pcs_ptr->disallow_nsq = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#else
     pcs_ptr->disallow_nsq = EB_FALSE;
+#endif
     if (!pcs_ptr->disallow_nsq)
         assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
     pcs_ptr->max_number_of_pus_per_sb =
@@ -1016,8 +1020,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 
     // Set disallow_4x4
+#if M8_4x4
+    pcs_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#else
     pcs_ptr->disallow_4x4 = EB_FALSE;
-
+#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
     if (sc_content_detected) {
         pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
@@ -1232,7 +1239,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
         // IBC Modes:   0:Slow   1:Fast   2:Faster
 #if MAR4_M8_ADOPTIONS
+#if M8_IBC
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
         if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -1269,7 +1280,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                     0)) &&
 #if MAR4_M3_ADOPTIONS
 #if MAR10_ADOPTIONS
+#if M8_PALETTE
+            pcs_ptr->enc_mode <= ENC_M5
+#else
             pcs_ptr->enc_mode <= ENC_M8
+#endif
 #else
             pcs_ptr->enc_mode <= ENC_M3
 #endif
@@ -1290,7 +1305,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         .disable_dlf_flag &&
         frm_hdr->allow_intrabc == 0) {
 #if MAR2_M8_ADOPTIONS
+#if M8_LOOP_FILTER
+        if (pcs_ptr->enc_mode <= ENC_M5)
+            pcs_ptr->loop_filter_mode = 3;
+        else
+            pcs_ptr->loop_filter_mode =
+            pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#else
         pcs_ptr->loop_filter_mode = 3;
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M7)
             pcs_ptr->loop_filter_mode = 3;
@@ -1312,7 +1335,17 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                            64 step refinement
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
 #if MAR17_ADOPTIONS
+#if M8_CDEF
+        if (pcs_ptr->sc_content_detected)
+            pcs_ptr->cdef_filter_mode = 5;
+        else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                pcs_ptr->cdef_filter_mode = 5;
+            else
+                pcs_ptr->cdef_filter_mode = 2;
+#else
         pcs_ptr->cdef_filter_mode = 5;
+#endif
 #else
 #if MAR10_ADOPTIONS
         if (pcs_ptr->sc_content_detected)
@@ -1337,7 +1370,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     Av1Common *cm = pcs_ptr->av1_cm;
     if (sc_content_detected)
 #if MAR12_M8_ADOPTIONS
+#if M8_SG
+        if (pcs_ptr->enc_mode <= ENC_M5)
+            cm->sg_filter_mode = 4;
+        else
+            cm->sg_filter_mode = 1;
+#else
         cm->sg_filter_mode = 4;
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M5)
             cm->sg_filter_mode = 4;
@@ -1363,8 +1403,15 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         cm->sg_filter_mode = 4;
 #if MAR12_M8_ADOPTIONS
+#if M8_SG
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+        cm->sg_filter_mode = 3;
+    else
+        cm->sg_filter_mode = 1;
+#else
     else
         cm->sg_filter_mode = 3;
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6)
         cm->sg_filter_mode = 3;

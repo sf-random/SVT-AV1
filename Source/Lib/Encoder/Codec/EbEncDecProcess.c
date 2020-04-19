@@ -2168,7 +2168,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->bipred3x3_injection = 1;
             else
 #if MAR18_ADOPTIONS
+#if M8_BIPRED_3x3
+                if (enc_mode <= ENC_M5)
+                    context_ptr->bipred3x3_injection = 2;
+                else
+                    context_ptr->bipred3x3_injection = 0;
+#else
                 context_ptr->bipred3x3_injection = 2;
+#endif
 #else
                 context_ptr->bipred3x3_injection = 0;
 #endif
@@ -2184,7 +2191,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             context_ptr->bipred3x3_injection = 1;
         else
+#if M8_BIPRED_3x3
+    if (enc_mode <= ENC_M5)
+        context_ptr->bipred3x3_injection = 2;
+    else
+        context_ptr->bipred3x3_injection = 0;
+#else
             context_ptr->bipred3x3_injection = 2;
+#endif
 #else
 #if MAR17_ADOPTIONS
         else if (enc_mode <= ENC_M7)
@@ -2248,7 +2262,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR4_M6_ADOPTIONS
 #if MAR10_ADOPTIONS
+#if M8_PRED_ME
+                    if (enc_mode <= ENC_M5)
+#else
                     if (enc_mode <= ENC_M8)
+#endif
 #else
                     if (enc_mode <= ENC_M5)
 #endif
@@ -2269,7 +2287,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                         context_ptr->predictive_me_level = 6;
 #if MAR12_M8_ADOPTIONS
                     else
+#if M8_PRED_ME
+                        if (enc_mode <= ENC_M5)
+                            context_ptr->predictive_me_level = 5;
+                        else
+                            context_ptr->predictive_me_level = 0;
+#else
                         context_ptr->predictive_me_level = 5;
+#endif
 #else
 #if MAR4_M6_ADOPTIONS
                     else if (enc_mode <= ENC_M5)
