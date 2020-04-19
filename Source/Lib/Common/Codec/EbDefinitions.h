@@ -246,7 +246,12 @@ extern "C" {
 // HME/ME
 #define M8_HME_ME 1
 
-#define M8_REMOVE_USELESS_OPERATION 1
+#define M8_CLEAN_UP 1 // remove full loop escape
+
+#define M8_MPPD 1
+#define M8_INTRA_MODE 1
+#define M8_TXT 1
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

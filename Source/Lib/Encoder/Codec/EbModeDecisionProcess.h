@@ -130,7 +130,7 @@ typedef struct MdBlkStruct {
 #if CLEAN_UP_SB_DATA_7
     uint8_t merge_flag;
 #endif
-#if !M8_REMOVE_USELESS_OPERATION
+#if !M8_CLEAN_UP
 #if BLOCK_REDUCTION_ALGORITHM_1
     uint64_t luma_quant_coeff_energy;
     uint64_t cb_quant_coeff_energy;
@@ -213,7 +213,7 @@ typedef struct DepthReductionCtrls {
     uint8_t cost_sq_vs_nsq_energy_based_depth_reduction_enabled; // to enable the 1st evaluation
     int64_t current_to_parent_deviation_th; // decrease towards a more agressive level
     int64_t sq_to_best_nsq_deviation_th; // increase towards a more agressive level
-#if M8_REMOVE_USELESS_OPERATION
+#if M8_CLEAN_UP
     // TODO: add percentage_non_zero_coeff_th;// increase towards a more agressive level
 #else
     uint64_t quant_coeff_energy_th;// increase towards a more agressive level

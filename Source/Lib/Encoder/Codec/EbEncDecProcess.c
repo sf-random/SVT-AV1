@@ -1461,7 +1461,7 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = 0;
-#if !M8_REMOVE_USELESS_OPERATION
+#if !M8_CLEAN_UP
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
 #endif
         depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 0;
@@ -1477,7 +1477,7 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         depth_reduction_ctrls->cost_sq_vs_nsq_energy_based_depth_reduction_enabled = 1;
         depth_reduction_ctrls->current_to_parent_deviation_th = 0;
         depth_reduction_ctrls->sq_to_best_nsq_deviation_th = 0;
-#if !M8_REMOVE_USELESS_OPERATION
+#if !M8_CLEAN_UP
         depth_reduction_ctrls->quant_coeff_energy_th = 0;
 #endif
         depth_reduction_ctrls->nsq_data_based_depth_reduction_enabled = 1;
@@ -1581,7 +1581,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #endif
 #if MAR25_ADOPTIONS
+#if M8_TXT
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
 #else
 #if MAR17_ADOPTIONS
     else if (enc_mode <= ENC_M7)
@@ -1591,12 +1595,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         context_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
 #if MAR2_M8_ADOPTIONS
+#if M8_TXT
+    else
+            context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
+#else
     else {
         if (pcs_ptr->temporal_layer_index == 0)
             context_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
         else
             context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
     }
+#endif
 #else
     else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->temporal_layer_index == 0)
@@ -1627,11 +1636,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_txt_search_level = 1;
         else if (enc_mode <= ENC_M2)
             context_ptr->md_txt_search_level = 2;
-#if M8_TXT
-        else if (enc_mode <= ENC_M5)
-#else
         else if (enc_mode <= ENC_M8)
-#endif
             context_ptr->md_txt_search_level = 3;
         else
             context_ptr->md_txt_search_level = 4;
@@ -5224,8 +5229,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         }
 #if ADOPT_SKIPPING_PD1
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
+#if M8_MPPD
+                            if(pcs_ptr->enc_mode <= ENC_M5) {
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                            }
+                            else {
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : -1;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 1;
+                            }
+#else
                             s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                             e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+#endif
                         }
 #endif
 #if MAR30_ADOPTIONS

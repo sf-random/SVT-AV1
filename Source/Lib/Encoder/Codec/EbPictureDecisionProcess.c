@@ -1509,7 +1509,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                            Light OIS based Intra
     if (pcs_ptr->slice_type == I_SLICE)
 #if MAR2_M8_ADOPTIONS
+#if M8_INTRA_MODE
+        if (pcs_ptr->enc_mode <= ENC_M5)
+            pcs_ptr->intra_pred_mode = 0;
+        else
+            pcs_ptr->intra_pred_mode = 4;
+#else
         pcs_ptr->intra_pred_mode = 0;
+#endif
 #else
         if (sc_content_detected)
             if (pcs_ptr->enc_mode <= ENC_M6)
@@ -1545,11 +1552,21 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->intra_pred_mode = 2;
 #endif
 #if MAR17_ADOPTIONS
+#if M8_INTRA_MODE
+            else if (pcs_ptr->enc_mode <= ENC_M5)
+                if (pcs_ptr->temporal_layer_index == 0)
+                    pcs_ptr->intra_pred_mode = 2;
+                else
+                    pcs_ptr->intra_pred_mode = 3;
+            else                
+                pcs_ptr->intra_pred_mode = 4;
+#else
             else
                 if (pcs_ptr->temporal_layer_index == 0)
                     pcs_ptr->intra_pred_mode = 2;
                 else
                     pcs_ptr->intra_pred_mode = 3;
+#endif
 #else
             else if (pcs_ptr->enc_mode <= ENC_M6)
                 if (pcs_ptr->temporal_layer_index == 0)
