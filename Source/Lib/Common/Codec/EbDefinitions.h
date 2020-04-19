@@ -228,7 +228,7 @@ extern "C" {
 #define M8_CDF 1
 #define M8_WM 1
 #define M8_OBMC 1
-
+#define M8_TXT 1
 // Filtering
 #define M8_SG 1
 #define M8_RESTORATION 1

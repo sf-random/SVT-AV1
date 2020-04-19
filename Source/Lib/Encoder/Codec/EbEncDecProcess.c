@@ -1597,7 +1597,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_txt_search_level = 1;
         else if (enc_mode <= ENC_M2)
             context_ptr->md_txt_search_level = 2;
+#if M8_TXT
+        else if (enc_mode <= ENC_M5)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
             context_ptr->md_txt_search_level = 3;
         else
             context_ptr->md_txt_search_level = 4;
