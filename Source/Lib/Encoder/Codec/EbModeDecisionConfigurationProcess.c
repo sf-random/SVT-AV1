@@ -972,6 +972,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
     // Note: local warp should be disabled when super-res is ON
+    // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion =
         enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&
@@ -1225,6 +1226,8 @@ static int motion_field_projection(Av1Common *cm, PictureControlSet *pcs_ptr,
     if (start_frame_buf->frame_type == KEY_FRAME || start_frame_buf->frame_type == INTRA_ONLY_FRAME)
         return 0;
 
+    // MFMV is not applied when the reference picture is of a different spatial resolution
+    // (described in the AV1 spec section 7.9.2.)
     if (start_frame_buf->mi_rows != cm->mi_rows ||
         start_frame_buf->mi_cols != cm->mi_cols){
         return 0;
