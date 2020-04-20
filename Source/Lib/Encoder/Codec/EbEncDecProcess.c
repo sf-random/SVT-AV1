@@ -2011,10 +2011,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if M8_4x4
      // Set disallow_4x4
      context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
-     SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[context_ptr->sb_index];
      // If SB non-multiple of 4, then disallow_4x4 could not be used
-     // To guarantee disallow_4x4 for all SBs, the input should be a multiple of 4 (padding @ init time) 
-     if (sb_params->width % 4 != 0 || sb_params->height % 4 != 0) {
+     // SB Stats
+     uint32_t sb_width =
+         MIN(sequence_control_set_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_width - context_ptr->sb_ptr->origin_x);
+     uint32_t sb_height =
+         MIN(sequence_control_set_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_height - context_ptr->sb_ptr->origin_y);
+     if (sb_width % 8 != 0 || sb_height % 8 != 0) {
          context_ptr->disallow_4x4 = EB_FALSE;
      }
 #endif
@@ -6026,7 +6029,11 @@ void *enc_dec_kernel(void *input_ptr) {
                             .tile_group_sb_start_x;
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
+#if M8_4x4
+                    sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
+#else
                     sb_ptr   = pcs_ptr->sb_ptr_array[sb_index];
+#endif
                     sb_origin_x = (x_sb_index + tile_group_x_sb_start) << sb_size_log2;
                     sb_origin_y = (y_sb_index + tile_group_y_sb_start) << sb_size_log2;
                     //printf("[%ld]:ED sb index %d, (%d, %d), encoded total sb count %d, ctx coded sb count %d\n",
@@ -6051,11 +6058,7 @@ void *enc_dec_kernel(void *input_ptr) {
 #else
                     mdc_ptr               = &pcs_ptr->mdc_sb_array[sb_index];
 #endif
-#if M8_4x4
-                    context_ptr->sb_index = context_ptr->md_context->sb_index = sb_index;
-#else
                     context_ptr->sb_index = sb_index;
-#endif
 #if SB_CLASSIFIER
                     context_ptr->md_context->sb_class = NONE_CLASS;
 #endif
