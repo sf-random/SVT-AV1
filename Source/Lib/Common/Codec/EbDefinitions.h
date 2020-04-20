@@ -242,8 +242,6 @@ extern "C" {
 // HME/ME
 #define M8_HME_ME 1
 #define M8_MPPD 1
-#define M7_SETTINGS 1
-#define M9_SETTINGS 1
 #endif
 #define M8_CLEAN_UP 1 // remove useless code: energy, full loop escape
 #endif

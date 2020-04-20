@@ -5265,15 +5265,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if ADOPT_SKIPPING_PD1
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
 #if M8_MPPD
-
-                            int8_t percentage_non_zero_coeff = (context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs * 100) / (blk_geom->sq_size * blk_geom->sq_size);
                             if(pcs_ptr->enc_mode <= ENC_M5) {
-                                s_depth = (percentage_non_zero_coeff < pcs_ptr->parent_pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th) ? 0 : pcs_ptr->slice_type == I_SLICE ? -2 : -1;
-                                e_depth = (percentage_non_zero_coeff < pcs_ptr->parent_pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th) ? 0 : pcs_ptr->slice_type == I_SLICE ?  2 :  1;
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
                             else {
-                                s_depth = (percentage_non_zero_coeff < pcs_ptr->parent_pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th) ? 0 : -1;
-                                e_depth = (percentage_non_zero_coeff < pcs_ptr->parent_pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th) ? 0 :  1;
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ?  1 : 0;
                             }
 #else
                             s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
