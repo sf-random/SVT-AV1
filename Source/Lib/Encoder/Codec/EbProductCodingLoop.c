@@ -3062,7 +3062,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 
 #if FASTER_NIC
-
+        if (pcs_ptr->enc_mode >= ENC_M8)
         for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
 
             // Then set md_stage_1_count to 2 

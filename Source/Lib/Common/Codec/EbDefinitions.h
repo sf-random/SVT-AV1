@@ -230,7 +230,7 @@ extern "C" {
 #define M8_CDF 1
 #define M8_WM 1
 #define M8_OBMC 1
-#define M8_TXT 1
+#define M8_TXT 0
 // Filtering
 #define M8_SG 1
 #define M8_RESTORATION 1
@@ -252,7 +252,6 @@ extern "C" {
 #define M8_MPPD 1
 #define FASTER_MPPD 1
 #define M8_INTRA_MODE 1
-#define M8_TXT 1
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
