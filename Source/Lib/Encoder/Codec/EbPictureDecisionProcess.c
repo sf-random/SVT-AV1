@@ -1513,7 +1513,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->intra_pred_mode = 0;
         else
-            pcs_ptr->intra_pred_mode = 0;
+            pcs_ptr->intra_pred_mode = 1;
 #else
         pcs_ptr->intra_pred_mode = 0;
 #endif
