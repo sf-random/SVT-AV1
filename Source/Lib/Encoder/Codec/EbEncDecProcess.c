@@ -1986,6 +1986,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if SB_CLASSIFIER
 #if OPT_BLOCK_INDICES_GEN_2
+     // Update nsq settings based on the sb_class
      context_ptr->md_disallow_nsq = (context_ptr->enable_area_based_cycles_allocation &&  context_ptr->sb_class == HIGH_COMPLEX_CLASS ) ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #else
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
@@ -3117,6 +3118,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_tx_size_search_mode = 0;
     else
         context_ptr->md_tx_size_search_mode = pcs_ptr->parent_pcs_ptr->tx_size_search_mode;
+#if OPT_BLOCK_INDICES_GEN_2
+    // Update txs settings based on the sb_class
+    context_ptr->md_tx_size_search_mode = (context_ptr->enable_area_based_cycles_allocation && context_ptr->sb_class == MEDIUM_COMPLEX_CLASS) ? 0 : context_ptr->md_tx_size_search_mode;
+#endif
     // Set md_filter_intra_mode @ MD
     if (pd_pass == PD_PASS_0)
         context_ptr->md_filter_intra_mode = 0;

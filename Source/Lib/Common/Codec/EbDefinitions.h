@@ -208,7 +208,7 @@ extern "C" {
 #if OPT_BLOCK_INDICES_GEN
 #define OPT_BLOCK_INDICES_GEN_0 1
 #define OPT_BLOCK_INDICES_GEN_1 1
-#define OPT_BLOCK_INDICES_GEN_2 1 // TODO: unify the action of disallow_nsq and complex sb
+#define OPT_BLOCK_INDICES_GEN_2 1 // unify the action(s) of disallow_nsq and complex sb
 #endif
 #define TF_LEVELS 1
 #define TF_X86_KERNEL_FIX 1

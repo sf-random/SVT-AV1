@@ -10347,21 +10347,23 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     Part     nsq_shape_table[NUMBER_OF_SHAPES] = {
         PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S};
     uint8_t skip_next_depth = 0;
+#if !OPT_BLOCK_INDICES_GEN_2
 #if SB_CLASSIFIER
     // Store defalut settings
     uint8_t default_md_tx_size_search_mode = context_ptr->md_tx_size_search_mode;
-#if !OPT_BLOCK_INDICES_GEN_2
+
     uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
-#endif
+
     // Update nsq and txs settings based on the sb_class
     if (context_ptr->enable_area_based_cycles_allocation) {
         if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
             context_ptr->md_tx_size_search_mode = 0;
-#if !OPT_BLOCK_INDICES_GEN_2
+
         if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
             context_ptr->md_disallow_nsq = 1;
-#endif
+
     }
+#endif
 #endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
@@ -10743,10 +10745,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             d1_first_block = 0;
         blk_index++;
     } while (blk_index < leaf_count); // End of CU loop
+#if !OPT_BLOCK_INDICES_GEN_2
 #if SB_CLASSIFIER
     // Restor the default settings
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
-#if !OPT_BLOCK_INDICES_GEN_2
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
 #endif
 #endif
