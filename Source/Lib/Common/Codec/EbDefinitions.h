@@ -245,6 +245,39 @@ extern "C" {
 #endif
 #define M8_CLEAN_UP 1 // remove useless code: energy, full loop escape
 #endif
+
+/********************************/
+// TF
+#define USE_M8_TF_IN_M5 0 // NSC only
+// Part
+#define USE_M8_4x4_IN_M5 0
+#define USE_M8_NSQ_IN_M5 0
+#define USE_M8_SB_SIZE_IN_M5 0
+// MRP
+#define USE_M8_MRP_IN_M5 0
+//MD
+#define USE_M8_BIPRED_3x3 0
+#define USE_M8_PRED_ME 0
+#define USE_M8_CDF_IN_M5 0
+#define USE_M8_WM_IN_M5 0
+#define USE_M8_OBMC_IN_M5 0
+#define USE_M8_INTRA_MODE_IN_M5 0 // NSC only
+#define USE_M8_RDOQ_IN_M5 0 // SC only
+// Filtering
+#define USE_M8_SG_IN_M5 0
+#define USE_M8_RESTORATION_IN_M5 0
+#define USE_M8_LOOP_FILTER_IN_M5 0 // NSC only
+#define USE_M8_CDEF_IN_M5 0 // NSC only
+// SC tools
+#define USE_M8_PALETTE_IN_M5 0
+#define USE_M8_IBC_IN_M5 0
+// NIC
+#define USE_M8_NIC_IN_M5 0
+// HME/ME
+#define USE_M8_HME_ME_IN_M5 0
+#define USE_M8_MPPD_IN_M5 0
+/********************************/
+
 // END  MAY2020 /////////////////////////////////////////////////////////
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

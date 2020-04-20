@@ -1030,7 +1030,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Set disallow_nsq
 #if M8_NSQ
+#if USE_M8_NSQ_IN_M5
+    pcs_ptr->disallow_nsq = pcs_ptr->enc_mode <= ENC_M4 ? EB_FALSE : EB_TRUE;
+#else
     pcs_ptr->disallow_nsq = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#endif
 #else
     pcs_ptr->disallow_nsq = EB_FALSE;
 #endif
@@ -1282,7 +1286,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // IBC Modes:   0:Slow   1:Fast   2:Faster
 #if MAR4_M8_ADOPTIONS
 #if M8_IBC
+#if USE_M8_IBC_IN_M5
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
@@ -1323,7 +1331,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MAR4_M3_ADOPTIONS
 #if MAR10_ADOPTIONS
 #if M8_PALETTE
+#if USE_M8_PALETTE_IN_M5
+            pcs_ptr->enc_mode <= ENC_M4
+#else
             pcs_ptr->enc_mode <= ENC_M5
+#endif
 #else
             pcs_ptr->enc_mode <= ENC_M8
 #endif
@@ -1348,7 +1360,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         frm_hdr->allow_intrabc == 0) {
 #if MAR2_M8_ADOPTIONS
 #if M8_LOOP_FILTER
+#if USE_M8_LOOP_FILTER_IN_M5
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
             pcs_ptr->loop_filter_mode = 3;
         else
             pcs_ptr->loop_filter_mode =
@@ -1381,7 +1397,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->sc_content_detected)
             pcs_ptr->cdef_filter_mode = 5;
         else
+#if USE_M8_CDEF_IN_M5
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
             if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
                 pcs_ptr->cdef_filter_mode = 5;
             else
                 pcs_ptr->cdef_filter_mode = 2;
@@ -1413,7 +1433,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (sc_content_detected)
 #if MAR12_M8_ADOPTIONS
 #if M8_SG
+#if USE_M8_SG_IN_M5
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
             cm->sg_filter_mode = 4;
         else
             cm->sg_filter_mode = 1;
@@ -1446,7 +1470,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->sg_filter_mode = 4;
 #if MAR12_M8_ADOPTIONS
 #if M8_SG
+#if USE_M8_SG_IN_M5
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
         cm->sg_filter_mode = 3;
     else
         cm->sg_filter_mode = 1;
@@ -1575,11 +1603,13 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->intra_pred_mode = 0;
 #if MAR2_M8_ADOPTIONS
 #if M8_INTRA_MODE
+#if !USE_M8_INTRA_MODE_IN_M5
         else if (pcs_ptr->enc_mode <= ENC_M5)
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
+#endif
         else
             pcs_ptr->intra_pred_mode = 3;
 #else
@@ -1868,7 +1898,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         (pcs_ptr->temporal_layer_index == 0 ||(pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
         ? 1 : 0;
     if (perform_filtering) {
+#if USE_M8_TF_IN_M5
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
             context_ptr->tf_level = 0;
         }
         else {

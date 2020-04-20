@@ -135,7 +135,11 @@ void* set_me_hme_params_oq(
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 800;
             }
 #if M8_HME_ME
+#if USE_M8_HME_ME_IN_M5
+            else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
             else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 225;
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 450;
             }
@@ -158,7 +162,11 @@ void* set_me_hme_params_oq(
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 240 : 360;
     }
 #if M8_HME_ME
+#if USE_M8_HME_ME_IN_M5
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
     }

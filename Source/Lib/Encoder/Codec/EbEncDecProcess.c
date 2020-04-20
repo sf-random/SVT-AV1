@@ -1973,7 +1973,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if M8_4x4
      // Set disallow_4x4
+#if USE_M8_4x4_IN_M5
+     context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M4 ? EB_FALSE : EB_TRUE;
+#else
      context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#endif
      // If SB non-multiple of 4, then disallow_4x4 could not be used
      // SB Stats
      uint32_t sb_width =
@@ -2254,7 +2258,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             else
 #if MAR18_ADOPTIONS
 #if M8_BIPRED_3x3
+#if USE_M8_BIPRED_3x3
+                if (enc_mode <= ENC_M4)
+#else
                 if (enc_mode <= ENC_M5)
+#endif
                     context_ptr->bipred3x3_injection = 2;
                 else
                     context_ptr->bipred3x3_injection = 0;
@@ -2277,7 +2285,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->bipred3x3_injection = 1;
         else
 #if M8_BIPRED_3x3
+#if USE_M8_BIPRED_3x3
+    if (enc_mode <= ENC_M4)
+#else
     if (enc_mode <= ENC_M5)
+#endif
         context_ptr->bipred3x3_injection = 2;
     else
         context_ptr->bipred3x3_injection = 0;
@@ -2348,7 +2360,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if MAR4_M6_ADOPTIONS
 #if MAR10_ADOPTIONS
 #if M8_PRED_ME
+#if USE_M8_PRED_ME
+                    if (enc_mode <= ENC_M4)
+#else
                     if (enc_mode <= ENC_M5)
+#endif
 #else
                     if (enc_mode <= ENC_M8)
 #endif
@@ -2373,7 +2389,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if MAR12_M8_ADOPTIONS
                     else
 #if M8_PRED_ME
+#if USE_M8_PRED_ME
+                        if (enc_mode <= ENC_M4)
+#else
                         if (enc_mode <= ENC_M5)
+#endif
                             context_ptr->predictive_me_level = 5;
                         else
                             context_ptr->predictive_me_level = 0;
@@ -2582,7 +2602,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR17_ADOPTIONS
 #if M8_RDOQ
+#if USE_M8_RDOQ_IN_M5
+                if (enc_mode <= ENC_M4)
+#else
                 if (enc_mode <= ENC_M5)
+#endif
 #else
                 if (enc_mode <= ENC_M8)
 #endif
@@ -5265,7 +5289,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if ADOPT_SKIPPING_PD1
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
 #if M8_MPPD
+#if USE_M8_MPPD_IN_M5
+                            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
                             if(pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }

@@ -1073,7 +1073,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     // CDF
 #if M8_CDF
+#if USE_M8_CDF_IN_M5
+    pcs_ptr->update_cdf = (pcs_ptr->enc_mode <= ENC_M4) ? 1 : 0;
+#else
     pcs_ptr->update_cdf = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR2_M7_ADOPTIONS
@@ -1131,8 +1135,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #if M8_WM
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
         enable_wm = EB_TRUE;
+#if !USE_M8_WM_IN_M5
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
+#endif
     } else {
         enable_wm = EB_FALSE;
     }
@@ -1243,7 +1249,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
                 pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
 #if OBMC_FAST
 #if M8_OBMC
+#if USE_M8_OBMC_IN_M5
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
             else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
             else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
 #endif
@@ -1266,7 +1276,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
 #if OBMC_FAST
 #if M8_OBMC
+#if USE_M8_OBMC_IN_M5
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
 #endif
