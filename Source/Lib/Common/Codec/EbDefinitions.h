@@ -213,45 +213,36 @@ extern "C" {
 #define DISALLOW_NSQ_FIX_2 0 // TODO: unify the action of disallow_nsq and complex sb
 #if 1
 #define TF_LEVELS 1
-#define RDOQ_LEVELS 1
-
-// 
-
-
-// 
-#define TEMPORAL_FILTERING_FIX 1
-
-
+#define TF_X86_KERNEL_FIX 1
+#define MOD_CS2_SETTINGS 1
+#if MOD_CS2_SETTINGS
 // MRP
 #define M8_MRP 1
-
 //MD 
 #define M8_BIPRED_3x3 1
 #define M8_PRED_ME 1
 #define M8_CDF 1
 #define M8_WM 1
 #define M8_OBMC 1
-#define M8_TXT 0
+#define M8_INTRA_MODE 1
+#define M8_RDOQ 1
 // Filtering
 #define M8_SG 1
 #define M8_RESTORATION 1
 #define M8_LOOP_FILTER 1
 #define M8_CDEF 1
-
 // SC 
 #define M8_PALETTE 1
 #define M8_IBC 1
-
+#endif
 // NIC
 #define M8_NIC 1
 #define FASTER_NIC 1
 // HME/ME
 #define M8_HME_ME 1
-
 #define M8_CLEAN_UP 1 // remove full loop escape
-
 #define M8_MPPD 1
-#define M8_INTRA_MODE 1
+
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

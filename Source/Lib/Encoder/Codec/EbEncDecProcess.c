@@ -1355,31 +1355,6 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 
 }
 #endif
-#if RDOQ_LEVELS
-void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
-
-    RdoqControls *rdoq_ctrls = &mdctxt->rdoq_ctrls;
-
-    switch (rdoq_level)
-    {
-    case 0:
-        rdoq_ctrls->enabled = 0;
-        rdoq_ctrls->fast_mode = 0;
-        break;
-    case 1:
-        rdoq_ctrls->enabled = 1;
-        rdoq_ctrls->fast_mode = 1;
-        break;
-    case 2:
-        rdoq_ctrls->enabled = 1;
-        rdoq_ctrls->fast_mode = 0;
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-#endif
 #if MD_REFERENCE_MASKING
 void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
 
@@ -1537,9 +1512,6 @@ void set_sb_class_controls(ModeDecisionContext *context_ptr) {
     }
 }
 #endif
-
-#if RDOQ_LEVELS
-#endif
 /******************************************************
 * Derive EncDec Settings for OQ
 Input   : encoder mode and pd pass
@@ -1644,11 +1616,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #endif
 #if MAR25_ADOPTIONS
-#if M8_TXT
-    else if (enc_mode <= ENC_M5)
-#else
     else if (enc_mode <= ENC_M8)
-#endif
 #else
 #if MAR17_ADOPTIONS
     else if (enc_mode <= ENC_M7)
@@ -1658,17 +1626,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         context_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
 #if MAR2_M8_ADOPTIONS
-#if M8_TXT
-    else
-            context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
-#else
     else {
         if (pcs_ptr->temporal_layer_index == 0)
             context_ptr->tx_search_level = TX_SEARCH_FULL_LOOP;
         else
             context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
     }
-#endif
 #else
     else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->temporal_layer_index == 0)
@@ -2607,28 +2570,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->blk_skip_decision = EB_FALSE;
 
     // Derive Trellis Quant Coeff Optimization Flag
-
-#if RDOQ_LEVELS
-    if (pd_pass == PD_PASS_0)
-        context_ptr->rdoq_level = 0;
-    else if (pd_pass == PD_PASS_1)
-        context_ptr->rdoq_level = 0;
-    else
-        if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT)
-            if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-                if (enc_mode <= ENC_M5)
-                    context_ptr->rdoq_level = 2;
-                else
-                    context_ptr->rdoq_level = 1;
-            else if (enc_mode <= ENC_M5)
-                context_ptr->rdoq_level = 2;
-            else
-                context_ptr->rdoq_level = 1;
-        else
-            context_ptr->rdoq_level = sequence_control_set_ptr->static_config.enable_rdoq ? 2 : 0;
-
-    set_rdoq_controls(context_ptr, context_ptr->rdoq_level);
-#else
     if (pd_pass == PD_PASS_0)
         context_ptr->enable_rdoq = EB_FALSE;
     else if (pd_pass == PD_PASS_1)
@@ -2663,7 +2604,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->enable_rdoq =
             sequence_control_set_ptr->static_config.enable_rdoq;
-#endif
 
     // Derive redundant block
     if (pd_pass == PD_PASS_0)

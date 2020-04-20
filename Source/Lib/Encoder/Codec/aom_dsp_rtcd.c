@@ -640,7 +640,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
              noise_extract_chroma_weak_avx2_intrin);
     SET_SSE41(
         svt_av1_apply_filtering, svt_av1_apply_filtering_c, svt_av1_apply_temporal_filter_sse4_1);
-#if TEMPORAL_FILTERING_FIX
+#if TF_X86_KERNEL_FIX
     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
              svt_av1_apply_temporal_filter_planewise_c,
              svt_av1_apply_temporal_filter_planewise_avx2);
