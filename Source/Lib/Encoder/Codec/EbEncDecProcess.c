@@ -5242,6 +5242,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         }
                     }
 #endif
+#if IMPROVE_LOW_COMPLEX_SB && P3M3_DEPTH
+                    if (context_ptr->enable_area_based_cycles_allocation) {
+                        if (context_ptr->sb_class == 4) {
+                            s_depth = -3;
+                            s_depth = 3;
+                        }
+                    }
+#endif
 #if ADOPT_SKIPPING_PD1
                     // Check that the start and end depth are in allowed range, given other features
                     // which restrict allowable depths

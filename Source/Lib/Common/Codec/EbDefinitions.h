@@ -202,11 +202,14 @@ extern "C" {
 #define SB_CLASSIFIER       1 // Classify the SBs based on the PD0 output and apply specific settings for the detected SBs
 #define IMPROVE_LOW_COMPLEX_SB  0
 #if IMPROVE_LOW_COMPLEX_SB
-#define LOW_COMP_SB_TH 4
-#define MR_NIC        1
-#define MR_NSQ_WEIGHT 1
-#define MR_TXS        1
-#define P2M2_DEPTH    1
+#define LOW_COMP_SB_TH 0
+#define MR_NIC        0
+#define MR_NSQ_WEIGHT 0
+#define MR_TXS        0
+#define P2M2_DEPTH    0
+#define P3M3_DEPTH    0
+#define TWO_X_NIC     0
+#define MR_MD_PRUNING 0
 #endif
 #endif
 #endif

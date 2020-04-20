@@ -1794,7 +1794,14 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
         }
 #endif
-
+#if IMPROVE_LOW_COMPLEX_SB && TWO_X_NIC
+        if (context_ptr->sb_class == 4 && context_ptr->enable_area_based_cycles_allocation) {
+            for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+                context_ptr->md_stage_1_count[cidx] = (context_ptr->md_stage_1_count[cidx] ) * 2;
+                context_ptr->md_stage_2_count[cidx] = (context_ptr->md_stage_2_count[cidx] ) * 2;
+            }
+        }            
+#endif
             ////MULT
 #if APR02_ADOPTIONS
             if ((((pcs_ptr->enc_mode <= ENC_M1) || (pcs_ptr->enc_mode <= ENC_M3 && pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)) && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
@@ -7784,7 +7791,6 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
 #if CLASS_MERGING
 #if IMPROVE_LOW_COMPLEX_SB && MR_TXS
-    uint8_t default_sq_weight = context_ptr->sq_weight;
     if (context_ptr->enable_area_based_cycles_allocation) {
         if (context_ptr->sb_class == 4)
             context_ptr->md_staging_tx_size_mode = EB_TRUE;
@@ -10307,6 +10313,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         }
     }
 #endif
+#if IMPROVE_LOW_COMPLEX_SB && MR_MD_PRUNING
+    uint64_t default_md_stage_1_cand_prune_th = context_ptr->md_stage_1_cand_prune_th;
+    uint64_t default_md_stage_1_class_prune_th = context_ptr->md_stage_1_class_prune_th;
+    uint64_t default_md_stage_2_3_cand_prune_th = context_ptr->md_stage_2_3_cand_prune_th;
+    uint64_t default_md_stage_2_3_class_prune_th = context_ptr->md_stage_2_3_class_prune_th;
+    if (context_ptr->enable_area_based_cycles_allocation) {
+        if (context_ptr->sb_class == 4) {
+            context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+            context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+            context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
+            context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
+        }
+    }
+#endif
 #endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
@@ -10694,6 +10714,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
 #if MR_NSQ_WEIGHT
     context_ptr->sq_weight = default_sq_weight;
+#endif
+#if MR_MD_PRUNING
+    context_ptr->md_stage_1_cand_prune_th = default_md_stage_1_cand_prune_th;
+    context_ptr->md_stage_1_class_prune_th = default_md_stage_1_class_prune_th;
+    context_ptr->md_stage_2_3_cand_prune_th = default_md_stage_2_3_cand_prune_th;
+    context_ptr->md_stage_2_3_class_prune_th = default_md_stage_2_3_class_prune_th;
 #endif
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
