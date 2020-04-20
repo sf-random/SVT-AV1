@@ -5311,8 +5311,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             }
                             else {
 #if FASTER_MPPD
-                                s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
-                                e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+                                int percentage_non_zero_coeff = (context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs * 100) / (blk_geom->sq_size * blk_geom->sq_size);
+                                if (percentage_non_zero_coeff < 50) {
+                                    s_depth = 0;
+                                    e_depth = 0;
+                                }
+                                else {
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+                                }
 #else
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 1;
