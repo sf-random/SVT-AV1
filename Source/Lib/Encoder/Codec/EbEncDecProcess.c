@@ -2619,11 +2619,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 if (enc_mode <= ENC_M5)
                     context_ptr->rdoq_level = 2;
                 else
-                    context_ptr->rdoq_level = 0;
+                    context_ptr->rdoq_level = 2;
             else if (enc_mode <= ENC_M5)
                 context_ptr->rdoq_level = 2;
             else
-                context_ptr->rdoq_level = 0;
+                context_ptr->rdoq_level = 2;
         else
             context_ptr->rdoq_level = sequence_control_set_ptr->static_config.enable_rdoq ? 2 : 0;
 
