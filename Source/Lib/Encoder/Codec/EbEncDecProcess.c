@@ -1796,7 +1796,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
     } else if (context_ptr->pd_pass == PD_PASS_1) {
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
-    } else if (pcs_ptr->enc_mode <= ENC_M4)
+    }
+#if CS2_ADOPTIONS_1
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
     else
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
