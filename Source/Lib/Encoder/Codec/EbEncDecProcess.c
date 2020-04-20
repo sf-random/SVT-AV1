@@ -6213,13 +6213,15 @@ void *enc_dec_kernel(void *input_ptr) {
                         // Perform Pred_0 depth refinement - Add blocks to be considered in the next stage(s) of PD based on depth cost.
                         perform_pred_depth_refinement(
                             scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
-
+#if !OPT_BLOCK_INDICES_GEN_0
                         // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
 #if DEPTH_PART_CLEAN_UP
                         build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #else
                         build_cand_block_array(scs_ptr, pcs_ptr, sb_index);
 #endif
+#endif
+
                         // Reset neighnor information to current SB @ position (0,0)
                         copy_neighbour_arrays(pcs_ptr,
                                               context_ptr->md_context,
@@ -6248,7 +6250,10 @@ void *enc_dec_kernel(void *input_ptr) {
                             context_ptr->md_context->pd_pass = PD_PASS_1;
                             signal_derivation_enc_dec_kernel_oq(
                                 scs_ptr, pcs_ptr, context_ptr->md_context);
-
+#if OPT_BLOCK_INDICES_GEN_0
+                            // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
+                            build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                             // [PD_PASS_1] Mode Decision - Further reduce the number of
                             // partitions to be considered in later PD stages. This pass uses more accurate
                             // info than PD0 to give a better PD estimate.
@@ -6294,7 +6299,11 @@ void *enc_dec_kernel(void *input_ptr) {
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
-
+#if OPT_BLOCK_INDICES_GEN_0
+                    // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
+                    if(pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_OFF)
+                    build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                     // [PD_PASS_2] Mode Decision - Obtain the final partitioning decision using more accurate info
                     // than previous stages.  Reduce the total number of partitions to 1.
                     // Input : mdc_blk_ptr built @ PD1 refinement
