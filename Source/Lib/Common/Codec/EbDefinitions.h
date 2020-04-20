@@ -209,6 +209,7 @@ extern "C" {
 #define OPT_BLOCK_INDICES_GEN_0 1
 #define OPT_BLOCK_INDICES_GEN_1 1
 #define OPT_BLOCK_INDICES_GEN_2 1 // unify the action(s) of disallow_nsq and complex sb
+#define OPT_BLOCK_INDICES_GEN_3 1 // disallow_all_nsq_blocks_below_8x8, disallow_all_nsq_blocks_below_16x16, ..
 #endif
 #define TF_LEVELS 1
 #define TF_X86_KERNEL_FIX 1

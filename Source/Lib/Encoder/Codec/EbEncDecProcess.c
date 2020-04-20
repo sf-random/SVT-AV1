@@ -4827,11 +4827,20 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-
 #if OPT_BLOCK_INDICES_GEN_2
+#if OPT_BLOCK_INDICES_GEN_3
+            tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+                (blk_geom->sq_size <= 8 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
+                (blk_geom->sq_size <= 16 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_16x16) ? 1 :
+#else
             tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
+#endif
 #else
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
+#endif
+#if OPT_BLOCK_INDICES_GEN_3
+                (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16) ? 5 :
+                (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_all_h4_v4_blocks_below_16x16) ? 17 :
 #endif
                 blk_geom->sq_size == 128
                 ? 17
@@ -5617,9 +5626,19 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 #if OPT_BLOCK_INDICES_GEN_2
+#if OPT_BLOCK_INDICES_GEN_3
+            tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+                (blk_geom->sq_size <= 8 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
+                (blk_geom->sq_size <= 16 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_16x16) ? 1 :
+#else
             tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
+#endif
 #else
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
+#endif
+#if OPT_BLOCK_INDICES_GEN_3
+                (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16) ? 5 :
+                (blk_geom->sq_size == 16 && pcs_ptr->parent_pcs_ptr->disallow_all_h4_v4_blocks_below_16x16) ? 17 :
 #endif
                 blk_geom->sq_size == 128
                 ? 17
