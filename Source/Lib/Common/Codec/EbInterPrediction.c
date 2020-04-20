@@ -20,8 +20,8 @@
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
-#if CUTREE_MV_CLIP
-#include "Av1Common.h"
+#if CUTREE_LA
+#include "EbWarpedMotion.h"
 #endif
 //#include "EbRateDistortionCost.h"
 

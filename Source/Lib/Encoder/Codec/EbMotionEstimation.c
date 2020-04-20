@@ -12509,9 +12509,6 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
             // Fill Neighbor Arrays
             update_neighbor_samples_array_open_loop(above_row - 1,
                                                     left_col - 1,
-#if CUTREE_LA
-                                                    pcs_ptr,
-#endif
                                                     input_ptr,
                                                     input_ptr->stride_y,
                                                     blk_origin_x,
@@ -12652,7 +12649,7 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
 #if CUTREE_LA
 EbErrorType open_loop_intra_search_mb(
     PictureParentControlSet *pcs_ptr, uint32_t sb_index,
-    MotionEstimationContext_t *context_ptr, EbPictureBufferDesc *input_ptr)
+    EbPictureBufferDesc *input_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
@@ -12718,7 +12715,11 @@ EbErrorType open_loop_intra_search_mb(
             }
 #endif
             // Fill Neighbor Arrays
-            update_neighbor_samples_array_open_loop(above0_row - 1, left0_col - 1, pcs_ptr, input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);
+            update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
+#if USE_ORIGIN_YUV
+                                                       pcs_ptr,
+#endif
+                                                       input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);
             uint8_t ois_intra_mode;
             uint8_t intra_mode_start = DC_PRED;
             EbBool   enable_paeth                = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_paeth;

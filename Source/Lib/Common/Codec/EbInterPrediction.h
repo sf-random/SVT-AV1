@@ -16,6 +16,9 @@
 #include "EbCabacContextModel.h"
 #if CUTREE_LA
 #include "../../Encoder/Codec/EbCodingUnit.h"
+#if CUTREE_MV_CLIP
+#include "Av1Common.h"
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -166,6 +169,15 @@ typedef struct WedgeParamsType
                            const struct ScaleFactors *sf,
                            const struct Buf2D *ref_buf,
                            uint32_t interp_filters);
+#if CUTREE_MV_CLIP
+void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
+                               int dst_stride, const MV *src_mv, int pix_col, int pix_row,
+                               InterPredParams *inter_pred_params);
+#else
+void av1_build_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
+                               const MV *src_mv, int pix_col, int pix_row,
+                               InterPredParams *inter_pred_params);
+#endif
 #endif
 
     /* Mapping of interintra to intra mode for use in the intra component */

@@ -61,7 +61,6 @@ extern "C" {
     extern EbErrorType open_loop_intra_search_mb(
         PictureParentControlSet   *picture_control_set_ptr,
         uint32_t                   sb_index,
-        MotionEstimationContext_t *context_ptr,
         EbPictureBufferDesc       *input_ptr);
 #endif
 

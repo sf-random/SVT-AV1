@@ -1177,11 +1177,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                         sb_origin_y = y_sb_index * scs_ptr->sb_sz;
 
                         sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
-                        open_loop_intra_search_mb(
-                            pcs_ptr,
-                            sb_index,
-                            context_ptr,
-                            input_picture_ptr);
+                        open_loop_intra_search_mb(pcs_ptr, sb_index, input_picture_ptr);
                     }
                 }
             }

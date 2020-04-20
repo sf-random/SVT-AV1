@@ -2569,8 +2569,8 @@ static int is_smooth_luma(uint8_t mode) {
 void filter_intra_edge(PictureParentControlSet *pcs_ptr, OisMbResults *ois_mb_results_ptr, uint8_t mode,
                               int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    uint32_t mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
-    uint32_t mb_height = (scs_ptr->seq_header.max_frame_height + 15) / 16;
+    const int mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
+    const int mb_height = (scs_ptr->seq_header.max_frame_height + 15) / 16;
     const int txwpx = tx_size_wide[TX_16X16];
     const int txhpx = tx_size_high[TX_16X16];
     const int need_right = p_angle < 90;

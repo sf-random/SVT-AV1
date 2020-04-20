@@ -17,6 +17,8 @@
 #include "EbRateDistortionCost.h"
 #if CUTREE_LA
 #include "EbLog.h"
+#include "EbIntraPrediction.h"
+#include "EbMotionEstimation.h"
 #endif
 /**************************************
  * Context
@@ -913,7 +915,7 @@ static int rate_estimator(tran_low_t *qcoeff, int eob, TxSize tx_size) {
 }
 
 static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *cutree_stats_ptr,
-        uint32_t mb_origin_x, uint32_t mb_origin_y, uint32_t picture_width_in_mb) {
+        uint32_t mb_origin_x, uint32_t mb_origin_y) {
   const int mi_height = mi_size_high[BLOCK_16X16];
   const int mi_width = mi_size_wide[BLOCK_16X16];
   const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
@@ -1054,9 +1056,6 @@ void eb_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q);
 void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                             int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                             Quants *const quants, Dequants *const deq);
-void wht_fwd_txfm(int16_t *src_diff, int bw,
-                  int32_t *coeff, TxSize tx_size,
-                  int bit_depth, int is_hbd);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
 /************************************************
@@ -1389,7 +1388,11 @@ if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin
                         left_col = left_data + 16;
                         TxSize tx_size = TX_16X16;
 
-                        update_neighbor_samples_array_open_loop(above_row - 1, left_col - 1, pcs_ptr, input_picture_ptr, input_picture_ptr->stride_y, mb_origin_x, mb_origin_y, 16, 16);
+                        update_neighbor_samples_array_open_loop_mb(above_row - 1, left_col - 1,
+#if USE_ORIGIN_YUV
+                                                                   pcs_ptr,
+#endif
+                                                                   input_picture_ptr, input_picture_ptr->stride_y, mb_origin_x, mb_origin_y, 16, 16);
                         uint8_t ois_intra_mode = ois_mb_results_ptr->intra_mode;
                         int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
                         // Edge filter
@@ -1440,7 +1443,7 @@ if(pcs_ptr->picture_number == 16 && mb_origin_y == 0)
 }
 #endif
                     // Motion flow dependency dispenser.
-                    result_model_store(pcs_ptr, &cutree_stats, mb_origin_x, mb_origin_y, picture_width_in_mb);
+                    result_model_store(pcs_ptr, &cutree_stats, mb_origin_x, mb_origin_y);
                 }
                 pa_blk_index++;
             }
@@ -1697,8 +1700,8 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
             int64_t intra_cost = 0;
             int64_t mc_dep_cost = 0;
-            for (int blky_offset = 0; blky_offset < blks; blky_offset++) {
-                for (int blkx_offset = 0; blkx_offset < blks; blkx_offset++) {
+            for (uint32_t blky_offset = 0; blky_offset < blks; blky_offset++) {
+                for (uint32_t blkx_offset = 0; blkx_offset < blks; blkx_offset++) {
                     uint32_t blkx = ((sb_x * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blkx_offset;
                     uint32_t blky = ((sb_y * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blky_offset;
                     if((blkx >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_width_in_mb ||
@@ -1760,7 +1763,7 @@ void update_mc_flow(
     PictureParentControlSet          *pcs_array_org[60] = {NULL, };
 
     uint32_t                         inputQueueIndex;
-    uint32_t                         frames_in_sw = MIN(60, pcs_ptr->frames_in_sw);
+    int32_t                          frames_in_sw = MIN(60, pcs_ptr->frames_in_sw);
     uint64_t                         start_poc = 0;
     int32_t                          frame_idx, i;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
@@ -1806,12 +1809,12 @@ void update_mc_flow(
         }
     }
     if (got_intra_in_sw) {
-        SVT_LOG("update_mc_flow start_poc=%d, got_intra_in_sw at [%d] poc=%d\n", start_poc, frame_idx, pcs_array[frame_idx]->picture_number);
+        // SVT_LOG("update_mc_flow start_poc=%d, got_intra_in_sw at [%d] poc=%d\n", start_poc, frame_idx, pcs_array[frame_idx]->picture_number);
         return;
     }
     start_poc = pcs_array[0]->picture_number;
     start_is_intra = frame_is_intra_only(pcs_array[0]);
-    SVT_LOG("update_mc_flow start_poc=%d, start_is_intra=%d, frames_in_sw=%d\n", start_poc, start_is_intra, frames_in_sw);
+    // SVT_LOG("update_mc_flow start_poc=%d, start_is_intra=%d, frames_in_sw=%d\n", start_poc, start_is_intra, frames_in_sw);
 
     for(frame_idx = 0; frame_idx < 60; frame_idx++)
         encode_context_ptr->poc_map_idx[frame_idx] = -1;
@@ -1863,7 +1866,7 @@ void update_mc_flow(
 
     for(int32_t start_idx = 0; start_idx < (frames_in_sw - 1); start_idx++) {
         if (pcs_array[start_idx]->temporal_layer_index == 0 && (frame_is_intra_only(pcs_array[start_idx]) && pcs_array[start_idx]->picture_number == start_poc)) {
-            uint32_t sw_length = MIN(17, (frames_in_sw - start_idx));
+            int32_t sw_length = MIN(17, (frames_in_sw - start_idx));
             for(frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--) {
                 // SVT_LOG("calling1 before synthesizer frame_idx=%d reordered poc=%d decode_order=%d\n", frame_idx, pcs_array[frame_idx]->picture_number, pcs_array[frame_idx]->decode_order);
                 cutree_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
@@ -1901,12 +1904,12 @@ void update_mc_flow(
 
         if (pcs_array[start_idx]->temporal_layer_index == 0 && start_idx == 1) {
 #if UPDATE_SW
-            uint32_t sw_length = (frames_in_sw - start_idx);
+            int32_t sw_length = (frames_in_sw - start_idx);
 #else
-            uint32_t sw_length = (start_idx + 25) <= frames_in_sw ? 25 : (frames_in_sw - start_idx);
+            int32_t sw_length = (start_idx + 25) <= frames_in_sw ? 25 : (frames_in_sw - start_idx);
 #endif
             PictureParentControlSet *pcs_array_reorder[60] = {NULL, };
-            for (uint32_t index = 0; index < sw_length; index++) {
+            for (int32_t index = 0; index < sw_length; index++) {
 #if UPDATE_SW
                 pcs_array_reorder[index] = pcs_array[start_idx + index];
 #else
