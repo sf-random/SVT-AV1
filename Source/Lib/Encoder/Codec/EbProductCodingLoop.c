@@ -1993,7 +1993,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 }
                 else {
 #if M8_NIC
-#if M9_SETTINGS
+#if M9_SETTINGS && !M7_SETTINGS
                     // INTER
                     inter_scaling_num = 1;
                     inter_scaling_denom = 8;

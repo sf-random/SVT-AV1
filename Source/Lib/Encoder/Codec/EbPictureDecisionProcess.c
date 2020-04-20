@@ -989,9 +989,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if M8_MPPD
     if (pcs_ptr->enc_mode <= ENC_M5)
         pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th = 0;
-#if M9_SETTINGS
+#if M9_SETTINGS || M7_SETTINGS
     else
-        pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th = pcs_ptr->slice_type == I_SLICE ? 0 : 101;
+        pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th = pcs_ptr->slice_type == I_SLICE ? 0 : (uint8_t) ~0;
 #else
     else
         pcs_ptr->post_pd0_pred_only_percentage_non_zero_coeff_th = pcs_ptr->slice_type == I_SLICE ? 0 : 50;
