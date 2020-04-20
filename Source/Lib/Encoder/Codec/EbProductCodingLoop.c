@@ -10114,16 +10114,10 @@ void block_based_depth_reduction(
             }
 
             // Get sq_to_best_nsq_deviation
-#if 0//M8_CLEAN_UP
-            int64_t sq_to_best_nsq_deviation = MAX_SIGNED_VALUE;
-            if (context_ptr->best_nsq_default_cost != MAX_MODE_COST)
-                sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
-            if (current_depth_has_coeff == EB_FALSE &&
-#else
             int64_t sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
 
             if (current_depth_has_coeff == EB_FALSE && //current_depth_block_energy <= context_ptr->depth_reduction_ctrls.quant_coeff_energy_th &&
-#endif
+
                 sq_to_best_nsq_deviation <= context_ptr->depth_reduction_ctrls.sq_to_best_nsq_deviation_th &&
                 current_to_parent_deviation >= context_ptr->depth_reduction_ctrls.current_to_parent_deviation_th) {
                 set_child_to_be_skipped(
