@@ -617,6 +617,9 @@ typedef struct PictureParentControlSet {
     // Multi-modes signal(s)
 #if DEPTH_PART_CLEAN_UP
     MultiPassPdLevel multi_pass_pd_level;
+#if M8_MPPD
+    uint8_t post_pd0_pred_only_percentage_non_zero_coeff_th;
+#endif
     EbBool sb_64x64_simulated;
 #if !M8_4x4
     EbBool disallow_4x4;
