@@ -1532,7 +1532,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         pd_pass = PD_PASS_2;
     }
 #endif
-#if DISALLOW_NSQ_FIX_2
+#if OPT_BLOCK_INDICES_GEN_2
 #if SB_CLASSIFIER
     // sb_classifier levels
     // Level                Settings
@@ -1985,7 +1985,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      }
 #endif
 #if SB_CLASSIFIER
-#if DISALLOW_NSQ_FIX_2
+#if OPT_BLOCK_INDICES_GEN_2
      context_ptr->md_disallow_nsq = (context_ptr->enable_area_based_cycles_allocation &&  context_ptr->sb_class == HIGH_COMPLEX_CLASS ) ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #else
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
@@ -1993,7 +1993,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #elif REDUCE_COMPLEX_CLIP_CYCLES
      context_ptr->md_disallow_nsq = context_ptr->pic_class == 2 ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
-#if !DISALLOW_NSQ_FIX_2
+#if !OPT_BLOCK_INDICES_GEN_2
 #if SB_CLASSIFIER
     // sb_classifier levels
     // Level                Settings
@@ -2578,7 +2578,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT)
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR17_ADOPTIONS
+#if M8_RDOQ
+                if (enc_mode <= ENC_M5)
+#else
                 if (enc_mode <= ENC_M8)
+#endif
 #else
 #if MAR4_M6_ADOPTIONS
                 if (enc_mode <= ENC_M5)
@@ -4792,7 +4796,7 @@ static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_inde
     }
 }
 
-#if DISALLOW_NSQ_FIX_0
+#if OPT_BLOCK_INDICES_GEN_0
 static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint32_t sb_index) {
 
@@ -4817,7 +4821,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 
-#if DISALLOW_NSQ_FIX_2
+#if OPT_BLOCK_INDICES_GEN_2
             tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
 #else
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
@@ -5096,7 +5100,7 @@ void derive_start_end_depth(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint
         *e_depth = 1;
     else
         *e_depth = 0;
-#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_1  // refinement rest
+#if DEPTH_PART_CLEAN_UP && !OPT_BLOCK_INDICES_GEN_1  // refinement rest
     *s_depth =  MAX((sb_size == BLOCK_128X128 && pcs_ptr->parent_pcs_ptr->sb_64x64_simulated ? 1 : 0) - blk_geom->depth, *s_depth);
     *e_depth = MIN((pcs_ptr->parent_pcs_ptr->disallow_4x4 ? 4 :5) - blk_geom->depth, *e_depth);
 #endif
@@ -5264,7 +5268,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if MAR30_ADOPTIONS
                         else if ((pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M1)) {
 
-#if DISALLOW_NSQ_FIX_1
+#if OPT_BLOCK_INDICES_GEN_1
                             s_depth = -3;
                             e_depth =  3;
 #else
@@ -5311,7 +5315,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if MAR23_ADOPTIONS
                         if (pcs_ptr->slice_type == I_SLICE) {
 #if MAR25_ADOPTIONS
-#if DISALLOW_NSQ_FIX_1
+#if OPT_BLOCK_INDICES_GEN_1
                             s_depth =  -1;
                             e_depth =  (MR_MODE_MULTI_PASS_PD || pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 3 : 2;
 #else
@@ -5497,7 +5501,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #else
                             if (MR_MODE_MULTI_PASS_PD) { // Active when multi_pass_pd_level = PIC_MULTI_PASS_PD_MODE_1 or PIC_MULTI_PASS_PD_MODE_2 or PIC_MULTI_PASS_PD_MODE_3
 #endif
-#if DISALLOW_NSQ_FIX_1
+#if OPT_BLOCK_INDICES_GEN_1
                                 s_depth = -1;
                                 e_depth =  1;
 #else
@@ -5521,7 +5525,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         } else {
                             s_depth = 0;
 #if DEPTH_PART_CLEAN_UP // refinement rest
-#if DISALLOW_NSQ_FIX_1
+#if OPT_BLOCK_INDICES_GEN_1
                             e_depth = 1;
 #else
                             e_depth = (blk_geom->sq_size == 8 && pcs_ptr->parent_pcs_ptr->disallow_4x4) ? 0 : 1;
@@ -5541,7 +5545,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 : (blk_geom->sq_size == 16) ? MAX(-2, s_depth)
                                 : s_depth;
                     }
-#if DISALLOW_NSQ_FIX_1
+#if OPT_BLOCK_INDICES_GEN_1
                     if (context_ptr->disallow_4x4) {
 #else
                     if (pcs_ptr->parent_pcs_ptr->disallow_4x4) {
@@ -5581,7 +5585,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                 : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
 }
-#if DISALLOW_NSQ_FIX_0
+#if OPT_BLOCK_INDICES_GEN_0
 void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     EncDecContext *context_ptr, MdcSbData *results_ptr) {
     results_ptr->leaf_count = 0;
@@ -5603,7 +5607,7 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-#if DISALLOW_NSQ_FIX_2
+#if OPT_BLOCK_INDICES_GEN_2
             tot_d1_blocks = (context_ptr->md_context->md_disallow_nsq) ? 1 :
 #else
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
@@ -6130,7 +6134,7 @@ void *enc_dec_kernel(void *input_ptr) {
                     // Configure the SB
                     mode_decision_configure_sb(
                         context_ptr->md_context, pcs_ptr, (uint8_t)sb_ptr->qp);
-#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
+#if DEPTH_PART_CLEAN_UP && !OPT_BLOCK_INDICES_GEN_0
                     // Build the t=0 cand_block_array
                     build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
 #endif
@@ -6181,7 +6185,7 @@ void *enc_dec_kernel(void *input_ptr) {
                         signal_derivation_enc_dec_kernel_oq(
                             scs_ptr, pcs_ptr, context_ptr->md_context);
 
-#if DISALLOW_NSQ_FIX_0
+#if OPT_BLOCK_INDICES_GEN_0
                         // Build the t=0 cand_block_array
                         build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
 #endif
@@ -6282,7 +6286,7 @@ void *enc_dec_kernel(void *input_ptr) {
                                                   sb_origin_y);
                         }
                     }
-#if DISALLOW_NSQ_FIX_0
+#if OPT_BLOCK_INDICES_GEN_0
                     // Build the t=0 cand_block_array
                     else 
                         build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);

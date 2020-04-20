@@ -204,18 +204,20 @@ extern "C" {
 #define SB_CLASSIFIER       1 // Classify the SBs based on the PD0 output and apply specific settings for the detected SBs
 #endif
 #define PRESETS_SHIFT 1 // Shift M4->M3, M5->M4, M8->M5 to avoid empty presets
+#define OPT_BLOCK_INDICES_GEN 1
+#if OPT_BLOCK_INDICES_GEN
+#define OPT_BLOCK_INDICES_GEN_0 1
+#define OPT_BLOCK_INDICES_GEN_1 1
+#define OPT_BLOCK_INDICES_GEN_2 0 // TODO: unify the action of disallow_nsq and complex sb
+#endif
+#define TF_LEVELS 1
+#define TF_X86_KERNEL_FIX 1
+#define M8_SETTINGS 1
+#if M8_SETTINGS
 // Part
 #define M8_4x4 1
 #define M8_NSQ 1
 #define M8_SB_SIZE 1
-#define DISALLOW_NSQ_FIX_0 1
-#define DISALLOW_NSQ_FIX_1 1
-#define DISALLOW_NSQ_FIX_2 0 // TODO: unify the action of disallow_nsq and complex sb
-#if 1
-#define TF_LEVELS 1
-#define TF_X86_KERNEL_FIX 1
-#define MOD_CS2_SETTINGS 1
-#if MOD_CS2_SETTINGS
 // MRP
 #define M8_MRP 1
 //MD 
@@ -234,7 +236,6 @@ extern "C" {
 // SC 
 #define M8_PALETTE 1
 #define M8_IBC 1
-#endif
 // NIC
 #define M8_NIC 1
 #define FASTER_NIC 1
@@ -242,7 +243,6 @@ extern "C" {
 #define M8_HME_ME 1
 #define M8_CLEAN_UP 1 // remove full loop escape
 #define M8_MPPD 1
-
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

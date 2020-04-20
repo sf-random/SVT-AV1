@@ -144,7 +144,7 @@ struct PredictionUnit;
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
     uint32_t tot_d1_blocks; //how many d1 bloks every parent square would have
-#if !DISALLOW_NSQ_FIX_0
+#if !OPT_BLOCK_INDICES_GEN_0
     uint8_t  leaf_index;
 #endif
     EbBool   split_flag;
