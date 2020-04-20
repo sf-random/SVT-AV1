@@ -1506,7 +1506,7 @@ void set_sb_class_controls(ModeDecisionContext *context_ptr) {
         sb_class_ctrls->sb_class_th[MEDIUM_COMPLEX_CLASS] = 6;
         sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] = 4;
         break;
-    default: 
+    default:
         printf("Error - Invalid sb_class_level");
         break;
     }

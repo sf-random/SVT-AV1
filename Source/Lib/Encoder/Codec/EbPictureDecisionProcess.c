@@ -1882,7 +1882,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             context_ptr->tf_level = 2;
         }
     }
-    else 
+    else
         context_ptr->tf_level = 3;
     set_tf_controls(context_ptr, context_ptr->tf_level);
 #endif
