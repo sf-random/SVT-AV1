@@ -239,7 +239,7 @@ extern "C" {
 #define M8_IBC 1
 // NIC
 #define M8_NIC 1
-#define FASTER_NIC 1
+#define FASTER_NIC 0
 // HME/ME
 #define M8_HME_ME 1
 #define M8_CLEAN_UP 1 // remove full loop escape
