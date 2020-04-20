@@ -10114,7 +10114,7 @@ void block_based_depth_reduction(
             }
 
             // Get sq_to_best_nsq_deviation
-#if M8_CLEAN_UP
+#if 0//M8_CLEAN_UP
             int64_t sq_to_best_nsq_deviation = MAX_SIGNED_VALUE;
             if (context_ptr->best_nsq_default_cost != MAX_MODE_COST)
                 sq_to_best_nsq_deviation = (int64_t)(((int64_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost - (int64_t)context_ptr->best_nsq_default_cost) * 100) / (int64_t)context_ptr->best_nsq_default_cost;
