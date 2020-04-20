@@ -388,7 +388,9 @@ typedef struct ModeDecisionContext {
     uint8_t              independent_chroma_nics;
 #endif
     Part                 nsq_table[NSQ_TAB_SIZE];
+#if !M8_CLEAN_UP
     uint8_t              full_loop_escape;
+#endif
     uint8_t              global_mv_injection;
     uint8_t              perform_me_mv_1_8_pel_ref;
     uint8_t              new_nearest_injection;

@@ -7810,17 +7810,22 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         &(candidate_buffer_ptr_array_base[0]);
     ModeDecisionCandidateBuffer *candidate_buffer;
     ModeDecisionCandidate *      candidate_ptr;
-
+#if !M8_CLEAN_UP
     uint32_t best_inter_luma_zero_coeff = 1;
     uint64_t best_full_cost             = 0xFFFFFFFFull;
+#endif
     uint32_t full_loop_candidate_index;
     uint32_t cand_index;
 
     for (full_loop_candidate_index = 0; full_loop_candidate_index < fullCandidateTotalCount;
          ++full_loop_candidate_index) {
+#if M8_CLEAN_UP
+        cand_index = context_ptr->best_candidate_index_array[full_loop_candidate_index];
+#else
         cand_index = (context_ptr->full_loop_escape == 2)
                          ? context_ptr->sorted_candidate_index_array[full_loop_candidate_index]
                          : context_ptr->best_candidate_index_array[full_loop_candidate_index];
+#endif
         candidate_buffer = candidate_buffer_ptr_array[cand_index];
         candidate_ptr    = candidate_buffer->candidate_ptr;
 
@@ -7860,7 +7865,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
-
+#if !M8_CLEAN_UP
         if (pcs_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) &&
                 best_inter_luma_zero_coeff == 0) {
@@ -7868,7 +7873,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 return;
             }
         }
-
+#endif
         if (context_ptr->chroma_at_last_md_stage) {
             if (context_ptr->blk_geom->sq_size < 128) {
                 if (context_ptr->blk_geom->has_uv) {
@@ -7938,7 +7943,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                        blk_origin_index,
                        blk_chroma_origin_index,
                        ref_fast_cost);
-
+#if !M8_CLEAN_UP
         if (context_ptr->full_loop_escape) {
             if (pcs_ptr->slice_type != I_SLICE) {
                 if (candidate_ptr->type == INTER_MODE) {
@@ -7949,6 +7954,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 }
             }
         }
+#endif
     }
 }
 
@@ -9325,8 +9331,12 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         blk_ptr,
         candidate_buffer_ptr_array,
         context_ptr->md_stage_3_total_count,
+#if M8_CLEAN_UP
+        context_ptr->best_candidate_index_array,
+#else
         (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array
                                                 : context_ptr->best_candidate_index_array,
+#endif
         context_ptr->prune_ref_frame_for_rec_partitions,
         &best_intra_mode);
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];

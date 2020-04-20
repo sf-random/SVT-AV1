@@ -2057,6 +2057,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
 #endif
 #endif
+#if !M8_CLEAN_UP
     // Set the full loop escape level
     // Level                Settings
     // 0                    Off
@@ -2090,6 +2091,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->full_loop_escape = 0;
         else
             context_ptr->full_loop_escape = 2;
+#endif
 
 
     // Set global MV injection
@@ -5591,8 +5593,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     }
 }
 #if OPT_BLOCK_INDICES_GEN_0
-void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-    EncDecContext *context_ptr, MdcSbData *results_ptr) {
+static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, uint32_t sb_index) {
+
+    MdcSbData *results_ptr = context_ptr->mdc_sb_array;
+
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
     uint32_t tot_d1_blocks;
@@ -5603,17 +5607,17 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->sb_64x64_simulated)) ||
-            (blk_geom->sq_size == 4 && context_ptr->md_context->disallow_4x4)
+            (blk_geom->sq_size == 4 && context_ptr->disallow_4x4)
             ? 0
             : 1;
 
         // split_flag is f(min_sq_size)
-        int32_t min_sq_size = (context_ptr->md_context->disallow_4x4) ? 8 : 4;
+        int32_t min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
-        if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 #if OPT_BLOCK_INDICES_GEN_2
-            tot_d1_blocks = (context_ptr->md_context->md_disallow_nsq) ? 1 :
+            tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
 #else
             tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
 #endif
@@ -5624,7 +5628,7 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
             for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
                 blk_geom = get_blk_geom_mds(blk_index);
 
-                if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index]) {
+                if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
 
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
@@ -6192,7 +6196,7 @@ void *enc_dec_kernel(void *input_ptr) {
 
 #if OPT_BLOCK_INDICES_GEN_0
                         // Build the t=0 cand_block_array
-                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #endif
                         // [PD_PASS_0] Mode Decision - Reduce the total number of partitions to be tested in later stages.
                         // Input : mdc_blk_ptr built @ mdc process (up to 4421)
@@ -6297,9 +6301,9 @@ void *enc_dec_kernel(void *input_ptr) {
                         }
                     }
 #if OPT_BLOCK_INDICES_GEN_0
-                    // Build the t=0 cand_block_array
-                    else 
-                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr, mdc_ptr);
+                    else
+                        // Build the t=0 cand_block_array
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #endif
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
