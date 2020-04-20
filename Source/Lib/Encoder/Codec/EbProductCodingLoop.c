@@ -8958,7 +8958,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
     }
 }
 
-#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_2
 EbBool is_block_allowed(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     if((context_ptr->blk_geom->sq_size <=  8 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
        (context_ptr->blk_geom->sq_size <= 16 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_16x16) ||
@@ -9007,7 +9007,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
 
-#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_2
     if (is_block_allowed(pcs_ptr, context_ptr)) {
 #endif
     const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
@@ -9637,7 +9637,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
-#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_0
+#if DEPTH_PART_CLEAN_UP && !DISALLOW_NSQ_FIX_2
     } else {
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost         = MAX_MODE_COST;
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
@@ -10356,13 +10356,17 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if SB_CLASSIFIER
     // Store defalut settings
     uint8_t default_md_tx_size_search_mode = context_ptr->md_tx_size_search_mode;
+#if !DISALLOW_NSQ_FIX_2
     uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
+#endif
     // Update nsq and txs settings based on the sb_class
     if (context_ptr->enable_area_based_cycles_allocation) {
         if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
             context_ptr->md_tx_size_search_mode = 0;
+#if !DISALLOW_NSQ_FIX_2
         if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
             context_ptr->md_disallow_nsq = 1;
+#endif
     }
 #endif
     do {
@@ -10748,7 +10752,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if SB_CLASSIFIER
     // Restor the default settings
     context_ptr->md_tx_size_search_mode = default_md_tx_size_search_mode;
+#if !DISALLOW_NSQ_FIX_2
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
+#endif
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 

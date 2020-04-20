@@ -210,6 +210,7 @@ extern "C" {
 #define M8_SB_SIZE 1
 #define DISALLOW_NSQ_FIX_0 1
 #define DISALLOW_NSQ_FIX_1 1
+#define DISALLOW_NSQ_FIX_2 0 // TODO: unify the action of disallow_nsq and complex sb
 #if 1
 #define TF_LEVELS 1
 #define RDOQ_LEVELS 1

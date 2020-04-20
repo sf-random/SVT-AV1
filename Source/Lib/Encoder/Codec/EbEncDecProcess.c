@@ -1560,6 +1560,69 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         pd_pass = PD_PASS_2;
     }
 #endif
+#if DISALLOW_NSQ_FIX_2
+#if SB_CLASSIFIER
+    // sb_classifier levels
+    // Level                Settings
+    // 0                    Off
+    // 1                    TH 80%
+    // 2                    TH 70%
+    // 3                    TH 60%
+    // 4                    TH 50%
+    // 5                    TH 40%
+    if (pd_pass == PD_PASS_0)
+        context_ptr->enable_area_based_cycles_allocation = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->enable_area_based_cycles_allocation = 0;
+    else {
+        if (pcs_ptr->slice_type == I_SLICE)
+            context_ptr->enable_area_based_cycles_allocation = 0;
+        else
+            context_ptr->enable_area_based_cycles_allocation = 1;
+    }
+
+    if (MR_MODE) {
+        if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 1;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 0;
+        else
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 0;
+    }
+    else if (enc_mode == ENC_M0) {
+        if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 3;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 1;
+        else
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 0;
+    }
+    else if (enc_mode == ENC_M1) {
+        if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 4;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 3;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
+        else
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 1;
+    }
+    else {
+        if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 5;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 4;
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 3;
+        else
+            context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
+    }
+#endif
+#endif
     // Tx_search Level                                Settings
     // 0                                              OFF
     // 1                                              Tx search at encdec
@@ -1956,10 +2019,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      }
 #endif
 #if SB_CLASSIFIER
+#if DISALLOW_NSQ_FIX_2
+     context_ptr->md_disallow_nsq = (context_ptr->enable_area_based_cycles_allocation &&  context_ptr->sb_class == HIGH_COMPLEX_CLASS ) ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
+#else
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
+#endif
 #elif REDUCE_COMPLEX_CLIP_CYCLES
      context_ptr->md_disallow_nsq = context_ptr->pic_class == 2 ? 1 : pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
+#if !DISALLOW_NSQ_FIX_2
 #if SB_CLASSIFIER
     // sb_classifier levels
     // Level                Settings
@@ -2021,7 +2089,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
     }
 #endif
-
+#endif
     // Set the full loop escape level
     // Level                Settings
     // 0                    Off
@@ -4806,7 +4874,11 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 
+#if DISALLOW_NSQ_FIX_2
             tot_d1_blocks = (context_ptr->md_disallow_nsq) ? 1 :
+#else
+            tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
+#endif
                 blk_geom->sq_size == 128
                 ? 17
                 : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
@@ -5591,8 +5663,11 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-
+#if DISALLOW_NSQ_FIX_2
             tot_d1_blocks = (context_ptr->md_context->md_disallow_nsq) ? 1 :
+#else
+            tot_d1_blocks = (pcs_ptr->parent_pcs_ptr->disallow_nsq) ? 1 :
+#endif
                 blk_geom->sq_size == 128
                 ? 17
                 : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
