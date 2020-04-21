@@ -72,8 +72,12 @@
 
 void setup_rtcd_non8(CPU_FLAGS flags) {
     (void) flags;
+#if PR1238_ADOPTIONS
+    eb_av1_wiener_convolve_add_src = eb_av1_wiener_convolve_add_src_c;
+#else
     eb_av1_compute_stats = eb_av1_compute_stats_c;
     eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
+#endif
 }
 void setup_rtcd_internal(CPU_FLAGS flags) {
     /** Should be done during library initialization,
