@@ -211,6 +211,13 @@ extern "C" {
 #define TWO_X_NIC     0
 #define MR_MD_PRUNING 0
 #endif
+#define DISABLE_NEW_NEAREST_NEAR 0
+#define DISABLE_MRP              0
+#define DISABLE_IND_CHROMA       0
+#define DISABLE_PRED_ME          0
+#define DISABLE_IFS              0
+#define DISABLE_OBMC             0
+#define DISABLE_WARPED           0
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

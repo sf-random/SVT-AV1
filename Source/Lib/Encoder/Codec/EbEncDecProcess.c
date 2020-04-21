@@ -1738,7 +1738,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else
         context_ptr->interpolation_search_level = IT_SEARCH_OFF;
-
+#if DISABLE_IFS
+    if(pd_pass == PD_PASS_2)
+        context_ptr->interpolation_search_level = IT_SEARCH_OFF;
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -1800,7 +1803,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else // use specified level
         context_ptr->chroma_level =
         sequence_control_set_ptr->static_config.set_chroma_mode;
-
+#if DISABLE_IND_CHROMA
+    if(pd_pass == PD_PASS_2)
+        context_ptr->chroma_level = CHROMA_MODE_2;
+#endif
     // Chroma independent modes search
     // Level                Settings
     // 0                    post first md_stage
@@ -1874,6 +1880,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->intra_chroma_search_follows_intra_luma_injection = 0;
 #endif
 #endif
+
 
 #if SB_CLASSIFIER
      context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
@@ -2061,7 +2068,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->new_nearest_near_comb_injection =
             sequence_control_set_ptr->static_config.new_nearest_comb_inject;
-
+#if DISABLE_NEW_NEAREST_NEAR
+    if(pd_pass == PD_PASS_2)
+        context_ptr->new_nearest_near_comb_injection = 0;
+#endif
     // Set warped motion injection
     // Level                Settings
     // 0                    OFF
@@ -2076,6 +2086,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->warped_motion_injection = 1;
 
+#if DISABLE_WARPED
+    if(pd_pass == PD_PASS_2)
+        context_ptr->warped_motion_injection = 0;
+#endif
     // Set unipred3x3 injection
     // Level                Settings
     // 0                    OFF
@@ -2247,6 +2261,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->predictive_me_level = 0;
+#if DISABLE_PRED_ME
+    if(pd_pass == PD_PASS_2)
+        context_ptr->predictive_me_level = 0;
+#endif
 
 #if ADD_SAD_AT_PME_SIGNAL
     // Level                    Settings
@@ -2872,6 +2890,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_pic_obmc_mode =
         pcs_ptr->parent_pcs_ptr->pic_obmc_mode;
 
+#if DISABLE_OBMC
+    if (pd_pass == PD_PASS_2) {
+        context_ptr->md_pic_obmc_mode = 0;
+    }
+#endif
 #if OBMC_FAST
     set_obmc_controls(context_ptr,context_ptr->md_pic_obmc_mode);
 #endif
@@ -3015,7 +3038,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_max_ref_count = 4;
 #endif
-
+#if DISABLE_MRP
+    if (pd_pass == PD_PASS_2) {
+        context_ptr->md_max_ref_count = 1;
+    }
+#endif
     // Set md_skip_mvp_generation (and use (0,0) as MVP instead)
     if (pd_pass == PD_PASS_0)
         context_ptr->md_skip_mvp_generation = EB_TRUE;
