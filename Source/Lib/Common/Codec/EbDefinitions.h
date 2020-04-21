@@ -218,6 +218,14 @@ extern "C" {
 #define DISABLE_IFS              0
 #define DISABLE_OBMC             0
 #define DISABLE_WARPED           0
+
+#define SPEED_UP_FEATURE         0
+#if SPEED_UP_FEATURE
+#define MRP_TEST                 0
+#define PRED_ME_TEST             0
+#define SWICHABLE_ENC_MODE       0
+#endif
+#define MR_TXS_EVERYWHERE        0
 #endif
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

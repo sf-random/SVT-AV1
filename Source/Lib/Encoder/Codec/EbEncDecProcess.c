@@ -1524,6 +1524,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     uint8_t enc_mode = pcs_ptr->enc_mode;
     uint8_t pd_pass = context_ptr->pd_pass;
+#if SWICHABLE_ENC_MODE
+    if (pd_pass == PD_PASS_2) {
+        if (SWICHABLE_ENC_MODE == 1) {
+            if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
+                enc_mode = 2;
+        }
+        else if (SWICHABLE_ENC_MODE == 2) {
+            if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
+                enc_mode = 2;
+        }
+        else if (SWICHABLE_ENC_MODE == 3) {
+            if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
+                enc_mode = 2;
+        }
+    }
+#endif
 #if USE_M8_IN_PD1
     if (pd_pass == PD_PASS_1) {
         enc_mode = ENC_M8;

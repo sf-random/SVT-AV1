@@ -7798,7 +7798,11 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
             context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
     }
 #else
+#if MR_TXS_EVERYWHERE
+        context_ptr->md_staging_tx_size_mode = EB_TRUE;
+#else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+#endif
 #endif
 #else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7) ? 1 : 0;
@@ -10327,6 +10331,40 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         }
     }
 #endif
+#if MRP_TEST 
+    uint8_t default_md_max_ref_count = context_ptr->md_max_ref_count;
+    if (context_ptr->enable_area_based_cycles_allocation) {
+        if (MRP_TEST == 1) {
+            if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }
+        else if (MRP_TEST == 2) {
+            if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }
+        else if (MRP_TEST == 3) {
+            if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }
+    }
+#endif
+#if PRED_ME_TEST
+    uint8_t default_predictive_me_level = context_ptr->predictive_me_level;
+    if (context_ptr->enable_area_based_cycles_allocation) {
+        if (PRED_ME_TEST == 1) {
+            if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }
+        else if (PRED_ME_TEST == 2) {
+            if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }
+        else if (PRED_ME_TEST == 3) {
+            if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }
+    }
+#endif
 #endif
     do {
         blk_idx_mds = leaf_data_array[blk_index].mds_idx;
@@ -10720,6 +10758,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     context_ptr->md_stage_1_class_prune_th = default_md_stage_1_class_prune_th;
     context_ptr->md_stage_2_3_cand_prune_th = default_md_stage_2_3_cand_prune_th;
     context_ptr->md_stage_2_3_class_prune_th = default_md_stage_2_3_class_prune_th;
+#endif
+#if MRP_TEST
+    context_ptr->md_max_ref_count = default_md_max_ref_count;
+#endif
+#if PRED_ME_LEVEL
+    context_ptr->predictive_me_level = default_predictive_me_level;
 #endif
 #endif
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
