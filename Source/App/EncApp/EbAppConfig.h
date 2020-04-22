@@ -415,8 +415,8 @@ typedef struct EbConfig {
     uint32_t scene_change_detection;
     uint32_t rate_control_mode;
     uint32_t look_ahead_distance;
-#if CUTREE_LA
-    int8_t   enable_cutree_in_la;
+#if TPL_LA
+    int8_t   enable_tpl_la;
 #endif
     uint32_t target_bit_rate;
     uint32_t max_qp_allowed;

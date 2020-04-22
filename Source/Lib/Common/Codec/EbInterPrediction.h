@@ -14,7 +14,7 @@
 #include "filter.h"
 #include "convolve.h"
 #include "EbCabacContextModel.h"
-#if CUTREE_LA
+#if TPL_LA
 #include "../../Encoder/Codec/EbCodingUnit.h"
 #if CUTREE_MV_CLIP
 #include "Av1Common.h"
@@ -161,7 +161,7 @@ typedef struct WedgeParamsType
         InterpFilterParams *params_x, InterpFilterParams *params_y,
         int32_t w, int32_t h);
 
-#if CUTREE_LA
+#if TPL_LA
     void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
                            int block_height, int pix_row, int pix_col,
                            int subsampling_x, int subsampling_y, int bit_depth,

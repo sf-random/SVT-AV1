@@ -18,7 +18,7 @@
 #include "EbSegmentationParams.h"
 #include "EbMotionEstimationContext.h"
 
-
+#if !QP2QINDEX
 static const uint8_t q_index_to_quantizer[] = {
     0,  0,  0,  0,  1,  1,  1,  1,  2,  2,  2,  2,  3,  3,  3,  3,  4,  4,  4,  4,  5,  5,  5,  5,
     6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  8,  9,  9,  9,  9,  10, 10, 10, 10, 11, 11, 11, 11,
@@ -31,6 +31,7 @@ static const uint8_t q_index_to_quantizer[] = {
     48, 48, 48, 48, 49, 49, 49, 49, 50, 50, 50, 50, 51, 51, 51, 51, 52, 52, 52, 52, 53, 53, 53, 53,
     54, 54, 54, 54, 55, 55, 55, 55, 56, 56, 56, 56, 57, 57, 57, 57, 58, 58, 58, 58, 59, 59, 59, 59,
     60, 60, 60, 60, 61, 61, 61, 61, 61, 62, 62, 62, 62, 62, 62, 63};
+#endif
 
 uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
     int index0, index1;

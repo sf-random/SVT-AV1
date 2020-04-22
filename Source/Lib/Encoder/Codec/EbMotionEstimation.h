@@ -53,7 +53,7 @@ extern "C" {
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc       *input_ptr);
 
-#if CUTREE_LA
+#if TPL_LA
     extern EbErrorType av1_open_loop_intra_search(
         PictureParentControlSet   *picture_control_set_ptr,
         MotionEstimationContext_t *context_ptr,

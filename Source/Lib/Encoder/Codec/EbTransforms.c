@@ -3398,7 +3398,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
     return return_error;
 }
 
-#if CUTREE_LA
+#if TPL_LA
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, tran_low_t *coeff,
                                   int diff_stride, TxfmParam *txfm_param) {
   assert(txfm_param->tx_type == DCT_DCT);

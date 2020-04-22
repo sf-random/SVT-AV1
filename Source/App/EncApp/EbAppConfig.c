@@ -136,8 +136,8 @@
 #define MIN_QP_TOKEN "-min-qp"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
-#if CUTREE_LA
-#define ENABLE_CUTREE_LA_TOKEN "-enable-cutree-la"
+#if TPL_LA
+#define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
 #endif
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
@@ -470,9 +470,9 @@ static void set_scene_change_detection(const char *value, EbConfig *cfg) {
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->look_ahead_distance = strtoul(value, NULL, 0);
 };
-#if CUTREE_LA
-static void set_enable_cutree_in_la(const char *value, EbConfig *cfg) {
-    cfg->enable_cutree_in_la = strtoul(value, NULL, 0);
+#if TPL_LA
+static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
+    cfg->enable_tpl_la = strtoul(value, NULL, 0);
 };
 #endif
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
@@ -1235,8 +1235,8 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance", set_look_ahead_distance},
-#if CUTREE_LA
-    {SINGLE_INPUT, ENABLE_CUTREE_LA_TOKEN, "EnableCutreeInLA", set_enable_cutree_in_la},
+#if TPL_LA
+    {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableCutreeInLA", set_enable_tpl_la},
 #endif
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
@@ -1509,8 +1509,8 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->qp                  = 50;
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if CUTREE_LA
-    config_ptr->enable_cutree_in_la = 0;
+#if TPL_LA
+    config_ptr->enable_tpl_la = 0;
 #endif
     config_ptr->target_bit_rate     = 7000000;
     config_ptr->max_qp_allowed      = 63;

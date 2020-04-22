@@ -1294,7 +1294,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
     return return_error;
 }
 
-#if CUTREE_LA
+#if TPL_LA
 #define USE_PADDING_FIX 1
 EbErrorType update_neighbor_samples_array_open_loop_mb(
         uint8_t                           *above_ref,

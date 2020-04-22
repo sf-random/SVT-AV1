@@ -105,8 +105,8 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.tile_columns           = config->tile_columns;
     callback_data->eb_enc_parameters.scene_change_detection = config->scene_change_detection;
     callback_data->eb_enc_parameters.look_ahead_distance    = config->look_ahead_distance;
-#if CUTREE_LA
-    callback_data->eb_enc_parameters.enable_cutree_in_la    = config->enable_cutree_in_la;
+#if TPL_LA
+    callback_data->eb_enc_parameters.enable_tpl_la          = config->enable_tpl_la;
 #endif
     callback_data->eb_enc_parameters.rate_control_mode      = config->rate_control_mode;
     callback_data->eb_enc_parameters.target_bit_rate        = config->target_bit_rate;

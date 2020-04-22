@@ -15,7 +15,7 @@
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
-#if CUTREE_LA
+#if TPL_LA
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
@@ -818,7 +818,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
-#if CUTREE_LA
+#if TPL_LA
 #if LAMBDA_SCALING
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
 {
@@ -850,15 +850,15 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
                     if (mi_row >= cm->mi_rows || mi_col >= mi_cols_sr) continue;
 
                     const int index1 = (mi_row >> (1 + pcs_ptr->is_720p_or_larger)) * stride + (mi_col >> (1 + pcs_ptr->is_720p_or_larger));
-                    CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[index1];
+                    TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[index1];
                     int64_t mc_dep_delta =
-                        RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
-                    intra_cost  += (double)(cutree_stats_ptr->recrf_dist << RDDIV_BITS);
-                    mc_dep_cost += (double)(cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                        RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                    intra_cost  += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                     if (dbg) {
                         printf("\t(%d, %d): intra_cost %f, mc_dep_cost %f, base_rdmult %d, mc rate %ld, mc dist %ld, mc delta %ld\n",
                                 mi_col*4, mi_row*4, intra_cost, mc_dep_cost,
-                                pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist, mc_dep_delta);
+                                pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist, mc_dep_delta);
                     }
                 }
             }
@@ -914,7 +914,7 @@ static int rate_estimator(tran_low_t *qcoeff, int eob, TxSize tx_size) {
   return (rate_cost << AV1_PROB_COST_SHIFT);
 }
 
-static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *cutree_stats_ptr,
+static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats  *tpl_stats_ptr,
         uint32_t mb_origin_x, uint32_t mb_origin_y) {
   const int mi_height = mi_size_high[BLOCK_16X16];
   const int mi_width = mi_size_wide[BLOCK_16X16];
@@ -922,12 +922,12 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *c
   const int shift = 3 + pcs_ptr->is_720p_or_larger;
   const int aligned16_width = ((pcs_ptr->aligned_width + 15) / 16) << 4;
 
-  int64_t intra_cost = cutree_stats_ptr->intra_cost / (mi_height * mi_width);
-  int64_t inter_cost = cutree_stats_ptr->inter_cost / (mi_height * mi_width);
-  int64_t srcrf_dist = cutree_stats_ptr->srcrf_dist / (mi_height * mi_width);
-  int64_t recrf_dist = cutree_stats_ptr->recrf_dist / (mi_height * mi_width);
-  int64_t srcrf_rate = cutree_stats_ptr->srcrf_rate / (mi_height * mi_width);
-  int64_t recrf_rate = cutree_stats_ptr->recrf_rate / (mi_height * mi_width);
+  int64_t intra_cost = tpl_stats_ptr->intra_cost / (mi_height * mi_width);
+  int64_t inter_cost = tpl_stats_ptr->inter_cost / (mi_height * mi_width);
+  int64_t srcrf_dist = tpl_stats_ptr->srcrf_dist / (mi_height * mi_width);
+  int64_t recrf_dist = tpl_stats_ptr->recrf_dist / (mi_height * mi_width);
+  int64_t srcrf_rate = tpl_stats_ptr->srcrf_rate / (mi_height * mi_width);
+  int64_t recrf_rate = tpl_stats_ptr->recrf_rate / (mi_height * mi_width);
 
   intra_cost = AOMMAX(1, intra_cost);
   inter_cost = AOMMAX(1, inter_cost);
@@ -937,7 +937,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *c
   recrf_rate = AOMMAX(1, recrf_rate);
 
   for (int idy = 0; idy < mi_height; idy += step) {
-    CutreeStats *dst_ptr = pcs_ptr->cutree_stats[((mb_origin_y >> shift) + (idy >> 1)) * (aligned16_width >> shift) + (mb_origin_x >> shift)];
+    TplStats *dst_ptr = pcs_ptr->tpl_stats[((mb_origin_y >> shift) + (idy >> 1)) * (aligned16_width >> shift) + (mb_origin_x >> shift)];
     for (int idx = 0; idx < mi_width; idx += step) {
       dst_ptr->intra_cost = intra_cost;
       dst_ptr->inter_cost = inter_cost;
@@ -945,8 +945,8 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, CutreeStats  *c
       dst_ptr->recrf_dist = recrf_dist;
       dst_ptr->srcrf_rate = srcrf_rate;
       dst_ptr->recrf_rate = recrf_rate;
-      dst_ptr->mv = cutree_stats_ptr->mv;
-      dst_ptr->ref_frame_poc = cutree_stats_ptr->ref_frame_poc;
+      dst_ptr->mv = tpl_stats_ptr->mv;
+      dst_ptr->ref_frame_poc = tpl_stats_ptr->ref_frame_poc;
       ++dst_ptr;
     }
   }
@@ -1062,13 +1062,12 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
 * Genrate CUTree MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
 ************************************************/
-void cutree_mc_flow_dispenser(
+void tpl_mc_flow_dispenser(
     EncodeContext                   *encode_context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_ptr,
-    int32_t                          frame_idx,
-    uint64_t                         start_poc
-#if CU_TREE_REENCODE
+    int32_t                          frame_idx
+#if TPL_LA_REENCODE
     , int32_t reencode
 #endif
 )
@@ -1089,7 +1088,7 @@ void cutree_mc_flow_dispenser(
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     int64_t recon_error = 1, sse = 1;
-    CutreeStats  cutree_stats;
+    TplStats  tpl_stats;
 
     (void)scs_ptr;
 
@@ -1115,7 +1114,7 @@ void cutree_mc_flow_dispenser(
 
     Quants *const quants_bd = &pcs_ptr->quants_bd;
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
-#if CU_TREE_REENCODE
+#if TPL_LA_REENCODE
     if (reencode) {
       //  qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]/4;
         if (pcs_ptr->slice_type == I_SLICE) {
@@ -1183,7 +1182,7 @@ void cutree_mc_flow_dispenser(
     mb_plane.zbin_qtx        = pcs_ptr->quants_bd.y_zbin[qIndex];
     mb_plane.round_qtx       = pcs_ptr->quants_bd.y_round[qIndex];
     mb_plane.dequant_qtx     = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
-    //printf("dispenser begin poc=%d qp=%d qIndex=%d zbin_qtx[0~3]=%d %d %d %d\n", pcs_ptr->picture_number, scs_ptr->static_config.qp, qIndex, mb_plane.zbin_qtx[0], mb_plane.zbin_qtx[1], mb_plane.zbin_qtx[2], mb_plane.zbin_qtx[3]);
+    // printf("dispenser begin poc=%d qp=%d qIndex=%d zbin_qtx[0~3]=%d %d %d %d\n", pcs_ptr->picture_number, scs_ptr->static_config.qp, qIndex, mb_plane.zbin_qtx[0], mb_plane.zbin_qtx[1], mb_plane.zbin_qtx[2], mb_plane.zbin_qtx[3]);
     pcs_ptr->base_rdmult = av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 
     // Walk the first N entries in the sliding window
@@ -1215,8 +1214,6 @@ void cutree_mc_flow_dispenser(
                 if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
                     uint32_t mb_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
                     uint32_t mb_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
-//if(pcs_ptr->picture_number == 0 && sb_origin_y>=704)
-//printf("mb loop start sb_index=%d, mb_origin_x=%d, mb_origin_y=%d, pa_blk_index=%d, origin_xy = %d %d\n", sb_index, mb_origin_x, mb_origin_y, pa_blk_index, blk_stats_ptr->origin_x, blk_stats_ptr->origin_y);
                     const int dst_buffer_stride = input_picture_ptr->stride_y;
                     const int dst_mb_offset = mb_origin_y * dst_buffer_stride + mb_origin_x;
                     const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
@@ -1231,7 +1228,7 @@ void cutree_mc_flow_dispenser(
                     uint8_t best_mode = DC_PRED;
                     uint8_t *src_mb = input_picture_ptr->buffer_y + input_picture_ptr->origin_x + mb_origin_x +
                                      (input_picture_ptr->origin_y + mb_origin_y) * input_picture_ptr->stride_y;
-                    memset(&cutree_stats, 0, sizeof(cutree_stats));
+                    memset(&tpl_stats, 0, sizeof(tpl_stats));
 #if USE_ORIGIN_YUV
                     if(pcs_ptr->temporal_layer_index == 0) {
                         src_mb = pcs_ptr->save_enhanced_picture_ptr[0] + pcs_ptr->enhanced_picture_ptr->origin_x + mb_origin_x +
@@ -1251,9 +1248,9 @@ void cutree_mc_flow_dispenser(
                             continue;
                         uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
                         uint32_t ref_frame_idx = 0;
-                        while(ref_frame_idx < 60 && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
+                        while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
                             ref_frame_idx++;
-                        if(ref_frame_idx == 60 || (int32_t)ref_frame_idx >= frame_idx) {
+                        if(ref_frame_idx == MAX_TPL_LA_SW || (int32_t)ref_frame_idx >= frame_idx) {
                             continue;
                         }
 
@@ -1266,17 +1263,6 @@ void cutree_mc_flow_dispenser(
                         struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
                                                   ref_pic_ptr->width, ref_pic_ptr->height,
                                                   ref_pic_ptr->stride_y };
-
-#if 0
-                        if(referenceObject->ref_poc == 0){
-                        const int ref_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
-                        const int ref_mb_offset = mb_origin_y * input_picture_ptr->stride_y + mb_origin_x;
-                        uint8_t *ref_mb = encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx] + ref_basic_offset + ref_mb_offset;
-
-                        struct Buf2D ref_buf = { NULL, encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx] + ref_basic_offset,
-                                                  input_picture_ptr->width, input_picture_ptr->height,
-                                                  input_picture_ptr->stride_y };
-#endif
 
                         const MeSbResults *me_results = pcs_ptr->me_results[sb_index];
                         x_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
@@ -1321,34 +1307,25 @@ void cutree_mc_flow_dispenser(
                         uint16_t eob;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
                         int rate_cost = rate_estimator(qcoeff, eob, tx_size);
-                        cutree_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                        tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
                     best_intra_cost = AOMMAX(best_intra_cost, 1);
-#if 0
-if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin_y == 0)
-{
-    if (mb_origin_x == 0) {
-        printf("mbline%d poc%d\n", mb_origin_y >> 4, pcs_ptr->picture_number);
-           printf("%d %d \n", best_intra_cost, best_inter_cost);
-    }
-}
-#endif
-                    if (pcs_ptr->picture_number == start_poc)
+                    if (frame_is_intra_only(pcs_ptr))
                         best_inter_cost = 0;
                     else
                         best_inter_cost = AOMMIN(best_intra_cost, best_inter_cost);
-                    cutree_stats.inter_cost = best_inter_cost << TPL_DEP_COST_SCALE_LOG2;
-                    cutree_stats.intra_cost = best_intra_cost << TPL_DEP_COST_SCALE_LOG2;
+                    tpl_stats.inter_cost = best_inter_cost << TPL_DEP_COST_SCALE_LOG2;
+                    tpl_stats.intra_cost = best_intra_cost << TPL_DEP_COST_SCALE_LOG2;
 
-                    cutree_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                    tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
                         uint32_t ref_poc = pcs_ptr->ref_order_hint[best_rf_idx];
                         uint32_t ref_frame_idx = 0;
-                        while(ref_frame_idx < 60 && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
+                        while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
                             ref_frame_idx++;
-                        assert(ref_frame_idx != 60);
+                        assert(ref_frame_idx != MAX_TPL_LA_SW);
 
                         const int ref_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * input_picture_ptr->stride_y + mb_origin_x;
@@ -1419,31 +1396,29 @@ if((pcs_ptr->picture_number == 16 || pcs_ptr->picture_number == 32) && mb_origin
                             av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0 /*lossless*/);
                     }
 
-                    cutree_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
-                    cutree_stats.recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                    tpl_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                    tpl_stats.recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     if (best_mode != NEWMV) {
-                        cutree_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
-                        cutree_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+                        tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                        tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
-                    cutree_stats.recrf_dist = AOMMAX(cutree_stats.srcrf_dist, cutree_stats.recrf_dist);
-                    cutree_stats.recrf_rate = AOMMAX(cutree_stats.srcrf_rate, cutree_stats.recrf_rate);
+                    tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
+                    tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
 
-                    if (pcs_ptr->picture_number != start_poc && best_rf_idx != -1) {
-                        cutree_stats.mv = final_best_mv;
-                        cutree_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                    if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
+                        tpl_stats.mv = final_best_mv;
+                        tpl_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
                     }
 #if 0
 if(pcs_ptr->picture_number == 16 && mb_origin_y == 0)
 {
     if(mb_origin_x==0)
         printf("mbline%d poc%d, frame_idx=%d\n", mb_origin_y>>4, pcs_ptr->picture_number, frame_idx);
-    printf("%d %d isinterwinner%d\n", cutree_stats.srcrf_dist, cutree_stats.recrf_dist, best_mode == NEWMV);
-    //printf("%d %d %d\n", cutree_stats.inter_cost, cutree_stats.srcrf_dist, cutree_stats.recrf_rate);
-    printf("%d %d\n", cutree_stats.intra_cost, cutree_stats.inter_cost);
+    printf("%d %d %d %d interwin%d\n", tpl_stats.intra_cost, tpl_stats.inter_cost, tpl_stats.srcrf_dist, tpl_stats.recrf_rate, best_mode == NEWMV);
 }
 #endif
                     // Motion flow dependency dispenser.
-                    result_model_store(pcs_ptr, &cutree_stats, mb_origin_x, mb_origin_y);
+                    result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
                 }
                 pa_blk_index++;
             }
@@ -1459,21 +1434,6 @@ if(pcs_ptr->picture_number == 16 && mb_origin_y == 0)
         input_picture_ptr->origin_x,
         input_picture_ptr->origin_y);
 
-#if 0
-if(pcs_ptr->picture_number == 16 && frame_idx == 0)
-{
-    char filename[256];
-    sprintf(filename, "svtcutree_rec%d.yuv", pcs_ptr->picture_number);
-    FILE *output_file = fopen(filename, "wb");
-    const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
-    uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] + dst_basic_offset;
-    printf("dumpfile svtcutree_rec%d.yuv stride*height=%d %d\n", pcs_ptr->picture_number, input_picture_ptr->stride_y, input_picture_ptr->height);
-    fwrite(dst_buffer, 1, input_picture_ptr->stride_y*(input_picture_ptr->height), output_file);
-    //for (int kk=0; kk<input_picture_ptr->height; kk++)
-    //    fwrite(dst_buffer+kk*input_picture_ptr->stride_y, 1, input_picture_ptr->width, output_file);
-    fclose(output_file);
-}
-#endif
     return;
 }
 
@@ -1546,13 +1506,13 @@ static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist,
 }
 
 static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, PictureParentControlSet *pcs_ptr,
-                                          int32_t frame_idx, CutreeStats *cutree_stats_ptr,
+                                          TplStats *tpl_stats_ptr,
                                           int mi_row, int mi_col,
                                           const int/*BLOCK_SIZE*/ bsize) {
   Av1Common *ref_cm = ref_pcs_ptr->av1_cm;
-  CutreeStats *ref_cutree_stats_ptr;
+  TplStats *ref_tpl_stats_ptr;
 
-  const FULLPEL_MV full_mv = get_fullmv_from_mv(&cutree_stats_ptr->mv);
+  const FULLPEL_MV full_mv = get_fullmv_from_mv(&tpl_stats_ptr->mv);
   const int ref_pos_row = mi_row * MI_SIZE + full_mv.row;
   const int ref_pos_col = mi_col * MI_SIZE + full_mv.col;
 
@@ -1569,23 +1529,21 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
   int grid_pos_col_base = round_floor(ref_pos_col, bw) * bw;
   int block;
 
-  int64_t cur_dep_dist = cutree_stats_ptr->recrf_dist - cutree_stats_ptr->srcrf_dist;
+  int64_t cur_dep_dist = tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist;
   int64_t mc_dep_dist = (int64_t)(
-      cutree_stats_ptr->mc_dep_dist *
-      ((double)(cutree_stats_ptr->recrf_dist - cutree_stats_ptr->srcrf_dist) /
-       cutree_stats_ptr->recrf_dist));
-  int64_t delta_rate = cutree_stats_ptr->recrf_rate - cutree_stats_ptr->srcrf_rate;
+      tpl_stats_ptr->mc_dep_dist *
+      ((double)(tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) /
+       tpl_stats_ptr->recrf_dist));
+  int64_t delta_rate = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
   int64_t mc_dep_rate =
-      delta_rate_cost(cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->recrf_dist,
-                      cutree_stats_ptr->srcrf_dist, pix_num);
+      delta_rate_cost(tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->recrf_dist,
+                      tpl_stats_ptr->srcrf_dist, pix_num);
 #if 0
-//if(pcs_ptr->picture_number == 15 && frame_idx == 16 && mi_row == 0)
-if(pcs_ptr->picture_number == 0 && frame_idx == 0)
-{
+if(pcs_ptr->picture_number == 15 && mi_row == 0) {
     if(mi_col==0)
         printf("mbline%d poc%d mi_row=%d mi_cols=%d\n", mi_row>>2, pcs_ptr->picture_number, mi_row, pcs_ptr->av1_cm->mi_cols);
-    printf("mbxy=%d %d, %d %d %d ref_poc%d\n", mi_col>>2, mi_row>>2, cutree_stats_ptr->srcrf_dist, cutree_stats_ptr->recrf_dist, cutree_stats_ptr->mc_dep_dist, ref_pcs_ptr->picture_number);
-    //printf("%d %d \n", cutree_stats_ptr->mv.col, cutree_stats_ptr->mv.row);
+    printf("mbxy=%d %d, %d %d %d ref_poc%d\n", mi_col>>2, mi_row>>2, tpl_stats_ptr->srcrf_dist, tpl_stats_ptr->recrf_dist, tpl_stats_ptr->mc_dep_dist, ref_pcs_ptr->picture_number);
+    //printf("%d %d \n", tpl_stats_ptr->mv.col, tpl_stats_ptr->mv.row);
 }
 #endif
 
@@ -1603,14 +1561,11 @@ if(pcs_ptr->picture_number == 0 && frame_idx == 0)
 
       for (int idy = 0; idy < mi_height; idy += step) {
         for (int idx = 0; idx < mi_width; idx += step) {
-          ref_cutree_stats_ptr = ref_pcs_ptr->cutree_stats[((ref_mi_row + idy) >> shift) * (mi_cols_sr >> shift)  + ((ref_mi_col + idx) >> shift)];
-          ref_cutree_stats_ptr->mc_dep_dist +=
+          ref_tpl_stats_ptr = ref_pcs_ptr->tpl_stats[((ref_mi_row + idy) >> shift) * (mi_cols_sr >> shift)  + ((ref_mi_col + idx) >> shift)];
+          ref_tpl_stats_ptr->mc_dep_dist +=
               ((cur_dep_dist + mc_dep_dist) * overlap_area) / pix_num;
-          ref_cutree_stats_ptr->mc_dep_rate +=
+          ref_tpl_stats_ptr->mc_dep_rate +=
               ((delta_rate + mc_dep_rate) * overlap_area) / pix_num;
-//if(pcs_ptr->picture_number == 31 && mi_row == 0 && ref_pcs_ptr->picture_number == 30)
-//    printf("block%d, refmbxy %d %d, overlap_area%d pix_num%d cur_dep_dist=%d, mc_dep_dist=%d\n", block, (ref_mi_col + idx)>>2, (ref_mi_row + idy)>>2, overlap_area, pix_num, cur_dep_dist, mc_dep_dist);
-
           assert(overlap_area >= 0);
         }
       }
@@ -1618,7 +1573,7 @@ if(pcs_ptr->picture_number == 0 && frame_idx == 0)
   }
 }
 
-static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[60], int32_t frame_idx, int mi_row, int mi_col, const int/*BLOCK_SIZE*/ bsize, uint8_t frames_in_sw) {
+static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], int32_t frame_idx, int mi_row, int mi_col, const int/*BLOCK_SIZE*/ bsize, uint8_t frames_in_sw) {
   const int mi_height = mi_size_high[bsize];
   const int mi_width = mi_size_wide[bsize];
   PictureParentControlSet *pcs_ptr = pcs_array[frame_idx];
@@ -1630,18 +1585,18 @@ static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[60], 
 
   for (int idy = 0; idy < mi_height; idy += step) {
     for (int idx = 0; idx < mi_width; idx += step) {
-      CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[(((mi_row + idy) >> shift) * (mi_cols_sr >> shift)) + ((mi_col + idx) >> shift)];
+      TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[(((mi_row + idy) >> shift) * (mi_cols_sr >> shift)) + ((mi_col + idx) >> shift)];
 
-      while(i<frames_in_sw && pcs_array[i]->picture_number != cutree_stats_ptr->ref_frame_poc)
+      while(i<frames_in_sw && pcs_array[i]->picture_number != tpl_stats_ptr->ref_frame_poc)
         i++;
       if(i<frames_in_sw)
-        tpl_model_update_b(pcs_array[i], pcs_ptr, frame_idx, cutree_stats_ptr, mi_row + idy, mi_col + idx, block_size);
+        tpl_model_update_b(pcs_array[i], pcs_ptr, tpl_stats_ptr, mi_row + idy, mi_col + idx, block_size);
     }
   }
 }
 
-void cutree_mc_flow_synthesizer(
-    PictureParentControlSet         *pcs_array[60],
+void tpl_mc_flow_synthesizer(
+    PictureParentControlSet         *pcs_array[MAX_TPL_LA_SW],
     int32_t                          frame_idx,
     uint8_t                          frames_in_sw)
 {
@@ -1670,11 +1625,11 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
 
     for (int row = 0; row < cm->mi_rows; row += step) {
         for (int col = 0; col < mi_cols_sr; col += step) {
-            CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
+            TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
             int64_t mc_dep_delta =
-                RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
-            intra_cost_base  += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
-            mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+            intra_cost_base  += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+            mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
         }
     }
 
@@ -1707,11 +1662,11 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                     if((blkx >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_width_in_mb ||
                        (blky >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_height_in_mb)
                         continue;
-                    CutreeStats *cutree_stats_ptr = pcs_ptr->cutree_stats[blky * (mi_cols_sr >> shift) + blkx];
+                    TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[blky * (mi_cols_sr >> shift) + blkx];
                     int64_t mc_dep_delta =
-                        RDCOST(pcs_ptr->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
-                    intra_cost  += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
-                    mc_dep_cost += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                        RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                    intra_cost  += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
 
                 }
             }                    
@@ -1741,10 +1696,10 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 assert(beta > 0.0);
             }
             //printf("generate_r0beta sbxy=%d %d, rk=%f beta=%f\n", sb_x, sb_y, rk, beta);
-            pcs_ptr->cutree_beta[sb_y * picture_sb_width + sb_x] = beta;
+            pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
         }
     }
-    //printf("generate_r0beta beta[0~4]=%f %f %f %f\n",pcs_ptr->cutree_beta[0], pcs_ptr->cutree_beta[1], pcs_ptr->cutree_beta[2], pcs_ptr->cutree_beta[3]);
+    //printf("generate_r0beta beta[0~4]=%f %f %f %f\n",pcs_ptr->tpl_beta[0], pcs_ptr->tpl_beta[1], pcs_ptr->tpl_beta[2], pcs_ptr->tpl_beta[3]);
     return;
 }
 
@@ -1752,18 +1707,20 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
 * Genrate CUTree MC Flow Based on Lookahead
 ** LAD Window: sliding window size
 ************************************************/
-void update_mc_flow(
+EbErrorType update_mc_flow(
     EncodeContext                   *encode_context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_ptr)
 {
     InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
     PictureParentControlSet          *temp_pcs_ptr;
-    PictureParentControlSet          *pcs_array[60] = {NULL, };
-    PictureParentControlSet          *pcs_array_org[60] = {NULL, };
+    PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = {NULL, };
+#if !UPDATE_SW
+    PictureParentControlSet          *pcs_array_org[MAX_TPL_LA_SW] = {NULL, };
+#endif
 
     uint32_t                         inputQueueIndex;
-    int32_t                          frames_in_sw = MIN(60, pcs_ptr->frames_in_sw);
+    int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
     uint64_t                         start_poc = 0;
     int32_t                          frame_idx, i;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
@@ -1780,8 +1737,10 @@ void update_mc_flow(
         temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
         temp_pcs_ptr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
 
+#if !UPDATE_SW
         pcs_array_org[frame_idx] = temp_pcs_ptr;
-        //printf("update_mc_flow curr poc=%d frame_idx=%d, inputQueueIndex=%d, temp poc=%d, decode_order=%d, frames_in_sw=%d\n", pcs_ptr->picture_number, frame_idx, inputQueueIndex, temp_pcs_ptr->picture_number, temp_pcs_ptr->decode_order, pcs_ptr->frames_in_sw);
+#endif
+        // SVT_LOG("update_mc_flow curr poc=%d frame_idx=%d, inputQueueIndex=%d, temp poc=%d, decode_order=%d, frames_in_sw=%d\n", pcs_ptr->picture_number, frame_idx, inputQueueIndex, temp_pcs_ptr->picture_number, temp_pcs_ptr->decode_order, pcs_ptr->frames_in_sw);
         // sort to be decode order
         if(frame_idx == 0) {
             pcs_array[0] = temp_pcs_ptr;
@@ -1810,13 +1769,13 @@ void update_mc_flow(
     }
     if (got_intra_in_sw) {
         // SVT_LOG("update_mc_flow start_poc=%d, got_intra_in_sw at [%d] poc=%d\n", start_poc, frame_idx, pcs_array[frame_idx]->picture_number);
-        return;
+        return EB_ErrorNone;
     }
     start_poc = pcs_array[0]->picture_number;
     start_is_intra = frame_is_intra_only(pcs_array[0]);
     // SVT_LOG("update_mc_flow start_poc=%d, start_is_intra=%d, frames_in_sw=%d\n", start_poc, start_is_intra, frames_in_sw);
 
-    for(frame_idx = 0; frame_idx < 60; frame_idx++)
+    for(frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++)
         encode_context_ptr->poc_map_idx[frame_idx] = -1;
     for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
         EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
@@ -1826,13 +1785,13 @@ void update_mc_flow(
         encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
         {
             if(frame_idx == 1 && !start_is_intra/* pcs_array[frame_idx]->picture_number >= 32*/) {
-#if CU_TREE_REENCODE
+#if TPL_LA_REENCODE
                 int32_t frame_idx_tmp = 0;
                 // memset all stats before dispenser
                 for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
-                    memset(pcs_array[frame_idx_tmp]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
+                    memset(pcs_array[frame_idx_tmp]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
                 // SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx_tmp, pcs_array[frame_idx_tmp]->picture_number, pcs_array[frame_idx_tmp]->decode_order);
-                cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, start_poc, 1);
+                tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, 1);
 #else
 
 
@@ -1844,7 +1803,7 @@ void update_mc_flow(
             }
             // memset all stats before dispenser
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
-                memset(pcs_array[frame_idx]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
+                memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
 #if !UPDATE_SW
             if(!start_is_intra /*pcs_array[frame_idx]->picture_number > (start_poc + 32)*/ &&
               (frame_idx == 17 || frame_idx == 26 || frame_idx == 27)) {
@@ -1852,10 +1811,10 @@ void update_mc_flow(
                 encode_context_ptr->poc_map_idx[frame_idx] = -1;
             }
 #endif
-#if CU_TREE_REENCODE
-            cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, start_poc, 0);
+#if TPL_LA_REENCODE
+            tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, 0);
 #else
-            cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, start_poc);
+            tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 #endif
 #if !UPDATE_SW
             if(pcs_array[frame_idx]->temporal_layer_index == 0 && !start_is_intra/*pcs_array[frame_idx]->picture_number >= (start_poc + 32)*/ && frame_idx == 1)
@@ -1869,7 +1828,7 @@ void update_mc_flow(
             int32_t sw_length = MIN(17, (frames_in_sw - start_idx));
             for(frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--) {
                 // SVT_LOG("calling1 before synthesizer frame_idx=%d reordered poc=%d decode_order=%d\n", frame_idx, pcs_array[frame_idx]->picture_number, pcs_array[frame_idx]->decode_order);
-                cutree_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
+                tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
             }
             generate_r0beta(pcs_array[start_idx]);
 
@@ -1887,11 +1846,11 @@ void update_mc_flow(
 
                 for (int row = 0; row < cm->mi_rows; row += step) {
                     for (int col = 0; col < mi_cols_sr; col += step) {
-                        CutreeStats *cutree_stats_ptr = pcs_ptr_tmp->cutree_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                        TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
                         int64_t mc_dep_delta =
-                            RDCOST(pcs_ptr_tmp->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
-                        intra_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
-                        mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                            RDCOST(pcs_ptr_tmp->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                        intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                        mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                     }
                 }
 
@@ -1908,7 +1867,7 @@ void update_mc_flow(
 #else
             int32_t sw_length = (start_idx + 25) <= frames_in_sw ? 25 : (frames_in_sw - start_idx);
 #endif
-            PictureParentControlSet *pcs_array_reorder[60] = {NULL, };
+            PictureParentControlSet *pcs_array_reorder[MAX_TPL_LA_SW] = {NULL, };
             for (int32_t index = 0; index < sw_length; index++) {
 #if UPDATE_SW
                 pcs_array_reorder[index] = pcs_array[start_idx + index];
@@ -1920,13 +1879,13 @@ void update_mc_flow(
 #endif
             }
             if(start_is_intra/*pcs_array_reorder[0]->picture_number == 16*/) {
-#if CU_TREE_REENCODE
+#if TPL_LA_REENCODE
                 int32_t frame_idx_tmp = 0;
                 // memset all stats before dispenser
                 for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
-                    memset(pcs_array[frame_idx_tmp]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
+                    memset(pcs_array[frame_idx_tmp]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
                 // SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx_tmp, pcs_array[frame_idx_tmp]->picture_number, pcs_array[frame_idx_tmp]->decode_order);
-                cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, start_poc, 1);
+                tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx_tmp], frame_idx_tmp, 1);
 #else
                 // re-run P16 with input I0 as ref
                 EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
@@ -1942,7 +1901,7 @@ void update_mc_flow(
 #endif
                     // memset all stats before dispenser
                     for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++)
-                        memset(pcs_array[frame_idx]->cutree_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(CutreeStats));
+                        memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
 #if !UPDATE_SW
                     if (frame_idx == 17 || frame_idx == 26 || frame_idx == 27) {
                         // SVT_LOG("calling2 dispenser disable P%d as ref for frame_idx %d\n", pcs_array[frame_idx]->picture_number, frame_idx);
@@ -1951,10 +1910,10 @@ void update_mc_flow(
 #endif	
                
                     // SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx, pcs_array[frame_idx]->picture_number, pcs_array[frame_idx]->decode_order);
-#if CU_TREE_REENCODE
-                    cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, start_poc, 0);
+#if TPL_LA_REENCODE
+                    tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, 0);
 #else
-                    cutree_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, start_poc);
+                    tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 #endif
 #if !UPDATE_SW
                     // after picture 16 is coded, we change picture 0, so other pictures wont use it as a reference
@@ -1966,8 +1925,8 @@ void update_mc_flow(
             // SVT_LOG("calling2+ start_idx=%d start poc=%d decode_order=%d sw_length=%d\n", start_idx, pcs_array_reorder[0]->picture_number, pcs_array_reorder[0]->decode_order, sw_length);
 
             for(frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--) {
-                //SVT_LOG("calling2+ before synthesizer frame_idx=%d reordered poc=%d decode_order=%d\n", frame_idx, pcs_array_reorder[frame_idx]->picture_number, pcs_array_reorder[frame_idx]->decode_order);
-                cutree_mc_flow_synthesizer(pcs_array_reorder, frame_idx, sw_length);
+                // SVT_LOG("calling2+ before synthesizer frame_idx=%d reordered poc=%d decode_order=%d\n", frame_idx, pcs_array_reorder[frame_idx]->picture_number, pcs_array_reorder[frame_idx]->decode_order);
+                tpl_mc_flow_synthesizer(pcs_array_reorder, frame_idx, sw_length);
             }
             generate_r0beta(pcs_array[start_idx]);
             // SVT_LOG("BetaGen2 start_idx=%d, reordered picture_number=%d\n", start_idx, pcs_array[start_idx]->picture_number);
@@ -1986,11 +1945,11 @@ void update_mc_flow(
 
                 for (int row = 0; row < cm->mi_rows; row += step) {
                     for (int col = 0; col < mi_cols_sr; col += step) {
-                        CutreeStats *cutree_stats_ptr = pcs_ptr_tmp->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                        TplStats *tpl_stats_ptr = pcs_ptr_tmp->ois_mb_results[((row * mi_cols_sr) >> 4) + (col >> 2)];
                         int64_t mc_dep_delta =
-                            RDCOST(pcs_ptr_tmp->base_rdmult, cutree_stats_ptr->mc_dep_rate, cutree_stats_ptr->mc_dep_dist);
-                        intra_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS);
-                        mc_dep_cost_base += (cutree_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                            RDCOST(pcs_ptr_tmp->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                        intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                        mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                     }
                 }
 
@@ -2004,7 +1963,7 @@ void update_mc_flow(
     for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
         EB_FREE_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
 
-    return;
+    return EB_ErrorNone;
 }
 #endif
 
@@ -2083,8 +2042,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
             // Mark picture when global motion is detected using ME results
             //reset intra_coded_estimation_sb
             me_based_global_motion_detection(pcs_ptr);
-#if CUTREE_LA
-            if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_cutree_in_la == 0) {
+#if TPL_LA
+            if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
             }
@@ -2295,9 +2254,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 : &pcs_ptr->stat_struct;
                         if (scs_ptr->use_output_stat_file)
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
-#if CUTREE_LA
+#if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
-                            scs_ptr->static_config.enable_cutree_in_la &&
+                            scs_ptr->static_config.enable_tpl_la &&
                             //pcs_ptr->frames_in_sw > 16/*(2 << scs_ptr->static_config.hierarchical_levels)*/ &&
                             pcs_ptr->temporal_layer_index == 0) {
                             update_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
@@ -2317,8 +2276,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         else
                             out_results_ptr->pcs_wrapper_ptr =
                                 queue_entry_ptr->parent_pcs_wrapper_ptr;
-#if CUTREE_LA
-                        if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_cutree_in_la
+#if TPL_LA
+                        if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_tpl_la
                             && ((has_overlay == 0 && loop_index == 0) || (has_overlay == 1 && loop_index == 1))) {
                             // Release Pa Ref pictures when not needed
                             release_pa_reference_objects(scs_ptr, pcs_ptr);

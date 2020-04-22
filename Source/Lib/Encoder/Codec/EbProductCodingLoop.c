@@ -8804,7 +8804,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         ROUND_UV(blk_geom->origin_x) / 2 + ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
     BlkStruct *blk_ptr        = context_ptr->blk_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
-#if CUTREE_LA && CUTREE_LA_QPM && LAMBDA_SCALING
+#if TPL_LA && TPL_LA_QPM && LAMBDA_SCALING
     uint32_t sb_full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];

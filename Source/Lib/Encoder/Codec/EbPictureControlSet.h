@@ -588,13 +588,13 @@ typedef struct PictureParentControlSet {
     // Open loop Intra candidate Search Results
     OisSbResults **ois_sb_results;
     OisCandidate **ois_candicate;
-#if CUTREE_LA
+#if TPL_LA
     OisMbResults **ois_mb_results;
-    CutreeStats  **cutree_stats;
+    TplStats     **tpl_stats;
     int32_t      is_720p_or_larger;
     int32_t      base_rdmult;
     double       r0;
-    double       *cutree_beta;
+    double       *tpl_beta;
 #if LAMBDA_SCALING
     double      *tpl_rdmult_scaling_factors;
     double      *tpl_sb_rdmult_scaling_factors;

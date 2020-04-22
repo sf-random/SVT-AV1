@@ -203,16 +203,19 @@ extern "C" {
 #define IFS_MD_STAGE_3 1
 
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
-#define CUTREE_LA  1 // Add CUTREE into look ahead
-#define CUTREE_LA_QPS 1
-#define CUTREE_LA_QPM 1
+#define TPL_LA  1 // Add TPL into look ahead
+#if TPL_LA
+#define TPL_LA_QPS 1
+#define TPL_LA_QPM 1
 #define CUTREE_MV_CLIP 1
 #define UPDATE_SW 1
-#define CU_TREE_REENCODE 0
+#define TPL_LA_REENCODE 0
 #define QPS_TPL 1
+#define LAMBDA_SCALING 0
+#define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
+#endif
 
 #define QP2QINDEX 1
-#define LAMBDA_SCALING 0
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC \
     0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

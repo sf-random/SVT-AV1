@@ -26,7 +26,7 @@
 
 #include "EbRateControlResults.h"
 #include "EbRateControlTasks.h"
-#if CUTREE_LA
+#if TPL_LA
 #include "EbRateDistortionCost.h"
 #if LAMBDA_SCALING
 #include "EbLambdaRateTables.h"
@@ -4809,7 +4809,7 @@ static int rtc_minq_12[QINDEX_RANGE] = {
 
 static int gf_high = 2000;
 static int gf_low  = 400;
-#if CUTREE_LA && CUTREE_LA_QPS
+#if TPL_LA && TPL_LA_QPS
 static int gf_high_tpl_la = 2400;
 static int gf_low_tpl_la  = 300;
 #endif
@@ -4856,7 +4856,7 @@ static int get_gf_active_quality(const RATE_CONTROL *const rc, int q, AomBitDept
     return get_active_quality(
         q, rc->gfu_boost, gf_low, gf_high, arfgf_low_motion_minq, arfgf_high_motion_minq);
 }
-#if CUTREE_LA && CUTREE_LA_QPS
+#if TPL_LA && TPL_LA_QPS
 static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q, AomBitDepth bit_depth) {
     int *arfgf_low_motion_minq;
     int *arfgf_high_motion_minq;
@@ -4873,7 +4873,7 @@ static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
     return arfgf_high_motion_minq[q];
 }
 
-#if CUTREE_LA
+#if TPL_LA
 int16_t eb_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 static int get_kf_boost_from_r0(double r0, int frames_to_key) {
@@ -4947,7 +4947,7 @@ int av1_get_adaptive_rdmult(AomBitDepth bit_depth, int base_qindex, double beta)
   return (int)rdmult;
 }
 
-#if CUTREE_LA && CUTREE_LA_QPS
+#if TPL_LA && TPL_LA_QPS
 
 #define MIN_BPB_FACTOR 0.005
 #define MAX_BPB_FACTOR 50
@@ -5069,7 +5069,7 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
     rc->arf_q                                = 0;
     int q;
     int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost,
-        rf_level/*, update_type*/;
+        rf_level;
     is_src_frame_alt_ref  = 0;
     refresh_golden_frame  = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 1 : 0;
     refresh_alt_ref_frame = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
@@ -5084,14 +5084,6 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
                   ? GF_ARF_STD
                   : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? GF_ARF_LOW : INTER_NORMAL;
 
-#if 0
-    update_type = (frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
-                      ? KF_UPDATE
-                      : (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
-                            ? ARF_UPDATE
-                            : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? INTNL_ARF_UPDATE
-                                                                                 : LF_UPDATE;
-#endif
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
     // So, for each frame, arf_q is updated based on the qp of its references.
@@ -5172,7 +5164,7 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
             active_best_quality = cq_level;
         else {
 #if 0
-            // kelvin needs update rc->avg_frame_qindex before
+            // needs update rc->avg_frame_qindex before
             // Use the lower of active_worst_quality and recent
             // average Q as basis for GF/ARF best Q limit unless last frame was
             // a key frame.
@@ -5612,7 +5604,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
     }
 }
 
-#if CUTREE_LA
+#if TPL_LA
 #if LAMBDA_SCALING
 static void sb_setup_lambda(PictureControlSet *pcs_ptr,
         SuperBlock *sb_ptr) {
@@ -5692,16 +5684,12 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
  * used in the second pass of two pass encoding
  ******************************************************/
 static void sb_qp_derivation_tpl_la(
-    RATE_CONTROL              *rc,
     PictureControlSet         *pcs_ptr) {
 
     PictureParentControlSet   *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
     SequenceControlSet        *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
     SuperBlock                *sb_ptr;
     uint32_t                  sb_addr;
-#if QP2QINDEX
-    uint8_t sb_qp = 0;
-#endif
 
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
     if (pcs_ptr->temporal_layer_index <= 0)
@@ -5715,7 +5703,7 @@ static void sb_qp_derivation_tpl_la(
 #if !QP2QINDEX
             int delta_qp = 0;
 #endif
-            double beta = ppcs_ptr->cutree_beta[sb_addr];
+            double beta = ppcs_ptr->tpl_beta[sb_addr];
             int offset = av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
             offset = AOMMIN(offset,  pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 - 1);
             offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 + 1);
@@ -5730,34 +5718,14 @@ static void sb_qp_derivation_tpl_la(
             delta_qp = offset>>2;
             //if(pcs_ptr->parent_pcs_ptr->picture_number == 0)
             //printf("rc qpm: poc%ld sb_addr=%d r0=%f delta_qp=%d offset=%d, beta=%f, base_rdmult=%d, base_q_idx=%d\n", pcs_ptr->parent_pcs_ptr->picture_number, sb_addr, ppcs_ptr->r0, delta_qp, offset, beta, ppcs_ptr->base_rdmult, ppcs_ptr->frm_hdr.quantization_params.base_q_idx);
-#if 0
-            if (pcs_ptr->slice_type == 2) {
-                if (delta_qp < 0 && variance_sb < IS_COMPLEX_SB_FLAT_VARIANCE_TH)
-                    delta_qp = 0;
-            }
-#endif
 
-#if QP2QINDEX
-            sb_qp = CLIP3(
-                scs_ptr->static_config.min_qp_allowed,
-                scs_ptr->static_config.max_qp_allowed,
-                ((int16_t)pcs_ptr->parent_pcs_ptr->picture_qp + (int16_t)delta_qp));
-#else
             sb_ptr->qp = CLIP3(
                 scs_ptr->static_config.min_qp_allowed,
                 scs_ptr->static_config.max_qp_allowed,
                 sb_ptr->qp);
-#endif
-#if !QP2QINDEX
             sb_ptr->delta_qp = (int)pcs_ptr->parent_pcs_ptr->picture_qp - (int)sb_ptr->qp;
-#endif
 
-#if QP2QINDEX
-            sb_ptr->qindex = quantizer_to_qindex[sb_qp];
-            pcs_ptr->parent_pcs_ptr->average_qp += sb_qp;
-#else
             pcs_ptr->parent_pcs_ptr->average_qp += sb_ptr->qp;
-#endif
 #endif
 #if LAMBDA_SCALING
 			sb_setup_lambda(pcs_ptr, sb_ptr);
@@ -6048,11 +6016,11 @@ void *rate_control_kernel(void *input_ptr) {
                     if (!scs_ptr->use_output_stat_file &&
                         pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH) {
                         // Content adaptive qp assignment
-#if CUTREE_LA && CUTREE_LA_QPS
+#if TPL_LA && TPL_LA_QPS
                         if (scs_ptr->use_input_stat_file &&
                             !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
                             scs_ptr->static_config.look_ahead_distance != 0 &&
-                            scs_ptr->static_config.enable_cutree_in_la)
+                            scs_ptr->static_config.enable_tpl_la)
                             new_qindex = adaptive_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
                         else
 #endif
@@ -6164,13 +6132,13 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
                 !pcs_ptr->parent_pcs_ptr->sc_content_detected && !scs_ptr->use_output_stat_file &&
                 scs_ptr->use_input_stat_file)
-#if CUTREE_LA && CUTREE_LA_QPM
+#if TPL_LA && TPL_LA_QPM
                 if (scs_ptr->use_input_stat_file &&
                     scs_ptr->static_config.look_ahead_distance != 0 &&
-                    scs_ptr->static_config.enable_cutree_in_la &&
+                    scs_ptr->static_config.enable_tpl_la &&
                     pcs_ptr->parent_pcs_ptr->r0 != 0/* && pcs_ptr->picture_number<48*/) // only QPM for poc<48 pictue for last pic seq diff with aom
                     // Content adaptive qp assignment
-                    sb_qp_derivation_tpl_la(&rc, pcs_ptr);
+                    sb_qp_derivation_tpl_la(pcs_ptr);
                 else
 #endif
 

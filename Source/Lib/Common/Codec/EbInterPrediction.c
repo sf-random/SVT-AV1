@@ -20,7 +20,7 @@
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
-#if CUTREE_LA
+#if TPL_LA
 #include "EbWarpedMotion.h"
 #endif
 //#include "EbRateDistortionCost.h"
@@ -1516,7 +1516,7 @@ void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_
     }
 }
 
-#if CUTREE_LA
+#if TPL_LA
 #if CUTREE_MV_CLIP
 static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_mv, int32_t bw,
     int32_t bh, int32_t ss_x, int32_t ss_y) {

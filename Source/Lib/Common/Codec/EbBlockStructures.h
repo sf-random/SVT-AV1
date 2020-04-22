@@ -32,7 +32,7 @@ typedef struct mv32 {
     int32_t col;
 } MV32;
 
-#if CUTREE_LA
+#if TPL_LA
 #define GET_MV_RAWPEL(x) (((x) + 3 + ((x) >= 0)) >> 3)
 #define GET_MV_SUBPEL(x) ((x)*8)
 

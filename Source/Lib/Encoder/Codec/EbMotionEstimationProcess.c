@@ -1169,8 +1169,8 @@ void *motion_estimation_kernel(void *input_ptr) {
                 }
             }
 
-#if CUTREE_LA
-            if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_cutree_in_la) {
+#if TPL_LA
+            if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_tpl_la) {
                 for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
                     for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {
                         sb_origin_x = x_sb_index * scs_ptr->sb_sz;

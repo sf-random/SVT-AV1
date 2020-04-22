@@ -225,7 +225,7 @@ extern "C" {
     void av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
     void eb_av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*eb_av1_fwd_txfm2d_4x4)(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
-#if CUTREE_LA
+#if TPL_LA
     void av1_lowbd_fwd_txfm_c(int16_t *src_diff, tran_low_t *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse2(const int16_t *src_diff, tran_low_t *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse4_1(const int16_t *src_diff, tran_low_t *coeff, int diff_stride, TxfmParam *txfm_param);

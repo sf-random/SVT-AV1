@@ -234,7 +234,7 @@ typedef struct macroblockd_plane {
 #endif
 } MACROBLOCKD_PLANE;
 
-#if CUTREE_LA
+#if TPL_LA
 typedef enum InterPredMode {
     UNIFORM_PRED,
     WARP_PRED,
@@ -505,13 +505,13 @@ typedef struct OisSbResults {
     int8_t        best_distortion_index[CU_MAX_COUNT];
 } OisSbResults;
 
-#if CUTREE_LA
+#if TPL_LA
 typedef struct OisMbResults {
     int64_t intra_cost;
     int32_t intra_mode;
 } OisMbResults;
 
-typedef struct CutreeStats {
+typedef struct TplStats {
     int64_t intra_cost;
     int32_t intra_mode;
     int64_t inter_cost;
@@ -523,7 +523,7 @@ typedef struct CutreeStats {
     int64_t mc_dep_dist;
     MV mv;
     uint64_t ref_frame_poc;
-} CutreeStats;
+} TplStats;
 #endif
 
 typedef struct SuperBlock {
@@ -545,9 +545,6 @@ typedef struct SuperBlock {
 #else
     uint16_t       qp;
     int16_t        delta_qp;
-#endif
-#if CUTREE_LA
-    //int32_t        rdmult;
 #endif
     uint32_t       total_bits;
 

@@ -23,9 +23,6 @@
 #include "EbLambdaRateTables.h"
 
 #include "EbLog.h"
-#if CUTREE
-#include "EbTransforms.h"
-#endif
 
 #define AVCCODEL
 /********************************************
@@ -12646,7 +12643,11 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
     return return_error;
 }
 
-#if CUTREE_LA
+#if TPL_LA
+void wht_fwd_txfm(int16_t *src_diff, int bw,
+                  int32_t *coeff, TxSize tx_size,
+                  int bit_depth, int is_hbd);
+
 EbErrorType open_loop_intra_search_mb(
     PictureParentControlSet *pcs_ptr, uint32_t sb_index,
     EbPictureBufferDesc *input_ptr)
@@ -12743,14 +12744,14 @@ EbErrorType open_loop_intra_search_mb(
                     left_col  = left0_col;
                 }
                 // PRED
-                intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16/*dst_stride*/);
+                intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16);
 
                 // Distortion
-                aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y/*src_stride*/, predictor, 16/*dst_stride*/);
+                aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
                 wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0/*is_cur_buf_hbd(xd)*/);
                 intra_cost = aom_satd(coeff, 16 * 16);
 
-//printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
+                // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
                 if (intra_cost < best_intra_cost) {
                     best_intra_cost = intra_cost;
                     best_mode = ois_intra_mode;
@@ -12759,8 +12760,8 @@ EbErrorType open_loop_intra_search_mb(
             // store intra_cost to pcs
             ois_mb_results_ptr->intra_mode = best_mode;
             ois_mb_results_ptr->intra_cost = best_intra_cost;
-//if(pcs_ptr->picture_number == 16 && cu_origin_x <= 15 && cu_origin_y == 0)
-//    printf("open_loop_intra_search_mb cost0 poc%d sb_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs_ptr->picture_number, sb_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
+            //if(pcs_ptr->picture_number == 16 && cu_origin_x <= 15 && cu_origin_y == 0)
+            //    printf("open_loop_intra_search_mb cost0 poc%d sb_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs_ptr->picture_number, sb_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
         }
         pa_blk_index++;
     }

@@ -2237,8 +2237,8 @@ void copy_api_from_app(
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
-#if CUTREE_LA
-    scs_ptr->static_config.enable_cutree_in_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_cutree_in_la;
+#if TPL_LA
+    scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
 #endif
     scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
@@ -2985,8 +2985,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if CUTREE_LA
-    config_ptr->enable_cutree_in_la = 0;
+#if TPL_LA
+    config_ptr->enable_tpl_la = 0;
 #endif
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
