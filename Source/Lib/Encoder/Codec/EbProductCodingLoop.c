@@ -7893,17 +7893,15 @@ void update_intra_chroma_mode(ModeDecisionContext *context_ptr, ModeDecisionCand
                 // should be re-performed using best independant chroma pred 
                 if (candidate_ptr->intra_chroma_mode != UV_CFL_PRED)
                     if (candidate_ptr->intra_chroma_mode != intra_chroma_mode || candidate_ptr->angle_delta[PLANE_TYPE_UV] != angle_delta) {
-
+                        // Set to TRUE to redo INTRA CHROMAcompensation 
                         context_ptr->md_staging_perform_intra_chroma_pred = EB_TRUE;
-
                         // Update fast_chroma_rate
-#if FIX_CFL_RATE
                         candidate_ptr->fast_chroma_rate = context_ptr->fast_chroma_rate[candidate_ptr->intra_luma_mode][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_Y]];
-#endif
+                        // Update intra_chroma_mode
                         candidate_ptr->intra_chroma_mode = intra_chroma_mode;
                         candidate_ptr->angle_delta[PLANE_TYPE_UV] = angle_delta;
                         candidate_ptr->is_directional_chroma_mode_flag = is_directional_chroma_mode_flag;
-
+                        // Update transform_type_uv
                         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
                         if (candidate_ptr->intra_chroma_mode == UV_CFL_PRED)
                             candidate_ptr->transform_type_uv = DCT_DCT;
