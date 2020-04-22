@@ -1669,7 +1669,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                     mc_dep_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
 
                 }
-            }                    
+            }
             //if(pcs_ptr->picture_number == 16)
             //    printf(" ---> poc%ld sb_x=%d sb_y=%d intraC=%lld mc_dep=%lld\n", pcs_ptr->picture_number, sb_x, sb_y, intra_cost, mc_dep_cost);
             double beta = 1.0;
