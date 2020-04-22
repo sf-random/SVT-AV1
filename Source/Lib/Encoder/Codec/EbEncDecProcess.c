@@ -1537,6 +1537,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (SWICHABLE_ENC_MODE == 3) {
             if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
                 enc_mode = 2;
+        }else if (SWICHABLE_ENC_MODE == 4) {
+            if (context_ptr->sb_class == 2*HIGH_COMPLEX_CLASS)
+                enc_mode = 2;
+        }else if (SWICHABLE_ENC_MODE == 5) {
+            if (context_ptr->sb_class == 2*MEDIUM_COMPLEX_CLASS)
+                enc_mode = 2;
+        }else if (SWICHABLE_ENC_MODE == 6) {
+            if (context_ptr->sb_class == 2*LOW_COMPLEX_CLASS)
+                enc_mode = 2;
         }
     }
 #endif
@@ -4941,6 +4950,14 @@ static uint8_t determine_sb_class(
         sb_class = MEDIUM_COMPLEX_CLASS;
     else if (count_non_zero_coeffs >= ((total_samples * sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS]) / 20))
         sb_class = LOW_COMPLEX_CLASS;
+#if SPEED_UP_FEATURE
+    else if (count_non_zero_coeffs >= ((total_samples * (sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] - 2)) / 20))
+        sb_class = 2*HIGH_COMPLEX_CLASS;
+    else if (count_non_zero_coeffs >= ((total_samples * (sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] - 4)) / 20))
+        sb_class = 2*MEDIUM_COMPLEX_CLASS;
+    else if (count_non_zero_coeffs >= ((total_samples * (sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] - 6)) / 20))
+        sb_class = 2*LOW_COMPLEX_CLASS;
+#endif
 #if IMPROVE_LOW_COMPLEX_SB
     if (count_non_zero_coeffs <= ((total_samples * LOW_COMP_SB_TH) / 20))
         sb_class = 4;

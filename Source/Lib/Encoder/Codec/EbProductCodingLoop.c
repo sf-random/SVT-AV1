@@ -10357,6 +10357,16 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
                 context_ptr->md_max_ref_count = 1;
         }
+        else if (MRP_TEST == 4) {
+            if (context_ptr->sb_class == 2*HIGH_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }else if (MRP_TEST == 5) {
+            if (context_ptr->sb_class == 2*MEDIUM_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }else if (MRP_TEST == 6) {
+            if (context_ptr->sb_class == 2*LOW_COMPLEX_CLASS)
+                context_ptr->md_max_ref_count = 1;
+        }
     }
 #endif
 #if PRED_ME_TEST
@@ -10372,6 +10382,15 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         }
         else if (PRED_ME_TEST == 3) {
             if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }else if (PRED_ME_TEST == 4) {
+            if (context_ptr->sb_class == 2*HIGH_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }else if (PRED_ME_TEST == 5) {
+            if (context_ptr->sb_class == 2*MEDIUM_COMPLEX_CLASS)
+                context_ptr->predictive_me_level = 0;
+        }else if (PRED_ME_TEST == 6) {
+            if (context_ptr->sb_class == 2*LOW_COMPLEX_CLASS)
                 context_ptr->predictive_me_level = 0;
         }
     }
