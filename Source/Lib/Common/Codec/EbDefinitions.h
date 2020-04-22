@@ -248,7 +248,8 @@ extern "C" {
 #define FIX_CHROMA_LAST_STAGE 1 // Added the ability test CFL_OFF when independent chroma @ last stage
 #if FIX_CHROMA_LAST_STAGE
 #define REFACTOR_SIGNALS 1
-#define FIX_CFL_OFF 0
+#define FIX_CFL_OFF 1
+#define FIX_CFL_RATE 1
 #define TEST_DISABLE_CFL 0
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
