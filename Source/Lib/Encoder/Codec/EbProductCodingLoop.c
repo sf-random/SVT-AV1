@@ -7797,6 +7797,13 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         else
             context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
     }
+#elif IMPROVE_LOW_COMPLEX_SB && MR_TXS_OFF
+    if (context_ptr->enable_area_based_cycles_allocation) {
+        if (context_ptr->sb_class == 4)
+            context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+        else
+            context_ptr->md_staging_tx_size_mode = EB_TRUE;
+    }
 #else
 #if MR_TXS_EVERYWHERE
         context_ptr->md_staging_tx_size_mode = EB_TRUE;

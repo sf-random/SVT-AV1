@@ -210,6 +210,7 @@ extern "C" {
 #define P3M3_DEPTH    0
 #define TWO_X_NIC     0
 #define MR_MD_PRUNING 0
+#define MR_TXS_OFF    0
 #endif
 #define DISABLE_NEW_NEAREST_NEAR 0
 #define DISABLE_MRP              0
