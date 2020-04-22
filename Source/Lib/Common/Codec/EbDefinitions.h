@@ -245,6 +245,12 @@ extern "C" {
 #endif
 #define M8_CLEAN_UP 1 // remove useless code: energy, full loop escape
 #endif
+#define FIX_CHROMA_LAST_STAGE 1 // Added the ability test CFL_OFF when independent chroma @ last stage
+#if FIX_CHROMA_LAST_STAGE
+#define REFACTOR_SIGNALS 1
+#define FIX_CFL_OFF 0
+#define TEST_DISABLE_CFL 0
+#endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
