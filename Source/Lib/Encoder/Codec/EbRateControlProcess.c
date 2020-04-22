@@ -5728,7 +5728,7 @@ static void sb_qp_derivation_tpl_la(
             pcs_ptr->parent_pcs_ptr->average_qp += sb_ptr->qp;
 #endif
 #if LAMBDA_SCALING
-			sb_setup_lambda(pcs_ptr, sb_ptr);
+            sb_setup_lambda(pcs_ptr, sb_ptr);
 #endif
         }
     }

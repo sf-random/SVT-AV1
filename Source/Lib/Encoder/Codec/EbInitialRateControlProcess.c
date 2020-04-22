@@ -1641,7 +1641,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
 
     SVT_LOG("genrate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
 #if LAMBDA_SCALING
-	generate_lambda_scaling_factor(pcs_ptr);
+    generate_lambda_scaling_factor(pcs_ptr);
 #endif
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
@@ -1676,7 +1676,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
             double rk = -1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
             //if (mc_dep_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
-            //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)<< RDDIV_BITS) 
+            //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS)
             //    && intra_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
             //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS) ){
                 rk = (double)intra_cost / mc_dep_cost;
@@ -1906,15 +1906,16 @@ EbErrorType update_mc_flow(
                     if (frame_idx == 17 || frame_idx == 26 || frame_idx == 27) {
                         // SVT_LOG("calling2 dispenser disable P%d as ref for frame_idx %d\n", pcs_array[frame_idx]->picture_number, frame_idx);
                         encode_context_ptr->poc_map_idx[frame_idx] = -1;
-					}
-#endif	
-               
+                    }
+#endif
+
                     // SVT_LOG("calling2 before dispenser frame_idx=%d poc=%d decode_order=%d\n", frame_idx, pcs_array[frame_idx]->picture_number, pcs_array[frame_idx]->decode_order);
 #if TPL_LA_REENCODE
                     tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx, 0);
 #else
                     tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 #endif
+
 #if !UPDATE_SW
                     // after picture 16 is coded, we change picture 0, so other pictures wont use it as a reference
                     if(frame_idx == 1)
