@@ -250,7 +250,7 @@ extern "C" {
 #define REFACTOR_SIGNALS 1
 #define FIX_CFL_OFF 1
 #define FIX_CFL_RATE 1
-#define TEST_DISABLE_CFL 1
+#define TEST_DISABLE_CFL 0
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
