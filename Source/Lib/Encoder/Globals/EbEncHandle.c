@@ -1981,6 +1981,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
 #endif
+
+#if NSQ_TEST_6
+    if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+        scs_ptr->static_config.super_block_size = 64;
+#endif
+
 #if FIX_RC_SB_SIZE
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
 #else

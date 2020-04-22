@@ -277,6 +277,15 @@ extern "C" {
 #define USE_M8_HME_ME_IN_M5 0
 #define USE_M8_MPPD_IN_M5 0
 /********************************/
+#define NSQ_TEST_1 0
+#define NSQ_TEST_2 0
+#define NSQ_TEST_3 0
+#define NSQ_TEST_4 0
+#define NSQ_TEST_5 0
+#define NSQ_TEST_6 0
+#define NSQ_TEST_7 0
+#define NSQ_TEST_8 0
+#define NSQ_TEST_9 0
 
 // END  MAY2020 /////////////////////////////////////////////////////////
 

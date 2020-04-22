@@ -1506,6 +1506,13 @@ void set_sb_class_controls(ModeDecisionContext *context_ptr) {
         sb_class_ctrls->sb_class_th[MEDIUM_COMPLEX_CLASS] = 6;
         sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] = 4;
         break;
+#if NSQ_TEST_7
+    case 6:
+        sb_class_ctrls->sb_class_th[HIGH_COMPLEX_CLASS] = 6;
+        sb_class_ctrls->sb_class_th[MEDIUM_COMPLEX_CLASS] = 4;
+        sb_class_ctrls->sb_class_th[LOW_COMPLEX_CLASS] = 2;
+        break;
+#endif
     default:
         printf("Error - Invalid sb_class_level");
         break;
@@ -1593,6 +1600,25 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
     }
+#if NSQ_TEST_7
+    if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 6;
+    else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 6;
+    else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 5;
+    else
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 4;
+#elif NSQ_TEST_8
+    if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 5;
+    else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_1080p_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 5;
+    else if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE)
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 5;
+    else
+        context_ptr->coeffcients_area_based_cycles_allocation_level = 4;
+#endif
 #endif
 #endif
     // Tx_search Level                                Settings
@@ -1977,6 +2003,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M4 ? EB_FALSE : EB_TRUE;
 #else
      context_ptr->disallow_4x4 = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#endif
+#if NSQ_TEST_5
+     if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_480p_RANGE)
+         context_ptr->disallow_4x4 = EB_TRUE;
 #endif
      // If SB non-multiple of 4, then disallow_4x4 could not be used
      // SB Stats
@@ -2965,6 +2995,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->sq_weight =
                 sequence_control_set_ptr->static_config.sq_weight - 5;
 
+#if NSQ_TEST_3
+    if (pd_pass == PD_PASS_2)
+        context_ptr->sq_weight = 75;
+#elif NSQ_TEST_4
+    if (pd_pass == PD_PASS_2)
+        context_ptr->sq_weight = 50;
+#endif
     // nsq_hv_level  needs sq_weight to be ON
     // 0: OFF
     // 1: ON 10% + skip HA/HB/H4  or skip VA/VB/V4

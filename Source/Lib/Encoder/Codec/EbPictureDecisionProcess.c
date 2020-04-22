@@ -1091,8 +1091,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
+#if NSQ_TEST_2
+    pcs_ptr->disallow_all_nsq_blocks_below_16x16 = (pcs_ptr->is_used_as_reference_flag) ? EB_FALSE : EB_TRUE;
+#elif NSQ_TEST_1
+    pcs_ptr->disallow_all_nsq_blocks_below_16x16 = EB_TRUE;
+#else
     pcs_ptr->disallow_all_nsq_blocks_below_16x16 = EB_FALSE;
-
+#endif
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = EB_FALSE;
 

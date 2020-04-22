@@ -518,6 +518,9 @@ EbErrorType signal_derivation_me_kernel_oq(
     else
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 2;
 
+#if NSQ_TEST_9
+    context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 3;
+#endif
 #if ADD_ME_SIGNAL_FOR_PRUNING_TH
 #if MAR20_ADOPTIONS
     if (pcs_ptr->sc_content_detected)
@@ -843,7 +846,9 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     // 2: perform me nsq_search for the nearest refrenece pictures.
     // 3: me nsq_search off.
     context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 0;
-
+#if NSQ_TEST_9
+    context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 3;
+#endif
 #if ADD_ME_SIGNAL_FOR_PRUNING_TH
 #if MAR20_ADOPTIONS
     if (pcs_ptr->sc_content_detected)
