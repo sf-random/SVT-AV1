@@ -2931,6 +2931,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 else {
 #if QP2QINDEX
                     blk_ptr->qindex = sb_ptr->qindex;
+#else
+                    blk_ptr->qp = sb_ptr->qp;
 #endif
 #if !CLEAN_UP_SB_DATA_2
                     blk_ptr->delta_qp = sb_ptr->delta_qp;
