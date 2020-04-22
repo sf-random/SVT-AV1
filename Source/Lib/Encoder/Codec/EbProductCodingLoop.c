@@ -8271,7 +8271,11 @@ EbErrorType signal_derivation_block(
         if (context_ptr->intra_similar_mode)
             context_ptr->inject_inter_candidates = is_src_intra ? 0 : context_ptr->inject_inter_candidates;
     }
-
+#if DISABLE_COMPOUND
+    if (context_ptr->pd_pass == PD_PASS_2) {
+        context_ptr->compound_types_to_try = MD_COMP_AVG;
+    }
+#endif
     return return_error;
 }
 

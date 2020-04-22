@@ -219,6 +219,7 @@ extern "C" {
 #define DISABLE_IFS              0
 #define DISABLE_OBMC             0
 #define DISABLE_WARPED           0
+#define DISABLE_COMPOUND         0
 
 #define SPEED_UP_FEATURE         0
 #if SPEED_UP_FEATURE
