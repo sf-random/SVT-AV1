@@ -245,7 +245,7 @@ extern "C" {
 #endif
 #define M8_CLEAN_UP 1 // remove useless code: energy, full loop escape
 #endif
-#define FIX_CHROMA_LAST_STAGE 1 // Fix Tx Type, Predicted Samples, and Fast_Rate if chroma_mode diff between fisrt stage and last stage 
+#define FIX_CHROMA_LAST_STAGE 1 // Fix Tx Type, Predicted Samples, and Fast_Rate if chroma_mode diff between fisrt stage and last stage
 #if FIX_CHROMA_LAST_STAGE
 #define REFACTOR_SIGNALS 1
 #define FIX_CFL_OFF 1

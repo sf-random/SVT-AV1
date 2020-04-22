@@ -7905,12 +7905,12 @@ void update_intra_chroma_mode(ModeDecisionContext *context_ptr, ModeDecisionCand
                         candidate_ptr->angle_delta[PLANE_TYPE_Y]]))
                         : 0;
                 }
-                // If CFL OFF or not applicable, and intra_chroma_mode used @ md_stage_0() (first stage intra_mode) 
-                // and the best independant intra mode (final stage intra_mode) are not matching then the chroma pred 
-                // should be re-performed using best independant chroma pred 
+                // If CFL OFF or not applicable, and intra_chroma_mode used @ md_stage_0() (first stage intra_mode)
+                // and the best independant intra mode (final stage intra_mode) are not matching then the chroma pred
+                // should be re-performed using best independant chroma pred
                 if (candidate_ptr->intra_chroma_mode != UV_CFL_PRED)
                     if (candidate_ptr->intra_chroma_mode != intra_chroma_mode || candidate_ptr->angle_delta[PLANE_TYPE_UV] != angle_delta) {
-                        // Set to TRUE to redo INTRA CHROMAcompensation 
+                        // Set to TRUE to redo INTRA CHROMA compensation
                         context_ptr->md_staging_perform_intra_chroma_pred = EB_TRUE;
                         // Update fast_chroma_rate
                         candidate_ptr->fast_chroma_rate = context_ptr->fast_chroma_rate[candidate_ptr->intra_luma_mode][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_Y]];
