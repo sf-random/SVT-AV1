@@ -7451,6 +7451,14 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     uint32_t full_lambda = context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
+
+#if FIX_CFL_OFF
+    int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
+        candidate_buffer->candidate_ptr->use_intrabc)
+        ? EB_TRUE
+        : EB_FALSE;
+#endif
+
     // initialize TU Split
     y_full_distortion[DIST_CALC_RESIDUAL]   = 0;
     y_full_distortion[DIST_CALC_PREDICTION] = 0;
@@ -7467,7 +7475,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     // Set Skip Flag
     candidate_ptr->skip_flag = EB_FALSE;
 
+#if FIX_CFL_OFF
+    if (is_inter) {
+#else
     if (candidate_ptr->type != INTRA_MODE) {
+#endif
 #if REFACTOR_SIGNALS
         if (context_ptr->md_staging_perform_inter_pred) {
 #else
@@ -7477,6 +7489,18 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                 context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
         }
     }
+#if FIX_CFL_OFF
+    else if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+            // Cb/Cr Prediction
+            if (context_ptr->md_staging_perform_intra_chroma_pred) {
+                context_ptr->uv_intra_comp_only = EB_TRUE;
+                product_prediction_fun_table[candidate_ptr->type](
+                    context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+            }
+        }
+    }
+#endif
 
     // Initialize luma CBF
     candidate_ptr->y_has_coeff = 0;
@@ -7504,12 +7528,13 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         else
             end_tx_depth = 0;
     }
+#if !FIX_CFL_OFF
     // Transform partitioning path (INTRA Luma)
         int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                             candidate_buffer->candidate_ptr->use_intrabc)
                                ? EB_TRUE
                                : EB_FALSE;
-
+#endif
         //Y Residual: residual for INTRA is computed inside the TU loop
         if (is_inter)
             //Y Residual
@@ -7556,14 +7581,6 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
 
-#if FIX_CFL_OFF
-            // Cb/Cr Prediction
-            if (context_ptr->md_staging_perform_intra_chroma_pred) {
-                context_ptr->uv_intra_comp_only = EB_TRUE;
-                product_prediction_fun_table[candidate_ptr->type](
-                    context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
-            }
-#endif
             //Cb Residual
             residual_kernel(input_picture_ptr->buffer_cb,
                             input_cb_origin_in_index,
