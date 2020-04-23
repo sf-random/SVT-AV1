@@ -226,6 +226,10 @@ extern "C" {
 #define MRP_TEST                 0
 #define PRED_ME_TEST             0
 #define SWICHABLE_ENC_MODE       0
+#if SWICHABLE_ENC_MODE
+#define SB_ENC_MODE              0
+#endif
+#define NON_COMPETE              0
 #endif
 #define MR_TXS_EVERYWHERE        0
 #endif

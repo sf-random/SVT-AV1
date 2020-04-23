@@ -1786,7 +1786,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_1_count[CAND_CLASS_0] = MAX(context_ptr->md_stage_1_count[CAND_CLASS_0], 1);
 
 #endif
-#if SB_CLASSIFIER
+#if SB_CLASSIFIER && !NON_COMPETE
         if (context_ptr->sb_class == LOW_COMPLEX_CLASS && context_ptr->enable_area_based_cycles_allocation) {
             for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
                 context_ptr->md_stage_1_count[cidx] = (context_ptr->md_stage_1_count[cidx] + 1) / 2;
@@ -10314,12 +10314,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint8_t default_md_tx_size_search_mode = context_ptr->md_tx_size_search_mode;
     uint8_t default_md_disallow_nsq = context_ptr->md_disallow_nsq;
     // Update nsq and txs settings based on the sb_class
+#if !NON_COMPETE
     if (context_ptr->enable_area_based_cycles_allocation) {
         if (context_ptr->sb_class == MEDIUM_COMPLEX_CLASS)
             context_ptr->md_tx_size_search_mode = 0;
         if (context_ptr->sb_class == HIGH_COMPLEX_CLASS)
             context_ptr->md_disallow_nsq = 1;
     }
+#endif
 #if IMPROVE_LOW_COMPLEX_SB && MR_NSQ_WEIGHT
     uint8_t default_sq_weight = context_ptr->sq_weight;
     if (context_ptr->enable_area_based_cycles_allocation) {
