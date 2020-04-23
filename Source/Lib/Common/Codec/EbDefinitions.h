@@ -250,6 +250,7 @@ extern "C" {
 #define REFACTOR_SIGNALS 1
 #define FIX_CFL_OFF 1
 #endif
+#define FIX_CHROMA_PALETTE_INTERACTION 1 // Fix Chroma/Palette interaction
 // END  MAY2020 /////////////////////////////////////////////////////////
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
