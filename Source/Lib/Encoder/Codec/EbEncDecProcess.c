@@ -1566,7 +1566,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
-
+#if DISALLOW_CYCLE_ALLOCATION
+    context_ptr->enable_area_based_cycles_allocation = 0;
+#endif
     if (MR_MODE) {
         if (pcs_ptr->parent_pcs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE)
             context_ptr->coeffcients_area_based_cycles_allocation_level = 2;
@@ -1656,7 +1658,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #endif
-
+#if DISABLE_TXT_LEVEL
+    if (pd_pass == PD_PASS_2)
+        context_ptr->tx_search_level = TX_SEARCH_OFF;
+#endif
 #if TXT_CONTROL
     // Set MD tx_level
     // md_txt_search_level                            Settings
@@ -1680,6 +1685,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_txt_search_level = 3;
         else
             context_ptr->md_txt_search_level = 4;
+#if TXT_LEVEL
+        context_ptr->md_txt_search_level = TXT_LEVEL;
+#endif
     }
 #else
     // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
