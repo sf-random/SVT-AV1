@@ -7475,11 +7475,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     // Set Skip Flag
     candidate_ptr->skip_flag = EB_FALSE;
 
-#if FIX_CFL_OFF
-    if (is_inter) {
-#else
     if (candidate_ptr->type != INTRA_MODE) {
-#endif
 #if REFACTOR_SIGNALS
         if (context_ptr->md_staging_perform_inter_pred) {
 #else
