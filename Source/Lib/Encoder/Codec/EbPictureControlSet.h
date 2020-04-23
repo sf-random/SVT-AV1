@@ -847,6 +847,9 @@ typedef struct PictureControlSetInitData {
     uint16_t  non_m8_pad_h;
 #endif
 
+#if TPL_LA
+    uint8_t enable_tpl_la;
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

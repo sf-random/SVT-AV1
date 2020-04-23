@@ -1116,7 +1116,7 @@ void tpl_mc_flow_dispenser(
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
 #if TPL_LA_REENCODE
     if (reencode) {
-      //  qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]/4;
+        // qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp] / 4;
         if (pcs_ptr->slice_type == I_SLICE) {
             if (scs_ptr->static_config.qp == 20) {
                 qIndex = 18;
@@ -1269,10 +1269,10 @@ void tpl_mc_flow_dispenser(
                         y_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
                         InterPredParams inter_pred_params;
                         av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
-                                mb_origin_x, 0, 0, 8/*xd->bd*/, 0/*is_cur_buf_hbd(xd)*/, 0,
+                                mb_origin_x, 0, 0, 8, 0, 0,
                                 &sf, &ref_buf, kernel);
 
-                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8/*xd->bd*/);
+                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
 
                         MV best_mv = {y_curr_mv, x_curr_mv};
 #if CUTREE_MV_CLIP
@@ -1291,7 +1291,7 @@ void tpl_mc_flow_dispenser(
 #endif
                         aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
 
-                        wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8/*xd->bd*/, 0/*is_cur_buf_hbd(xd)*/);
+                        wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                         inter_cost = aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
@@ -1336,10 +1336,10 @@ void tpl_mc_flow_dispenser(
                                                   input_picture_ptr->stride_y};
                         InterPredParams inter_pred_params;
                         av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
-                            mb_origin_x, 0, 0, 8/*xd->bd*/, 0/*is_cur_buf_hbd(xd)*/, 0,
+                            mb_origin_x, 0, 0, 8, 0, 0,
                             &sf, &ref_buf, kernel);
 
-                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8/*xd->bd*/);
+                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
 #if CUTREE_MV_CLIP
                         av1_build_inter_predictor(pcs_ptr->av1_cm,
                                                   ref_mb,
@@ -1381,7 +1381,7 @@ void tpl_mc_flow_dispenser(
                     }
 
                     aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
-                    wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8/*xd->bd*/, 0/*s_cur_buf_hbd(xd)*/);
+                    wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                     uint16_t eob;
 
@@ -1390,10 +1390,7 @@ void tpl_mc_flow_dispenser(
                     int rate_cost = rate_estimator(qcoeff, eob, tx_size);
 
                     if(eob) {
-                        /*if(is16bit)
-                            av1_inv_transform_recon16bit();
-                        else*/
-                            av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0 /*lossless*/);
+                        av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0 /*lossless*/);
                     }
 
                     tpl_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);

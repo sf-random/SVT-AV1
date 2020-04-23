@@ -461,6 +461,14 @@ typedef struct EbSvtAv1EncConfiguration {
      * 1 = enable CU TREE in look ahead
      * Default is 0  */
     uint8_t enable_tpl_la;
+    /* Number of frames of sequence to be encoded. If number of frames is greater
+     * than the number of frames in file, the encoder will loop to the beginning
+     * and continue the encode.
+     *
+     * 0 = encodes the full clip.
+     *
+     * Default is 0. */
+    uint64_t frames_to_be_encoded;
 #endif
 
     /* Target bitrate in bits/second, only apllicable when rate control mode is

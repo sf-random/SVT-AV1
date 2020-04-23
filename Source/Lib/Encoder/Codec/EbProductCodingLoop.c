@@ -9485,7 +9485,7 @@ uint8_t update_skip_nsq_shapes(SequenceControlSet *scs_ptr, PictureControlSet *p
     sq_weight += sq_weight_per_qp[scs_ptr->static_config.qp];
 #else
 #if QP2QINDEX
-    sq_weight += sq_weight_per_qp[(context_ptr->qp_index + 2)>>2];
+    sq_weight += sq_weight_per_qp[context_ptr->qp_index >> 2];
 #else
     sq_weight += sq_weight_per_qp[context_ptr->qp];
 #endif
@@ -9559,8 +9559,8 @@ uint8_t update_skip_nsq_shapes(SequenceControlSet *scs_ptr, PictureControlSet *p
                         offset += nsq_weight_per_qp[scs_ptr->static_config.qp];
 #else
 #if QP2QINDEX
-                    if (offset >= (uint32_t) -nsq_weight_per_qp[(context_ptr->qp_index + 2) >> 2])
-                        offset += nsq_weight_per_qp[(context_ptr->qp_index + 2) >> 2];
+                    if (offset >= (uint32_t) -nsq_weight_per_qp[context_ptr->qp_index >> 2])
+                        offset += nsq_weight_per_qp[context_ptr->qp_index >> 2];
 #else
                     if (offset >= (uint32_t) -nsq_weight_per_qp[context_ptr->qp])
                         offset += nsq_weight_per_qp[context_ptr->qp];
@@ -9630,8 +9630,8 @@ uint8_t update_skip_nsq_shapes(SequenceControlSet *scs_ptr, PictureControlSet *p
                         offset += nsq_weight_per_qp[scs_ptr->static_config.qp];
 #else
 #if QP2QINDEX
-                    if (offset >= (uint32_t) -nsq_weight_per_qp[(context_ptr->qp_index+2)>>2])
-                        offset += nsq_weight_per_qp[(context_ptr->qp_index + 2) >> 2];
+                    if (offset >= (uint32_t) -nsq_weight_per_qp[context_ptr->qp_index >> 2])
+                        offset += nsq_weight_per_qp[context_ptr->qp_index >> 2];
 #else
                     if (offset >= (uint32_t) -nsq_weight_per_qp[context_ptr->qp])
                         offset += nsq_weight_per_qp[context_ptr->qp];
