@@ -70,6 +70,7 @@
     } while (0)
 #endif
 
+#if !PR1252_ADOPTIONS
 void setup_rtcd_non8(CPU_FLAGS flags) {
     (void) flags;
 #if PR1238_ADOPTIONS
@@ -79,6 +80,8 @@ void setup_rtcd_non8(CPU_FLAGS flags) {
     eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
 #endif
 }
+#endif
+
 void setup_rtcd_internal(CPU_FLAGS flags) {
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */

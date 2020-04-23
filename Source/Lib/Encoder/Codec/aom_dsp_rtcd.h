@@ -55,7 +55,9 @@ extern "C" {
 //    CPU_FLAGS get_cpu_flags_to_use();
     void setup_rtcd_internal(CPU_FLAGS flags);
 
+#if !PR1252_ADOPTIONS
     void setup_rtcd_non8(CPU_FLAGS flags);
+#endif
 
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;

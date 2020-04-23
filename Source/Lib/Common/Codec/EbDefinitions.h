@@ -135,6 +135,7 @@ extern "C" {
 #endif
 #define PR1187_ADOPTIONS              1 //Fix valgrind issue highbd_inv_txfm2d_add_h_identity_avx2()
 #define PR1238_ADOPTIONS              1 //Fix for AVX2/AVX512 kernels when non-multiple of 8 resolution is used
+#define PR1252_ADOPTIONS              1 //Fix for AVX2/AVX512 kernels when non-multiple of 8 resolution is used
 
 #if FIXED_SQ_WEIGHT_PER_QP
 #define SQ_WEIGHT_PATCH_0 1
