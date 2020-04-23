@@ -1688,6 +1688,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TXT_LEVEL
         context_ptr->md_txt_search_level = TXT_LEVEL;
 #endif
+#if FULL_TXT
+        context_ptr->md_txt_search_level = 0;
+#endif
     }
 #else
     // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)

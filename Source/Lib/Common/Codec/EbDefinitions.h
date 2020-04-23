@@ -255,9 +255,11 @@ extern "C" {
 #define FIX_CHROMA_PALETTE_INTERACTION 1 // Fix Chroma/Palette interaction and enable independent in M0 for SC
 #define QP2QINDEX 1 // switch QP to qindex for MD
 
+#define DISALLOW_CYCLE_ALLOCATION    0
 #define DISABLE_TXT_LEVEL            0
 #define TXT_LEVEL                    0
-#define DISALLOW_CYCLE_ALLOCATION    0
+#define FULL_TXT                     0
+
 // END  MAY2020 /////////////////////////////////////////////////////////
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
