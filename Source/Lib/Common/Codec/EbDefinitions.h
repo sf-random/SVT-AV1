@@ -259,6 +259,7 @@ extern "C" {
 #define DISABLE_TXT_LEVEL            0
 #define TXT_LEVEL                    0
 #define FULL_TXT                     0
+#define TXT_LEVEL5                   0
 
 // END  MAY2020 /////////////////////////////////////////////////////////
 

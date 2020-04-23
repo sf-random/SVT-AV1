@@ -5746,6 +5746,15 @@ void set_txt_search_ctrls(ModeDecisionContext *context_ptr) {
         txt_search_ctrls->txt_allow_skip = 0;
         break;
     case 5:
+#if TXT_LEVEL5
+        txt_search_ctrls->txt_allow_rdoq = 0;
+        txt_search_ctrls->txt_allow_ssse = 0;
+        txt_search_ctrls->txt_weight[0] = 102;
+        txt_search_ctrls->txt_weight[1] = 102;
+        txt_search_ctrls->txt_weight[2] = 102;
+        txt_search_ctrls->txt_table_idx = 4;
+        txt_search_ctrls->txt_allow_skip = 1;
+#else
         txt_search_ctrls->txt_allow_rdoq = 0;
         txt_search_ctrls->txt_allow_ssse = 0;
         txt_search_ctrls->txt_weight[0] = 0;
@@ -5753,6 +5762,7 @@ void set_txt_search_ctrls(ModeDecisionContext *context_ptr) {
         txt_search_ctrls->txt_weight[2] = 0;
         txt_search_ctrls->txt_table_idx = 5;
         txt_search_ctrls->txt_allow_skip = 0;
+#endif
         break;
     default:
         printf("Error: unvalid md_txt_search_level\n");
