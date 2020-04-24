@@ -428,6 +428,15 @@ EbErrorType load_default_buffer_configuration_settings(
         (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
     uint32_t me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
+#if MULTITHREAD_BUFFER_TUNE
+    if ((core_count != SINGLE_CORE_COUNT)&& (core_count < (CONS_CORE_COUNT << 1)))
+    {
+        enc_dec_seg_h = enc_dec_seg_h / 2;
+        enc_dec_seg_w = enc_dec_seg_w / 2;
+        me_seg_h = me_seg_h / 2;
+        me_seg_w = me_seg_w / 2;
+    }
+#endif 
     // ME segments
     scs_ptr->me_segment_row_count_array[0] = me_seg_h;
     scs_ptr->me_segment_row_count_array[1] = me_seg_h;
@@ -575,12 +584,37 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
     }
     else {
-        scs_ptr->input_buffer_fifo_init_count              = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
-        scs_ptr->picture_control_set_pool_init_count       = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
-        scs_ptr->pa_reference_picture_buffer_init_count    = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
-        scs_ptr->reference_picture_buffer_init_count       = MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
-        scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
-        scs_ptr->overlay_input_picture_buffer_init_count   = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
+#if MULTITHREAD_BUFFER_TUNE
+        if (core_count == (SINGLE_CORE_COUNT << 1))
+        {
+            scs_ptr->input_buffer_fifo_init_count = min_input;
+            scs_ptr->picture_control_set_pool_init_count = min_parent;
+            scs_ptr->pa_reference_picture_buffer_init_count = min_paref;
+            scs_ptr->reference_picture_buffer_init_count = min_ref;
+            scs_ptr->picture_control_set_pool_init_count_child = min_child;
+            scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
+            scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+        }
+        else if (core_count == (SINGLE_CORE_COUNT << 2))
+        {
+            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count) + 8;
+            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count) + 8;
+            scs_ptr->pa_reference_picture_buffer_init_count = min_paref;
+            scs_ptr->reference_picture_buffer_init_count = min_ref;
+            scs_ptr->picture_control_set_pool_init_count_child = min_child;
+            scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
+            scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+        }
+        else
+#endif
+        {
+            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
+            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
+            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
+            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
+            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
+            scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
+        }
     }
 
     //#====================== Inter process Fifos ======================
@@ -611,6 +645,12 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->dlf_process_init_count                         = MAX(MIN(40, core_count >> 1), core_count));
         scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count                        = MAX(MIN(40, core_count >> 1), core_count));
         scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count                        = MAX(MIN(40, core_count >> 1), core_count));
+#if MULTITHREAD_BUFFER_TUNE
+        if (core_count < (CONS_CORE_COUNT << 1)) {
+
+            scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count = MAX(core_count, MAX(MIN(20, core_count >> 1), core_count / 3)));
+        }
+#endif
     }else{
         scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count            = 1);
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count           = 1);
@@ -1658,8 +1698,12 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     * Thread Handles
     ************************************/
     EbSvtAv1EncConfiguration   *config_ptr = &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
-
+#if MULTITHREAD_BUFFER_TUNE
+    if (config_ptr->logical_processors == 1)
     eb_set_thread_management_parameters(config_ptr);
+#else
+    eb_set_thread_management_parameters(config_ptr);
+#endif
 
     control_set_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
 

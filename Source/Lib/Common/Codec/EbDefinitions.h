@@ -254,7 +254,7 @@ extern "C" {
 #define PR_1217 1
 #define FIX_CHROMA_PALETTE_INTERACTION 1 // Fix Chroma/Palette interaction and enable independent in M0 for SC
 #define QP2QINDEX 1 // switch QP to qindex for MD
-
+#define MULTITHREAD_BUFFER_TUNE 1
 // END  MAY2020 /////////////////////////////////////////////////////////
 
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
