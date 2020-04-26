@@ -5208,6 +5208,137 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
     return q;
 }
 #endif
+
+#if TPL_LA && TPL_LA_1PASS
+static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qindex) {
+    SequenceControlSet *scs_ptr              = pcs_ptr->parent_pcs_ptr->scs_ptr;
+    const int           cq_level             = qindex;
+    int                 active_best_quality  = 0;
+    int                 active_worst_quality = qindex;
+    rc->arf_q                                = 0;
+    int q;
+    int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost,
+        rf_level;
+    is_src_frame_alt_ref  = 0;
+    refresh_golden_frame  = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 1 : 0;
+    refresh_alt_ref_frame = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
+    is_intrl_arf_boost    = (pcs_ptr->parent_pcs_ptr->temporal_layer_index > 0 &&
+                          pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                             ? 1
+                             : 0;
+    rf_level =
+        (frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
+            ? KF_STD
+            : (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
+                  ? GF_ARF_STD
+                  : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? GF_ARF_LOW : INTER_NORMAL;
+
+    const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
+    // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
+    // So, for each frame, arf_q is updated based on the qp of its references.
+    rc->arf_q = MAX(rc->arf_q, ((pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2));
+    if (pcs_ptr->slice_type == B_SLICE)
+        rc->arf_q = MAX(rc->arf_q, ((pcs_ptr->ref_pic_qp_array[1][0] << 2) + 2));
+
+    if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+        // Not forced keyframe.
+        double q_adj_factor = 1.0;
+        double q_val;
+        rc->worst_quality   = MAXQ;
+        rc->best_quality    = MINQ;
+
+        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
+        const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key);
+
+        SVT_LOG("1pass tpl kf boost %d [%d] poc=%ld r0=%f\t", new_kf_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0);
+        SVT_LOG("%d\n",
+            pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
+        rc->kf_boost = new_kf_boost;//combine_prior_with_tpl_boost(rc->kf_boost, new_kf_boost, frames_to_key);
+
+        // Baseline value derived from cpi->active_worst_quality and kf boost.
+//#if QPS_TPL
+        active_best_quality = get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
+//#else
+//        active_best_quality = get_kf_active_quality(rc, active_worst_quality, bit_depth);
+//#endif
+#if QPS_UPDATE
+        // Allow somewhat lower kf minq with small image formats.
+        if ((pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_width *
+             pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_height) <= (352 * 288))
+            q_adj_factor -= 0.25;
+#endif
+        // Make a further adjustment based on the kf zero motion measure.
+        q_adj_factor +=
+            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
+                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+
+        // Convert the adjustment factor to a qindex delta
+        // on active_best_quality.
+        q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
+        active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+    } else if (!is_src_frame_alt_ref &&
+               (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame)) {
+        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
+                           - (pcs_ptr->parent_pcs_ptr->picture_number % (scs_ptr->intra_period_length + 1)) + 15;
+        const int new_gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
+        rc->arf_boost_factor = 1;
+        if (!is_intrl_arf_boost) {
+            SVT_LOG("1pass gfu boost %d [%d] poc=%ld r0=%f\t", new_gfu_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0);
+            SVT_LOG("%d\n",
+                pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
+        }
+        rc->gfu_boost = new_gfu_boost;//combine_prior_with_tpl_boost(rc->gfu_boost, new_gfu_boost, frames_to_key);
+
+        q = active_worst_quality;
+
+        // non ref frame or repeated frames with re-encode
+        if (!refresh_alt_ref_frame && !is_intrl_arf_boost)
+            active_best_quality = cq_level;
+        else {
+#if 0
+            // needs update rc->avg_frame_qindex before
+            // Use the lower of active_worst_quality and recent
+            // average Q as basis for GF/ARF best Q limit unless last frame was
+            // a key frame.
+            if (pcs_ptr->parent_pcs_ptr->decode_order/*rc->frames_since_key*/ > 1 &&
+                    rc->avg_frame_qindex[INTER_FRAME] < active_worst_quality) {
+                q = rc->avg_frame_qindex[INTER_FRAME];
+            }
+#endif
+            if (!is_intrl_arf_boost) {
+                active_best_quality = get_gf_active_quality_tpl_la(rc, q, bit_depth);
+                rc->arf_q           = active_best_quality;
+                const int min_boost = get_gf_high_motion_quality(q, bit_depth);
+                const int boost     = min_boost - active_best_quality;
+
+                active_best_quality = min_boost - (int)(boost * rc->arf_boost_factor);
+            } else {
+                active_best_quality = rc->arf_q;
+
+                // active_best_quality is updated with the q index of the reference
+                if (rf_level == GF_ARF_LOW)
+                    active_best_quality = (active_best_quality + cq_level + 1) / 2;
+            }
+            // For alt_ref and GF frames (including internal arf frames) adjust the
+            // worst allowed quality as well. This insures that even on hard
+            // sections we dont clamp the Q at the same value for arf frames and
+            // leaf (non arf) frames. This is important to the TPL model which assumes
+            // Q drops with each arf level.
+            active_worst_quality =
+                (active_best_quality + (3 * active_worst_quality) + 2) / 4;
+        }
+    } else
+        active_best_quality = cq_level;
+
+    adjust_active_best_and_worst_quality(pcs_ptr, rc, rf_level, &active_worst_quality, &active_best_quality);
+    q = active_best_quality;
+    clamp(q, active_best_quality, active_worst_quality);
+    if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
+    SVT_LOG("1pas tplqps poc=%d, q=%d, active_best_quality=%d, active_worst_quality=%d, boost=%d\n", pcs_ptr->parent_pcs_ptr->picture_number, q, active_best_quality, active_worst_quality, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost );
+
+    return q;
+}
+#endif
 #endif
 
 /******************************************************
@@ -6029,10 +6160,26 @@ void *rate_control_kernel(void *input_ptr) {
                             !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
                             pcs_ptr->parent_pcs_ptr->referenced_area_has_non_zero)
                             new_qindex = adaptive_qindex_calc_two_pass(pcs_ptr, &rc, qindex);
+#if TPL_LA && TPL_LA_1PASS
+                        // 1pass QPS with tpl_la
+                        else if (!scs_ptr->use_input_stat_file &&
+                                 !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
+                                 scs_ptr->static_config.look_ahead_distance != 0 &&
+                                 scs_ptr->static_config.enable_tpl_la)
+                            new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
+#endif
                         else
                             new_qindex = cqp_qindex_calc(pcs_ptr, &rc, qindex);
                     }
                     else {
+#if TPL_LA && TPL_LA_1PASS
+                        if (!scs_ptr->use_input_stat_file &&
+                            !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
+                            scs_ptr->static_config.look_ahead_distance != 0 &&
+                            scs_ptr->static_config.enable_tpl_la)
+                            new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
+                        else
+#endif
                         new_qindex = cqp_qindex_calc(
                             pcs_ptr,
                             &rc,
@@ -6146,6 +6293,15 @@ void *rate_control_kernel(void *input_ptr) {
                 if (scs_ptr->use_input_stat_file &&
                     pcs_ptr->parent_pcs_ptr->referenced_area_has_non_zero)
                     sb_qp_derivation_two_pass(pcs_ptr);
+#if TPL_LA && TPL_LA_1PASS
+                // 1pass QPM with tpl_la
+                else if (!scs_ptr->use_output_stat_file &&
+                         !scs_ptr->use_input_stat_file &&
+                         scs_ptr->static_config.look_ahead_distance != 0 &&
+                         scs_ptr->static_config.enable_tpl_la &&
+                         pcs_ptr->parent_pcs_ptr->r0 != 0/* && pcs_ptr->picture_number<48*/) // only QPM for poc<48 pictue for last pic seq diff with aom
+                    sb_qp_derivation_tpl_la(pcs_ptr);
+#endif
                 else
                     sb_qp_derivation(pcs_ptr);
             else {

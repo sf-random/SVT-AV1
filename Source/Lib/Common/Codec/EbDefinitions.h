@@ -205,6 +205,7 @@ extern "C" {
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 #define TPL_LA  1 // Add TPL into look ahead
 #if TPL_LA
+#define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
 #define TPL_LA_QPS 1
 #define TPL_LA_QPM 1
 #define CUTREE_MV_CLIP 1
@@ -212,7 +213,8 @@ extern "C" {
 #define TPL_LA_REENCODE 0
 #define QPS_TPL 1
 #define LAMBDA_SCALING 0
-#define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
+#define INTRA_RECON_WITH_REC 0
+#define TPL_LA_1PASS 0
 #endif
 
 #define QP2QINDEX 1
