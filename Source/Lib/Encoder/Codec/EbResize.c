@@ -1049,7 +1049,6 @@ EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControl
 
 static uint8_t get_denom_idx(uint8_t superres_denom){
     uint8_t denom_idx = (uint8_t)(superres_denom - SCALE_NUMERATOR - 1);
-    assert(denom_idx >= 0);
     return denom_idx;
 }
 

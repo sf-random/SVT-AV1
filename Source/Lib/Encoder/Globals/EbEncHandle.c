@@ -2892,7 +2892,7 @@ static EbErrorType verify_settings(
                 "only SUPERRES_NONE (0), SUPERRES_FIXED (1) and SUPERRES_RANDOM (2) are currently implemented \n", channel_number + 1, config->superres_mode, 0, 2);
         return_error = EB_ErrorBadParameter;
     }
-    
+
     if (config->superres_mode > 0 && ((config->input_stat_file || config->output_stat_file))){
         SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
