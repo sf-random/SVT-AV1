@@ -2345,7 +2345,11 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             0,
             0,
             0,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
             context_ptr->full_lambda,
             EB_FALSE);
 
@@ -2531,7 +2535,11 @@ void encode_pass_tx_search_hbd(
             0,
             0,
             0,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
             context_ptr->full_lambda,
             EB_FALSE);
 

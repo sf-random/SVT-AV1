@@ -6551,7 +6551,7 @@ void *enc_dec_kernel(void *input_ptr) {
 #endif
                     if (pcs_ptr->update_cdf) {
 
-#if !RATE_MEM_OPT
+#if !RATE_MEM_OPT && !REU_MEM_OPT
                         pcs_ptr->rate_est_array[sb_index] = *pcs_ptr->md_rate_estimation_array;
 #endif
                         if (scs_ptr->seq_header.pic_based_rate_est &&
@@ -6653,6 +6653,28 @@ void *enc_dec_kernel(void *input_ptr) {
                         context_ptr->md_context->md_rate_estimation_ptr =
                             &pcs_ptr->rate_est_array[real_sb_idx];
 #else
+#if REU_MEM_OPT
+                        // Initial Rate Estimation of the syntax elements
+                        av1_estimate_syntax_rate(&context_ptr->md_context->rate_est_table,
+                            pcs_ptr->slice_type == I_SLICE,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+                        // Initial Rate Estimation of the Motion vectors
+                        av1_estimate_mv_rate(pcs_ptr,
+                            &context_ptr->md_context->rate_est_table,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        //let the candidate point to the new rate table.
+                        uint32_t cand_index;
+                        for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT;
+                            ++cand_index)
+                            context_ptr->md_context->fast_candidate_ptr_array[cand_index]
+                            ->md_rate_estimation_ptr = &context_ptr->md_context->rate_est_table;
+                        context_ptr->md_context->md_rate_estimation_ptr =
+                            &context_ptr->md_context->rate_est_table;
+#else
                         // Initial Rate Estimation of the syntax elements
                         av1_estimate_syntax_rate(&pcs_ptr->rate_est_array[sb_index],
                                                  pcs_ptr->slice_type == I_SLICE,
@@ -6673,7 +6695,7 @@ void *enc_dec_kernel(void *input_ptr) {
                                 ->md_rate_estimation_ptr = &pcs_ptr->rate_est_array[sb_index];
                         context_ptr->md_context->md_rate_estimation_ptr =
                             &pcs_ptr->rate_est_array[sb_index];
-
+#endif
 #endif
 
                     }

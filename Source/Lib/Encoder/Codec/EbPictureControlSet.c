@@ -212,7 +212,9 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->mip);
     EB_FREE_ARRAY(obj->md_rate_estimation_array);
     EB_FREE_ARRAY(obj->ec_ctx_array);
+#if !REU_MEM_OPT
     EB_FREE_ARRAY(obj->rate_est_array);
+#endif
     if (obj->tile_tok[0][0]) EB_FREE_ARRAY(obj->tile_tok[0][0]);
 #if !DEPTH_PART_CLEAN_UP
     EB_FREE_ARRAY(obj->mdc_sb_array);
@@ -427,13 +429,14 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_MALLOC_ARRAY(object_ptr->md_rate_estimation_array, 1);
     memset(object_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext));
     EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
+#if !REU_MEM_OPT
 #if RATE_MEM_OPT
     if(init_data_ptr->serial_rate_est)
        EB_MALLOC_ARRAY(object_ptr->rate_est_array, 1);
     else
 #endif
     EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
-
+#endif
     if (init_data_ptr->cfg_palette) {
         uint32_t     mi_cols = init_data_ptr->picture_width >> MI_SIZE_LOG2;
         uint32_t     mi_rows = init_data_ptr->picture_height >> MI_SIZE_LOG2;

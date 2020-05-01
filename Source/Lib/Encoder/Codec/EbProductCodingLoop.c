@@ -177,7 +177,11 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
         (uint8_t)context_ptr->blk_ptr->prediction_unit_array->inter_pred_direction_index;
     uint8_t ref_frame_type = (uint8_t)context_ptr->blk_ptr->prediction_unit_array[0].ref_frame_type;
     int32_t is_inter = (context_ptr->blk_ptr->prediction_mode_flag == INTER_MODE ||
-                        context_ptr->blk_ptr->av1xd->use_intrabc)
+#if SB_MEM_OPT
+        context_ptr->blk_ptr->use_intrabc)
+#else
+        context_ptr->blk_ptr->av1xd->use_intrabc)
+#endif
                            ? EB_TRUE
                            : EB_FALSE;
 
@@ -8339,6 +8343,14 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
 #endif
     dst_cu->mds_idx           = src_cu->mds_idx;
     dst_cu->filter_intra_mode = src_cu->filter_intra_mode;
+#if SB_MEM_OPT
+    dst_cu->use_intrabc = src_cu->use_intrabc;
+    dst_cu->drl_ctx[0] = src_cu->drl_ctx[0];
+    dst_cu->drl_ctx[1] = src_cu->drl_ctx[1];
+    dst_cu->drl_ctx_near[0] = src_cu->drl_ctx_near[0];
+    dst_cu->drl_ctx_near[1] = src_cu->drl_ctx_near[1];
+
+#endif
 }
 void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                           BlkStruct *src_cu, BlkStruct *dst_cu) {
@@ -8438,6 +8450,13 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
 #if !CLEAN_UP_SB_DATA_2
     dst_cu->shape = src_cu->shape;
     //dst_cu->mds_idx = src_cu->mds_idx;
+#endif
+#if SB_MEM_OPT
+    dst_cu->use_intrabc = src_cu->use_intrabc;
+    dst_cu->drl_ctx[0] = src_cu->drl_ctx[0];
+    dst_cu->drl_ctx[1] = src_cu->drl_ctx[1];
+    dst_cu->drl_ctx_near[0] = src_cu->drl_ctx_near[0];
+    dst_cu->drl_ctx_near[1] = src_cu->drl_ctx_near[1];
 #endif
 }
 

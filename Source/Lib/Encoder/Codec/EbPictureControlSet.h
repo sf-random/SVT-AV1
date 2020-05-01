@@ -377,7 +377,9 @@ typedef struct PictureControlSet {
     CRC_CALCULATOR   crc_calculator2;
 
     FRAME_CONTEXT *                 ec_ctx_array;
+#if !REU_MEM_OPT
     struct MdRateEstimationContext *rate_est_array;
+#endif
     uint8_t                         update_cdf;
     FRAME_CONTEXT                   ref_frame_context[REF_FRAMES];
     EbWarpedMotionParams            ref_global_motion[TOTAL_REFS_PER_FRAME];
