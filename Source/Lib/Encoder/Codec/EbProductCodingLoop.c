@@ -1802,6 +1802,10 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         }
 #endif
             ////MULT
+#if MAY01_M1_SC_ADOPT
+        if (((pcs_ptr->enc_mode <= ENC_M2) && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
+            ((pcs_ptr->enc_mode <= ENC_M1 && pcs_ptr->parent_pcs_ptr->sc_content_detected) && context_ptr->blk_geom->shape == PART_N)) {
+#else
 #if SHIFT_M3_SC_TO_M1
         if (((pcs_ptr->enc_mode <= ENC_M2) && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
             ((pcs_ptr->enc_mode <= ENC_M0 && pcs_ptr->parent_pcs_ptr->sc_content_detected) && context_ptr->blk_geom->shape == PART_N)) {
@@ -1832,6 +1836,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #else
             if ((pcs_ptr->enc_mode <= ENC_M0 && !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
                 ((pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->enc_mode <= ENC_M1 && pcs_ptr->parent_pcs_ptr->sc_content_detected)) && context_ptr->blk_geom->shape == PART_N)) {
+#endif
 #endif
 #endif
 #endif
@@ -1914,6 +1919,9 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 }
                 else
 #endif
+#if MAY01_M1_SC_ADOPT
+                if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
 #if M1_COMBO_1 || NEW_M1_CAND
                 if (pcs_ptr->enc_mode <= ENC_M0) {
 #else
@@ -1924,6 +1932,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 if (pcs_ptr->enc_mode <= ENC_M3) {
 #else
                 if (pcs_ptr->enc_mode <= ENC_M1) {
+#endif
 #endif
 #endif
 #endif
@@ -8647,10 +8656,14 @@ EbErrorType signal_derivation_block(
 
     context_ptr->compound_types_to_try = context_ptr->inter_comp_ctrls.enabled ? MD_COMP_WEDGE : MD_COMP_AVG;
 #if APR22_ADOPTIONS
+#if MAY01_M1_SC_ADOPT
+    if (pcs->enc_mode <= ENC_M2)
+#else
 #if M2_COMBO_1 || M1_COMBO_3 || NEW_M1_CAND
     if (pcs->enc_mode <= ENC_M0)
 #else
     if (pcs->enc_mode <= ENC_M2)
+#endif
 #endif
         context_ptr->inter_comp_ctrls.wedge_variance_th = 0;
 #endif
