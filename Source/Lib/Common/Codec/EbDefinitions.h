@@ -342,9 +342,14 @@ extern "C" {
 #define REMAP_MODES   1 //enc_mode remap
 #define APR25_7PM_ADOPTIONS 1
 #define R2R_FIX_PADDING 1
-#define REU_MEM_OPT 1 // Memory reduction for rate estimation tables
-#define SB_MEM_OPT 1 // memory reduction for SB array. Removing memory allocation for av1xd per blk
-#define MD_FRAME_CONTEXT_MEM_OPT 1 // Memory reduction for frame context used in MD
+
+#define REU_MEM_OPT                 1 // Memory reduction for rate estimation tables
+#define SB_MEM_OPT                  1 // memory reduction for SB array. Removing memory allocation for av1xd per blk
+#define MD_FRAME_CONTEXT_MEM_OPT    1 // Memory reduction for frame context used in MD
+#define ME_MEM_OPT                  1 // Memory reduction for ME results
+#define CAND_MEM_OPT                1 // Memory reduction for candidate buffers
+#define PAL_MEM_OPT                 1 // Memory allocation on the fly for palette
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

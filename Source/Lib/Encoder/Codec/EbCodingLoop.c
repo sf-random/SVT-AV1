@@ -32,6 +32,9 @@
 #include "EbMdRateEstimation.h"
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
+#if SB_MEM_OPT
+uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
+#endif
 /*******************************************
 * set Penalize Skip Flag
 *
@@ -2986,6 +2989,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     .ref_frame_type],
                                     sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
 #if SB_MEM_OPT
+
                                 {
                                     uint8_t      ref_frame_type = blk_ptr->prediction_unit_array[0].ref_frame_type;
                                     MacroBlockD *xd = blk_ptr->av1xd;
