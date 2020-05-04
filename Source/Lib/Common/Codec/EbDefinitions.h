@@ -350,6 +350,8 @@ extern "C" {
 #define CAND_MEM_OPT                1 // Memory reduction for candidate buffers
 #define PAL_MEM_OPT                 1 // Memory allocation on the fly for palette
 
+#define MAY03_4K_10BIT_ADOPTS 1
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
