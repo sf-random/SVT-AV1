@@ -3907,10 +3907,16 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
                     continue;
 #endif
+
+#if PR1274_ADOPTIONS
+                if (inter_direction == 2) {
+#endif
                 if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                     list1_ref_index > context_ptr->md_max_ref_count - 1)
                     continue;
+#if !PR1274_ADOPTIONS
                 if (inter_direction == 2) {
+#endif
                     int16_t to_inject_mv_x_l0 =
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds]
                         [me_block_results_ptr->ref0_list][list0_ref_index][0];
@@ -6027,7 +6033,9 @@ void  inject_palette_candidates(
         &tot_palette_cands);
 
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
-
+#if PR1274_ADOPTIONS
+        cand_array[can_total_cnt].is_interintra_used = 0;
+#endif
         palette_cand_array[cand_i].pmi.palette_size[1] = 0;
         memcpy(cand_array[can_total_cnt].palette_info.color_idx_map, palette_cand_array[cand_i].color_idx_map, 64 * 64);
         memcpy(&cand_array[can_total_cnt].palette_info.pmi, &palette_cand_array[cand_i].pmi, sizeof(PaletteModeInfo));

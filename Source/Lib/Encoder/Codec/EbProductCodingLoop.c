@@ -748,10 +748,8 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
 #endif
         mode_decision_update_neighbor_arrays(
             pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
-#if PR1154_ADOPTIONS
-    }
-#endif
 
+#if PR1274_ADOPTIONS
     update_mi_map(context_ptr,
                   context_ptr->blk_ptr,
                   context_ptr->blk_origin_x,
@@ -759,6 +757,21 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
                   context_ptr->blk_geom,
                   avail_blk_flag,
                   pcs_ptr);
+#endif
+
+#if PR1154_ADOPTIONS
+    }
+#endif
+
+#if !PR1274_ADOPTIONS
+    update_mi_map(context_ptr,
+                  context_ptr->blk_ptr,
+                  context_ptr->blk_origin_x,
+                  context_ptr->blk_origin_y,
+                  context_ptr->blk_geom,
+                  avail_blk_flag,
+                  pcs_ptr);
+#endif
 }
 
 void md_update_all_neighbour_arrays_multiple(PictureControlSet *  pcs_ptr,
