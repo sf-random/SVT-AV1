@@ -351,6 +351,7 @@ extern "C" {
 #define PAL_MEM_OPT                 1 // Memory allocation on the fly for palette
 
 #define MAY03_4K_10BIT_ADOPTS 1
+#define REST_MEM_OPT                1 // Memory reduction for restoration
 
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
