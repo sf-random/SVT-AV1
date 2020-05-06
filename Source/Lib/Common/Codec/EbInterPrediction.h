@@ -14,12 +14,6 @@
 #include "filter.h"
 #include "convolve.h"
 #include "EbCabacContextModel.h"
-#if TPL_LA
-#include "../../Encoder/Codec/EbCodingUnit.h"
-#if CUTREE_MV_CLIP
-#include "Av1Common.h"
-#endif
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +78,12 @@ typedef enum WedgeDirectionType
     WEDGE_OBLIQUE153 = 5,
     WEDGE_DIRECTIONS
 } WedgeDirectionType;
+
+static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS + 1] = {
+    {(const int16_t *)sub_pel_filters_8, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
+    {(const int16_t *)sub_pel_filters_8smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
+    {(const int16_t *)sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
+    {(const int16_t *)bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
 
 static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
                             int32_t max_row) {
@@ -160,25 +160,6 @@ typedef struct WedgeParamsType
     void av1_get_convolve_filter_params(uint32_t interp_filters,
         InterpFilterParams *params_x, InterpFilterParams *params_y,
         int32_t w, int32_t h);
-
-#if TPL_LA
-    void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
-                           int block_height, int pix_row, int pix_col,
-                           int subsampling_x, int subsampling_y, int bit_depth,
-                           int use_hbd_buf, int is_intrabc,
-                           const struct ScaleFactors *sf,
-                           const struct Buf2D *ref_buf,
-                           uint32_t interp_filters);
-#if CUTREE_MV_CLIP
-void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
-                               int dst_stride, const MV *src_mv, int pix_col, int pix_row,
-                               InterPredParams *inter_pred_params);
-#else
-void av1_build_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
-                               const MV *src_mv, int pix_col, int pix_row,
-                               InterPredParams *inter_pred_params);
-#endif
-#endif
 
     /* Mapping of interintra to intra mode for use in the intra component */
     static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {

@@ -20,13 +20,6 @@
 extern "C" {
 #endif
 
-void av1_fwd_txfm(const int16_t *src_diff, tran_low_t *coeff, int diff_stride,
-                  TxfmParam *txfm_param);
-
-void av1_highbd_fwd_txfm(const int16_t *src_diff, tran_low_t *coeff,
-                         int diff_stride, TxfmParam *txfm_param);
-
-
 void wht_fwd_txfm(int16_t *src_diff, int bw,
                   int32_t *coeff, TxSize tx_size,
                   int bit_depth, int is_hbd);

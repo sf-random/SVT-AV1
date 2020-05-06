@@ -53,6 +53,11 @@ static AOM_INLINE MV get_mv_from_fullmv(const FULLPEL_MV *full_mv) {
                          (int16_t)GET_MV_SUBPEL(full_mv->col) };
   return subpel_mv;
 }
+
+typedef struct OisMbResults {
+    int64_t intra_cost;
+    int32_t intra_mode;
+} OisMbResults;
 #endif
 
 typedef struct CandidateMv {

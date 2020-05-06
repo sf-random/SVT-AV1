@@ -1841,7 +1841,8 @@ int64_t aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_str
     return sse;
 }
 
-int aom_satd_avx2(const tran_low_t *coeff, int length) {
+#if TPL_LA
+int aom_satd_avx2(const TranLow *coeff, int length) {
   __m256i accum = _mm256_setzero_si256();
   int i;
 
@@ -1862,11 +1863,11 @@ int aom_satd_avx2(const tran_low_t *coeff, int length) {
   }
 }
 
-static INLINE void read_coeff(const tran_low_t *coeff, intptr_t offset,
+static INLINE void read_coeff(const TranLow *coeff, intptr_t offset,
                               __m256i *c) {
-  const tran_low_t *addr = coeff + offset;
+  const TranLow *addr = coeff + offset;
 
-  if (sizeof(tran_low_t) == 4) {
+  if (sizeof(TranLow) == 4) {
     const __m256i x0 = _mm256_loadu_si256((const __m256i *)addr);
     const __m256i x1 = _mm256_loadu_si256((const __m256i *)addr + 1);
     const __m256i y = _mm256_packs_epi32(x0, x1);
@@ -1876,7 +1877,7 @@ static INLINE void read_coeff(const tran_low_t *coeff, intptr_t offset,
   }
 }
 
-int64_t av1_block_error_avx2(const tran_low_t *coeff, const tran_low_t *dqcoeff,
+int64_t av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
                              intptr_t block_size, int64_t *ssz) {
   __m256i sse_reg, ssz_reg, coeff_reg, dqcoeff_reg;
   __m256i exp_dqcoeff_lo, exp_dqcoeff_hi, exp_coeff_lo, exp_coeff_hi;
@@ -1933,6 +1934,7 @@ int64_t av1_block_error_avx2(const tran_low_t *coeff, const tran_low_t *dqcoeff,
   _mm256_zeroupper();
   return sse;
 }
+#endif
 
 static INLINE uint64_t xx_cvtsi128_si64(__m128i a) {
 #if ARCH_X86_64

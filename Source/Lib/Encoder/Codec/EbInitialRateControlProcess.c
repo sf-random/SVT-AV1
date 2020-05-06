@@ -880,8 +880,8 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
 
 #endif
 static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
-                                          const tran_low_t *coeff, tran_low_t *qcoeff,
-                                          tran_low_t *dqcoeff, TxSize tx_size,
+                                          const TranLow *coeff, TranLow *qcoeff,
+                                          TranLow *dqcoeff, TxSize tx_size,
                                           uint16_t *eob, int64_t *recon_error,
                                           int64_t *sse) {
   const ScanOrder *const scan_order = &av1_scan_orders[tx_size][DCT_DCT]; //&av1_default_scan_orders[tx_size]
@@ -899,7 +899,7 @@ static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
   *sse = AOMMAX(*sse, 1);
 }
 
-static int rate_estimator(tran_low_t *qcoeff, int eob, TxSize tx_size) {
+static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
   const ScanOrder *const scan_order = &av1_scan_orders[tx_size][DCT_DCT]; //&av1_default_scan_orders[tx_size]
 
   assert((1 << num_pels_log2_lookup[txsize_to_bsize[tx_size]]) >= eob);
@@ -1094,10 +1094,10 @@ void tpl_mc_flow_dispenser(
 
     DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
     DECLARE_ALIGNED(32, int16_t, src_diff[256]);
-    DECLARE_ALIGNED(32, tran_low_t, coeff[256]);
-    DECLARE_ALIGNED(32, tran_low_t, qcoeff[256]);
-    DECLARE_ALIGNED(32, tran_low_t, dqcoeff[256]);
-    DECLARE_ALIGNED(32, tran_low_t, best_coeff[256]);
+    DECLARE_ALIGNED(32, TranLow, coeff[256]);
+    DECLARE_ALIGNED(32, TranLow, qcoeff[256]);
+    DECLARE_ALIGNED(32, TranLow, dqcoeff[256]);
+    DECLARE_ALIGNED(32, TranLow, best_coeff[256]);
     uint8_t *predictor = predictor8;
 
     blk_geom.bwidth  = 16;
@@ -1380,7 +1380,7 @@ void tpl_mc_flow_dispenser(
                         int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
                         // Edge filter
                         if(av1_is_directional_mode((PredictionMode)ois_intra_mode) && 1/*scs_ptr->seq_header.enable_intra_edge_filter*/) {
-                            filter_intra_edge(pcs_ptr, ois_mb_results_ptr, ois_intra_mode, p_angle, mb_origin_x, mb_origin_y, above_row, left_col);
+                            filter_intra_edge(ois_mb_results_ptr, ois_intra_mode, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, p_angle, mb_origin_x, mb_origin_y, above_row, left_col);
                         }
                         // PRED
                         intra_prediction_open_loop_mb(p_angle, ois_intra_mode, mb_origin_x, mb_origin_y, tx_size, above_row, left_col, dst_buffer, dst_buffer_stride);

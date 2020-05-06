@@ -890,10 +890,6 @@ static const int32_t tx_size_high[TX_SIZES_ALL] = {
 
 // TranLow  is the datatype used for final transform coefficients.
 typedef int32_t TranLow;
-typedef int32_t tran_low_t;
-typedef int64_t tran_high_t;
-
-
 typedef uint8_t QmVal;
 
 typedef enum TxClass {

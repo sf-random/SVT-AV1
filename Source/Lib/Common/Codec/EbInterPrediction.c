@@ -20,10 +20,6 @@
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
-#if TPL_LA
-#include "EbWarpedMotion.h"
-#endif
-//#include "EbRateDistortionCost.h"
 
 #define MVBOUNDLOW \
     36 //  (80-71)<<2 // 80 = ReferencePadding ; minus 71 is derived from the expression -64 + 1 - 8, and plus 7 is derived from expression -1 + 8
@@ -1259,11 +1255,6 @@ DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_4smooth[SUBPEL_SHIFTS])
     {0, 0, 4, 40, 62, 22, 0, 0},
     {0, 0, 4, 36, 62, 26, 0, 0},
     {0, 0, 2, 34, 62, 30, 0, 0}};
-static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS + 1] = {
-    {(const int16_t *)sub_pel_filters_8, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
-    {(const int16_t *)sub_pel_filters_8smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
-    {(const int16_t *)sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
-    {(const int16_t *)bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
 static const InterpFilterParams av1_interp_4tap[2] = {
     {(const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
     {(const int16_t *)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
@@ -1515,166 +1506,6 @@ void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_
                                                                                   bd);
     }
 }
-
-#if TPL_LA
-#if CUTREE_MV_CLIP
-static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_mv, int32_t bw,
-    int32_t bh, int32_t ss_x, int32_t ss_y) {
-    // If the MV points so far into the UMV border that no visible pixels
-    // are used for reconstruction, the subpel part of the MV can be
-    // discarded and the MV limited to 16 pixels with equivalent results.
-    const int32_t spel_left = (AOM_INTERP_EXTEND + bw) << SUBPEL_BITS;
-    const int32_t spel_right = spel_left - SUBPEL_SHIFTS;
-    const int32_t spel_top = (AOM_INTERP_EXTEND + bh) << SUBPEL_BITS;
-    const int32_t spel_bottom = spel_top - SUBPEL_SHIFTS;
-    MV            clamped_mv = { (int16_t)(src_mv->row * (1 << (1 - ss_y))),
-                                 (int16_t)(src_mv->col * (1 << (1 - ss_x))) };
-    assert(ss_x <= 1);
-    assert(ss_y <= 1);
-
-    clamp_mv(&clamped_mv,
-        xd->mb_to_left_edge * (1 << (1 - ss_x)) - spel_left,
-        xd->mb_to_right_edge * (1 << (1 - ss_x)) + spel_right,
-        xd->mb_to_top_edge * (1 << (1 - ss_y)) - spel_top,
-        xd->mb_to_bottom_edge * (1 << (1 - ss_y)) + spel_bottom);
-
-    return clamped_mv;
-}
-#endif
-
-void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
-                           int block_height, int pix_row, int pix_col,
-                           int subsampling_x, int subsampling_y, int bit_depth,
-                           int use_hbd_buf, int is_intrabc,
-                           const struct ScaleFactors *sf,
-                           const struct Buf2D *ref_buf,
-                           uint32_t interp_filters) {
-  inter_pred_params->block_width = block_width;
-  inter_pred_params->block_height = block_height;
-  inter_pred_params->pix_row = pix_row;
-  inter_pred_params->pix_col = pix_col;
-  inter_pred_params->subsampling_x = subsampling_x;
-  inter_pred_params->subsampling_y = subsampling_y;
-  inter_pred_params->bit_depth = bit_depth;
-  inter_pred_params->use_hbd_buf = use_hbd_buf;
-  inter_pred_params->is_intrabc = is_intrabc;
-  inter_pred_params->scale_factors = sf;
-  inter_pred_params->ref_frame_buf = *ref_buf;
-  inter_pred_params->mode = UNIFORM_PRED;
-
-  if (is_intrabc) {
-    inter_pred_params->interp_filter_params[0] = av1_interp_filter_params_list[BILINEAR];
-    inter_pred_params->interp_filter_params[1] = av1_interp_filter_params_list[BILINEAR];
-  } else {
-    InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
-    InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
-    inter_pred_params->interp_filter_params[0] =
-        av1_get_interp_filter_params_with_block_size(
-            filter_x, block_width);
-    inter_pred_params->interp_filter_params[1] =
-        av1_get_interp_filter_params_with_block_size(
-            filter_y, block_height);
-  }
-}
-
-void av1_make_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst,
-                              int dst_stride,
-                              InterPredParams *inter_pred_params,
-                              const SubpelParams *subpel_params) {
-  assert(IMPLIES(inter_pred_params->conv_params.is_compound,
-                 inter_pred_params->conv_params.dst != NULL));
-
-  if (inter_pred_params->mode == WARP_PRED) {
-    eb_av1_warp_plane(
-        &inter_pred_params->warp_params, inter_pred_params->use_hbd_buf,
-        inter_pred_params->bit_depth, inter_pred_params->ref_frame_buf.buf0,
-        inter_pred_params->ref_frame_buf.width,
-        inter_pred_params->ref_frame_buf.height,
-        inter_pred_params->ref_frame_buf.stride, dst,
-        inter_pred_params->pix_col, inter_pred_params->pix_row,
-        inter_pred_params->block_width, inter_pred_params->block_height,
-        dst_stride, inter_pred_params->subsampling_x,
-        inter_pred_params->subsampling_y, &inter_pred_params->conv_params);
-  } else if (inter_pred_params->mode == UNIFORM_PRED) {
-    uint32_t interp_filters = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
-    svt_inter_predictor(
-        src, src_stride, dst, dst_stride, subpel_params,
-        inter_pred_params->scale_factors, inter_pred_params->block_width,
-        inter_pred_params->block_height, &inter_pred_params->conv_params,
-        interp_filters, 0);
-  }
-}
-#if CUTREE_MV_CLIP
-void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
-                               int dst_stride, const MV *src_mv, int pix_col, int pix_row,
-                               InterPredParams *inter_pred_params) {
-#else
-void av1_build_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
-                               const MV *src_mv, int pix_col, int pix_row,
-                               InterPredParams *inter_pred_params) {
-#endif
-  SubpelParams subpel_params;
-  //const struct scale_factors *sf = inter_pred_params->scale_factors;
-  const struct ScaleFactors *sf = inter_pred_params->scale_factors;
-
-  (void)pix_row;
-  (void)pix_col;
-
-#if CUTREE_MV_CLIP
-  MacroBlockD xd;
-  int32_t       mi_row = pix_row >> MI_SIZE_LOG2;
-  int32_t       mi_col = pix_col >> MI_SIZE_LOG2;
-  BlockSize     bsize = BLOCK_16X16;
-  const int32_t bw = mi_size_wide[bsize];
-  const int32_t bh = mi_size_high[bsize];
-  xd.mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
-  xd.mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
-  xd.mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
-  xd.mb_to_right_edge = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-  MV best_mv_tmp = clamp_mv_to_umv_border_sb(&xd,
-                                             src_mv,
-                                             16,//blk_geom->bwidth,
-                                             16,//blk_geom->bheight,
-                                             inter_pred_params->subsampling_x,
-                                             inter_pred_params->subsampling_y);
-#endif
-
-  struct Buf2D *pre_buf    = &inter_pred_params->ref_frame_buf;
-  int           ssx        = inter_pred_params->subsampling_x;
-  int ssy = inter_pred_params->subsampling_y;
-  int orig_pos_y = inter_pred_params->pix_row << SUBPEL_BITS;
-#if CUTREE_MV_CLIP
-  orig_pos_y += best_mv_tmp.row;
-  int orig_pos_x = inter_pred_params->pix_col << SUBPEL_BITS;
-  orig_pos_x += best_mv_tmp.col;
-#else
-  orig_pos_y += src_mv->row * (1 << (1 - ssy));
-  int orig_pos_x = inter_pred_params->pix_col << SUBPEL_BITS;
-  orig_pos_x += src_mv->col * (1 << (1 - ssx));
-#endif
-  int pos_y = sf->scale_value_y(orig_pos_y, sf);
-  int pos_x = sf->scale_value_x(orig_pos_x, sf);
-  pos_x += SCALE_EXTRA_OFF;
-  pos_y += SCALE_EXTRA_OFF;
-
-  const int top = -AOM_LEFT_TOP_MARGIN_SCALED(ssy);
-  const int left = -AOM_LEFT_TOP_MARGIN_SCALED(ssx);
-  const int bottom = (pre_buf->height + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
-  const int right = (pre_buf->width + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
-  pos_y = clamp(pos_y, top, bottom);
-  pos_x = clamp(pos_x, left, right);
-
-  src = pre_buf->buf0 + (pos_y >> SCALE_SUBPEL_BITS) * pre_buf->stride +
-        (pos_x >> SCALE_SUBPEL_BITS);
-  subpel_params.subpel_x = pos_x & SCALE_SUBPEL_MASK;
-  subpel_params.subpel_y = pos_y & SCALE_SUBPEL_MASK;
-  subpel_params.xs = sf->x_step_q4;
-  subpel_params.ys = sf->y_step_q4;
-
-  av1_make_inter_predictor(src, src_stride, dst, dst_stride, inter_pred_params,
-                           &subpel_params);
-}
-#endif
 
 #define USE_PRECOMPUTED_WEDGE_SIGN 1
 #define USE_PRECOMPUTED_WEDGE_MASK 1

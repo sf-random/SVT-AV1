@@ -506,11 +506,6 @@ typedef struct OisSbResults {
 } OisSbResults;
 
 #if TPL_LA
-typedef struct OisMbResults {
-    int64_t intra_cost;
-    int32_t intra_mode;
-} OisMbResults;
-
 typedef struct TplStats {
     int64_t intra_cost;
     int32_t intra_mode;

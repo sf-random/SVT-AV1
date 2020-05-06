@@ -9,9 +9,6 @@
 #include "EbSvtAv1.h"
 #include "EbObject.h"
 #include "EbBlockStructures.h"
-#if TPL_LA
-#include "../../Encoder/Codec/EbPictureControlSet.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -239,7 +236,7 @@ static INLINE int32_t cfl_idx_to_alpha(int32_t alpha_idx, int32_t joint_sign,
 }
 #if TPL_LA
 #define USE_ORIGIN_YUV 0
-    extern void filter_intra_edge(PictureParentControlSet *picture_control_set_ptr, OisMbResults *ois_mb_results_ptr, uint8_t mode,
+    extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
                               int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
     extern EbErrorType intra_prediction_open_loop_mb(
          int32_t  p_angle ,
