@@ -4066,7 +4066,6 @@ enum {
 #define LOW_QPS_COMP_THRESHOLD 40
 #define HIGH_FILTERED_THRESHOLD (4 << 8) // 8 bit precision
 #define LOW_FILTERED_THRESHOLD (2 << 8) // 8 bit precision
-#define QPS_SW_THRESH 8 // 100 to shut QPS/QPM (i.e. CORE only)
 #define MAX_REF_AREA_I 50 // Max ref area for I slice
 #define MAX_REF_AREA_NONI 50 // Max ref area for Non I slice
 #define MAX_REF_AREA_NONI_LOW_RES 40 // Max ref area for Non I slice in low resolution
@@ -4886,7 +4885,7 @@ static int get_kf_boost_from_r0(double r0, int frames_to_key) {
 
     factor = AOMMIN(factor, 10.0);
     factor = AOMMAX(factor, 4.0);
-    const int boost = (int)rint(2 * (75.0 + 14.0 * factor) / r0);
+    const int boost = (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0);
 #else
     factor = AOMMIN(factor, 10.0);
     factor = AOMMAX(factor, 4.0);
@@ -5104,7 +5103,7 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         if (referenced_area_avg <= 16) referenced_area_avg = 0;
         // cross multiplication to derive kf_boost from referenced area; kf_boost range is [kf_low,kf_high], and referenced range [0,referenced_area_max]
         rc->kf_boost = (int)((referenced_area_avg * (kf_high - kf_low)) / referenced_area_max) + kf_low;
-        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
+        int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
         const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key);
 
         SVT_LOG("old kf boost %d new kf boost %d [%d] poc=%ld r0=%f\t", rc->kf_boost, new_kf_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0);
@@ -5146,7 +5145,7 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
 
         rc->gfu_boost = (int)(((referenced_area_avg) * (gf_high - gf_low)) / referenced_area_max) + gf_low;
 
-        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
+        int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
                            - (pcs_ptr->parent_pcs_ptr->picture_number % (scs_ptr->intra_period_length + 1)) + 15;
         const int new_gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
         rc->arf_boost_factor = 1;
@@ -5247,7 +5246,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->worst_quality   = MAXQ;
         rc->best_quality    = MINQ;
 
-        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
+        int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
         rc->kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key);
 
         SVT_LOG("1pass tpl kf boost %d [%d] poc=%ld r0=%f\t%d\n", rc->kf_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
@@ -5275,7 +5274,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (!is_src_frame_alt_ref &&
                (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame)) {
-        int frames_to_key = MIN(scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
+        int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
                            - (pcs_ptr->parent_pcs_ptr->picture_number % (scs_ptr->intra_period_length + 1)) + 15;
         rc->gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
         rc->arf_boost_factor = 1;

@@ -43,6 +43,7 @@ extern "C" {
 #define MAX_NUMBER_OF_REGIONS_IN_WIDTH 4
 #define MAX_NUMBER_OF_REGIONS_IN_HEIGHT 4
 #define MAX_REF_QP_NUM 81
+#define QPS_SW_THRESH 8 // 100 to shut QPS/QPM (i.e. CORE only)
 
 // BDP OFF
 #define MD_NEIGHBOR_ARRAY_INDEX 0

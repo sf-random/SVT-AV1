@@ -2261,6 +2261,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
+                            pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
                             //pcs_ptr->frames_in_sw > 16/*(2 << scs_ptr->static_config.hierarchical_levels)*/ &&
                             pcs_ptr->temporal_layer_index == 0) {
                             update_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
