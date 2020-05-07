@@ -2773,7 +2773,7 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
     MdRateEstimationContext *md_rate_estimation_ptr   = context_ptr->md_rate_estimation_ptr;
 #if QP2QINDEX
     // AMIR LAMBDA
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t lambda = context_ptr-> md_context->blk_full_lambda;
 #else
     uint64_t lambda = context_ptr->md_context->

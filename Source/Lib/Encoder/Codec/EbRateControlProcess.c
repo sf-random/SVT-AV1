@@ -28,7 +28,7 @@
 #include "EbRateControlTasks.h"
 #if TPL_LA
 #include "EbRateDistortionCost.h"
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
 #include "EbLambdaRateTables.h"
 #endif
 #endif
@@ -4875,7 +4875,7 @@ static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
 #if TPL_LA
 int16_t eb_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
-static int get_kf_boost_from_r0(double r0, int frames_to_key) {
+static int get_kf_boost_from_r0(double r0, int frames_to_key, int is_smaller_360p) {
     double factor = sqrt((double)frames_to_key);
 #if  QPS_TPL
     //factor = 10;
@@ -4885,7 +4885,8 @@ static int get_kf_boost_from_r0(double r0, int frames_to_key) {
 
     factor = AOMMIN(factor, 10.0);
     factor = AOMMAX(factor, 4.0);
-    const int boost = (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0);
+    const int boost = is_smaller_360p ? (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0)
+                                      : (int)rint(2 * (75.0 + 14.0 * factor) / r0);
 #else
     factor = AOMMIN(factor, 10.0);
     factor = AOMMAX(factor, 4.0);
@@ -5104,7 +5105,8 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         // cross multiplication to derive kf_boost from referenced area; kf_boost range is [kf_low,kf_high], and referenced range [0,referenced_area_max]
         rc->kf_boost = (int)((referenced_area_avg * (kf_high - kf_low)) / referenced_area_max) + kf_low;
         int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
-        const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key);
+        int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
+        const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, is_smaller_360p);
 
         SVT_LOG("old kf boost %d new kf boost %d [%d] poc=%ld r0=%f\t", rc->kf_boost, new_kf_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0);
         SVT_LOG("%d\t%d\n",
@@ -5247,7 +5249,8 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->best_quality    = MINQ;
 
         int frames_to_key = MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
-        rc->kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key);
+        int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
+        rc->kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, is_smaller_360p);
 
         SVT_LOG("1pass tpl kf boost %d [%d] poc=%ld r0=%f\t%d\n", rc->kf_boost, frames_to_key, pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity);
 
@@ -5731,7 +5734,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
 }
 
 #if TPL_LA
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
 static void sb_setup_lambda(PictureControlSet *pcs_ptr,
         SuperBlock *sb_ptr) {
     const Av1Common  *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -5855,7 +5858,7 @@ static void sb_qp_derivation_tpl_la(
 
             pcs_ptr->parent_pcs_ptr->average_qp += sb_ptr->qp;
 #endif
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
             sb_setup_lambda(pcs_ptr, sb_ptr);
 #endif
         }
@@ -6061,7 +6064,7 @@ void *rate_control_kernel(void *input_ptr) {
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 #endif
 

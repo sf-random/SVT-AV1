@@ -275,7 +275,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                        (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
 
     uint8_t bit_depth = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -3378,7 +3378,7 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
     FrameHeader *          frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
 
 // single_motion_search supports 8bit path only
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda = context_ptr->full_lambda_md[EB_8_BIT_MD];
@@ -5343,7 +5343,7 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                      uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
     IntraBcContext *x = &x_st;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -6672,7 +6672,7 @@ uint32_t product_full_mode_decision(
     return lowest_cost_index;
 }
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
 void get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                  uint32_t sb_full_lambda, uint32_t pic_full_lambda) {
     PictureParentControlSet *ppcs_ptr = pcs_ptr->parent_pcs_ptr;

@@ -445,7 +445,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
 
     context_ptr->three_quad_energy = 0;
 
-#if TPL_LA && TPL_LA_QPM && LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t sb_full_lambda = context_ptr->md_context->hbd_mode_decision ?
         context_ptr->md_context->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->md_context->full_lambda_md[EB_8_BIT_MD];
@@ -541,7 +541,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->luma_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
             context_ptr->md_context->blk_full_lambda, //Jing: double check here, if fine for 8/10bit
 #else
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
@@ -765,7 +765,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cb_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
             context_ptr->md_context->blk_full_lambda, //Jing: double check here, if fine for 8/10bit
 #else
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
@@ -826,7 +826,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cr_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
             context_ptr->md_context->blk_full_lambda, //Jing: double check here, if fine for 8/10bit
 #else
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],

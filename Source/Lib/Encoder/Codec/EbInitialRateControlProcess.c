@@ -819,7 +819,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
 }
 
 #if TPL_LA
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
@@ -1643,7 +1643,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     }
 
     SVT_LOG("genrate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     generate_lambda_scaling_factor(pcs_ptr);
 #endif
 

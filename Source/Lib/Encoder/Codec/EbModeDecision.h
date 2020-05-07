@@ -238,7 +238,7 @@ extern EbErrorType mode_decision_candidate_buffer_ctor(
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth);
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
 void get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                  uint32_t sb_full_lambda, uint32_t pic_full_lambda);
 #endif

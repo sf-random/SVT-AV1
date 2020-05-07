@@ -587,7 +587,7 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                 ? EB_8_BIT_MD
                                 : context_ptr->hbd_mode_decision;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  hbd_mode_decision ?
@@ -755,7 +755,7 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
                               int8_t *const best_wedge_index) {
     //const MACROBLOCKD *const xd = &x->e_mbd;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -843,7 +843,7 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                 ? EB_8_BIT_MD
                                 : context_ptr->hbd_mode_decision;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  hbd_mode_decision ?
@@ -967,7 +967,7 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
     // we need to divide by 8 before sending to modeling function.
     const int bd_round = 0;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -3292,7 +3292,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     int32_t       tmp_rate;
     int64_t       tmp_dist;
     // AMIR LAMBDA
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda_divided = md_context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda_divided = hbd_mode_decision ?

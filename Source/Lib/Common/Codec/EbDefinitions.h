@@ -212,7 +212,7 @@ extern "C" {
 #define UPDATE_SW 1
 #define TPL_LA_REENCODE 0
 #define QPS_TPL 1
-#define LAMBDA_SCALING 0
+#define TPL_LA_LAMBDA_SCALING 0
 #define INTRA_RECON_WITH_REC 0
 #define TPL_LA_QPS_1PASS 1
 #define TPL_LA_QPM_1PASS 1

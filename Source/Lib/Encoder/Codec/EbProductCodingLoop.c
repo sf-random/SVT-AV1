@@ -1196,7 +1196,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     uint64_t luma_fast_distortion;
     uint64_t chroma_fast_distortion;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -5057,7 +5057,7 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
     uint64_t full_distortion[DIST_CALC_TOTAL];
     uint64_t coeff_bits;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -5233,7 +5233,7 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
     uint64_t full_distortion[DIST_CALC_TOTAL];
     uint64_t coeff_bits;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -5619,7 +5619,7 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                                uint64_t *cb_full_distortion,
                                uint64_t *cr_full_distortion, uint64_t *cb_coeff_bits,
                                uint64_t *cr_coeff_bits) {
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -6219,7 +6219,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
                                .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                          : 0;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -7032,7 +7032,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
 #endif
                              uint64_t *y_full_distortion) {
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -7235,7 +7235,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     uint64_t cb_coeff_bits = 0;
     uint64_t cr_coeff_bits = 0;
 
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda = context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda = context_ptr->hbd_mode_decision ?
@@ -8199,7 +8199,7 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                      uint32_t             cu_chroma_origin_index,
                                      ModeDecisionContext *context_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda =  context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
@@ -8804,7 +8804,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         ROUND_UV(blk_geom->origin_x) / 2 + ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
     BlkStruct *blk_ptr        = context_ptr->blk_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
-#if TPL_LA && TPL_LA_QPM && LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t sb_full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
@@ -10027,7 +10027,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     EbBool all_blk_init = (pcs_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE);
 #endif
     init_sq_nsq_block(scs_ptr, context_ptr);
-#if LAMBDA_SCALING
+#if TPL_LA_LAMBDA_SCALING
     uint32_t full_lambda = context_ptr->blk_full_lambda;
 #else
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
