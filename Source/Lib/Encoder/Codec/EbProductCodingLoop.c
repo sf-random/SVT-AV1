@@ -1862,8 +1862,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #if NEW_NICS_SCALING
             }
             else if (pcs_ptr->enc_mode <= ENC_M4) {
+#if MAY07_M3_SC_ADOPT
+                scale_num   = 4;
+                scale_denum = 8;
+#else
                 scale_num   = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 4 : 6;
                 scale_denum = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 8 : 8;
+#endif
 #endif
             }else if (pcs_ptr->enc_mode <= ENC_M5) {
                 scale_num   = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 4 : 2;

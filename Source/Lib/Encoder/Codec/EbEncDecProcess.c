@@ -2095,6 +2095,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t) ~0;
             context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
         }
+#if MAY07_M3_SC_ADOPT
+        else if (enc_mode <= ENC_M2) {
+            context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
+            context_ptr->chroma_at_last_md_stage_intra_th = 150;
+            context_ptr->chroma_at_last_md_stage_cfl_th = 150;
+        }
+        else {
+            context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
+            context_ptr->chroma_at_last_md_stage_intra_th = 100;
+            context_ptr->chroma_at_last_md_stage_cfl_th = 100;
+        }
+#else
         else {
             context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
 #if MAY07_M1_SC_ADOPT
@@ -2105,12 +2117,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
 #endif
         }
+#endif
     }
+#if MAY07_M3_NSC_ADOPT
+    else if (enc_mode <= ENC_M2) {
+        context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
+        context_ptr->chroma_at_last_md_stage_intra_th = 130;
+        context_ptr->chroma_at_last_md_stage_cfl_th = 130;
+    }
+    else {
+    context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
+    context_ptr->chroma_at_last_md_stage_intra_th = 100;
+    context_ptr->chroma_at_last_md_stage_cfl_th = 100;
+    }
+#else
     else {
         context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
         context_ptr->chroma_at_last_md_stage_intra_th = 130;
         context_ptr->chroma_at_last_md_stage_cfl_th = 130;
     }
+#endif
 #else
     context_ptr->chroma_at_last_md_stage =
         MR_MODE ? 0 : (context_ptr->chroma_level == CHROMA_MODE_0 && !pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 1 : 0;
@@ -3215,6 +3241,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_1_cand_prune_th = 75;
     else
 #if APR22_ADOPTIONS
+#if MAY07_M3_SC_ADOPT
+        if (enc_mode <= ENC_M0 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && enc_mode <= ENC_M2))
+#else
 #if MAY01_M1_NSC_ADOPT
         if (enc_mode <= ENC_M0 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
@@ -3222,6 +3251,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M1 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
         if (enc_mode <= ENC_M2 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#endif
 #endif
 #endif
 #else
@@ -5981,20 +6011,35 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             else
 #endif
 #if M8_MPPD
+#if MAY07_M3_NSC_ADOPT
+                            if (pcs_ptr->enc_mode <= ENC_M2 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M6)) {
+#else
 #if APR24_ADOPTIONS_M6_M7
                             if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
                             if(pcs_ptr->enc_mode <= ENC_M5) {
 #endif
+#endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
+#if MAY07_M3_NSC_ADOPT
+                            else if (pcs_ptr->enc_mode <= ENC_M6) {
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  0;
+                            }
+#endif
                             else {
 #if M5_I_PD
 #if UPGRADE_M6_M7_M8
                                 if (pcs_ptr->enc_mode <= ENC_M7) {
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
+#if MAY07_M3_NSC_ADOPT
+                                    // This change is to keep the onion-ring design
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
+#else
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
                                 }
                                 else {
 #if M8_MPPD_ISLICE_ADOPT

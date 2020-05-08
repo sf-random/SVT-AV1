@@ -1955,6 +1955,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if PRESETS_SHIFT
 #if APR23_ADOPTIONS
             if (pcs_ptr->sc_content_detected)
+#if MAY07_M3_SC_ADOPT
+                pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M2 ? 2 : 0;
+#else
 #if MAY05_M3_SC_ADOPT
                 pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M4 ? 2 : 0;
 #else
@@ -1962,6 +1965,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M2 ? 2 : 0;
 #else
                 pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M4 ? 2 : 0;
+#endif
 #endif
 #endif
             else
@@ -5829,6 +5833,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
 #if UPGRADE_M6_M7_M8
                                 if (pcs_ptr->sc_content_detected) {
+#if MAY07_M3_SC_ADOPT
+                                    if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
 #if SHIFT_M6_SC_TO_M5
                                     if (pcs_ptr->enc_mode <= ENC_M4) {
 #else
@@ -5842,9 +5849,16 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #endif
 #endif
+#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }
+#if MAY07_M3_SC_ADOPT
+                                    else if (pcs_ptr->enc_mode <= ENC_M4) {
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+                                    }
+#endif
 #if APR25_12AM_ADOPTIONS
 #if APR25_3AM_ADOPTIONS
 #if APR23_4AM_M6_ADOPTIONS

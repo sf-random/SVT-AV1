@@ -235,10 +235,14 @@ void* set_me_hme_params_oq(
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 120;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 480;
     }
+#if MAY07_M3_NSC_ADOPT
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
 #if MAY05_M3_NSC_ADOPT
     else if (pcs_ptr->enc_mode <= ENC_M4) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #endif
 #else
 #if PRESETS_SHIFT
@@ -259,6 +263,12 @@ void* set_me_hme_params_oq(
 #endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
+    }
+#endif
+#if MAY07_M3_NSC_ADOPT
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
     }
 #endif
 #if NEW_M5_HME_ME

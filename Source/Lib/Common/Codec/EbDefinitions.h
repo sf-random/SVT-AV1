@@ -366,6 +366,9 @@ extern "C" {
 #define START_ME_AT_HME_MV 1 // Start the ME search at the HME MV for all resolutions - needed for high motion clips
 #define MAY07_M1_SC_ADOPT 1 // M1 SC adoptions
 
+#define MAY07_M3_NSC_ADOPT 1
+#define MAY07_M3_SC_ADOPT 1
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

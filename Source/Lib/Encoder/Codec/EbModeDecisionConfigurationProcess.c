@@ -1203,7 +1203,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         }
     } else
 #endif
+#if MAY07_M3_NSC_ADOPT
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
         enable_wm = EB_TRUE;
 #if UPGRADE_M8
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
