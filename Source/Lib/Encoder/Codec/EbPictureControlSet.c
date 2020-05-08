@@ -1210,8 +1210,9 @@ static void picture_parent_control_set_dctor(EbPtr p) {
     uint32_t                 region_in_picture_height_index;
 
     EB_DELETE(obj->denoise_and_model);
-
+#if !DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(obj->me_results, obj->sb_total_count_unscaled);
+#endif
     if (obj->is_chroma_downsampled_picture_ptr_owner)
         EB_DELETE(obj->chroma_downsampled_picture_ptr);
 
@@ -1425,7 +1426,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
             ME_RES_CAND_MRP_MODE_1; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
 
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
-
+#if ! DECOUPLE_ME_RES
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_NEW(object_ptr->me_results[sb_index],
                me_sb_results_ctor,
@@ -1433,7 +1434,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                init_data_ptr->mrp_mode,
                object_ptr->max_number_of_candidates_per_block);
     }
-
+#endif
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);
     // ME and OIS Distortion Histograms
     EB_MALLOC_ARRAY(object_ptr->me_distortion_histogram, NUMBER_OF_SAD_INTERVALS);
@@ -1536,6 +1537,46 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     return return_error;
 }
 
+#if DECOUPLE_ME_RES
+EbErrorType me_ctor(MotionEstimationData *object_ptr,
+    EbPtr                    object_init_data_ptr) {
+
+    PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
+    EbErrorType                return_error = EB_ErrorNone;
+    const uint16_t             picture_sb_width = (uint16_t)(
+        (init_data_ptr->picture_width + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+    const uint16_t picture_sb_height = (uint16_t)(
+        (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+   
+    uint16_t       sb_index;
+    
+    //TODO//---
+    //object_ptr->dctor = picture_parent_control_set_dctor;  
+
+    
+
+    uint32_t sb_total_count = picture_sb_width * picture_sb_height;
+   
+
+    uint32_t max_number_of_candidates_per_block =
+        (init_data_ptr->mrp_mode == 0)
+        ? ME_RES_CAND_MRP_MODE_0
+        : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
+        ME_RES_CAND_MRP_MODE_1; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
+
+    EB_ALLOC_PTR_ARRAY(object_ptr->me_results,  sb_total_count);
+
+    for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+        EB_NEW(object_ptr->me_results[sb_index],
+            me_sb_results_ctor,
+            (init_data_ptr->nsq_present) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT,
+            init_data_ptr->mrp_mode,
+            max_number_of_candidates_per_block);
+    }
+
+    return return_error;
+}
+#endif
 EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr,
                                PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -1713,3 +1754,14 @@ EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
     return EB_ErrorNone;
 }
+#if DECOUPLE_ME_RES
+EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    MotionEstimationData *obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, me_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif

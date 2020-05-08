@@ -381,6 +381,9 @@ extern "C" {
 #endif
 #define ME_MEM_OPT2                 1 // Memory reduction for ME Context
 
+#define POUT                  1
+#define DECOUPLE_ME_RES       1
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

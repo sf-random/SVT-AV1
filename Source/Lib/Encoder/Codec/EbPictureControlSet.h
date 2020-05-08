@@ -827,8 +827,17 @@ typedef struct PictureParentControlSet {
 #if !ME_HME_PRUNING_CLEANUP
     uint8_t prune_ref_based_me;
 #endif
+#if DECOUPLE_ME_RES
+    EbObjectWrapper *me_data_wrapper_ptr;
+#endif
 } PictureParentControlSet;
 
+#if DECOUPLE_ME_RES
+typedef struct MotionEstimationData {
+    EbDctor              dctor;
+    MeSbResults **me_results;
+} MotionEstimationData;
+#endif
 typedef struct PictureControlSetInitData {
     uint16_t       picture_width;
     uint16_t       picture_height;
@@ -894,7 +903,10 @@ extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
-
+#if DECOUPLE_ME_RES
+extern EbErrorType me_creator(EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr);
+#endif
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                       uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
 #ifdef __cplusplus

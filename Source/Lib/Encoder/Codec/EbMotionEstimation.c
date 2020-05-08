@@ -10244,13 +10244,21 @@ void prune_references_fp(
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
 #if INTER_COMP_REDESIGN
-            if (counter < NUMBER_REF_INTER_COMP)
-                pcs_ptr->me_results[sb_index]->
-                do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
-            else
-                pcs_ptr->me_results[sb_index]->
-                do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
-            counter ++;
+
+#if DECOUPLE_ME_RES
+            if (context_ptr->me_alt_ref == EB_FALSE)
+            {
+#endif
+                if (counter < NUMBER_REF_INTER_COMP)
+                    pcs_ptr->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
+                else
+                    pcs_ptr->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
+                counter++;
+#if DECOUPLE_ME_RES
+            }
+#endif
 #endif
 #if ME_HME_PRUNING_CLEANUP
             // Prune references based on ME sad
@@ -11963,6 +11971,9 @@ EbErrorType motion_estimate_sb(
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
 #if INTER_COMP_REDESIGN
+#if DECOUPLE_ME_RES
+            if(context_ptr->me_alt_ref == EB_FALSE)
+#endif
             pcs_ptr->me_results[sb_index]->do_comp[li][ri] = 1;
 #endif
             context_ptr->hme_results[li][ri].list_i = li;

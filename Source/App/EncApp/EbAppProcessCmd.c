@@ -1272,7 +1272,8 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             // Release the output buffer
             eb_svt_release_out_buffer(&header_ptr);
 
-#if DEADLOCK_DEBUG
+#if 1//DEADLOCK_DEBUG
+            if (!(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
             ++frame_count;
 #else
             //++frame_count;

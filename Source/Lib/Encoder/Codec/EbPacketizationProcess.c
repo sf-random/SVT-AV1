@@ -569,6 +569,10 @@ void *packetization_kernel(void *input_ptr) {
         else
             // Since feedback is not set to PM, life count of is reduced here instead of PM
             eb_release_object(pcs_ptr->scs_wrapper_ptr);
+
+#if POUT
+        printf("PACK: %I64i\n", pcs_ptr->picture_number);
+#endif
         //Release the Parent PCS then the Child PCS
         eb_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child
 

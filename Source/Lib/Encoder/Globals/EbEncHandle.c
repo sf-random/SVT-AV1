@@ -522,6 +522,11 @@ EbErrorType load_default_buffer_configuration_settings(
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
+#if DECOUPLE_ME_RES
+    scs_ptr->me_pool_init_count = 200;  
+#endif
+
+
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
@@ -765,7 +770,9 @@ static void eb_enc_handle_dctor(EbPtr p)
     EB_FREE_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->scs_pool_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-
+#if DECOUPLE_ME_RES
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -986,7 +993,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     * Picture Control Set: Parent
     ************************************/
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-
+#if DECOUPLE_ME_RES
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of SBs, not samples
         PictureControlSetInitData input_data;
@@ -1034,6 +1043,18 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             picture_parent_control_set_creator,
             &input_data,
             NULL);
+
+#if DECOUPLE_ME_RES
+        EB_NEW(
+            enc_handle_ptr->me_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->me_pool_init_count,
+            1,
+            0,
+            me_creator,
+            &input_data,
+            NULL);
+#endif
     }
 
     /************************************

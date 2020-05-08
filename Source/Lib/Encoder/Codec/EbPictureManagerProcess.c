@@ -212,6 +212,11 @@ void *picture_manager_kernel(void *input_ptr) {
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
+#if 0//DECOUPLE_ME_RES 
+            queue_entry_index = (int32_t)(
+                pcs_ptr->decode_order -
+                encode_context_ptr->picture_manager_reorder_queue[encode_context_ptr->picture_manager_reorder_queue_head_index]->picture_number);
+#else
 
             queue_entry_index = (int32_t)(
                 pcs_ptr->picture_number_alt -
@@ -219,6 +224,7 @@ void *picture_manager_kernel(void *input_ptr) {
                     ->picture_manager_reorder_queue[encode_context_ptr
                                                         ->picture_manager_reorder_queue_head_index]
                     ->picture_number);
+#endif
             queue_entry_index += encode_context_ptr->picture_manager_reorder_queue_head_index;
             queue_entry_index = (queue_entry_index > PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH - 1)
                                     ? queue_entry_index - PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH
@@ -228,7 +234,11 @@ void *picture_manager_kernel(void *input_ptr) {
                 CHECK_REPORT_ERROR_NC(encode_context_ptr->app_callback_ptr, EB_ENC_PD_ERROR8);
             } else {
                 queue_entry_ptr->parent_pcs_wrapper_ptr = input_picture_demux_ptr->pcs_wrapper_ptr;
+#if 0//DECOUPLE_ME_RES
+                queue_entry_ptr->picture_number = pcs_ptr->decode_order;
+#else
                 queue_entry_ptr->picture_number         = pcs_ptr->picture_number_alt;
+#endif
             }
             // Process the head of the Picture Manager Reorder Queue
             queue_entry_ptr = encode_context_ptr->picture_manager_reorder_queue
@@ -560,6 +570,9 @@ void *picture_manager_kernel(void *input_ptr) {
                 // Release the Reference Buffer once we know it is not a reference
                 if (pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
                     // Release the nominal live_count value
+#if 0//POUT
+                    printf("PicMGR: REF - %I64i\n", pcs_ptr->picture_number);
+#endif
                     eb_release_object(pcs_ptr->reference_picture_wrapper_ptr);
                     pcs_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
                 }
@@ -1321,6 +1334,10 @@ void *picture_manager_kernel(void *input_ptr) {
                         rate_control_tasks_ptr = (RateControlTasks *)output_wrapper_ptr->object_ptr;
                         rate_control_tasks_ptr->pcs_wrapper_ptr = child_pcs_wrapper_ptr;
                         rate_control_tasks_ptr->task_type       = RC_PICTURE_MANAGER_RESULT;
+
+#if POUT
+                        printf("PicMGR: %I64i\n", child_pcs_ptr->picture_number);
+#endif
 
                         // Post the Full Results Object
                         eb_post_full_object(output_wrapper_ptr);

@@ -55,7 +55,9 @@ typedef struct PictureDecisionContext
     EbDctor      dctor;
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
-
+#if DECOUPLE_ME_RES
+    EbFifo       *me_fifo_ptr;
+#endif
     uint64_t      last_solid_color_frame_poc;
 
     EbBool        reset_running_avg;
@@ -90,6 +92,9 @@ typedef struct PictureDecisionContext
 #if TF_LEVELS
     uint8_t tf_level;
     TfControls tf_ctrls;
+#endif
+#if DECOUPLE_ME_RES
+    PictureParentControlSet* mg_pictures_array[32];//change 32
 #endif
 } PictureDecisionContext;
 
@@ -311,6 +316,12 @@ EbErrorType picture_decision_context_ctor(
     }
 
     context_ptr->reset_running_avg = EB_TRUE;
+      
+   
+#if DECOUPLE_ME_RES   
+    context_ptr->me_fifo_ptr = eb_system_resource_get_producer_fifo(
+            enc_handle_ptr->me_pool_ptr_array[0], 0);   
+#endif
 
     return EB_ErrorNone;
 }
@@ -5140,7 +5151,9 @@ void* picture_decision_kernel(void *input_ptr)
 
     EncodeContext                 *encode_context_ptr;
     SequenceControlSet            *scs_ptr;
-
+#if DECOUPLE_ME_RES  
+    EbObjectWrapper               *me_wrapper_ptr;
+#endif
     EbObjectWrapper               *in_results_wrapper_ptr;
     PictureAnalysisResults        *in_results_ptr;
 
@@ -5194,6 +5207,9 @@ void* picture_decision_kernel(void *input_ptr)
         frm_hdr = &pcs_ptr->frm_hdr;
         encode_context_ptr = (EncodeContext*)scs_ptr->encode_context_ptr;
         loop_count++;
+#if POUT
+        printf("PicDec IN: %I64i\n", pcs_ptr->picture_number);
+#endif
 
         // Input Picture Analysis Results into the Picture Decision Reordering Queue
         // P.S. Since the prior Picture Analysis processes stage is multithreaded, inputs to the Picture Decision Process
@@ -5290,7 +5306,9 @@ void* picture_decision_kernel(void *input_ptr)
                 // Set the POC Number
                 pcs_ptr->picture_number = (encode_context_ptr->current_input_poc + 1) /*& ((1 << scs_ptr->bits_for_picture_order_count)-1)*/;
                 encode_context_ptr->current_input_poc = pcs_ptr->picture_number;
-
+#if POUT
+                printf("PicDec PRE-ASS IN: %I64i\n", pcs_ptr->picture_number);
+#endif
                 pcs_ptr->pred_structure = scs_ptr->static_config.pred_structure;
 
                 pcs_ptr->hierarchical_layers_diff = 0;
@@ -5978,6 +5996,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     else
                                         pcs_ptr->altref_strength = 2;
 
+#if POUT
+                                    printf("PicDec TF: %I64i\n", pcs_ptr->picture_number);
+#endif
                                     for (seg_idx = 0; seg_idx < pcs_ptr->tf_segments_total_count; ++seg_idx) {
                                         eb_get_empty_object(
                                             context_ptr->picture_decision_results_output_fifo_ptr,
@@ -6154,6 +6175,13 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
                             pcs_ptr->me_segments_completion_mask = 0;
 
+#if DECOUPLE_ME_RES
+                            uint32_t pic_it = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
+                            context_ptr->mg_pictures_array[pic_it] = pcs_ptr;
+#else
+#if POUT
+                            printf("PicDec OUT ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
+#endif
                             // Post the results to the ME processes
                             {
                                 uint32_t segment_index;
@@ -6176,7 +6204,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_post_full_object(out_results_wrapper_ptr);
                                 }
                             }
-
+#endif
                             if (out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
                                 // Increment the Decode Base Number
                                 encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index] + has_overlay;
@@ -6191,6 +6219,70 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
                         }
+
+#if DECOUPLE_ME_RES
+                        uint32_t mg_size = context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay - context_ptr->mini_gop_start_index[mini_gop_index]+1;
+                   
+                        //sort based on decoder order
+                        {
+                            uint32_t  num_of_cand_to_sort = mg_size;
+                            uint32_t i, j;
+                            for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
+                                for (j = i + 1; j < num_of_cand_to_sort; ++j) {
+                                    if (context_ptr->mg_pictures_array[j]->decode_order < context_ptr->mg_pictures_array[i]->decode_order) {
+                                        PictureParentControlSet* temp = context_ptr->mg_pictures_array[i];
+                                        context_ptr->mg_pictures_array[i] = context_ptr->mg_pictures_array[j];
+                                        context_ptr->mg_pictures_array[j] = temp;
+                                    }
+                                }
+                            }
+                        }
+
+                      
+                        for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i){
+                            
+                            pcs_ptr = context_ptr->mg_pictures_array[pic_i];                           
+#if POUT
+                            printf("PicDec OUT ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
+#endif
+
+#if DECOUPLE_ME_RES   
+                            //get a new ME data buffer
+                            eb_get_empty_object(context_ptr->me_fifo_ptr,
+                                &me_wrapper_ptr);
+                            pcs_ptr->me_data_wrapper_ptr = me_wrapper_ptr;
+                            printf("PicDec got new ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
+
+                            MotionEstimationData * me_data = (MotionEstimationData *)me_wrapper_ptr->object_ptr;
+                            for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index)
+                                pcs_ptr->me_results[sb_index] = me_data->me_results[sb_index];
+
+#endif
+
+#if 1
+                            for (uint32_t segment_index = 0; segment_index < pcs_ptr->me_segments_total_count; ++segment_index) {
+                                // Get Empty Results Object
+                                eb_get_empty_object(
+                                    context_ptr->picture_decision_results_output_fifo_ptr,
+                                    &out_results_wrapper_ptr);
+
+                                out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
+                                //if (pcs_ptr->is_overlay)
+                                    out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
+                                //else
+                               //     out_results_ptr->pcs_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[out_stride_diff64];
+
+                                out_results_ptr->segment_index = segment_index;
+                                out_results_ptr->task_type = 0;
+                                // Post the Full Results Object
+                                eb_post_full_object(out_results_wrapper_ptr);
+                            }
+#endif
+
+                        }
+
+#endif
+
                     } // End MINI GOPs loop
                 }
 

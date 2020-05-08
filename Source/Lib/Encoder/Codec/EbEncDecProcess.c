@@ -7013,6 +7013,12 @@ void *enc_dec_kernel(void *input_ptr) {
 #else
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
 #endif
+
+#if DECOUPLE_ME_RES
+            eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+#endif
+
         }
 
         if (last_sb_flag) {
