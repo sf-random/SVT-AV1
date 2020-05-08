@@ -140,7 +140,7 @@ extern "C" {
 #define ENABLE_HME_AT_INC_SB              1
 #define NEW_HME_DISTANCE_ALGORITHM        1
 #define DISABLE_HME_OF_SAME_POC           1
-#define DISABLE_HME_L0_FOR_240P           1
+#define DISABLE_HME_L0_FOR_240P           0
 #define PRUNE_HME_L0                      0
 #define PRUNE_HME_L1                      0
 #endif
@@ -359,6 +359,13 @@ extern "C" {
 
 #define NICS_CLEANUP         1
 #define NEW_CYCLE_ALLOCATION               1
+
+#define PUSH_NOISE_FEATURES_2 1 // remove features that are giving noise deviations, even in M8
+#define NEW_NICS_SCALING 1 // Change nics scaling for M3/M6 SC
+#define RE_ENABLE_HME_L0_240p 1 // Re-enable HME L0 for 240p, as it helps high motion clips, and is noise for others
+#define START_ME_AT_HME_MV 1 // Start the ME search at the HME MV for all resolutions - needed for high motion clips
+#define MAY07_M1_SC_ADOPT 1 // M1 SC adoptions
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

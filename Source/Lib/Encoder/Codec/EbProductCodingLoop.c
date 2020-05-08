@@ -1847,15 +1847,33 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
             uint32_t scale_num   ;
             uint32_t scale_denum ;
+#if NEW_NICS_SCALING
+            if (MR_MODE) {
+                scale_num   = 8;
+                scale_denum = 8;
+            }else
+#endif
             if (pcs_ptr->enc_mode <= ENC_M0) {
                 scale_num   = 7;
                 scale_denum = 8;
             }else if (pcs_ptr->enc_mode <= ENC_M1) {
                 scale_num   = 6;
                 scale_denum = 8;
+#if NEW_NICS_SCALING
+            }
+            else if (pcs_ptr->enc_mode <= ENC_M4) {
+                scale_num   = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 4 : 6;
+                scale_denum = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 8 : 8;
+#endif
             }else if (pcs_ptr->enc_mode <= ENC_M5) {
                 scale_num   = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 4 : 2;
                 scale_denum = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 8 : 8;
+#if NEW_NICS_SCALING
+            }
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+                scale_num   = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 1 : 2;
+                scale_denum = pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 ? 8 : 8;
+#endif
             } else if (pcs_ptr->enc_mode <= ENC_M7) {
                 scale_num   = 1;
                 scale_denum = 8;

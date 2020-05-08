@@ -130,7 +130,9 @@ void* set_me_hme_params_oq(
 #if M1_COMBO_2 || M2_COMBO_2
             if (pcs_ptr->enc_mode <= ENC_M0) {
 #else
-
+#if MAY07_M1_SC_ADOPT
+            if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
 #if SHIFT_M5_SC_TO_M3
             if (pcs_ptr->enc_mode <= ENC_M2) {
 #else
@@ -141,12 +143,19 @@ void* set_me_hme_params_oq(
 #endif
 #endif
 #endif
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M3) {
 #endif
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 200;
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 800;
             }
+#if MAY07_M1_SC_ADOPT
+            else if (pcs_ptr->enc_mode <= ENC_M1) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 175;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 700;
+            }
+#endif
 #if M8_HME_ME
 #if SHIFT_M6_SC_TO_M5
             else if (pcs_ptr->enc_mode <= ENC_M4) {
