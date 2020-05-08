@@ -368,6 +368,8 @@ extern "C" {
 
 #define MAY07_M3_NSC_ADOPT 1
 #define MAY07_M3_SC_ADOPT 1
+#define MAY07_M5_NSC_ADOPT 1
+#define MAY07_M5_SC_ADOPT 1
 
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

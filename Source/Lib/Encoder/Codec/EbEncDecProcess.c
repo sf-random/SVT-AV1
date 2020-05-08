@@ -2495,6 +2495,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
 #if MAR4_M6_ADOPTIONS
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if MAY07_M5_SC_ADOPT
+                if (enc_mode <= ENC_M5)
+#else
 #if MAY05_M3_SC_ADOPT
                 if (enc_mode <= ENC_M4)
 #else
@@ -2524,9 +2527,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #endif
+#endif
                     context_ptr->global_mv_injection = 1;
                 else
                     context_ptr->global_mv_injection = 0;
+#if MAY07_M5_NSC_ADOPT
+            else if (enc_mode <= ENC_M5)
+#else
 #if PRESETS_SHIFT
             else if (enc_mode <= ENC_M4)
 #else
@@ -2534,6 +2541,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             else if (enc_mode <= ENC_M7)
 #else
             else if (enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
 #else
@@ -2564,6 +2572,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR30_ADOPTIONS
+#if MAY07_M5_SC_ADOPT
+                if (enc_mode <= ENC_M5)
+#else
 #if MAY05_M3_SC_ADOPT
                 if (enc_mode <= ENC_M4)
 #else
@@ -2577,6 +2588,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 if (enc_mode <= ENC_M2)
 #else
                 if (enc_mode <= ENC_M0)
+#endif
 #endif
 #endif
 #endif
@@ -3111,6 +3123,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (sequence_control_set_ptr->static_config.edge_skp_angle_intra == DEFAULT) {
 #if MAR12_ADOPTIONS
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if MAY07_M5_SC_ADOPT
+                if (enc_mode <= ENC_M5)
+#else
 #if MAY05_M3_SC_ADOPT
                 if (enc_mode <= ENC_M4)
 #else
@@ -3124,6 +3139,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 if (enc_mode <= ENC_M7)
 #else
                 if (enc_mode <= ENC_M3)
+#endif
 #endif
 #endif
 #endif
@@ -6011,6 +6027,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             else
 #endif
 #if M8_MPPD
+#if MAY07_M5_SC_ADOPT
+                                if (pcs_ptr->enc_mode <= ENC_M2 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M4)) {
+#else
 #if MAY07_M3_NSC_ADOPT
                             if (pcs_ptr->enc_mode <= ENC_M2 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M6)) {
 #else
@@ -6018,6 +6037,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
                             if(pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #endif
 #endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;

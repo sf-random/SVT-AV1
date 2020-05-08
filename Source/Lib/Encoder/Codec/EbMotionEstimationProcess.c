@@ -178,6 +178,12 @@ void* set_me_hme_params_oq(
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 450;
 #endif
             }
+#if MAY07_M5_SC_ADOPT
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 125;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
+            }
+#endif
 #if APR25_3AM_ADOPTIONS
 #if APR23_4AM_M6_ADOPTIONS && !APR25_10AM_ADOPTIONS
             else if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -357,6 +363,9 @@ void* set_me_hme_params_oq(
     }
     else {
 #if APR22_ADOPTIONS
+#if MAY07_M5_NSC_ADOPT
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
 #if MAY05_M3_NSC_ADOPT
         if (pcs_ptr->enc_mode <= ENC_M4) {
 #else
@@ -371,6 +380,7 @@ void* set_me_hme_params_oq(
 #endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M0) {
+#endif
 #endif
 #endif
 #endif
@@ -740,6 +750,9 @@ EbErrorType signal_derivation_me_kernel_oq(
     {
 #if MAR4_M6_ADOPTIONS
         if (pcs_ptr->sc_content_detected)
+#if MAY07_M5_SC_ADOPT
+            if (enc_mode <= ENC_M5)
+#else
 #if MAY05_M3_SC_ADOPT
             if (enc_mode <= ENC_M4)
 #else
@@ -769,9 +782,13 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
 #endif
 #endif
+#endif
                 context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
             else
                 context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#if MAY07_M5_NSC_ADOPT
+        else if (enc_mode <= ENC_M5)
+#else
 #if PRESETS_SHIFT
         else if (enc_mode <= ENC_M4)
 #else
@@ -779,6 +796,7 @@ EbErrorType signal_derivation_me_kernel_oq(
         else if (enc_mode <= ENC_M7)
 #else
         else if (enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
 #else

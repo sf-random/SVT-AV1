@@ -1617,6 +1617,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             cm->sg_filter_mode = 0;
 #endif
+#if MAY07_M5_NSC_ADOPT
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
 #if PRESETS_SHIFT
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #else
@@ -1631,6 +1634,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #endif
 #endif
 #endif
@@ -1683,6 +1687,9 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->wn_filter_mode = 0;
 #endif
     else
+#if MAY07_M5_NSC_ADOPT
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
 #if PRESETS_SHIFT
         if (pcs_ptr->enc_mode <= ENC_M4)
 #else
@@ -1690,6 +1697,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->enc_mode <= ENC_M7)
 #else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
             cm->wn_filter_mode = 3;
