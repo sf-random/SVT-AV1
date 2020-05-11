@@ -1933,7 +1933,6 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && is_cfl_allowed)
                 // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
                 is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
-
             chroma_rate +=
                 candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
                     ->cfl_alpha_fac_bits[candidate_buffer_ptr->candidate_ptr->cfl_alpha_signs]

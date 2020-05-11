@@ -1854,7 +1854,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }else
 #endif
             if (pcs_ptr->enc_mode <= ENC_M0) {
+#if M0_REF
+                scale_num = 8;
+#else
                 scale_num   = 7;
+#endif
                 scale_denum = 8;
             }else if (pcs_ptr->enc_mode <= ENC_M1) {
                 scale_num   = 6;
@@ -8314,6 +8318,11 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
             context_ptr->md_staging_tx_size_mode = 1;
         else
             context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+
+#if TXS_INTRA_OFF
+        if (context_ptr->pd_pass == PD_PASS_2)
+            context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 0 : context_ptr->md_staging_tx_size_mode;
+#endif
 #else
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
 #endif
@@ -8330,9 +8339,30 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
                 ? 2
                 : 1;
+#if TXT_INTER_OFF
+        if (context_ptr->pd_pass == PD_PASS_2)
+            context_ptr->md_staging_tx_search = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? context_ptr->md_staging_tx_search : 0;
+#endif
+#if TXT_INTRA_OFF
+        if (context_ptr->pd_pass == PD_PASS_2)
+            context_ptr->md_staging_tx_search = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 0 : context_ptr->md_staging_tx_search;
+#endif
+#if TXT_OFF
+        if (context_ptr->pd_pass == PD_PASS_2)
+            context_ptr->md_staging_tx_search = 0;
+#endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
+#if RDOQ_INTER_OFF
+        context_ptr->md_staging_skip_rdoq = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? context_ptr->md_staging_skip_rdoq : EB_TRUE;
+#endif
+#if RDOQ_INTRA_OFF
+        context_ptr->md_staging_skip_rdoq = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? EB_TRUE : context_ptr->md_staging_skip_rdoq;
+#endif
+#if RDOQ_OFF
+        context_ptr->md_staging_skip_rdoq = EB_TRUE;
+#endif
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
 #if !M8_CLEAN_UP
         if (pcs_ptr->slice_type != I_SLICE) {

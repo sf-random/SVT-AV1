@@ -1866,6 +1866,12 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->tx_size_search_mode = 0;
 
+#if M0_REF
+    pcs_ptr->tx_size_search_mode = 1;
+#endif
+#if TXS_OFF
+    pcs_ptr->tx_size_search_mode = 0;
+#endif
 #if APR22_ADOPTIONS
     // Assign whether to use TXS in inter classes (if TXS is ON)
     // 0 OFF - TXS in intra classes only
@@ -1876,6 +1882,13 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->txs_in_inter_classes = (pcs_ptr->is_used_as_reference_flag && pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 1 : 0;
     else
         pcs_ptr->txs_in_inter_classes = 0;
+
+#if M0_REF
+    pcs_ptr->txs_in_inter_classes = 1;
+#endif
+#if TXS_INTER_OFF
+    pcs_ptr->txs_in_inter_classes = 0;
+#endif
 #endif
 
 #if !INTER_COMP_REDESIGN

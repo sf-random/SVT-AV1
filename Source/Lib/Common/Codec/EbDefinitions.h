@@ -371,6 +371,27 @@ extern "C" {
 #define MAY07_M5_NSC_ADOPT 1
 #define MAY07_M5_SC_ADOPT 1
 
+// Testing Macros
+#define M0_REF        0
+
+#define TXS_INTER_OFF 0
+#define TXS_INTRA_OFF 0
+#define TXS_OFF       0
+
+#define TXT_INTER_OFF 0
+#define TXT_INTRA_OFF 0
+#define TXT_OFF       0
+
+#define RDOQ_INTER_OFF 0
+#define RDOQ_INTRA_OFF 0
+#define RDOQ_OFF       0
+
+#define IFS_OFF         0
+#define IFS_WITH_CHROMA 0
+
+#define CFL_OFF 0
+#define ICS_OFF 0
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 

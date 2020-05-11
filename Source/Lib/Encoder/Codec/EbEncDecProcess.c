@@ -1787,10 +1787,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if APR23_ADOPTIONS_2
         // New adoption levels after UPDATE_TXT_LEVEL
         if (enc_mode <= ENC_M0)
+#if M0_REF
+            context_ptr->md_txt_search_level = 0;
+#else
 #if MR_I_TXT
             context_ptr->md_txt_search_level = (enc_mode == ENC_M0 && pcs_ptr->slice_type == I_SLICE) ? 0 : 1;
 #else
             context_ptr->md_txt_search_level = 1;
+#endif
 #endif
         else if (enc_mode <= ENC_M7)
             context_ptr->md_txt_search_level = 2;
@@ -1966,7 +1970,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
     else if (enc_mode <= ENC_M3)
 #endif
+#if IFS_WITH_CHROMA
+        context_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
+#else
         context_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP_UV_BLIND;
+#endif
 #if !MAR10_ADOPTIONS
     else if (enc_mode <= ENC_M7)
         if (pcs_ptr->temporal_layer_index == 0)
@@ -1976,6 +1984,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else
         context_ptr->interpolation_search_level = IT_SEARCH_OFF;
+
+#if IFS_OFF
+    context_ptr->interpolation_search_level = IT_SEARCH_OFF;
+#endif
 
     // Set Chroma Mode
     // Level                Settings
@@ -2060,7 +2072,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else // use specified level
         context_ptr->chroma_level =
         sequence_control_set_ptr->static_config.set_chroma_mode;
-
+#if ICS_OFF
+    if (context_ptr->pd_pass == PD_PASS_2)
+        context_ptr->chroma_level = CHROMA_MODE_1;
+#endif
     // Chroma independent modes search
     // Level                Settings
     // 0                    post first md_stage
@@ -2189,7 +2204,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 1                    Disable cfl
 #if PRESETS_SHIFT
 #if ALLOW_CFL_M8
+#if CFL_OFF
+    context_ptr->md_disable_cfl = EB_TRUE;
+#else
     context_ptr->md_disable_cfl = EB_FALSE;
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
         context_ptr->md_disable_cfl = EB_FALSE;
@@ -3089,6 +3108,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->enable_rdoq =
             sequence_control_set_ptr->static_config.enable_rdoq;
 
+#if RDOQ_OFF
+    context_ptr->enable_rdoq = EB_FALSE;
+#endif
     // Derive redundant block
     if (pd_pass == PD_PASS_0)
         context_ptr->redundant_blk = EB_FALSE;
@@ -3302,6 +3324,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 
+#if M0_REF
+    if (pd_pass > PD_PASS_1)
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+#endif
     // md_stage_1_class_prune_th (for class removal)
     // Remove class if deviation to the best higher than TH_C
     if (pd_pass == PD_PASS_0)
@@ -3341,6 +3367,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
 
+#if M0_REF
+    if (pd_pass > PD_PASS_1)
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+#endif
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
     // md_stage_2_3_cand_prune_th
@@ -3394,6 +3424,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_2_3_cand_prune_th = 5;
 
+#if M0_REF
+    if (pd_pass > PD_PASS_1)
+        context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
+#endif
     // md_stage_2_3_class_prune_th (for class removal)
     // Remove class if deviation to the best is higher than
     // md_stage_2_3_class_prune_th
@@ -3453,6 +3487,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_2_3_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_2_3_class_prune_th;
+
+#if M0_REF
+    if (pd_pass > PD_PASS_1)
+        context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
+#endif
 
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
