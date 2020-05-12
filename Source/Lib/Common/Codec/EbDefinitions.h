@@ -374,6 +374,7 @@ extern "C" {
 #define MAY11_ADOPTIONS 1 // M0-M5 misc. adoptions
 #define MAY11_M6_NSC_ADOPT 1
 #define MAY11_M6_SC_ADOPT 1
+#define MR_NICS_SCALING 1
 
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////

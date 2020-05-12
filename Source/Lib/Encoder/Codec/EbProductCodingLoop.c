@@ -1849,7 +1849,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             uint32_t scale_denum ;
 #if NEW_NICS_SCALING
             if (MR_MODE) {
+#if MR_NICS_SCALING
+                scale_num = 10;
+#else
                 scale_num   = 8;
+#endif
                 scale_denum = 8;
             }else
 #endif
