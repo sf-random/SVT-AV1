@@ -1840,7 +1840,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_1_count[CAND_CLASS_0] = MAX(context_ptr->md_stage_1_count[CAND_CLASS_0], 1);
 
 #endif
-#if NICS_CLEANUP
+#if NICS_CLEANUP && !REMOVE_SCALING
 
             uint32_t min_nics =   pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ?
                 2 : 1 ;
@@ -3687,6 +3687,10 @@ void md_stage_0(
                 candidate_buffer_ptr_array_base[candidate_buffer_start_index];
             ModeDecisionCandidate *candidate_ptr = candidate_buffer->candidate_ptr =
                 &fast_candidate_array[fast_loop_cand_index];
+
+#if CAND_PRUN_OPT
+            candidate_ptr->txt_level = context_ptr->md_txt_search_level;
+#endif
             // Initialize tx_depth
             candidate_buffer->candidate_ptr->tx_depth = 0;
             // Only check (src - src) candidates (Tier0 candidates)
@@ -5933,9 +5937,17 @@ void init_txt_search_ctrls(ModeDecisionContext *context_ptr) {
     context_ptr->txt_rdoq = 0;
     context_ptr->txt_ssse = 0;
 }
+#if CAND_PRUN_OPT
+void set_txt_search_ctrls(ModeDecisionContext *context_ptr,uint8_t txt_level) {
+#else
 void set_txt_search_ctrls(ModeDecisionContext *context_ptr) {
+#endif
     TxTSearchCtrls* txt_search_ctrls = &context_ptr->txt_search_ctrls;
+#if CAND_PRUN_OPT
+    switch (txt_level) {
+#else
     switch (context_ptr->md_txt_search_level) {
+#endif
     case 0:
         txt_search_ctrls->txt_allow_rdoq = 1;
         txt_search_ctrls->txt_allow_ssse = 1;
@@ -6015,13 +6027,64 @@ void set_txt_search_ctrls(ModeDecisionContext *context_ptr) {
         break;
 #endif
 #endif
+#if NEW_TXT_LEVELS
+    case 6:
+        txt_search_ctrls->txt_allow_rdoq = 1;
+        txt_search_ctrls->txt_allow_ssse = 1;
+        txt_search_ctrls->txt_weight[0] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[1] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[2] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_table_idx = 1;
+        txt_search_ctrls->txt_allow_skip = 0;
+        break;
+    case 7:
+        txt_search_ctrls->txt_allow_rdoq = 1;
+        txt_search_ctrls->txt_allow_ssse = 1;
+        txt_search_ctrls->txt_weight[0] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[1] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[2] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_table_idx = 2;
+        txt_search_ctrls->txt_allow_skip = 0;
+        break;
+    case 8:
+        txt_search_ctrls->txt_allow_rdoq = 1;
+        txt_search_ctrls->txt_allow_ssse = 1;
+        txt_search_ctrls->txt_weight[0] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[1] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[2] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_table_idx = 3;
+        txt_search_ctrls->txt_allow_skip = 0;
+        break;
+    case 9:
+        txt_search_ctrls->txt_allow_rdoq = 1;
+        txt_search_ctrls->txt_allow_ssse = 1;
+        txt_search_ctrls->txt_weight[0] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[1] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[2] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_table_idx = 4;
+        txt_search_ctrls->txt_allow_skip = 0;
+        break;
+    case 10:
+        txt_search_ctrls->txt_allow_rdoq = 1;
+        txt_search_ctrls->txt_allow_ssse = 1;
+        txt_search_ctrls->txt_weight[0] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[1] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_weight[2] = MAX_TX_WEIGHT;
+        txt_search_ctrls->txt_table_idx = 4;
+        txt_search_ctrls->txt_allow_skip = 2;
+        break;
+#endif
     default:
         printf("Error: unvalid md_txt_search_level\n");
         break;
     };
 }
 uint8_t get_tx_search_config(ModeDecisionContext *context_ptr,
+#if CAND_PRUN_OPT
+    int32_t sq_size, uint64_t ref_fast_cost, uint64_t cu_cost ,uint8_t txt_level) {
+#else
     int32_t sq_size, uint64_t ref_fast_cost, uint64_t cu_cost) {
+#endif
     uint8_t tx_search_skip_flag = 0;
     TxTSearchCtrls* txt_search_ctrls = &context_ptr->txt_search_ctrls;
     uint8_t bwidth = context_ptr->blk_geom->bwidth;
@@ -6034,7 +6097,11 @@ uint8_t get_tx_search_config(ModeDecisionContext *context_ptr,
         bclass = 1;
     else
         bclass = 2;
+#if CAND_PRUN_OPT
+    set_txt_search_ctrls(context_ptr , txt_level);
+#else
     set_txt_search_ctrls(context_ptr);
+#endif
     if(txt_search_ctrls->txt_weight[bclass] < MAX_TX_WEIGHT)
         level = cu_cost >= ((ref_fast_cost * txt_search_ctrls->txt_weight[bclass]) / 100) ? 1 : 0;
     if (level && !txt_search_ctrls->txt_allow_rdoq)
@@ -7576,16 +7643,22 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_flag = EB_TRUE;
     else if (context_ptr->md_staging_tx_search == 1) {
+#if !REMOVE_TXT_SHORTCUT
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected && context_ptr->blk_geom->shape == PART_N)
             tx_search_skip_flag =
                 context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE : EB_TRUE;
         else
+#endif
             tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP
 #if TXT_CONTROL
             ? get_tx_search_config(context_ptr,
                 context_ptr->blk_geom->sq_size,
                 ref_fast_cost,
+#if CAND_PRUN_OPT
+                *candidate_buffer->fast_cost_ptr, candidate_buffer->candidate_ptr->txt_level)
+#else
                 *candidate_buffer->fast_cost_ptr)
+#endif
 #else
             ? get_skip_tx_search_flag(context_ptr->blk_geom->sq_size,
                 ref_fast_cost,
@@ -7811,7 +7884,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     uint8_t end_tx_depth = 0;
     if (context_ptr->md_tx_size_search_mode == 0) {
         start_tx_depth = end_tx_depth = 0;
+#if CAND_PRUN_OPT
+    } else if (candidate_ptr->txs_level == 0) {
+#else
     } else if (context_ptr->md_staging_tx_size_mode == 0) {
+#endif
         start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     } else {
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
@@ -8049,6 +8126,13 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
             context_ptr->cand_buff_indices[context_ptr->target_class][full_loop_candidate_index];
         candidate_buffer = candidate_buffer_ptr_array[cand_index];
         candidate_ptr    = candidate_buffer->candidate_ptr;
+
+#if CAND_PRUN_OPT
+        candidate_ptr->txt_level = context_ptr->md_txt_search_level;
+#endif
+#if CAND_PRUN_OPT
+    candidate_ptr->txs_level = 0;
+#endif
 #if REFACTOR_SIGNALS
         context_ptr->md_staging_perform_inter_pred = EB_TRUE;
 #else
@@ -8104,7 +8188,13 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         candidate_ptr    = candidate_buffer->candidate_ptr;
 
+#if CAND_PRUN_OPT
+        candidate_ptr->txt_level = context_ptr->md_txt_search_level;
+#endif
         context_ptr->md_staging_tx_size_mode = 0;
+#if CAND_PRUN_OPT
+        candidate_ptr->txs_level = 0;
+#endif
 
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
@@ -8172,7 +8262,13 @@ void update_intra_chroma_mode(ModeDecisionContext *context_ptr, ModeDecisionCand
                 int32_t  angle_delta;
                 uint8_t  is_directional_chroma_mode_flag;
 #if FIXED_LAST_STAGE_SC
+#if CAND_PRUN_OPT
+                uint64_t chroma_at_last_md_stage_cfl_th = candidate_ptr->disallow_cfl ? 0 : context_ptr->chroma_at_last_md_stage_cfl_th;
+
+                if (((context_ptr->best_inter_cost * chroma_at_last_md_stage_cfl_th) < (context_ptr->best_intra_cost * 100))) {
+#else
                 if (((context_ptr->best_inter_cost * context_ptr->chroma_at_last_md_stage_cfl_th) < (context_ptr->best_intra_cost * 100))) {
+#endif
 #else
                 if (((context_ptr->best_inter_cost * (100 + cfl_th)) <
                     (context_ptr->best_intra_cost * 100)) &&
@@ -8305,7 +8401,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
-#if MR_MODE
+#if MR_MODE || REMOVE_TXS_SHORTCUT
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
 #else
 #if CLASS_MERGING
@@ -8321,6 +8417,9 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7) ? 1 : 0;
 #endif
 #endif
+#if REMOVE_TXT_SHORTCUT || TXT_FULL
+        context_ptr->md_staging_tx_search = 1;
+#else
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
 #if CLASS_MERGING
@@ -8330,10 +8429,17 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
                 ? 2
                 : 1;
+#endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
+#if CAND_PRUN_OPT
+        context_ptr->md_staging_tx_size_mode = candidate_ptr->disallow_txs ? 0 : context_ptr->md_staging_tx_size_mode;
+        context_ptr->md_staging_tx_search = candidate_ptr->disallow_txt ? 0 : context_ptr->md_staging_tx_search;
+        context_ptr->md_staging_skip_rdoq = candidate_ptr->disallow_rdoq ? EB_TRUE : context_ptr->md_staging_skip_rdoq;
+        context_ptr->md_staging_spatial_sse_full_loop = candidate_ptr->disallow_ssse ? EB_FALSE : context_ptr->md_staging_spatial_sse_full_loop;
+#endif
 #if !M8_CLEAN_UP
         if (pcs_ptr->slice_type != I_SLICE) {
             if ((candidate_ptr->type == INTRA_MODE || context_ptr->full_loop_escape == 2) &&
@@ -9408,7 +9514,136 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
     }
 }
 
-void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
+#define CLASS_BAND_1           1
+#define CLASS_BAND_2           1
+#define CLASS_BAND_3           1
+#define CLASS_BAND_4           1
+
+
+#if CLASS_PRUNE
+
+#define NEW_TEST 2
+
+uint32_t scale_array[2/*sc-nsc*/][6/*test#*/][4/*band#*/][2/*num/denum*/] = {
+    { //NSC
+        // TEST2
+        {
+            {4, 8},     // b0
+            {3, 8},     // b1
+            {2, 8},     // b2
+            {0, 8}      // b3
+        },
+        // TEST3
+        {
+            {3, 8},     // b0
+            {2, 8},     // b1
+            {1, 8},     // b2
+            {0, 8}      // b3
+        },
+        // TEST4
+        {
+            {2, 8},     // b0
+            {1, 8},     // b1
+            {1, 8},     // b2
+            {0, 8}      // b3
+        },
+        // TEST5
+        {
+            {1, 8},      // b0
+            {1, 16},     // b1
+            {1, 16},     // b2
+            {0, 8}       // b3
+        },
+        // TEST6
+        {
+            {1, 8},      // b0
+            {1, 16},     // b1
+            {0, 8},      // b2
+            {0, 8}       // b3
+        },
+        // TEST7
+        {
+            {1, 16},     // b0
+            {1, 32},     // b1
+            {0, 8},      // b2
+            {0, 8}       // b3
+        },
+    },//NSC END
+    {//SC
+        // TEST2
+        {
+            {6, 8},     // b0
+            {5, 8},     // b1
+            {4, 8},     // b2
+            {2, 8}      // b3
+        },
+        // TEST3
+        {
+            {5, 8},     // b0
+            {4, 8},     // b1
+            {3, 8},     // b2
+            {1, 8}      // b3
+        },
+        // TEST4
+        {
+            {4, 8},     // b0
+            {3, 8},     // b1
+            {2, 8},     // b2
+            {1, 8}      // b3
+        },
+        // TEST5
+        {
+            {3, 8},      // b0
+            {2, 8},     // b1
+            {1, 8},     // b2
+            {1, 16}       // b3
+        },
+        // TEST6
+        {
+            {2, 8},      // b0
+            {1, 8},     // b1
+            {1, 16},      // b2
+            {0, 8}       // b3
+        },
+        // TEST7
+        {
+            {1, 8},       // b0
+            {1, 16},      // b1
+            {1, 32},      // b2
+            {0, 8}        // b3
+        },
+    },//SC END
+};
+
+
+
+#endif
+#if CAND_PRUN_OPT_TXT
+#define CAN_TEST    3
+uint8_t txs_txt_array[3/*test#*/][4/*band#*/][2/*txs-txt*/] = {
+    {//Can_test_1
+        {1,6},      // b0
+        {0,7},      // b1
+        {0,9},      // b2
+        {0,10}      // b3
+    },
+    {//Can_test_2
+        {1,6},      // b0
+        {0,7},      // b1
+        {0,8},      // b2
+        {0,9}       // b3
+    },
+    {//Can_test_3
+        {1,0},      // b0
+        {0,0},      // b1
+        {0,6},      // b2
+        {0,7}       // b3
+    },
+};
+
+
+#endif
+void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost,uint8_t is_used_as_reference_flag,uint8_t sc_content_detected) {
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
          cand_class_it++) {
         if (context_ptr->md_stage_2_3_cand_prune_th != (uint64_t)~0 ||
@@ -9419,7 +9654,7 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
                 uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
                 uint64_t  class_best_cost =
                     *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
-
+#if !DISABLE_CLASS_PRUNE
                 // inter class pruning
                 if (best_md_stage_cost && class_best_cost &&
                     ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) >
@@ -9427,10 +9662,100 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
                     context_ptr->md_stage_2_count[cand_class_it] = 0;
                     continue;
                 }
+#endif
+#if CLASS_PRUNE
+                uint64_t distance_cost = (class_best_cost - best_md_stage_cost) * 100;
+                uint64_t band1_cost_th = (class_best_cost * 5);
+                uint64_t band2_cost_th = (class_best_cost * 10);
+                uint64_t band3_cost_th = (class_best_cost * 20);
 
+
+                uint32_t scale_num     ;
+                uint32_t scale_denum   ;
+
+
+                uint8_t test_number = NEW_TEST-2;
+
+                uint32_t min_nics =   is_used_as_reference_flag ? MIN(2,context_ptr->md_stage_2_count[cand_class_it]) : 1 ;
+
+                if (best_md_stage_cost && class_best_cost){
+                    if (best_md_stage_cost == class_best_cost) {
+                    }
+                    else if (distance_cost < band1_cost_th) {
+#if CLASS_BAND_1
+                        scale_num  =  scale_array[sc_content_detected][test_number][0][0] ;
+                        scale_denum = scale_array[sc_content_detected][test_number][0][1] ;
+                        if (scale_num == 0) {
+                            context_ptr->md_stage_2_count[cand_class_it] = 0;
+                            continue;
+                        }else{
+                            context_ptr->md_stage_2_count[cand_class_it] =
+                                MAX(
+                                    min_nics,
+                                    DIVIDE_AND_ROUND(
+                                        context_ptr->md_stage_2_count[cand_class_it] * scale_num,
+                                        scale_denum));
+                        }
+#endif
+                    }
+                    else  if (distance_cost < band2_cost_th) {
+#if CLASS_BAND_2
+                        scale_num  =  scale_array[sc_content_detected][test_number][1][0] ;
+                        scale_denum = scale_array[sc_content_detected][test_number][1][1] ;
+                        if (scale_num == 0) {
+                            context_ptr->md_stage_2_count[cand_class_it] = 0;
+                            continue;
+                        }else{
+                            context_ptr->md_stage_2_count[cand_class_it] =
+                                MAX(
+                                    min_nics,
+                                    DIVIDE_AND_ROUND(
+                                        context_ptr->md_stage_2_count[cand_class_it] * scale_num,
+                                        scale_denum));
+                        }
+#endif
+                    }
+                    else  if (distance_cost < band3_cost_th) {
+#if CLASS_BAND_3
+                        scale_num  =  scale_array[sc_content_detected][test_number][2][0] ;
+                        scale_denum = scale_array[sc_content_detected][test_number][2][1] ;
+                        if (scale_num == 0) {
+                            context_ptr->md_stage_2_count[cand_class_it] = 0;
+                            continue;
+                        }else{
+                            context_ptr->md_stage_2_count[cand_class_it] =
+                                MAX(
+                                    min_nics,
+                                    DIVIDE_AND_ROUND(
+                                        context_ptr->md_stage_2_count[cand_class_it] * scale_num,
+                                        scale_denum));
+                        }
+#endif
+                    }
+                    else {
+#if CLASS_BAND_4
+                        scale_num  =  scale_array[sc_content_detected][test_number][3][0] ;
+                        scale_denum = scale_array[sc_content_detected][test_number][3][1] ;
+                        if (scale_num == 0) {
+                            context_ptr->md_stage_2_count[cand_class_it] = 0;
+                            continue;
+                        }else{
+                            context_ptr->md_stage_2_count[cand_class_it] =
+                                MAX(
+                                    min_nics,
+                                    DIVIDE_AND_ROUND(
+                                        context_ptr->md_stage_2_count[cand_class_it] * scale_num,
+                                        scale_denum));
+                        }
+#endif
+                    }
+            }
+
+#endif
                 // intra class pruning
                 uint32_t cand_count = 1;
                 uint64_t md_stage_2_3_cand_prune_th = context_ptr->md_stage_2_3_cand_prune_th;
+#if !REMOVE_CAND_PRUN_SHORTCUT
                 md_stage_2_3_cand_prune_th = (cand_class_it == CAND_CLASS_0 ||
 #if CLASS_MERGING
                     cand_class_it == CAND_CLASS_3) ?
@@ -9440,6 +9765,78 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
 #endif
                     (uint64_t)~0 : (context_ptr->blk_geom->shape == PART_N) ? (uint64_t)~0 :
                     md_stage_2_3_cand_prune_th;
+#endif
+#if CAND_PRUN_OPT
+                ModeDecisionCandidateBuffer *candidate_buffer;
+                ModeDecisionCandidate *      candidate_ptr;
+
+                for (uint16_t cand_index = 0; cand_index < context_ptr->md_stage_2_count[cand_class_it]; cand_index++) {
+
+                    candidate_buffer = context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_index]];
+                    candidate_ptr = candidate_buffer->candidate_ptr;
+                    candidate_ptr->skip_candidate = 0;
+                    candidate_ptr->disallow_txt = 0;
+                    candidate_ptr->disallow_txs = 0;
+                    candidate_ptr->disallow_ssse = 0;
+                    candidate_ptr->disallow_rdoq = 0;
+                    candidate_ptr->disallow_cfl = 0;
+                    candidate_ptr->txt_level = context_ptr->md_txt_search_level;
+#if  REMOVE_TXS_SHORTCUT
+                    candidate_ptr->txs_level = 1;
+#else
+                    candidate_ptr->txs_level = is_used_as_reference_flag ? 1 : (cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3) ? 1 : 0;
+#endif
+
+                }
+
+
+#endif
+
+#if CAND_PRUN_OPT
+
+                if (class_best_cost)
+                    for (uint16_t cand_index = 1; cand_index < context_ptr->md_stage_2_count[cand_class_it]; cand_index++) {
+
+                        candidate_buffer = context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_index]];
+                        candidate_ptr = candidate_buffer->candidate_ptr;
+                        uint64_t  can_cost = *(candidate_buffer->full_cost_ptr);
+
+                        distance_cost = (can_cost - class_best_cost) * 100;
+                        band1_cost_th = (can_cost * 5);
+                        band2_cost_th = (can_cost * 10);
+                        band3_cost_th = (can_cost * 20);
+#if CAND_PRUN_OPT_TXT
+                        if (can_cost == class_best_cost) {
+                        }
+                        else if (distance_cost < band1_cost_th) {
+                            candidate_ptr->txt_level = txs_txt_array[CAN_TEST-1][0][1];
+                            candidate_ptr->txs_level = txs_txt_array[CAN_TEST-1][0][0];
+                        }
+                        else  if (distance_cost < band2_cost_th) {
+                            candidate_ptr->txt_level = txs_txt_array[CAN_TEST-1][1][1];
+                            candidate_ptr->txs_level = txs_txt_array[CAN_TEST-1][1][0];
+                        }
+                        else  if (distance_cost < band3_cost_th) {
+                            candidate_ptr->txt_level = txs_txt_array[CAN_TEST-1][2][1];
+                            candidate_ptr->txs_level = txs_txt_array[CAN_TEST-1][2][0];
+                        }
+                        else {
+                            candidate_ptr->txt_level = txs_txt_array[CAN_TEST-1][3][1];
+                            candidate_ptr->txs_level = txs_txt_array[CAN_TEST-1][3][0];
+                        }
+#else
+                        if (distance_cost >= md_stage_2_3_cand_prune_th * class_best_cost)
+                                candidate_ptr->skip_candidate = 1;
+#endif
+                    }
+                    while (
+                        cand_count < context_ptr->md_stage_2_count[cand_class_it] &&
+                        !(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]->candidate_ptr->skip_candidate)){
+                        cand_count++;
+                    }
+                context_ptr->md_stage_2_count[cand_class_it] = cand_count;
+#endif
+#if !DISABLE_CAND_PRUNE
                 if (class_best_cost)
                     while (
                         cand_count < context_ptr->md_stage_2_count[cand_class_it] &&
@@ -9451,6 +9848,8 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
                         cand_count++;
                     }
                 context_ptr->md_stage_2_count[cand_class_it] = cand_count;
+
+#endif
             }
         context_ptr->md_stage_2_total_count += context_ptr->md_stage_2_count[cand_class_it];
     }
@@ -9775,7 +10174,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
                     best_md_stage_cost);
         }
     }
-    interintra_class_pruning_2(context_ptr, best_md_stage_cost);
+    interintra_class_pruning_2(context_ptr, best_md_stage_cost,pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,pcs_ptr->parent_pcs_ptr->sc_content_detected);
 
     // 2nd Full-Loop
     best_md_stage_cost    = (uint64_t)~0;
