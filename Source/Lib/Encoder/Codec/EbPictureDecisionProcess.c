@@ -1639,6 +1639,10 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
         cm->sg_filter_mode = 4;
+#if MAY11_M6_NSC_ADOPT
+    else
+        cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
+#else
 #if MAR12_M8_ADOPTIONS
 #if M8_SG
 #if UPGRADE_M6_M7_M8
@@ -1667,6 +1671,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         cm->sg_filter_mode = 1;
 #endif
+#endif
 
     // WN Level                                     Settings
     // 0                                            OFF
@@ -1687,6 +1692,9 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->wn_filter_mode = 0;
 #endif
     else
+#if MAY11_M6_NSC_ADOPT
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#else
 #if MAY07_M5_NSC_ADOPT
         if (pcs_ptr->enc_mode <= ENC_M5)
 #else
@@ -1697,6 +1705,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->enc_mode <= ENC_M7)
 #else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
 #endif
@@ -5863,10 +5872,16 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
 #if MAY07_M3_SC_ADOPT
                                     else if (pcs_ptr->enc_mode <= ENC_M4) {
+#if MAY11_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
                                     }
 #endif
+#if !MAY11_ADOPTIONS
 #if APR25_12AM_ADOPTIONS
 #if APR25_3AM_ADOPTIONS
 #if APR23_4AM_M6_ADOPTIONS
@@ -5886,6 +5901,7 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                     }
 #endif
+#endif
                                     else {
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
@@ -5902,8 +5918,13 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
 #if APR25_12AM_ADOPTIONS
                                     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#if MAY11_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
                                     }
 #endif
                                     else {

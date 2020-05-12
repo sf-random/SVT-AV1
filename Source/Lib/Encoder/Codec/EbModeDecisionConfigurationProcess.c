@@ -1088,7 +1088,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             pcs_ptr->update_cdf = 0;
 #endif
     else
+#if MAY11_M6_NSC_ADOPT
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
             pcs_ptr->update_cdf = 1;
         else
 #if M5_I_CDF
@@ -1145,7 +1149,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
                 pcs_ptr->pic_filter_intra_mode = 1;
             else
                 pcs_ptr->pic_filter_intra_mode = 0;
+#if MAY11_M6_NSC_ADOPT
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
             pcs_ptr->pic_filter_intra_mode = 1;
         else
             pcs_ptr->pic_filter_intra_mode = 0;

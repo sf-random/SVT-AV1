@@ -179,7 +179,11 @@ void* set_me_hme_params_oq(
 #endif
             }
 #if MAY07_M5_SC_ADOPT
+#if MAY11_M6_SC_ADOPT
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
             else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 125;
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
             }
@@ -344,10 +348,14 @@ void* set_me_hme_params_oq(
 #if NEW_HME_ME_SIZES
     if (sc_content_detected) {
 #if UPGRADE_M6_M7_M8
+#if MAY11_M6_SC_ADOPT
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
 #if APR25_10AM_ADOPTIONS
         if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
         if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 #endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 150;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 600;
@@ -750,6 +758,9 @@ EbErrorType signal_derivation_me_kernel_oq(
     {
 #if MAR4_M6_ADOPTIONS
         if (pcs_ptr->sc_content_detected)
+#if MAY11_M6_SC_ADOPT
+            if (enc_mode <= ENC_M6)
+#else
 #if MAY07_M5_SC_ADOPT
             if (enc_mode <= ENC_M5)
 #else
@@ -783,9 +794,13 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
 #endif
 #endif
+#endif
                 context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
             else
                 context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#if MAY11_M6_NSC_ADOPT
+        else if (enc_mode <= ENC_M6)
+#else
 #if MAY07_M5_NSC_ADOPT
         else if (enc_mode <= ENC_M5)
 #else
@@ -796,6 +811,7 @@ EbErrorType signal_derivation_me_kernel_oq(
         else if (enc_mode <= ENC_M7)
 #else
         else if (enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
 #endif
@@ -829,10 +845,14 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 0;
 #if UPGRADE_M8
+#if MAY11_M6_NSC_ADOPT
+    else if (enc_mode <= ENC_M5 || (!pcs_ptr->sc_content_detected && enc_mode <= ENC_M6))
+#else
 #if NSQ_OFF_IN_M6_M7_ME
     else if (enc_mode <= ENC_M5)
 #else
     else if (enc_mode <= ENC_M7)
+#endif
 #endif
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 2;
     else
