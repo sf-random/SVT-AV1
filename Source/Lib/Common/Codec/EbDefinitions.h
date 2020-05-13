@@ -388,6 +388,10 @@ extern "C" {
 
 
 #define COEFF_BASED_BYPASS_NSQ    1  //coefficient-based nsq bypassing
+
+/********************************/
+#define SHUT_ME_CAND_SORTING 1 
+/********************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

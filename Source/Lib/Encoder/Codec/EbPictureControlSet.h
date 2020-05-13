@@ -795,7 +795,9 @@ typedef struct PictureParentControlSet {
     uint64_t          filtered_sse_uv;
     FrameHeader       frm_hdr;
     uint8_t           compound_mode;
+#if !SHUT_ME_CAND_SORTING
     uint8_t           prune_unipred_at_me;
+#endif
     uint16_t *        altref_buffer_highbd[3];
     uint8_t           enable_inter_intra;
     uint8_t           pic_obmc_mode;

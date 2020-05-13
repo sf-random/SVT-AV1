@@ -2003,7 +2003,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->frame_end_cdf_update_mode =
         scs_ptr->static_config.frame_end_cdf_update;
-
+#if !SHUT_ME_CAND_SORTING
     if (scs_ptr->static_config.prune_unipred_me == DEFAULT)
 #if MAR4_M6_ADOPTIONS
 #if MAR10_ADOPTIONS
@@ -2023,7 +2023,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->prune_unipred_at_me =
         scs_ptr->static_config.prune_unipred_me;
-
+#endif
     // CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop
     // preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check
     // RPS construction for more info.

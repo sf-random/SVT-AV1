@@ -8756,7 +8756,7 @@ EbErrorType biprediction_compensation(MeContext *context_ptr, uint32_t pu_index,
 
     return return_error;
 }
-
+#if !SHUT_ME_CAND_SORTING
 uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
                      uint8_t ref_type_table[7]) {
     if (!pcs_ptr->prune_unipred_at_me) return 1;
@@ -8768,7 +8768,7 @@ uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
     }
     return allow_cand;
 }
-
+#endif
 /*******************************************
  * bi_prediction_search
  *   performs Bi-Prediction Search (SB)
@@ -8827,13 +8827,20 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
                     svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
                 uint8_t to_inject_ref_type_1 =
                     svt_get_ref_frame_type(REF_LIST_1, second_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+                //if one of the references is skipped at ME, do not consider bi for this cand
+                if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref &&
+                    context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref) {
+#else
                 uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
                 add_bi += skip_bi_pred(pcs_ptr, to_inject_ref_type_1, ref_type_table);
+
                 //if one of the references is skipped at ME, do not consider bi for this cand
                 if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref == 0 ||
                     context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref == 0  )
                     add_bi = 0;
                 if (add_bi) {
+#endif
                     biprediction_compensation(
                         context_ptr,
                         pu_index,
@@ -8859,12 +8866,19 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
              first_list_ref_pict_idx++) {
             uint8_t to_inject_ref_type_0 =
                 svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+            //if one of the references is skipped at ME, do not consider bi for this cand
+            if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+#else
             uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
+
             //if one of the references is skipped at ME, do not consider bi for this cand
             if (context_ptr->hme_results[REF_LIST_0][0].do_ref == 0 ||
                 context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref == 0)
                 add_bi = 0;
             if (add_bi) {
+#endif
                 biprediction_compensation(
                     context_ptr,
                     pu_index,
@@ -8886,12 +8900,18 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
              second_list_ref_pict_idx++) {
             uint8_t to_inject_ref_type_0 =
                 svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+            if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
+#else
             uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
+
             //if one of the references is skipped at ME, do not consider bi for this cand
             if (context_ptr->hme_results[REF_LIST_1][0].do_ref == 0 ||
                 context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref == 0)
                 add_bi = 0;
             if (add_bi) {
+#endif
                 biprediction_compensation(
                     context_ptr,
                     pu_index,
@@ -12549,7 +12569,9 @@ EbErrorType motion_estimate_sb(
             }
 
             total_me_candidate_index = cand_index;
+
             uint8_t ref_type_table[7];
+#if !SHUT_ME_CAND_SORTING
             if (pcs_ptr->prune_unipred_at_me) {
                 // Sorting of the ME candidates
                 for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
@@ -12579,6 +12601,7 @@ EbErrorType motion_estimate_sb(
                             me_candidate->ref1_list, me_candidate->ref_index[1]);
                 }
             }
+#endif
             if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
                                         context_ptr,
@@ -12595,7 +12618,7 @@ EbErrorType motion_estimate_sb(
                                         ref_type_table,
                                         pcs_ptr);
             }
-
+#if !SHUT_ME_CAND_SORTING
             // Sorting of the ME candidates
             for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
                  ++candidate_index) {
@@ -12610,7 +12633,7 @@ EbErrorType motion_estimate_sb(
                     }
                 }
             }
-
+#endif
             MeSbResults *me_pu_result                        = pcs_ptr->me_results[sb_index];
             me_pu_result->total_me_candidate_index[pu_index] = total_me_candidate_index;
 
