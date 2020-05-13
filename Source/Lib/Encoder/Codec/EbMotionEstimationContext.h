@@ -476,7 +476,9 @@ typedef struct MeContext {
     uint16_t search_area_height;
     uint16_t max_me_search_width;
     uint16_t max_me_search_height;
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t inherit_rec_mv_from_sq_block;
+#endif
     uint8_t best_list_idx;
     uint8_t best_ref_idx;
     // HME
