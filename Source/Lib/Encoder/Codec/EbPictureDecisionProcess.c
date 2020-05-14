@@ -1875,6 +1875,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->tx_size_search_mode = 0;
 
+#if SHUT_TXS_IMPACT_FEATURES
+    pcs_ptr->tx_size_search_mode = 1;
+#endif
+
 #if APR22_ADOPTIONS
     // Assign whether to use TXS in inter classes (if TXS is ON)
     // 0 OFF - TXS in intra classes only
@@ -1887,6 +1891,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->txs_in_inter_classes = 0;
 #endif
 
+#if SHUT_TXS_IMPACT_FEATURES
+    pcs_ptr->txs_in_inter_classes = 1;
+#endif
 #if !INTER_COMP_REDESIGN
     // Set Wedge mode      Settings
     // 0                 FULL: Full search

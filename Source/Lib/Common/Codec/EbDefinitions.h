@@ -376,6 +376,16 @@ extern "C" {
 #define MAY11_M6_SC_ADOPT 1
 #define MR_NICS_SCALING 1
 
+#define SHUT_TXS_IMPACT_FEATURES 1 // Shut features that strongly impact TXS
+
+#define TXS_STATS 1 // Add code for generating TXS statistics
+#if TXS_STATS
+#define STATS_DEPTHS 6 // # of partition depths
+#define STATS_SHAPES 9 // SQ, H, V, HA, HB, VA, VB, H4, V4 (not necessarily in order)
+#define STATS_BANDS  20
+#define STATS_LEVELS 3 // 3 TXS levels (i.e. TXS depths): 0, 1, 2
+#endif
+
 #endif
 // END  MAY2020 /////////////////////////////////////////////////////////
 
