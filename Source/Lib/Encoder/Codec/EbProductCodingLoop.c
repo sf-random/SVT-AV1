@@ -4304,7 +4304,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #endif
 #if ADD_MD_NSQ_SEARCH
+#if SKIP_Nx4_4xN_SEARCH
+                if (context_ptr->blk_geom->shape != PART_N && context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4 &&  context_ptr->refine_nsq_mv_ctrls.enabled) {
+#else
                 if (context_ptr->blk_geom->shape != PART_N && context_ptr->refine_nsq_mv_ctrls.enabled) {
+#endif
                     uint8_t  search_pattern = 0;
 
                     // Search Center

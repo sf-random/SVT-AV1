@@ -1549,9 +1549,9 @@ void set_refine_nsq_mv_controls(ModeDecisionContext *mdctxt, uint8_t md_refine_n
         break;
     case 1:
         refine_nsq_mv_ctrls->enabled = 1;
-        refine_nsq_mv_ctrls->use_ssd = 1;
-        refine_nsq_mv_ctrls->full_pel_search_width = 3;
-        refine_nsq_mv_ctrls->full_pel_search_height = 3;
+        refine_nsq_mv_ctrls->use_ssd = 0;
+        refine_nsq_mv_ctrls->full_pel_search_width = 15;
+        refine_nsq_mv_ctrls->full_pel_search_height = 15;
         refine_nsq_mv_ctrls->half_pel_search_width = 3;
         refine_nsq_mv_ctrls->half_pel_search_height = 3;
         refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
