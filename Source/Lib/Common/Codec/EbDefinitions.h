@@ -390,7 +390,7 @@ extern "C" {
 #define COEFF_BASED_BYPASS_NSQ    1  //coefficient-based nsq bypassing
 
 /********************************/
-#define SHUT_ME_CAND_SORTING 1 
+#define SHUT_ME_CAND_SORTING 0 
 #define PRUNING_PER_INTER_TYPE 1
 
 #define SHUT_ME_NSQ_SEARCH 0 
