@@ -391,8 +391,10 @@ extern "C" {
 
 /********************************/
 #define SHUT_ME_CAND_SORTING 1 
-#define SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
+#define PRUNING_PER_INTER_TYPE 1
+
+#define SHUT_ME_NSQ_SEARCH 0 
+#define ADD_MD_NSQ_SEARCH 0
 /********************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

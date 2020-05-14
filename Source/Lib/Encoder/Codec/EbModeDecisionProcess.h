@@ -582,8 +582,10 @@ typedef struct ModeDecisionContext {
     uint8_t      md_refine_nsq_mv ;
     RefineNsqMvCtrls refine_nsq_mv_ctrls;
 #endif
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     uint8_t bipred3x3_number_input_mv;
+#endif
 #endif
     uint8_t      md_max_ref_count;
     EbBool       md_skip_mvp_generation;

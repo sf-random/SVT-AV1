@@ -885,10 +885,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t     mi_col                 = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
     // (8 Best_L0 neighbors)
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -1056,10 +1058,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     }
 
     // (8 Best_L1 neighbors)
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -1279,10 +1283,12 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
         /**************
        NEW_NEWMV
        ************* */
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
         total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
         total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
         for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt;
              ++me_candidate_index) {

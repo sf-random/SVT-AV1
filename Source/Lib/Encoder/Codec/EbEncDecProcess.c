@@ -3998,7 +3998,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_max_ref_count = 4;
 #endif
-
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     if (pd_pass == PD_PASS_0)
         context_ptr->bipred3x3_number_input_mv = 4;
@@ -4009,7 +4009,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->bipred3x3_number_input_mv = 1;
 #endif
-
+#endif
     // Set md_skip_mvp_generation (and use (0,0) as MVP instead)
     if (pd_pass == PD_PASS_0)
         context_ptr->md_skip_mvp_generation = EB_TRUE;
