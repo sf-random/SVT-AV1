@@ -5987,35 +5987,36 @@ void generate_statistics(
 
                     uint8_t part_idx = context_ptr->md_blk_arr_nsq[blk_index].part;
                     uint8_t tx_depth = context_ptr->md_blk_arr_nsq[blk_index].tx_depth;
+                    uint32_t count_unit = 1;// (blk_geom->bwidth*blk_geom->bheight);
                     if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][18][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][18][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][16][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][16][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][14][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][14][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][12][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][12][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][10][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][10][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][8][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][8][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][6][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][6][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][4][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][4][tx_depth] += count_unit;
                     }
                     else if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][2][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][2][tx_depth] += count_unit;
                     }
                     else {
-                        part_cnt[blk_geom->depth][part_idx][0][tx_depth] += (blk_geom->bwidth*blk_geom->bheight);
+                        part_cnt[blk_geom->depth][part_idx][0][tx_depth] += count_unit;
                     }
                 }
             }

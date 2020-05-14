@@ -15,7 +15,7 @@ static void eb_sequence_control_set_dctor(EbPtr p) {
     for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
         for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
             for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                for (uint8_t txs_idx = 1; txs_idx < STATS_LEVELS; txs_idx++) {
+                for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
                     total += obj->part_cnt[depthidx][partidx][band][txs_idx];
                 }
             }
@@ -26,7 +26,7 @@ static void eb_sequence_control_set_dctor(EbPtr p) {
         for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
             for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
                 for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                    for (uint8_t txs_idx = 1; txs_idx < STATS_LEVELS; txs_idx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
                         printf("%d\t", obj->part_cnt[depthidx][partidx][band][txs_idx]);
                     }
                 }
