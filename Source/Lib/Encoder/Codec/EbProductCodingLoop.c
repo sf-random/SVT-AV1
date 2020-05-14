@@ -4241,8 +4241,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     const SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
     derive_me_offsets(scs_ptr, pcs_ptr, context_ptr);
-
+#if !ADD_MD_NSQ_SEARCH
     EbBool                    use_ssd = EB_TRUE;
+#endif
     uint8_t                   hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
         ? EB_8_BIT_MD
         : context_ptr->hbd_mode_decision;
@@ -4302,6 +4303,109 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         << 1;
                 }
 #endif
+#if ADD_MD_NSQ_SEARCH
+                if (context_ptr->blk_geom->shape != PART_N && context_ptr->refine_nsq_mv_ctrls.enabled) {
+                    uint8_t  search_pattern = 0;
+
+                    // Search Center
+                    int16_t  search_center_mvx = me_mv_x;
+                    int16_t  search_center_mvy = me_mv_y;
+                    uint32_t search_center_distortion = (uint32_t)~0;
+                    md_sub_pel_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        list_idx,
+                        ref_idx,
+                        search_center_mvx,
+                        search_center_mvy,
+                        0,
+                        0,
+                        0,
+                        0,
+                        -1, // not used as only 1 position to search = central position
+                        &search_center_mvx,
+                        &search_center_mvy,
+                        &search_center_distortion,
+                        1,
+                        search_pattern);
+
+                    int16_t  best_search_mvx = (int16_t)~0;
+                    int16_t  best_search_mvy = (int16_t)~0;
+                    uint32_t best_search_distortion = (uint32_t)~0;
+
+                    // Round-up the search center to the closest integer
+                    search_center_mvx = (search_center_mvx + 4) & ~0x07;
+                    search_center_mvy = (search_center_mvy + 4) & ~0x07;
+
+                    md_full_pel_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        list_idx,
+                        ref_idx,
+                        search_center_mvx,
+                        search_center_mvy,
+                        -(context_ptr->refine_nsq_mv_ctrls.full_pel_search_width >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.full_pel_search_width >> 1),
+                        -(context_ptr->refine_nsq_mv_ctrls.full_pel_search_height >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.full_pel_search_height >> 1),
+                        8,
+                        &best_search_mvx,
+                        &best_search_mvy,
+                        &best_search_distortion);
+
+                    md_sub_pel_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        list_idx,
+                        ref_idx,
+                        best_search_mvx,
+                        best_search_mvy,
+                        -(context_ptr->refine_nsq_mv_ctrls.half_pel_search_width >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.half_pel_search_width >> 1),
+                        -(context_ptr->refine_nsq_mv_ctrls.half_pel_search_height >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.half_pel_search_height >> 1),
+                        4,
+                        &best_search_mvx,
+                        &best_search_mvy,
+                        &best_search_distortion,
+                        0,
+                        search_pattern);
+
+                    md_sub_pel_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        list_idx,
+                        ref_idx,
+                        best_search_mvx,
+                        best_search_mvy,
+                        -(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_width >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_width >> 1),
+                        -(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_height >> 1),
+                        +(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_height >> 1),
+                        2,
+                        &best_search_mvx,
+                        &best_search_mvy,
+                        &best_search_distortion,
+                        0,
+                        search_pattern);
+
+                    if (best_search_distortion < search_center_distortion) {
+                        me_mv_x = best_search_mvx;
+                        me_mv_y = best_search_mvy;
+                    }
+                }
+#endif
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
                     int16_t  best_search_mvx = (int16_t)~0;
                     int16_t  best_search_mvy = (int16_t)~0;
@@ -4312,7 +4416,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         input_picture_ptr,
                         input_origin_index,
                         blk_origin_index,
+#if ADD_MD_NSQ_SEARCH
+                        EB_TRUE,
+#else
                         use_ssd,
+#endif
                         list_idx,
                         ref_idx,
                         me_mv_x,
@@ -4727,7 +4835,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
         }
     }
 
-    // Tag ref: do_red or not
+    // Tag ref: do_ref or not
     // tag to_do the best ?
     uint8_t min_ref_to_tag = MIN_REF_TO_TAG;
     uint8_t max_ref_to_tag = context_ptr->ref_pruning_ctrls.max_ref_to_tag;

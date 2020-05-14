@@ -222,6 +222,18 @@ typedef struct DepthReductionCtrls {
 
 }DepthReductionCtrls;
 #endif
+#if ADD_MD_NSQ_SEARCH
+typedef struct RefineNsqMvCtrls {
+    uint8_t enabled;
+    EbBool use_ssd;
+    uint8_t full_pel_search_width;
+    uint8_t full_pel_search_height;
+    uint8_t half_pel_search_width;
+    uint8_t half_pel_search_height;
+    uint8_t quarter_pel_search_width;
+    uint8_t quarter_pel_search_height;
+}RefineNsqMvCtrls;
+#endif
 #if TXT_CONTROL
 typedef struct TxTSearchCtrls {
     uint64_t txt_weight[3]; // Used to classify the md candidates
@@ -565,6 +577,10 @@ typedef struct ModeDecisionContext {
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
     uint8_t      block_based_depth_reduction_level;
     DepthReductionCtrls depth_reduction_ctrls;
+#endif
+#if ADD_MD_NSQ_SEARCH
+    uint8_t      md_refine_nsq_mv ;
+    RefineNsqMvCtrls refine_nsq_mv_ctrls;
 #endif
 #if ADD_BEST_CAND_COUNT_SIGNAL
     uint8_t bipred3x3_number_input_mv;
