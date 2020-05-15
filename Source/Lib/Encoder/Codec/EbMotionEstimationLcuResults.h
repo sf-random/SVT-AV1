@@ -63,8 +63,9 @@ typedef struct MeSbResults {
 #endif
     // [PU][LAST, LAST2, LAST3, GOLD, BWD, ALT2, ALT] if MRP Mode 0,
     // [PU][LAST, LAST2, BWD, ALT2] if MRP Mode 1,
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     uint32_t max_number_of_pus_per_sb;
-
+#endif
 #if INTER_COMP_REDESIGN
     uint8_t do_comp[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif

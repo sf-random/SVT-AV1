@@ -393,9 +393,10 @@ extern "C" {
 #define SHUT_ME_CAND_SORTING 1 
 #define REFACTOR_REF_FRAME_MASKING 1
 #define PRUNING_PER_INTER_TYPE 1
-#define SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
-#define SKIP_Nx4_4xN_SEARCH 1
+#define SHUT_ME_NSQ_SEARCH 0 
+#define ADD_MD_NSQ_SEARCH 0
+#define SKIP_Nx4_4xN_SEARCH 0
+#define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
 /********************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

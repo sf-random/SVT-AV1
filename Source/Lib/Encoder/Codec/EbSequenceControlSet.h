@@ -80,9 +80,11 @@ typedef struct SequenceControlSet {
     uint8_t mrp_mode;
     /*!< CDF (The signal changes per preset; 0: CDF update, 1: no CDF update) Default is 0.*/
     uint8_t cdf_mode;
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     /*!< Non-square present flag to use for memory allocation
         (The signal changes per preset; 0: NSQ absent, 1: NSQ present) Default is 1. */
     uint8_t nsq_present;
+#endif
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
         (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
     uint8_t down_sampling_method_me_search;
