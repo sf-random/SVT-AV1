@@ -1426,6 +1426,109 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 }
 #endif
 #if MD_REFERENCE_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
+
+    RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
+
+    switch (inter_inter_distortion_based_reference_pruning_mode)
+    {
+    case 0:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 0;
+        break;
+    case 1:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 7;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 7;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 7;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 7;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 7;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 7;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 7;
+        break;
+    case 2:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 6;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 6;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 6;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 6;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 6;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 6;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 6;
+        break;
+    case 3:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 5;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 5;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 5;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 5;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 5;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 5;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 5;
+        break;
+    case 4:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 4;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 4;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 4;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 4;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 4;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 4;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 4;
+        break;
+    case 5:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 3;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 3;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 3;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 3;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 3;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 3;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 3;
+
+        break;
+    case 6:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]                = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNIPRED_3x3_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BIPRED_3x3_GROUP]           = 2;
+        ref_pruning_ctrls->max_ref_to_tag[NEW_NEAREST_NEW_NEAR_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]                 = 2;
+        ref_pruning_ctrls->max_ref_to_tag[NEAREST_NEAR_GROUP]         = 2;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]              = 2;
+
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
 
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1447,20 +1550,24 @@ void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionCon
     case 3:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 4;
+
         break;
     case 4:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 3;
+
         break;
     case 5:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 2;
+
         break;
     default:
         assert(0);
         break;
     }
 }
+#endif
 void set_inter_intra_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_intra_distortion_based_reference_pruning_mode) {
 
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -3882,6 +3989,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
         else if (pd_pass == PD_PASS_1)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+#if PRUNING_PER_INTER_TYPE
+        else if (MR_MODE)
+            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+#endif
 #if MAR25_ADOPTIONS
 #if MAY12_ADOPTIONS
         else if (enc_mode <= ENC_M0)
@@ -3896,20 +4007,32 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M3 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #endif
 #endif
+#if REFACTOR_REF_FRAME_MASKING
+            context_ptr->inter_inter_distortion_based_reference_pruning = 1;
+#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+#endif
 #if M1_COMBO_1 || NEW_M1_CAND
         else if (enc_mode <= ENC_M1)
+#if REFACTOR_REF_FRAME_MASKING
+            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
+#endif
 #endif
         else
 #if M2_COMBO_2
             context_ptr->inter_inter_distortion_based_reference_pruning = 5;
 #else
+#if REFACTOR_REF_FRAME_MASKING
+            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
+#endif
 #endif
 #else
         else
-            context_ptr->inter_inter_distortion_based_reference_pruning = 0; // 3 as default mode
+            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
 #endif
     }
     else {

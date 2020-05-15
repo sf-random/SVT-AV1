@@ -155,6 +155,18 @@ typedef struct RefResults {
     EbBool valid_ref;
 #endif
 } RefResults;
+#if REFACTOR_REF_FRAME_MASKING
+typedef enum InterCandGroup {
+    PA_ME_GROUP = 0,
+    UNIPRED_3x3_GROUP = 1,
+    BIPRED_3x3_GROUP = 2,
+    NEW_NEAREST_NEW_NEAR_GROUP = 3,
+    WARP_GROUP = 4,
+    NEAREST_NEAR_GROUP = 5,
+    PRED_ME_GROUP = 6,
+    TOTAL_INTER_CAND_GROUP = 7
+} InterCandGroup;
+#endif
 #endif
 #if OBMC_FAST
 typedef struct  ObmcControls {
@@ -201,7 +213,11 @@ typedef struct  InterCompoundControls {
 typedef struct RefPruningControls {
     uint8_t intra_to_inter_pruning_enabled;
     uint8_t inter_to_inter_pruning_enabled;
+#if REFACTOR_REF_FRAME_MASKING
+    uint8_t max_ref_to_tag[TOTAL_INTER_CAND_GROUP];
+#else
     uint8_t max_ref_to_tag;
+#endif
 }RefPruningControls;
 #endif
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
@@ -602,7 +618,11 @@ typedef struct ModeDecisionContext {
     InterCompoundControls inter_comp_ctrls;
 #endif
 #if MD_REFERENCE_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+    RefResults ref_filtering_res[TOTAL_INTER_CAND_GROUP][MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
     RefResults ref_filtering_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     RefPruningControls ref_pruning_ctrls;
 #endif
     // Signal to control initial and final pass PD setting(s)

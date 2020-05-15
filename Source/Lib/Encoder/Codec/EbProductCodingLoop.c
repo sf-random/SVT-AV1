@@ -4543,6 +4543,25 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
     uint32_t early_inter_distortion_array[MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH];
 
     // Reset ref_filtering_res
+#if REFACTOR_REF_FRAME_MASKING
+    for (uint32_t gi = 0; gi < TOTAL_INTER_CAND_GROUP; gi++) {
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+            for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                context_ptr->ref_filtering_res[gi][li][ri].list_i = li;
+                context_ptr->ref_filtering_res[gi][li][ri].ref_i = ri;
+                context_ptr->ref_filtering_res[gi][li][ri].dist = (uint32_t)~0;
+                context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
+                context_ptr->ref_filtering_res[gi][li][ri].valid_ref = EB_FALSE;
+            }
+        }
+    }
+
+    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+            early_inter_distortion_array[li * REF_LIST_MAX_DEPTH + ri] = (uint32_t)~0;
+        }
+    }
+#else
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
             context_ptr->ref_filtering_res[li][ri].list_i = li;
@@ -4553,6 +4572,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             context_ptr->ref_filtering_res[li][ri].valid_ref = EB_FALSE;
         }
     }
+#endif
 #if M8_CLEAN_UP
     if ((!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled) || (pcs_ptr->parent_pcs_ptr->ref_list0_count_try == 1 && pcs_ptr->parent_pcs_ptr->ref_list1_count_try == 1))
 #else
@@ -4818,8 +4838,15 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
 
             // early_inter_distortion_array
+#if REFACTOR_REF_FRAME_MASKING
+            for (uint32_t gi = 0; gi < TOTAL_INTER_CAND_GROUP; gi++) {
+                context_ptr->ref_filtering_res[gi][list_idx][ref_idx].valid_ref = EB_TRUE;
+                context_ptr->ref_filtering_res[gi][list_idx][ref_idx].dist = MIN(pa_me_distortion, best_mvp_distortion);
+            }
+#else
             context_ptr->ref_filtering_res[list_idx][ref_idx].valid_ref = EB_TRUE;
             context_ptr->ref_filtering_res[list_idx][ref_idx].dist = MIN(pa_me_distortion, best_mvp_distortion);
+#endif
             early_inter_distortion_array[list_idx * REF_LIST_MAX_DEPTH + ref_idx] = MIN(pa_me_distortion, best_mvp_distortion);
 
         }
@@ -4838,7 +4865,62 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
         }
     }
+#if REFACTOR_REF_FRAME_MASKING
+    for (uint32_t gi = 0; gi < TOTAL_INTER_CAND_GROUP; gi++) {
+        // Tag ref: do_ref or not
+// tag to_do the best ?
+        uint8_t min_ref_to_tag = MIN_REF_TO_TAG;
+        uint8_t max_ref_to_tag = context_ptr->ref_pruning_ctrls.max_ref_to_tag[gi];
+        uint8_t total_tagged_ref = 0;
 
+        // inter-to-inter distortion based ref masking
+        if (context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled) {
+            total_tagged_ref = 0;
+            for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+                for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                    if (context_ptr->ref_filtering_res[gi][li][ri].valid_ref) {
+                        context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
+                        if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[max_ref_to_tag - 1] && total_tagged_ref < max_ref_to_tag) {
+                            context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
+                            total_tagged_ref++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // intra-to-inter distortion based ref masking
+        if (context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled) {
+            total_tagged_ref = 0;
+            for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+                for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                    if (context_ptr->ref_filtering_res[gi][li][ri].valid_ref) {
+                        if (context_ptr->ref_filtering_res[gi][li][ri].dist > early_intra_distortion) {
+                            context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
+                        }
+                        else {
+                            total_tagged_ref++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // if after intra-to-inter distortion check, less than min_ref_to_tag ref are tagged, then tag the best min_ref_to_tag ref
+        if (total_tagged_ref < min_ref_to_tag) {
+            total_tagged_ref = 0;
+            for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+                for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                    context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
+                    if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[min_ref_to_tag - 1] && total_tagged_ref < min_ref_to_tag) {
+                        context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
+                        total_tagged_ref++;
+                    }
+                }
+            }
+        }
+    }
+#else
     // Tag ref: do_ref or not
     // tag to_do the best ?
     uint8_t min_ref_to_tag = MIN_REF_TO_TAG;
@@ -4891,6 +4973,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
         }
     }
+#endif
 }
 #endif
 
@@ -4947,7 +5030,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             uint8_t          list_idx   = get_list_idx(rf[0]);
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
+#endif
 #if 0
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) continue;
             if (context_ptr->pd_pass == PD_PASS_2) if (ref_idx > 0) continue;

@@ -897,7 +897,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
 #if UNIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[UNIPRED_3x3_GROUP][REF_LIST_0][list0_ref_index].do_ref) continue;
+#else
         if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
 #endif
         if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 0) {
@@ -1070,7 +1074,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if UNIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[UNIPRED_3x3_GROUP][REF_LIST_1][list1_ref_index].do_ref) continue;
+#else
         if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
 #endif
         if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 1) {
@@ -1297,7 +1305,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if BIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[BIPRED_3x3_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[BIPRED_3x3_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+#endif
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                 list1_ref_index > context_ptr->md_max_ref_count - 1)
@@ -1770,7 +1782,12 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         uint8_t          list_idx   = get_list_idx(rf[0]);
         uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if NEAREST_NEAR_REF_MASKING
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[NEAREST_NEAR_GROUP][list_idx][ref_idx].do_ref && ref_idx) return;
+#else
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
+#endif
 #if 0
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) return;
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
@@ -2032,9 +2049,12 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
 
         uint8_t list_idx_0 = get_list_idx(rf[0]);
         uint8_t list_idx_1 = get_list_idx(rf[1]);
-
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if REFACTOR_REF_FRAME_MASKING
+        if ((!context_ptr->ref_filtering_res[NEAREST_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[NEAREST_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
+#else
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
-
+#endif
 #if 0
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref)) return;
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
@@ -2373,9 +2393,17 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         uint8_t list_idx_0 = get_list_idx(rf[0]);
         uint8_t list_idx_1 = get_list_idx(rf[1]);
         if (list_idx_0 != INVALID_REF)
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[NEW_NEAREST_NEW_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref) return;
+#else
             if (!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref) return;
+#endif
         if (list_idx_1 != INVALID_REF)
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[NEW_NEAREST_NEW_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref) return;
+#else
             if (!context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) return;
+#endif
 #endif
         if (ref_idx_0 > context_ptr->md_max_ref_count - 1 ||
             ref_idx_1 > context_ptr->md_max_ref_count - 1)
@@ -2984,7 +3012,11 @@ void inject_warped_motion_candidates(
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][list_idx][ref_idx].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
+#endif
 #endif
             if (ref_idx > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3150,7 +3182,11 @@ void inject_warped_motion_candidates(
         ************* */
         if (inter_direction == 0) {
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_0][list0_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3249,7 +3285,11 @@ void inject_warped_motion_candidates(
        ************* */
         if (inter_direction == 1) {
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_1][list1_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
 #endif
             if (list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3637,7 +3677,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         ************* */
         if (inter_direction == 0) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_0][list0_ref_index].do_ref)
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref)
+#endif
                 continue;
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
@@ -3793,7 +3837,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
            ************* */
             if (inter_direction == 1) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_1][list1_ref_index].do_ref)
+#else
                 if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref)
+#endif
                     continue;
 #endif
                 if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
@@ -3941,7 +3989,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
             ************* */
             if (allow_bipred) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
+#else
                 if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
+#endif
                     continue;
 #endif
                 if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
