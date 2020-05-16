@@ -92,7 +92,7 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
-#define SCD_LAD                                             1
+#define SCD_LAD                                             12
 
 /**************************************
  * Globals
