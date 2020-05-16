@@ -4900,9 +4900,6 @@ double estimate_noise_highbd(const uint16_t *src, int width, int height, int str
 void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, EbBool include_padding);
 
-void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
-    uint32_t ss_y, EbBool include_padding);
-
 EbErrorType derive_tf_window_params(
 #else
 void derive_tf_window_params(
@@ -5010,18 +5007,6 @@ void derive_tf_window_params(
             central_picture_ptr->stride_cr);
     }   
 
-    if (is_highbd) {
-        unpack_highbd_pic(picture_control_set_ptr_central->altref_buffer_highbd,
-            central_picture_ptr,
-            ss_x,
-            ss_y,
-            EB_TRUE);
-
-        EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
-        EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);
-        EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V]);
-
-    }
     // Adjust number of filtering frames based on noise and quantization factor.
     // Basically, we would like to use more frames to filter low-noise frame such
     // that the filtered frame can provide better predictions for more frames.

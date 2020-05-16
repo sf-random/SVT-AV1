@@ -3307,7 +3307,7 @@ EbErrorType svt_av1_init_temporal_filtering(
 #endif
 
         if (is_highbd) {
-#if !NOISE_BASED_TF_FRAMES
+
             unpack_highbd_pic(picture_control_set_ptr_central->altref_buffer_highbd,
                               central_picture_ptr,
                               ss_x,
@@ -3317,7 +3317,7 @@ EbErrorType svt_av1_init_temporal_filtering(
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V]);
-#endif
+
             for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes + picture_control_set_ptr_central->future_altref_nframes + 1); i++) {
                 if (i != picture_control_set_ptr_central->past_altref_nframes) {
                     EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y]);
