@@ -5042,7 +5042,6 @@ void derive_tf_window_params(
 #else
     int altref_nframes = scs_ptr->static_config.altref_nframes;
 #endif
-    printf("noise_levels=%f\taltref_nframes=%d\tadjust_nums=%d\taltmax_ref_nframes=%d\n", noise_levels[0], altref_nframes, adjust_num, scs_ptr->static_config.altref_nframes);
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -5170,6 +5169,9 @@ void derive_tf_window_params(
             }
         }
     }
+
+    printf("poc=%d\tnoise_levels=%f\taltref_nframes=%d\tadjust_nums=%d\taltmax_ref_nframes=%d\tpast=%d\tfuture=%d\n", picture_control_set_ptr_central->picture_number, noise_levels[0], altref_nframes, adjust_num, scs_ptr->static_config.altref_nframes, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+
 #if NOISE_BASED_TF_FRAMES
     return EB_ErrorNone; 
 #endif
