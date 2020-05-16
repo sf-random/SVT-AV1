@@ -92,8 +92,11 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
+#if NOISE_BASED_TF_FRAMES
 #define SCD_LAD                                             12
-
+#else
+#define SCD_LAD                                              6
+#endif
 /**************************************
  * Globals
  **************************************/
@@ -518,7 +521,6 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->scd_delay =
         scs_ptr->static_config.enable_altrefs || scs_ptr->static_config.scene_change_detection ? SCD_LAD : 0;
 
-    //printf("---> %d \n", scs_ptr->scd_delay);
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
