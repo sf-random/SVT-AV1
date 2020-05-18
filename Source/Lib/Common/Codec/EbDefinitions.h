@@ -397,15 +397,6 @@ extern "C" {
 #define COEFF_BASED_BYPASS_NSQ    1  //coefficient-based nsq bypassing
 #else
 #define COEFF_BASED_BYPASS_NSQ    0  //coefficient-based nsq bypassing
-
-/********************************/
-#define SHUT_ME_CAND_SORTING 1 
-#define REFACTOR_REF_FRAME_MASKING 1
-#define PRUNING_PER_INTER_TYPE 1
-#define SHUT_ME_NSQ_SEARCH 0 
-#define ADD_MD_NSQ_SEARCH 0
-#define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
-/********************************/
 #endif
 #define CAP_MV_DIFF 1 // Restrict the max. MV diff size to be within the allowable range: fp -2048 < x < 2048
 #define COEFF_BASED_BYPASS_NSQ_FIX 1 // apply algorithm to non-I_SLICE
@@ -427,6 +418,20 @@ extern "C" {
 #endif
 #define MAY16_7PM_ADOPTIONS 1 // M0 and M1 adoptions
 #define MAY17_ADOPTIONS 1 // Adoptions for M0/M1
+
+
+
+
+
+/********************************/
+#define SHUT_ME_CAND_SORTING 0 
+#define REFACTOR_REF_FRAME_MASKING 0
+#define PRUNING_PER_INTER_TYPE 0
+#define SHUT_ME_NSQ_SEARCH 0 
+#define ADD_MD_NSQ_SEARCH 0
+#define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
+/********************************/
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
