@@ -818,7 +818,7 @@ EbErrorType signal_derivation_me_kernel_oq(
     }
     else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
-
+#if !SHUT_ME_NSQ_SEARCH
     // Me nsq search levels.
     // 0: feature off -> perform nsq_search.
     // 1: perform me nsq_search only for the best refrenece picture.
@@ -850,6 +850,7 @@ EbErrorType signal_derivation_me_kernel_oq(
 #else
     else
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 2;
+#endif
 #endif
 #if ME_HME_PRUNING_CLEANUP
 
@@ -1317,13 +1318,14 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
 #endif
+#if !SHUT_ME_NSQ_SEARCH
     // Me nsq search levels.
     // 0: feature off -> perform nsq_search.
     // 1: perform me nsq_search for the best refrenece picture.
     // 2: perform me nsq_search for the nearest refrenece pictures.
     // 3: me nsq_search off.
     context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 0;
-
+#endif
 #if ME_HME_PRUNING_CLEANUP
 
     // Set hme/me based reference pruning level (0-4)
@@ -1401,12 +1403,20 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
         enc_handle_ptr->picture_decision_results_resource_ptr, index);
     context_ptr->motion_estimation_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, index);
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    EB_NEW(context_ptr->me_context_ptr,
+        me_context_ctor,
+        scs_ptr->max_input_luma_width,
+        scs_ptr->max_input_luma_height,
+        scs_ptr->mrp_mode);
+#else
     EB_NEW(context_ptr->me_context_ptr,
            me_context_ctor,
            scs_ptr->max_input_luma_width,
            scs_ptr->max_input_luma_height,
            scs_ptr->nsq_present,
            scs_ptr->mrp_mode);
+#endif
     return EB_ErrorNone;
 }
 

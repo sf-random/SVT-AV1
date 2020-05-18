@@ -1330,7 +1330,7 @@ void ext_sad_calculation(uint32_t *p_sad8x8, uint32_t *p_sad16x16, uint32_t *p_s
         p_best_mv8x32[15]   = mv;
     }
 }
-
+#if !SHUT_ME_NSQ_SEARCH
 /****************************************************
 Calculate SAD for Rect H, V and H4, V4 partitions
 and update its Motion info if the result SAD is better
@@ -2351,7 +2351,7 @@ void ext_eigth_sad_calculation_nsq_c(
         }
     }
 }
-
+#endif
 /*******************************************
  * ext_eight_sad_calculation_8x8_16x16
  *******************************************/
@@ -2722,6 +2722,7 @@ static void open_loop_me_get_eight_search_point_results_block(
                                           context_ptr->p_best_mv64x64,
                                           curr_mv,
                                           context_ptr->p_eight_sad32x32);
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t perform_nsq_flag = 1;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 0 : perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 0: perform_nsq_flag;
@@ -2754,6 +2755,7 @@ static void open_loop_me_get_eight_search_point_results_block(
                                   context_ptr->p_best_sad_16x64,
                                   context_ptr->p_best_mv16x64,
                                   curr_mv);
+#endif
 }
 
 /*******************************************
@@ -4178,6 +4180,7 @@ void half_pel_refinement_sb(
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     }
 #endif
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t perform_nsq_flag = 1;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 0 : perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 0: perform_nsq_flag;
@@ -4528,6 +4531,7 @@ void half_pel_refinement_sb(
         }
     }
     }
+#endif
     return;
 }
 /*******************************************
@@ -4556,12 +4560,14 @@ static void open_loop_me_half_pel_search_sblock(
         list_index,
         ref_pic_index,
         0);
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t gather_nsq_flag = 0;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 1 : gather_nsq_flag;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 1: gather_nsq_flag;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3 ) ? 1 : gather_nsq_flag;
     if(gather_nsq_flag)
         generate_nsq_mv(context_ptr);
+#endif
 }
 
 /*******************************************
@@ -4603,12 +4609,14 @@ static void open_loop_me_fullpel_search_sblock(MeContext *context_ptr, uint32_t 
                 (int32_t)y_search_index + y_search_area_origin);
         }
     }
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t gather_nsq_flag = 0;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 1 : gather_nsq_flag;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 1: gather_nsq_flag;
     gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3 ) ? 1 : gather_nsq_flag;
     if(gather_nsq_flag)
         generate_nsq_mv(context_ptr);
+#endif
 }
 
 #ifndef AVCCODEL
@@ -5526,6 +5534,7 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     }
 #endif
+#if !SHUT_ME_NSQ_SEARCH
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     uint8_t perform_nsq_flag = !pcs_ptr->disallow_nsq ? 1 : 0;
@@ -5867,7 +5876,7 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                                    &context_ptr->psub_pel_direction16x64[idx]);
         }
     }
-
+#endif
     return;
 }
 /*******************************************
@@ -6909,6 +6918,7 @@ static void quarter_pel_search_sb(
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     }
 #endif
+#if !SHUT_ME_NSQ_SEARCH
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     uint8_t perform_nsq_flag = ext_block_flag;
     perform_nsq_flag = (context_ptr->me_alt_ref) ? 0 : perform_nsq_flag;
@@ -7491,8 +7501,9 @@ static void quarter_pel_search_sb(
                                                  &context_ptr->p_best_mv16x64[nidx],
                                                  context_ptr->psub_pel_direction16x64[nidx]);
         }
-    }
 
+    }
+#endif
     return;
 }
 void hme_one_quadrant_level_0(
@@ -8756,7 +8767,7 @@ EbErrorType biprediction_compensation(MeContext *context_ptr, uint32_t pu_index,
 
     return return_error;
 }
-
+#if !SHUT_ME_CAND_SORTING
 uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
                      uint8_t ref_type_table[7]) {
     if (!pcs_ptr->prune_unipred_at_me) return 1;
@@ -8768,7 +8779,7 @@ uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
     }
     return allow_cand;
 }
-
+#endif
 /*******************************************
  * bi_prediction_search
  *   performs Bi-Prediction Search (SB)
@@ -8827,13 +8838,20 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
                     svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
                 uint8_t to_inject_ref_type_1 =
                     svt_get_ref_frame_type(REF_LIST_1, second_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+                //if one of the references is skipped at ME, do not consider bi for this cand
+                if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref &&
+                    context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref) {
+#else
                 uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
                 add_bi += skip_bi_pred(pcs_ptr, to_inject_ref_type_1, ref_type_table);
+
                 //if one of the references is skipped at ME, do not consider bi for this cand
                 if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref == 0 ||
                     context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref == 0  )
                     add_bi = 0;
                 if (add_bi) {
+#endif
                     biprediction_compensation(
                         context_ptr,
                         pu_index,
@@ -8859,12 +8877,19 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
              first_list_ref_pict_idx++) {
             uint8_t to_inject_ref_type_0 =
                 svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+            //if one of the references is skipped at ME, do not consider bi for this cand
+            if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+#else
             uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
+
             //if one of the references is skipped at ME, do not consider bi for this cand
             if (context_ptr->hme_results[REF_LIST_0][0].do_ref == 0 ||
                 context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref == 0)
                 add_bi = 0;
             if (add_bi) {
+#endif
                 biprediction_compensation(
                     context_ptr,
                     pu_index,
@@ -8886,12 +8911,18 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
              second_list_ref_pict_idx++) {
             uint8_t to_inject_ref_type_0 =
                 svt_get_ref_frame_type(REF_LIST_0, first_list_ref_pict_idx);
+#if SHUT_ME_CAND_SORTING
+            if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
+#else
             uint8_t add_bi = skip_bi_pred(pcs_ptr, to_inject_ref_type_0, ref_type_table);
+
             //if one of the references is skipped at ME, do not consider bi for this cand
             if (context_ptr->hme_results[REF_LIST_1][0].do_ref == 0 ||
                 context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref == 0)
                 add_bi = 0;
             if (add_bi) {
+#endif
                 biprediction_compensation(
                     context_ptr,
                     pu_index,
@@ -12478,6 +12509,9 @@ EbErrorType motion_estimate_sb(
 #else
                             pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
 #endif
+#if SHUT_ME_NSQ_SEARCH
+                        generate_nsq_mv(context_ptr);
+#endif
                     }
                 }
             }
@@ -12549,7 +12583,9 @@ EbErrorType motion_estimate_sb(
             }
 
             total_me_candidate_index = cand_index;
+
             uint8_t ref_type_table[7];
+#if !SHUT_ME_CAND_SORTING
             if (pcs_ptr->prune_unipred_at_me) {
                 // Sorting of the ME candidates
                 for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
@@ -12579,6 +12615,7 @@ EbErrorType motion_estimate_sb(
                             me_candidate->ref1_list, me_candidate->ref_index[1]);
                 }
             }
+#endif
             if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
                                         context_ptr,
@@ -12595,7 +12632,7 @@ EbErrorType motion_estimate_sb(
                                         ref_type_table,
                                         pcs_ptr);
             }
-
+#if !SHUT_ME_CAND_SORTING
             // Sorting of the ME candidates
             for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
                  ++candidate_index) {
@@ -12610,7 +12647,7 @@ EbErrorType motion_estimate_sb(
                     }
                 }
             }
-
+#endif
             MeSbResults *me_pu_result                        = pcs_ptr->me_results[sb_index];
             me_pu_result->total_me_candidate_index[pu_index] = total_me_candidate_index;
 

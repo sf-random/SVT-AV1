@@ -40,8 +40,13 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
 }
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
+                            uint16_t max_input_luma_height, uint8_t mrp_mode) {
+#else
 EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
                             uint16_t max_input_luma_height, uint8_t nsq_present, uint8_t mrp_mode) {
+#endif
     uint32_t list_index;
     uint32_t ref_pic_index;
     uint32_t pu_index;
@@ -130,7 +135,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
 
     EB_MALLOC_ARRAY(object_ptr->me_candidate,
                     ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1));
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    for (pu_index = 0; pu_index < SQUARE_PU_COUNT;
+#else
     for (pu_index = 0; pu_index < (uint32_t)(nsq_present ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT);
+#endif
          pu_index++) {
         for (me_candidate_index = 0;
              me_candidate_index <

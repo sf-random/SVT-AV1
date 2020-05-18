@@ -795,7 +795,9 @@ typedef struct PictureParentControlSet {
     uint64_t          filtered_sse_uv;
     FrameHeader       frm_hdr;
     uint8_t           compound_mode;
+#if !SHUT_ME_CAND_SORTING
     uint8_t           prune_unipred_at_me;
+#endif
     uint16_t *        altref_buffer_highbd[3];
     uint8_t           enable_inter_intra;
     uint8_t           pic_obmc_mode;
@@ -859,7 +861,9 @@ typedef struct PictureControlSetInitData {
     EbBool    ext_block_flag;
     uint8_t   mrp_mode;
     uint8_t   cdf_mode;
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     uint8_t   nsq_present;
+#endif
     uint8_t   over_boundary_block_mode;
     uint8_t   mfmv;
     //init value for child pcs
@@ -894,9 +898,12 @@ extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
-
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
+#else
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                       uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
+#endif
 #ifdef __cplusplus
 }
 #endif

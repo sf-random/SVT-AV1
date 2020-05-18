@@ -370,7 +370,7 @@ extern "C" {
         uint32_t *p_best_mv16x16,
         uint16_t p_eight_sad16x16[16][8],
         uint16_t p_eight_sad8x8[64][8]);
-
+#if !SHUT_ME_NSQ_SEARCH
     /****************************************************
     Calcualte SAD for Rect H, V and H4, V4 partitions
     and update its Motion info if the result SAD is better
@@ -400,7 +400,7 @@ extern "C" {
         uint32_t *p_best_sad16x64,
         uint32_t *p_best_mv16x64,
         uint32_t mv);
-
+#endif
     /*******************************************
     Calcualte SAD for 32x32,64x64 from 16x16
     and check if there is improvment, if yes keep

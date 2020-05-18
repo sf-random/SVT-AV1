@@ -86,18 +86,29 @@ static void me_sb_results_dctor(EbPtr p) {
 #endif
     EB_FREE_ARRAY(obj->total_me_candidate_index);
 }
-
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode,
+                               uint32_t maxNumberOfMeCandidatesPerPU) {
+#else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU) {
+#endif
     uint32_t pu_index;
 
     size_t count                      = ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
     obj_ptr->dctor                    = me_sb_results_dctor;
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     obj_ptr->max_number_of_pus_per_sb = max_number_of_blks_per_sb;
+#endif
 #if ME_MEM_OPT
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * count);
+    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * maxNumberOfMeCandidatesPerPU);
+#else
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, max_number_of_blks_per_sb * count);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array,
         max_number_of_blks_per_sb * maxNumberOfMeCandidatesPerPU);
+#endif
 #else
     EB_MALLOC_ARRAY(obj_ptr->me_candidate, max_number_of_blks_per_sb);
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, max_number_of_blks_per_sb);
@@ -105,7 +116,11 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
                     max_number_of_blks_per_sb * maxNumberOfMeCandidatesPerPU);
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array[0], max_number_of_blks_per_sb * count);
 #endif
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    for (pu_index = 0; pu_index < SQUARE_PU_COUNT; ++pu_index) {
+#else
     for (pu_index = 0; pu_index < max_number_of_blks_per_sb; ++pu_index) {
+#endif
 #if  ME_MEM_OPT
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l0 = 0;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l1 = 0;
@@ -133,8 +148,11 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
         obj_ptr->me_mv_array[pu_index]               = obj_ptr->me_mv_array[0] + pu_index * count;
 #endif
     }
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, SQUARE_PU_COUNT);
+#else
     EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, max_number_of_blks_per_sb);
-
+#endif
     return EB_ErrorNone;
 }
 
@@ -1427,11 +1445,18 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+        EB_NEW(object_ptr->me_results[sb_index],
+            me_sb_results_ctor,
+            init_data_ptr->mrp_mode,
+            object_ptr->max_number_of_candidates_per_block);
+#else
         EB_NEW(object_ptr->me_results[sb_index],
                me_sb_results_ctor,
                (init_data_ptr->nsq_present) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT,
                init_data_ptr->mrp_mode,
                object_ptr->max_number_of_candidates_per_block);
+#endif
     }
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);
