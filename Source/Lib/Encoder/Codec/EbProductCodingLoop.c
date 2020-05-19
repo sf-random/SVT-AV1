@@ -4306,6 +4306,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint32_t blk_origin_index) {
     const SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
+#if REDESIGN_ME_RESULTS_MD
+    // Reset valid_pa_me_mv
+    memset(context_ptr->valid_pa_me_mv, 0, 8); // [2][4]
+#endif
+
     derive_me_offsets(scs_ptr, pcs_ptr, context_ptr);
 #if !ADD_MD_NSQ_SEARCH
     EbBool                    use_ssd = EB_TRUE;
@@ -4512,6 +4517,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     me_mv_x;
                 context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
                     me_mv_y;
+
+#if REDESIGN_ME_RESULTS_MD
+                context_ptr->pa_me_mv[list_idx][ref_idx][0] = me_mv_x;
+                context_ptr->pa_me_mv[list_idx][ref_idx][1] = me_mv_y;
+                context_ptr->valid_pa_me_mv[list_idx][ref_idx] = EB_TRUE;
+#endif
             }
         }
     }
