@@ -1482,8 +1482,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 4;
 #if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 4;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 4;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 3;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 3;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 4;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 4;
