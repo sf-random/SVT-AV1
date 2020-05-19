@@ -8477,6 +8477,7 @@ static void quarder_pel_compensation(uint32_t pu_index, //[IN]
 
     return;
 }
+#if !REMOVE_ME_BIPRED_SEARCH
 /*******************************************************************************
  * Requirement: pu_width      = 8, 16, 24, 32, 48 or 64
  * Requirement: pu_height % 2 = 0
@@ -8767,6 +8768,7 @@ EbErrorType biprediction_compensation(MeContext *context_ptr, uint32_t pu_index,
 
     return return_error;
 }
+#endif
 #if !SHUT_ME_CAND_SORTING
 uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
                      uint8_t ref_type_table[7]) {
@@ -8780,6 +8782,7 @@ uint8_t skip_bi_pred(PictureParentControlSet *pcs_ptr, uint8_t ref_type,
     return allow_cand;
 }
 #endif
+#if !REMOVE_ME_BIPRED_SEARCH
 /*******************************************
  * bi_prediction_search
  *   performs Bi-Prediction Search (SB)
@@ -8943,7 +8946,7 @@ EbErrorType bi_prediction_search(SequenceControlSet *scs_ptr, MeContext *context
 
     return return_error;
 }
-
+#endif
 // Nader - to be replaced by loock-up table
 /*******************************************
  * get_me_info_index
@@ -12616,6 +12619,7 @@ EbErrorType motion_estimate_sb(
                 }
             }
 #endif
+#if !REMOVE_ME_BIPRED_SEARCH
             if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
                                         context_ptr,
@@ -12632,6 +12636,7 @@ EbErrorType motion_estimate_sb(
                                         ref_type_table,
                                         pcs_ptr);
             }
+#endif
 #if !SHUT_ME_CAND_SORTING
             // Sorting of the ME candidates
             for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
