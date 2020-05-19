@@ -4377,6 +4377,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     int16_t  search_center_mvx = me_mv_x;
                     int16_t  search_center_mvy = me_mv_y;
                     uint32_t search_center_distortion = (uint32_t)~0;
+                    if(context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
@@ -4423,7 +4424,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &best_search_mvx,
                         &best_search_mvy,
                         &best_search_distortion);
-
+                    if (context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
@@ -4445,6 +4446,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         0,
                         search_pattern);
 
+                    if (context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,

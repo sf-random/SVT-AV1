@@ -244,7 +244,8 @@ typedef struct DepthReductionCtrls {
 #if ADD_MD_NSQ_SEARCH
 typedef struct RefineNsqMvCtrls {
     uint8_t enabled;
-    EbBool use_ssd;
+    uint8_t use_ssd;
+    uint8_t perform_sub_pel;
     uint8_t full_pel_search_width;
     uint8_t full_pel_search_height;
     uint8_t half_pel_search_width;
