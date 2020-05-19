@@ -3827,7 +3827,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 context_ptr->injected_ref_type_l0_array[context_ptr->injected_mv_count_l0] =
                     to_inject_ref_type;
                 ++context_ptr->injected_mv_count_l0;
+#if !PD0_INTER_CAND
                 if (context_ptr->best_me_cand_only_flag) break;
+#endif
             }
         }
 
@@ -3981,7 +3983,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr->injected_ref_type_l1_array[context_ptr->injected_mv_count_l1] =
                         to_inject_ref_type;
                     ++context_ptr->injected_mv_count_l1;
+#if !PD0_INTER_CAND
                     if (context_ptr->best_me_cand_only_flag) break;
+#endif
                 }
             }
             /**************
@@ -4165,7 +4169,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                             context_ptr->injected_ref_type_bipred_array
                                 [context_ptr->injected_mv_count_bipred] = to_inject_ref_type;
                             ++context_ptr->injected_mv_count_bipred;
+#if !PD0_INTER_CAND
                             if (context_ptr->best_me_cand_only_flag) break;
+#endif
                         }
                     }
                 }

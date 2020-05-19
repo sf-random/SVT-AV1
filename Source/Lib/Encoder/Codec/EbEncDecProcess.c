@@ -4427,7 +4427,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)
+#if PD0_INTER_CAND
+        context_ptr->md_max_ref_count = 1;
+#else
         context_ptr->md_max_ref_count = 4;
+#endif 
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_max_ref_count = 1;
 #if M8_CAP_NUMBER_OF_REF_IN_MD
@@ -4497,7 +4501,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
     else
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
-
+#if !PD0_INTER_CAND 
     // Set best_me_cand_only_flag
     if (pd_pass == PD_PASS_0)
         context_ptr->best_me_cand_only_flag = EB_TRUE;
@@ -4505,7 +4509,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->best_me_cand_only_flag = EB_FALSE;
     else
         context_ptr->best_me_cand_only_flag = EB_FALSE;
-
+#endif
     // Set skip_depth
     if (pd_pass == PD_PASS_0)
         context_ptr->skip_depth = 0;

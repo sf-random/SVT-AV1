@@ -567,7 +567,9 @@ typedef struct ModeDecisionContext {
     uint32_t nsq_hv_level;
     // signal for enabling shortcut to skip search depths
     MD_COMP_TYPE compound_types_to_try;
+#if !PD0_INTER_CAND
     uint8_t      best_me_cand_only_flag;
+#endif
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
     uint8_t      full_cost_shut_fast_rate_flag;
