@@ -4449,7 +4449,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 //printf("%d\t%d\t%d\t\%d\n", context_ptr->me_sb_addr, context_ptr->blk_geom->blkidx_mds, me_mv_x, me_mv_y);
 
 #if ADD_MD_NSQ_SEARCH
-                if (context_ptr->blk_geom->shape != PART_N && context_ptr->refine_nsq_mv_ctrls.enabled) {
+                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->refine_nsq_mv_ctrls.enabled) {
                     uint8_t  search_pattern = 0;
 
                     // Search Center
