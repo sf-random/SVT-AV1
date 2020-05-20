@@ -425,14 +425,14 @@ extern "C" {
 
 /********************************/
 #define SHUT_ME_CAND_SORTING 1 
-#define REFACTOR_REF_FRAME_MASKING 1
-#define PRUNING_PER_INTER_TYPE 1
-#define PD0_INTER_CAND 1
-#define SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
+#define REFACTOR_REF_FRAME_MASKING 0
+#define PRUNING_PER_INTER_TYPE 0
+#define PD0_INTER_CAND 0
 
-// Clean-up: lossless
+#define SHUT_ME_NSQ_SEARCH 0 
+#define ADD_MD_NSQ_SEARCH 1
 #define REDESIGN_ME_RESULTS_MD 1
+
 #define REMOVE_ME_BIPRED_SEARCH 0
 #define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
 /********************************/
