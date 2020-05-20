@@ -2545,22 +2545,22 @@ void generate_nsq_mv(MeContext *context_ptr) {
 #if FIX_SHUT_ME_NSQ_SEARCH
     uint32_t *p_best_mv64x64 = context_ptr->p_best_mv64x64;
     // 64x32
-    p_best_mv64x32[0] = context_ptr->p_best_mv64x64[0];//p_sad32x32[0] < p_sad32x32[1] ? p_best_mv32x32[0] : p_best_mv32x32[1];
-    p_best_mv64x32[1] = context_ptr->p_best_mv64x64[0];//p_sad32x32[2] < p_sad32x32[3] ? p_best_mv32x32[2] : p_best_mv32x32[3];
+    p_best_mv64x32[0] = p_best_mv64x64[0];//p_sad32x32[0] < p_sad32x32[1] ? p_best_mv32x32[0] : p_best_mv32x32[1];
+    p_best_mv64x32[1] = p_best_mv64x64[0];//p_sad32x32[2] < p_sad32x32[3] ? p_best_mv32x32[2] : p_best_mv32x32[3];
     // 32x16
-    p_best_mv32x16[0] = context_ptr->p_best_mv32x32[0];//p_sad16x16[0] < p_sad16x16[1] ? p_best_mv16x16[0] : p_best_mv16x16[1];
-    p_best_mv32x16[1] = context_ptr->p_best_mv32x32[1];//p_sad16x16[2] < p_sad16x16[3] ? p_best_mv16x16[2] : p_best_mv16x16[3];
-    p_best_mv32x16[2] = context_ptr->p_best_mv32x32[0];//p_sad16x16[4] < p_sad16x16[5] ? p_best_mv16x16[4] : p_best_mv16x16[5];
-    p_best_mv32x16[3] = context_ptr->p_best_mv32x32[1];//p_sad16x16[6] < p_sad16x16[7] ? p_best_mv16x16[6] : p_best_mv16x16[7];
-    p_best_mv32x16[4] = context_ptr->p_best_mv32x32[2];//p_sad16x16[8] < p_sad16x16[9] ? p_best_mv16x16[8] : p_best_mv16x16[9];
-    p_best_mv32x16[5] = context_ptr->p_best_mv32x32[3];//p_sad16x16[10] < p_sad16x16[11] ? p_best_mv16x16[10] : p_best_mv16x16[11];
-    p_best_mv32x16[6] = context_ptr->p_best_mv32x32[2];//p_sad16x16[12] < p_sad16x16[13] ? p_best_mv16x16[12] : p_best_mv16x16[13];
-    p_best_mv32x16[7] = context_ptr->p_best_mv32x32[3];//p_sad16x16[14] < p_sad16x16[15] ? p_best_mv16x16[14] : p_best_mv16x16[15];
+    p_best_mv32x16[0] = p_best_mv32x32[0];//p_sad16x16[0] < p_sad16x16[1] ? p_best_mv16x16[0] : p_best_mv16x16[1];
+    p_best_mv32x16[1] = p_best_mv32x32[1];//p_sad16x16[2] < p_sad16x16[3] ? p_best_mv16x16[2] : p_best_mv16x16[3];
+    p_best_mv32x16[2] = p_best_mv32x32[0];//p_sad16x16[4] < p_sad16x16[5] ? p_best_mv16x16[4] : p_best_mv16x16[5];
+    p_best_mv32x16[3] = p_best_mv32x32[1];//p_sad16x16[6] < p_sad16x16[7] ? p_best_mv16x16[6] : p_best_mv16x16[7];
+    p_best_mv32x16[4] = p_best_mv32x32[2];//p_sad16x16[8] < p_sad16x16[9] ? p_best_mv16x16[8] : p_best_mv16x16[9];
+    p_best_mv32x16[5] = p_best_mv32x32[3];//p_sad16x16[10] < p_sad16x16[11] ? p_best_mv16x16[10] : p_best_mv16x16[11];
+    p_best_mv32x16[6] = p_best_mv32x32[2];//p_sad16x16[12] < p_sad16x16[13] ? p_best_mv16x16[12] : p_best_mv16x16[13];
+    p_best_mv32x16[7] = p_best_mv32x32[3];//p_sad16x16[14] < p_sad16x16[15] ? p_best_mv16x16[14] : p_best_mv16x16[15];
     // 64x16
-    p_best_mv64x16[0] = context_ptr->p_best_mv64x64[0];//(p_sad16x16[0] + p_sad16x16[1]) < (p_sad16x16[4] + p_sad16x16[5]) ? p_best_mv32x16[0] : p_best_mv32x16[2];
-    p_best_mv64x16[1] = context_ptr->p_best_mv64x64[0];//(p_sad16x16[2] + p_sad16x16[3]) < (p_sad16x16[6] + p_sad16x16[7]) ? p_best_mv32x16[1] : p_best_mv32x16[3];
-    p_best_mv64x16[2] = context_ptr->p_best_mv64x64[0];//(p_sad16x16[8] + p_sad16x16[9]) < (p_sad16x16[12] + p_sad16x16[13]) ? p_best_mv32x16[4] : p_best_mv32x16[6];
-    p_best_mv64x16[3] = context_ptr->p_best_mv64x64[0];//(p_sad16x16[10] + p_sad16x16[11]) < (p_sad16x16[14] + p_sad16x16[15]) ? p_best_mv32x16[5] : p_best_mv32x16[7];
+    p_best_mv64x16[0] = p_best_mv64x64[0];//(p_sad16x16[0] + p_sad16x16[1]) < (p_sad16x16[4] + p_sad16x16[5]) ? p_best_mv32x16[0] : p_best_mv32x16[2];
+    p_best_mv64x16[1] = p_best_mv64x64[0];//(p_sad16x16[2] + p_sad16x16[3]) < (p_sad16x16[6] + p_sad16x16[7]) ? p_best_mv32x16[1] : p_best_mv32x16[3];
+    p_best_mv64x16[2] = p_best_mv64x64[0];//(p_sad16x16[8] + p_sad16x16[9]) < (p_sad16x16[12] + p_sad16x16[13]) ? p_best_mv32x16[4] : p_best_mv32x16[6];
+    p_best_mv64x16[3] = p_best_mv64x64[0];//(p_sad16x16[10] + p_sad16x16[11]) < (p_sad16x16[14] + p_sad16x16[15]) ? p_best_mv32x16[5] : p_best_mv32x16[7];
     // 16x8
     p_best_mv16x8[0]  = p_best_mv16x16[0];// p_sad8x8[0] < p_sad8x8[1] ? p_best_mv8x8[0] : p_best_mv8x8[1];
     p_best_mv16x8[1]  = p_best_mv16x16[1];// p_sad8x8[2] < p_sad8x8[3] ? p_best_mv8x8[2] : p_best_mv8x8[3];
@@ -2598,14 +2598,14 @@ void generate_nsq_mv(MeContext *context_ptr) {
     p_best_mv32x64[0] = p_best_mv64x64[0];//p_sad32x32[0] < p_sad32x32[2] ? p_best_mv32x32[0] : p_best_mv32x32[2];
     p_best_mv32x64[1] = p_best_mv64x64[0];//p_sad32x32[1] < p_sad32x32[3] ? p_best_mv32x32[1] : p_best_mv32x32[3];
     // 16x32
-    p_best_mv16x32[0] = p_sad16x16[0];//p_sad16x16[0] < p_sad16x16[2] ? p_best_mv16x16[0] : p_best_mv16x16[2];
-    p_best_mv16x32[1] = p_sad16x16[0];//p_sad16x16[1] < p_sad16x16[3] ? p_best_mv16x16[1] : p_best_mv16x16[3];
-    p_best_mv16x32[2] = p_sad16x16[1];//p_sad16x16[4] < p_sad16x16[6] ? p_best_mv16x16[4] : p_best_mv16x16[6];
-    p_best_mv16x32[3] = p_sad16x16[1];//p_sad16x16[5] < p_sad16x16[7] ? p_best_mv16x16[5] : p_best_mv16x16[7];
-    p_best_mv16x32[4] = p_sad16x16[2];//p_sad16x16[8] < p_sad16x16[10] ? p_best_mv16x16[8] : p_best_mv16x16[10];
-    p_best_mv16x32[5] = p_sad16x16[2];//p_sad16x16[9] < p_sad16x16[11] ? p_best_mv16x16[9] : p_best_mv16x16[11];
-    p_best_mv16x32[6] = p_sad16x16[3];//p_sad16x16[12] < p_sad16x16[14] ? p_best_mv16x16[12] : p_best_mv16x16[14];
-    p_best_mv16x32[7] = p_sad16x16[3];//p_sad16x16[13] < p_sad16x16[15] ? p_best_mv16x16[13] : p_best_mv16x16[15];
+    p_best_mv16x32[0] = p_sad32x32[0];//p_sad16x16[0] < p_sad16x16[2] ? p_best_mv16x16[0] : p_best_mv16x16[2];
+    p_best_mv16x32[1] = p_sad32x32[0];//p_sad16x16[1] < p_sad16x16[3] ? p_best_mv16x16[1] : p_best_mv16x16[3];
+    p_best_mv16x32[2] = p_sad32x32[1];//p_sad16x16[4] < p_sad16x16[6] ? p_best_mv16x16[4] : p_best_mv16x16[6];
+    p_best_mv16x32[3] = p_sad32x32[1];//p_sad16x16[5] < p_sad16x16[7] ? p_best_mv16x16[5] : p_best_mv16x16[7];
+    p_best_mv16x32[4] = p_sad32x32[2];//p_sad16x16[8] < p_sad16x16[10] ? p_best_mv16x16[8] : p_best_mv16x16[10];
+    p_best_mv16x32[5] = p_sad32x32[2];//p_sad16x16[9] < p_sad16x16[11] ? p_best_mv16x16[9] : p_best_mv16x16[11];
+    p_best_mv16x32[6] = p_sad32x32[3];//p_sad16x16[12] < p_sad16x16[14] ? p_best_mv16x16[12] : p_best_mv16x16[14];
+    p_best_mv16x32[7] = p_sad32x32[3];//p_sad16x16[13] < p_sad16x16[15] ? p_best_mv16x16[13] : p_best_mv16x16[15];
     // 16x64
     p_best_mv16x64[0] = p_best_mv64x64[0];//(p_sad16x16[0] + p_sad16x16[2]) < (p_sad16x16[8] + p_sad16x16[10]) ? p_best_mv32x16[0] : p_best_mv32x16[4];
     p_best_mv16x64[1] = p_best_mv64x64[0];//(p_sad16x16[1] + p_sad16x16[3]) < (p_sad16x16[9] + p_sad16x16[11]) ? p_best_mv32x16[1] : p_best_mv32x16[5];
