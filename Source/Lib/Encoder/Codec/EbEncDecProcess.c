@@ -4428,11 +4428,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)
-#if PD0_INTER_CAND
-        context_ptr->md_max_ref_count = 1;
-#else
-        context_ptr->md_max_ref_count = 4;
-#endif 
+        context_ptr->md_max_ref_count = 4; 
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_max_ref_count = 1;
 #if M8_CAP_NUMBER_OF_REF_IN_MD
