@@ -6663,7 +6663,11 @@ static void quarter_pel_search_sb(
     int16_t y_search_area_origin, //[IN] search area origin in the vertical
     // direction, used to point to reference samples
     EbBool enable_half_pel32x32, EbBool enable_half_pel16x16,
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    EbBool enable_half_pel8x8, EbBool enable_quarter_pel) {
+#else
     EbBool enable_half_pel8x8, EbBool enable_quarter_pel, EbBool ext_block_flag) {
+#endif
     uint32_t pu_index;
 
     uint32_t pu_shift_x_index;
@@ -9978,6 +9982,7 @@ void integer_search_sb(
                 (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) + y_search_area_origin;
             search_region_index =
                 x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
             if (!pcs_ptr->disallow_nsq) {
 #else
@@ -10127,6 +10132,7 @@ void integer_search_sb(
 
             }
             else {
+#endif
                  initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             21,
@@ -10180,7 +10186,9 @@ void integer_search_sb(
                                            y_search_area_origin,
                                            search_area_width,
                                            search_area_height);
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
             }
+#endif
             context_ptr->x_search_area_origin[list_index][ref_pic_index] = x_search_area_origin;
             context_ptr->y_search_area_origin[list_index][ref_pic_index] = y_search_area_origin;
             context_ptr->sa_width[list_index][ref_pic_index] = search_area_width;
@@ -12127,6 +12135,7 @@ EbErrorType motion_estimate_sb(
                            //we can also make the ME small and shut subpel
             {
                 {
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
                     if (!pcs_ptr->disallow_nsq) {
 #else
@@ -12355,6 +12364,7 @@ EbErrorType motion_estimate_sb(
 
 
                     } else {
+#endif
                         initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             21,
@@ -12401,7 +12411,9 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-                    }
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
+}
+#endif
                 }
 
                 if (context_ptr->fractional_search_model == 0) {
@@ -12506,6 +12518,9 @@ EbErrorType motion_estimate_sb(
                             enable_half_pel_32x32,
                             enable_half_pel_16x16,
                             enable_half_pel_8x8,
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+                            enable_quarter_pel);
+#else
                             enable_quarter_pel,
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
                             !pcs_ptr->disallow_nsq);
@@ -12514,6 +12529,7 @@ EbErrorType motion_estimate_sb(
 #endif
 #if SHUT_ME_NSQ_SEARCH
                         generate_nsq_mv(context_ptr);
+#endif
 #endif
                     }
                 }

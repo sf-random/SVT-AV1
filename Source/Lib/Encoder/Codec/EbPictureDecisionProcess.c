@@ -1139,15 +1139,17 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_nsq = EB_FALSE;
 #endif
 #endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+    pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
+#else
     if (!pcs_ptr->disallow_nsq)
         assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
-#endif
+
     pcs_ptr->max_number_of_pus_per_sb =
         pcs_ptr->disallow_nsq
         ? SQUARE_PU_COUNT
         : MAX_ME_PU_COUNT;
-
+#endif
     // Set sb_64x64_simulated - only allow when SB size is not already 64x64
 #if MAR23_ADOPTIONS
     if (scs_ptr->static_config.super_block_size != 64) {

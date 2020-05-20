@@ -4233,6 +4233,75 @@ uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr,const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
 // Derive me_sb_addr and me_block_offset used to access ME_MV
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr) {
+
+    const BlockGeom *sq_blk_geom = get_blk_geom_mds(context_ptr->blk_geom->sqi_mds);
+
+    context_ptr->geom_offset_x = 0;
+    context_ptr->geom_offset_y = 0;
+
+    if (scs_ptr->seq_header.sb_size == BLOCK_128X128) {
+        uint32_t me_sb_size = scs_ptr->sb_sz;
+        uint32_t me_pic_width_in_sb =
+            (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_sb_x = (context_ptr->blk_origin_x / me_sb_size);
+        uint32_t me_sb_y = (context_ptr->blk_origin_y / me_sb_size);
+        context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
+        context_ptr->geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
+        context_ptr->geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
+    }
+    else
+        context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
+
+    // Derive whether if current block would need to have offsets made
+    uint32_t bwidth_offset_to_8 = (sq_blk_geom->bwidth == 4) << 2;
+    uint32_t bheight_offset_to_8 = (sq_blk_geom->bheight == 4) << 2;
+
+    // if there is an offset needed to set either dimension to 8
+    if (bwidth_offset_to_8 || bheight_offset_to_8) {
+        // Align parent block has dimensions inherited by current block, if current block has a dimension of 4
+        // add 4 so the resulting block follows an 8x8 basis
+        uint32_t bwidth_to_search = sq_blk_geom->bwidth + bwidth_offset_to_8;
+        uint32_t bheight_to_search = sq_blk_geom->bheight + bheight_offset_to_8;
+
+        // Align parent block has origin inherited by current block
+        uint32_t x_to_search =
+            sq_blk_geom->origin_x -
+            (context_ptr->geom_offset_x + ((sq_blk_geom->origin_x & 0x7) ? 4 : 0));
+        uint32_t y_to_search =
+            sq_blk_geom->origin_y -
+            (context_ptr->geom_offset_y + ((sq_blk_geom->origin_y & 0x7) ? 4 : 0));
+
+        // Search the me_block_offset to the parent block
+        for (uint32_t block_index = 0;
+            block_index < pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
+            block_index++) {
+            if ((bwidth_to_search == partition_width[block_index]) &&
+                (bheight_to_search == partition_height[block_index]) &&
+                (x_to_search == pu_search_index_map[block_index][0]) &&
+                (y_to_search == pu_search_index_map[block_index][1])) {
+                context_ptr->me_block_offset = block_index;
+                break;
+            }
+        }
+    }
+    else if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
+        context_ptr->me_block_offset = 0;
+    }
+    else {
+        context_ptr->me_block_offset =
+            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+                sq_blk_geom,
+                context_ptr->geom_offset_x,
+                context_ptr->geom_offset_y);
+    }
+#if ME_MEM_OPT
+    context_ptr->me_cand_offset = context_ptr->me_block_offset *pcs_ptr->parent_pcs_ptr->max_number_of_candidates_per_block;
+#endif
+}
+#else
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr) {
 
@@ -4299,6 +4368,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
 #endif
 
 }
+#endif
 // Copy ME_MVs (generated @ PA) from input buffer (pcs_ptr-> .. ->me_results) to local
 // MD buffers (context_ptr->sb_me_mv)
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
