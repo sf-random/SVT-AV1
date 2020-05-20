@@ -435,7 +435,7 @@ extern "C" {
 #define FIX_SHUT_ME_NSQ_SEARCH 1 
 /////*** SHUT ME NSQ @ ME ***
 
-#define ADD_MD_NSQ_SEARCH 0
+#define ADD_MD_NSQ_SEARCH 1
 #define REDESIGN_ME_RESULTS_MD 0
 #define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
 #endif
