@@ -429,10 +429,15 @@ extern "C" {
 #define PRUNING_PER_INTER_TYPE 0
 #define PD0_INTER_CAND 0
 #if 1 // ME for NSQ @ MD
+
+/////*** SHUT ME NSQ @ ME ***
 #define SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
-#define REDESIGN_ME_RESULTS_MD 1
-#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
+#define FIX_SHUT_ME_NSQ_SEARCH 1 
+/////*** SHUT ME NSQ @ ME ***
+
+#define ADD_MD_NSQ_SEARCH 0
+#define REDESIGN_ME_RESULTS_MD 0
+#define NSQ_REMOVAL_CODE_CLEAN_UP 0 // should be lossless
 #endif
 #define REMOVE_ME_BIPRED_SEARCH 0
 
