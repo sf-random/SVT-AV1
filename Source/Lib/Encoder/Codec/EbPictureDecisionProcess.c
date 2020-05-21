@@ -1486,6 +1486,10 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if UPGRADE_M6_M7_M8
 #if M1_SC_ADOPTION
 #if REVERT_WHITE // palette_mode
+#if MAY19_ADOPTIONS
+           (MR_MODE || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M6) ||
+            (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
+#else
 #if MAY16_7PM_ADOPTIONS
            ((pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M6) ||
             (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
@@ -1495,6 +1499,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
 #else
            (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M7))
+#endif
 #endif
 #endif
 #else
@@ -1639,6 +1644,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             cm->sg_filter_mode = 0;
 #endif
+#if MAY19_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
 #if PRESETS_SHIFT
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #else
@@ -1656,7 +1664,12 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 #endif
+#endif
         cm->sg_filter_mode = 4;
+#if MAY19_ADOPTIONS
+    else
+        cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
+#else
 #if MAR12_M8_ADOPTIONS
 #if M8_SG
 #if UPGRADE_M6_M7_M8
@@ -1685,7 +1698,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         cm->sg_filter_mode = 1;
 #endif
-
+#endif
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
@@ -1705,6 +1718,9 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->wn_filter_mode = 0;
 #endif
     else
+#if MAY19_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#else
 #if PRESETS_SHIFT
         if (pcs_ptr->enc_mode <= ENC_M4)
 #else
@@ -1712,6 +1728,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->enc_mode <= ENC_M7)
 #else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #endif
 #endif
             cm->wn_filter_mode = 3;
@@ -5029,7 +5046,7 @@ void derive_tf_window_params(
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cr);
-    }   
+    }
 
     // Adjust number of filtering frames based on noise and quantization factor.
     // Basically, we would like to use more frames to filter low-noise frame such
@@ -5045,7 +5062,7 @@ void derive_tf_window_params(
     else if (filter_frame_lookahead_idx < 0 && q <= 10) {
         adjust_num = 0;
     }
-    else 
+    else
 #endif
     if (noise_levels[0] < 0.5) {
         adjust_num = 6;
@@ -5194,7 +5211,7 @@ void derive_tf_window_params(
         }
     }
 #if NOISE_BASED_TF_FRAMES
-    return EB_ErrorNone; 
+    return EB_ErrorNone;
 #endif
 }
 /* Picture Decision Kernel */
@@ -5396,8 +5413,8 @@ void* picture_decision_kernel(void *input_ptr)
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 #if NOISE_BASED_TF_FRAMES
-            parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] = 
-            parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] = 
+            parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
+            parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
             parent_pcs_window[12] = parent_pcs_window[13] = NULL;
 #else
             parent_pcs_window[0] = parent_pcs_window[1] = parent_pcs_window[2] = parent_pcs_window[3] = parent_pcs_window[4] = parent_pcs_window[5] = NULL;
@@ -6018,6 +6035,9 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }
 #if APR25_12AM_ADOPTIONS
+#if MAY19_ADOPTIONS
+                                    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
 #if APR25_3AM_ADOPTIONS
 #if APR23_4AM_M6_ADOPTIONS
                                     else if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -6026,6 +6046,7 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #else
                                     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 #endif
 #if APR25_10AM_ADOPTIONS
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
@@ -6052,8 +6073,13 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
 #if APR25_12AM_ADOPTIONS
                                     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#if MAY19_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
                                     }
 #endif
                                     else {
