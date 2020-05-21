@@ -10120,7 +10120,7 @@ void integer_search_sb(
                 (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) + y_search_area_origin;
             search_region_index =
                 x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
+#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
             if (!pcs_ptr->disallow_nsq) {
 #else
@@ -10324,7 +10324,7 @@ void integer_search_sb(
                                            y_search_area_origin,
                                            search_area_width,
                                            search_area_height);
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
+#if 1// !NSQ_REMOVAL_CODE_CLEAN_UP
             }
 #endif
             context_ptr->x_search_area_origin[list_index][ref_pic_index] = x_search_area_origin;
@@ -12273,7 +12273,7 @@ EbErrorType motion_estimate_sb(
                            //we can also make the ME small and shut subpel
             {
                 {
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
+#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
                     if (!pcs_ptr->disallow_nsq) {
 #else
@@ -12642,7 +12642,7 @@ EbErrorType motion_estimate_sb(
                                 context_ptr->sa_height[list_index][ref_pic_index]);
                         }
 #endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
+#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
 }
 #endif
                 }
