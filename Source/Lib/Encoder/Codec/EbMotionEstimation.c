@@ -12549,6 +12549,99 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+                        if (context_ptr->half_pel_mode == EX_HP_MODE ||
+                            context_ptr->local_hp_mode[list_index][ref_pic_index] == EX_HP_MODE) {
+                            // Move to the top left of the search region
+                            //x_top_left_search_region =
+                            //    (int16_t)(ref_pic_ptr->origin_x + sb_origin_x) +
+                            //    context_ptr->x_search_area_origin[list_index][ref_pic_index];
+                            //y_top_left_search_region =
+                            //    (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) +
+                            //    context_ptr->y_search_area_origin[list_index][ref_pic_index];
+                            // Interpolate the search region for Half-Pel
+                            // Refinements H - AVC Style
+                            interpolate_search_region_avc(
+                                context_ptr,
+                                list_index,
+                                ref_pic_index,
+                                context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
+                                (ME_FILTER_TAP >> 1) +
+                                ((ME_FILTER_TAP >> 1) *
+                                    context_ptr
+                                    ->interpolated_full_stride[list_index][ref_pic_index]),
+                                context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+#if OVERLAY_R2R_FIX
+                                MAX(1, (uint32_t)context_ptr->sa_width[list_index][ref_pic_index]) + (BLOCK_SIZE_64 - 1),
+                                MAX(1, (uint32_t)context_ptr->sa_height[list_index][ref_pic_index]) + (BLOCK_SIZE_64 - 1),
+#else
+                                (uint32_t)context_ptr->sa_width[list_index][ref_pic_index] + (BLOCK_SIZE_64 - 1),
+                                (uint32_t)context_ptr->sa_height[list_index][ref_pic_index] + (BLOCK_SIZE_64 - 1),
+#endif
+                                8);
+
+                            initialize_buffer_32bits(
+                                context_ptr->p_sb_best_ssd[list_index][ref_pic_index],
+                                52,
+                                1,
+                                MAX_SSE_VALUE);
+                            memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
+                                context_ptr->p_sb_best_mv[list_index][ref_pic_index],
+                                MAX_ME_PU_COUNT * sizeof(uint32_t));
+                            context_ptr->full_quarter_pel_refinement = 1;
+                            context_ptr->p_best_full_pel_mv64x64 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_64x64]);
+                            context_ptr->p_best_full_pel_mv32x32 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_32x32_0]);
+                            context_ptr->p_best_full_pel_mv16x16 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_16x16_0]);
+                            context_ptr->p_best_full_pel_mv8x8 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_8x8_0]);
+                            context_ptr->p_best_full_pel_mv64x32 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_64x32_0]);
+                            context_ptr->p_best_full_pel_mv32x16 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_32x16_0]);
+                            context_ptr->p_best_full_pel_mv16x8 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_16x8_0]);
+                            context_ptr->p_best_full_pel_mv32x64 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_32x64_0]);
+                            context_ptr->p_best_full_pel_mv16x32 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_16x32_0]);
+                            context_ptr->p_best_full_pel_mv8x16 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_8x16_0]);
+                            context_ptr->p_best_full_pel_mv32x8 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_32x8_0]);
+                            context_ptr->p_best_full_pel_mv8x32 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_8x32_0]);
+                            context_ptr->p_best_full_pel_mv64x16 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_64x16_0]);
+                            context_ptr->p_best_full_pel_mv16x64 =
+                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
+                                    [ME_TIER_ZERO_PU_16x64_0]);
+                            // half-Pel search
+                            open_loop_me_half_pel_search_sblock(pcs_ptr,
+                                context_ptr,
+                                list_index,
+                                ref_pic_index,
+                                context_ptr->x_search_area_origin[list_index][ref_pic_index],
+                                context_ptr->y_search_area_origin[list_index][ref_pic_index],
+                                context_ptr->sa_width[list_index][ref_pic_index],
+                                context_ptr->sa_height[list_index][ref_pic_index]);
+                        }
+#endif
 #if !NSQ_REMOVAL_CODE_CLEAN_UP
 }
 #endif
