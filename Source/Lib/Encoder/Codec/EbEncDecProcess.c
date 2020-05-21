@@ -4353,17 +4353,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #endif
-#if REFACTOR_REF_FRAME_MASKING
-            context_ptr->inter_inter_distortion_based_reference_pruning = 1;
-#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
-#endif
 #if !MAY19_ADOPTIONS
 #if M1_COMBO_1 || NEW_M1_CAND
         else if (enc_mode <= ENC_M1)
-#if REFACTOR_REF_FRAME_MASKING
-            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
-#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
 #endif
 #endif
@@ -4379,7 +4372,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #else
         else
-            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+            context_ptr->inter_inter_distortion_based_reference_pruning = 0; // 3 as default mode
 #endif
     }
     else {
