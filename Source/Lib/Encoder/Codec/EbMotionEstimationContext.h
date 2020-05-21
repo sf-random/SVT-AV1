@@ -357,6 +357,7 @@ typedef struct MeContext {
     uint32_t *p_best_mv16x16;
     uint32_t *p_best_mv32x32;
     uint32_t *p_best_mv64x64;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_sad_64x32;
     uint32_t *p_best_sad_32x16;
     uint32_t *p_best_sad_16x8;
@@ -377,6 +378,7 @@ typedef struct MeContext {
     uint32_t *p_best_mv8x32;
     uint32_t *p_best_mv64x16;
     uint32_t *p_best_mv16x64;
+#endif
     EB_ALIGN(16) uint32_t p_sad32x32[4];
     EB_ALIGN(64) uint32_t p_sad16x16[16];
     EB_ALIGN(64) uint32_t p_sad8x8[64];
@@ -420,6 +422,7 @@ typedef struct MeContext {
     uint32_t *p_best_ssd16x16;
     uint32_t *p_best_ssd32x32;
     uint32_t *p_best_ssd64x64;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_ssd64x32;
     uint32_t *p_best_ssd32x16;
     uint32_t *p_best_ssd16x8;
@@ -430,7 +433,7 @@ typedef struct MeContext {
     uint32_t *p_best_ssd8x32;
     uint32_t *p_best_ssd64x16;
     uint32_t *p_best_ssd16x64;
-
+#endif
     uint8_t * p_best_nsq8x8;
     uint8_t * p_best_nsq16x16;
     uint8_t * p_best_nsq32x32;

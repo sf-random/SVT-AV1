@@ -11,10 +11,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if 0//NSQ_ME_CONTEXT_CLEAN_UP
+#define MAX_ME_PU_COUNT  85
+#else
 #define MAX_ME_PU_COUNT \
     209 // Sum of all the possible partitions which have both deminsions greater than 4.
-
+#endif
 #define ME_RES_CAND_MRP_MODE_0 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
 #define ME_MV_MRP_MODE_0 7 // [7 = 4+3]
 

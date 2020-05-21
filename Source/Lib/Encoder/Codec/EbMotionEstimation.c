@@ -557,6 +557,7 @@ void sad_calculation_32x32_64x64_c(uint32_t *p_sad16x16, uint32_t *p_best_sad_32
         p_best_mv64x64[0]   = mv;
     }
 }
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 /****************************************************
 Calculate SAD for Rect H, V and H4, V4 partitions
 
@@ -1330,6 +1331,7 @@ void ext_sad_calculation(uint32_t *p_sad8x8, uint32_t *p_sad16x16, uint32_t *p_s
         p_best_mv8x32[15]   = mv;
     }
 }
+#endif
 #if !SHUT_ME_NSQ_SEARCH
 /****************************************************
 Calculate SAD for Rect H, V and H4, V4 partitions
@@ -2525,6 +2527,7 @@ void ext_eight_sad_calculation_32x32_64x64_c(
         }
     }
 }
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 void generate_nsq_mv(MeContext *context_ptr) {
     uint32_t *p_sad8x8 = context_ptr->p_best_sad_8x8;
     uint32_t *p_sad16x16 = context_ptr->p_best_sad_16x16;
@@ -2815,6 +2818,7 @@ void generate_nsq_mv(MeContext *context_ptr) {
     p_best_mv8x32[15] =(p_sad8x8[53] + p_sad8x8[55]) < (p_sad16x16[61] + p_sad8x8[63])  ? p_best_mv16x8[27] : p_best_mv16x8[31];
 #endif
 }
+#endif
 /*******************************************
  * open_loop_me_get_search_point_results_block
  *******************************************/
@@ -2932,6 +2936,7 @@ static void open_loop_me_get_search_point_results_block(
     uint32_t *p_best_sad_16x16      = context_ptr->p_best_sad_16x16;
     uint32_t *p_best_sad_32x32      = context_ptr->p_best_sad_32x32;
     uint32_t *p_best_sad_64x64      = context_ptr->p_best_sad_64x64;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_sad_64x32      = context_ptr->p_best_sad_64x32;
     uint32_t *p_best_sad_32x16      = context_ptr->p_best_sad_32x16;
     uint32_t *p_best_sad_16x8       = context_ptr->p_best_sad_16x8;
@@ -2942,10 +2947,12 @@ static void open_loop_me_get_search_point_results_block(
     uint32_t *p_best_sad_8x32       = context_ptr->p_best_sad_8x32;
     uint32_t *p_best_sad_64x16      = context_ptr->p_best_sad_64x16;
     uint32_t *p_best_sad_16x64      = context_ptr->p_best_sad_16x64;
+#endif
     uint32_t *p_best_mv8x8          = context_ptr->p_best_mv8x8;
     uint32_t *p_best_mv16x16        = context_ptr->p_best_mv16x16;
     uint32_t *p_best_mv32x32        = context_ptr->p_best_mv32x32;
     uint32_t *p_best_mv64x64        = context_ptr->p_best_mv64x64;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_mv64x32        = context_ptr->p_best_mv64x32;
     uint32_t *p_best_mv32x16        = context_ptr->p_best_mv32x16;
     uint32_t *p_best_mv16x8         = context_ptr->p_best_mv16x8;
@@ -2954,12 +2961,14 @@ static void open_loop_me_get_search_point_results_block(
     uint32_t *p_best_mv8x16         = context_ptr->p_best_mv8x16;
     uint32_t *p_best_mv32x8         = context_ptr->p_best_mv32x8;
     uint32_t *p_best_mv8x32         = context_ptr->p_best_mv8x32;
+#endif
     uint32_t *p_sad32x32            = context_ptr->p_sad32x32;
     uint32_t *p_sad16x16            = context_ptr->p_sad16x16;
     uint32_t *p_sad8x8              = context_ptr->p_sad8x8;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_mv64x16        = context_ptr->p_best_mv64x16;
     uint32_t *p_best_mv16x64        = context_ptr->p_best_mv16x64;
-
+#endif
     // TODO: block_index search_position_index could be removed
 
     const uint32_t src_stride = context_ptr->sb_src_stride;
@@ -3220,6 +3229,7 @@ static void open_loop_me_get_search_point_results_block(
                                     p_best_mv64x64,
                                     curr_mv,
                                     &p_sad32x32[0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
  #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
     if(!context_ptr->me_alt_ref)
 #endif
@@ -3247,6 +3257,7 @@ static void open_loop_me_get_search_point_results_block(
                         p_best_sad_16x64,
                         p_best_mv16x64,
                         curr_mv);
+#endif
 }
 
 /*******************************************
@@ -10120,15 +10131,20 @@ void integer_search_sb(
                 (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) + y_search_area_origin;
             search_region_index =
                 x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
-#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
             if (!pcs_ptr->disallow_nsq) {
 #else
             if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
 #endif
+#endif
                 initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
+#if NSQ_ME_CONTEXT_CLEAN_UP
+                            21,
+#else
                             52,
+#endif
                             1,
                             MAX_SAD_VALUE);
                 context_ptr->p_best_sad_64x64 = &(
@@ -10143,6 +10159,7 @@ void integer_search_sb(
                         context_ptr->p_best_sad_8x8 = &(
                             context_ptr
                                 ->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_sad_64x32 =
                             &(context_ptr->p_sb_best_sad[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_64x32_0]);
@@ -10173,7 +10190,7 @@ void integer_search_sb(
                         context_ptr->p_best_sad_16x64 =
                             &(context_ptr->p_sb_best_sad[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_16x64_0]);
-
+#endif
                         context_ptr->p_best_mv64x64 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -10186,6 +10203,7 @@ void integer_search_sb(
                         context_ptr->p_best_mv8x8 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_mv64x32 = &(
                             context_ptr
                                 ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x32_0]);
@@ -10216,7 +10234,7 @@ void integer_search_sb(
                         context_ptr->p_best_mv16x64 = &(
                             context_ptr
                                 ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x64_0]);
-
+#endif
                         context_ptr->p_best_ssd64x64 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -10229,6 +10247,7 @@ void integer_search_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_ssd64x32 =
                             &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_64x32_0]);
@@ -10259,7 +10278,7 @@ void integer_search_sb(
                         context_ptr->p_best_ssd16x64 =
                             &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_16x64_0]);
-
+#endif
                         open_loop_me_fullpel_search_sblock(context_ptr,
                                                            list_index,
                                                            ref_pic_index,
@@ -10267,10 +10286,11 @@ void integer_search_sb(
                                                            y_search_area_origin,
                                                            search_area_width,
                                                            search_area_height);
-
+#if !NSQ_ME_CONTEXT_CLEAN_UP
             }
+
             else {
-#endif
+
                  initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             21,
@@ -10324,7 +10344,6 @@ void integer_search_sb(
                                            y_search_area_origin,
                                            search_area_width,
                                            search_area_height);
-#if 1// !NSQ_REMOVAL_CODE_CLEAN_UP
             }
 #endif
             context_ptr->x_search_area_origin[list_index][ref_pic_index] = x_search_area_origin;
@@ -12273,11 +12292,12 @@ EbErrorType motion_estimate_sb(
                            //we can also make the ME small and shut subpel
             {
                 {
-#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
                     if (!pcs_ptr->disallow_nsq) {
 #else
                     if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
 #endif
                         context_ptr->p_best_sad_64x64 = &(
                             context_ptr
@@ -12291,6 +12311,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_sad_8x8 = &(
                             context_ptr
                                 ->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_sad_64x32 =
                             &(context_ptr->p_sb_best_sad[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_64x32_0]);
@@ -12321,7 +12342,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_sad_16x64 =
                             &(context_ptr->p_sb_best_sad[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_16x64_0]);
-
+#endif
                         context_ptr->p_best_mv64x64 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -12334,6 +12355,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_mv8x8 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_mv64x32 = &(
                             context_ptr
                                 ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x32_0]);
@@ -12364,7 +12386,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_mv16x64 = &(
                             context_ptr
                                 ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x64_0]);
-
+#endif
                         context_ptr->p_best_ssd64x64 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -12377,6 +12399,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                         context_ptr->p_best_ssd64x32 =
                             &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_64x32_0]);
@@ -12407,6 +12430,7 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_ssd16x64 =
                             &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
                                                         [ME_TIER_ZERO_PU_16x64_0]);
+#endif
                         context_ptr->full_quarter_pel_refinement = 0;
                         if (context_ptr->half_pel_mode == EX_HP_MODE ||
                             context_ptr->local_hp_mode[list_index][ref_pic_index] == EX_HP_MODE) {
@@ -12440,7 +12464,11 @@ EbErrorType motion_estimate_sb(
 
                             initialize_buffer_32bits(
                                 context_ptr->p_sb_best_ssd[list_index][ref_pic_index],
+#if NSQ_ME_CONTEXT_CLEAN_UP
+                                21,
+#else
                                 52,
+#endif
                                 1,
                                 MAX_SSE_VALUE);
                             memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
@@ -12459,6 +12487,7 @@ EbErrorType motion_estimate_sb(
                             context_ptr->p_best_full_pel_mv8x8 =
                                 &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
                                                                     [ME_TIER_ZERO_PU_8x8_0]);
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                             context_ptr->p_best_full_pel_mv64x32 =
                                 &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
                                                                     [ME_TIER_ZERO_PU_64x32_0]);
@@ -12489,6 +12518,7 @@ EbErrorType motion_estimate_sb(
                             context_ptr->p_best_full_pel_mv16x64 =
                                 &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
                                                                     [ME_TIER_ZERO_PU_16x64_0]);
+#endif
                             // half-Pel search
                             open_loop_me_half_pel_search_sblock(pcs_ptr,
                                                                 context_ptr,
@@ -12499,10 +12529,9 @@ EbErrorType motion_estimate_sb(
                                                                 context_ptr->sa_width[list_index][ref_pic_index],
                                                                 context_ptr->sa_height[list_index][ref_pic_index]);
                         }
-
-
+#if !NSQ_ME_CONTEXT_CLEAN_UP
                     } else {
-#endif
+
                         initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             21,
@@ -12549,100 +12578,6 @@ EbErrorType motion_estimate_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-#if NSQ_REMOVAL_CODE_CLEAN_UP
-                        if (context_ptr->half_pel_mode == EX_HP_MODE ||
-                            context_ptr->local_hp_mode[list_index][ref_pic_index] == EX_HP_MODE) {
-                            // Move to the top left of the search region
-                            //x_top_left_search_region =
-                            //    (int16_t)(ref_pic_ptr->origin_x + sb_origin_x) +
-                            //    context_ptr->x_search_area_origin[list_index][ref_pic_index];
-                            //y_top_left_search_region =
-                            //    (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) +
-                            //    context_ptr->y_search_area_origin[list_index][ref_pic_index];
-                            // Interpolate the search region for Half-Pel
-                            // Refinements H - AVC Style
-                            interpolate_search_region_avc(
-                                context_ptr,
-                                list_index,
-                                ref_pic_index,
-                                context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
-                                (ME_FILTER_TAP >> 1) +
-                                ((ME_FILTER_TAP >> 1) *
-                                    context_ptr
-                                    ->interpolated_full_stride[list_index][ref_pic_index]),
-                                context_ptr->interpolated_full_stride[list_index][ref_pic_index],
-#if OVERLAY_R2R_FIX
-                                MAX(1, (uint32_t)context_ptr->sa_width[list_index][ref_pic_index]) + (BLOCK_SIZE_64 - 1),
-                                MAX(1, (uint32_t)context_ptr->sa_height[list_index][ref_pic_index]) + (BLOCK_SIZE_64 - 1),
-#else
-                                (uint32_t)context_ptr->sa_width[list_index][ref_pic_index] + (BLOCK_SIZE_64 - 1),
-                                (uint32_t)context_ptr->sa_height[list_index][ref_pic_index] + (BLOCK_SIZE_64 - 1),
-#endif
-                                8);
-
-                            initialize_buffer_32bits(
-                                context_ptr->p_sb_best_ssd[list_index][ref_pic_index],
-                                52,
-                                1,
-                                MAX_SSE_VALUE);
-                            memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
-                                context_ptr->p_sb_best_mv[list_index][ref_pic_index],
-                                MAX_ME_PU_COUNT * sizeof(uint32_t));
-                            context_ptr->full_quarter_pel_refinement = 1;
-                            context_ptr->p_best_full_pel_mv64x64 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_64x64]);
-                            context_ptr->p_best_full_pel_mv32x32 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_32x32_0]);
-                            context_ptr->p_best_full_pel_mv16x16 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_16x16_0]);
-                            context_ptr->p_best_full_pel_mv8x8 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_8x8_0]);
-                            context_ptr->p_best_full_pel_mv64x32 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_64x32_0]);
-                            context_ptr->p_best_full_pel_mv32x16 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_32x16_0]);
-                            context_ptr->p_best_full_pel_mv16x8 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_16x8_0]);
-                            context_ptr->p_best_full_pel_mv32x64 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_32x64_0]);
-                            context_ptr->p_best_full_pel_mv16x32 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_16x32_0]);
-                            context_ptr->p_best_full_pel_mv8x16 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_8x16_0]);
-                            context_ptr->p_best_full_pel_mv32x8 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_32x8_0]);
-                            context_ptr->p_best_full_pel_mv8x32 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_8x32_0]);
-                            context_ptr->p_best_full_pel_mv64x16 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_64x16_0]);
-                            context_ptr->p_best_full_pel_mv16x64 =
-                                &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
-                                    [ME_TIER_ZERO_PU_16x64_0]);
-                            // half-Pel search
-                            open_loop_me_half_pel_search_sblock(pcs_ptr,
-                                context_ptr,
-                                list_index,
-                                ref_pic_index,
-                                context_ptr->x_search_area_origin[list_index][ref_pic_index],
-                                context_ptr->y_search_area_origin[list_index][ref_pic_index],
-                                context_ptr->sa_width[list_index][ref_pic_index],
-                                context_ptr->sa_height[list_index][ref_pic_index]);
-                        }
-#endif
-#if 1//!NSQ_REMOVAL_CODE_CLEAN_UP
 }
 #endif
                 }

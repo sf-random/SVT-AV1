@@ -423,9 +423,10 @@ extern "C" {
 #define FIX_SHUT_ME_NSQ_SEARCH 1 
 #define ADD_MD_NSQ_SEARCH 1
 #define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
-
-#define REDESIGN_ME_RESULTS_MD 0
+#define NSQ_ME_CONTEXT_CLEAN_UP 1
 #define REMOVE_ME_BIPRED_SEARCH 0
+#define REDESIGN_ME_RESULTS_MD 0
+
 /********************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
