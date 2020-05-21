@@ -1655,8 +1655,8 @@ void set_refine_nsq_mv_controls(ModeDecisionContext *mdctxt, uint8_t md_refine_n
         refine_nsq_mv_ctrls->full_pel_search_width = 15;
         refine_nsq_mv_ctrls->full_pel_search_height = 15;
         refine_nsq_mv_ctrls->perform_sub_pel = 1;
-        refine_nsq_mv_ctrls->half_pel_search_width = 3;
-        refine_nsq_mv_ctrls->half_pel_search_height = 3;
+        refine_nsq_mv_ctrls->half_pel_search_width = 7;
+        refine_nsq_mv_ctrls->half_pel_search_height = 7;
         refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
         refine_nsq_mv_ctrls->quarter_pel_search_height = 3;
         break;
