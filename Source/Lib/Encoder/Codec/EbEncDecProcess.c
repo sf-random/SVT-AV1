@@ -4364,11 +4364,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #endif
-#if REFACTOR_REF_FRAME_MASKING // SC Test0
-            context_ptr->inter_inter_distortion_based_reference_pruning = 1;
-#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
-#endif
 #if !MAY19_ADOPTIONS
 #if M1_COMBO_1 || NEW_M1_CAND
         else if (enc_mode <= ENC_M1)
