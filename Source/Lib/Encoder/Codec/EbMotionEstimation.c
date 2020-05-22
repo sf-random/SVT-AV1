@@ -4697,11 +4697,17 @@ static void open_loop_me_half_pel_search_sblock(
             ((ME_FILTER_TAP >> 1) *
              context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
         context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+#if REMOVE_ME_BIPRED_SEARCH
+        &(context_ptr->pos_b_buffer[(ME_FILTER_TAP >> 1) * context_ptr->interpolated_stride]),
+        &(context_ptr->pos_h_buffer[1]),
+        &(context_ptr->pos_j_buffer[0]),
+#else
         &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
                                    [(ME_FILTER_TAP >> 1) * context_ptr->interpolated_stride]),
 
         &(context_ptr->pos_h_buffer[list_index][ref_pic_index][1]),
         &(context_ptr->pos_j_buffer[list_index][ref_pic_index][0]),
+#endif
         x_search_area_origin,
         y_search_area_origin,
         search_area_height,
@@ -4934,7 +4940,11 @@ void interpolate_search_region_avc(
         avc_style_luma_interpolation_filter(
             searchRegionBuffer - (ME_FILTER_TAP >> 1) * luma_stride - (ME_FILTER_TAP >> 1) + 1,
             luma_stride,
+#if REMOVE_ME_BIPRED_SEARCH
+            context_ptr->pos_b_buffer,
+#else
             context_ptr->pos_b_buffer[list_index][ref_pic_index],
+#endif
             context_ptr->interpolated_stride,
             search_area_width_for_asm,
             search_area_height + ME_FILTER_TAP,
@@ -4949,7 +4959,11 @@ void interpolate_search_region_avc(
         avc_style_luma_interpolation_filter(
             searchRegionBuffer - (ME_FILTER_TAP >> 1) * luma_stride - 1 + luma_stride,
             luma_stride,
+#if REMOVE_ME_BIPRED_SEARCH
+            context_ptr->pos_h_buffer,
+#else
             context_ptr->pos_h_buffer[list_index][ref_pic_index],
+#endif
             context_ptr->interpolated_stride,
             search_area_width_for_asm,
             search_area_height + 1,
@@ -4962,9 +4976,17 @@ void interpolate_search_region_avc(
     if (search_area_width_for_asm) {
         // Half pel interpolation of the search region using f1 -> pos_j_buffer
         avc_style_luma_interpolation_filter(
+#if REMOVE_ME_BIPRED_SEARCH
+            context_ptr->pos_b_buffer + context_ptr->interpolated_stride,
+#else
             context_ptr->pos_b_buffer[list_index][ref_pic_index] + context_ptr->interpolated_stride,
+#endif
             context_ptr->interpolated_stride,
+#if REMOVE_ME_BIPRED_SEARCH
+            context_ptr->pos_j_buffer,
+#else
             context_ptr->pos_j_buffer[list_index][ref_pic_index],
+#endif
             context_ptr->interpolated_stride,
             search_area_width_for_asm,
             search_area_height + 1,
@@ -8483,7 +8505,7 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
 
     return;
 }
-
+#if !REMOVE_ME_BIPRED_SEARCH
 static void select_buffer_luma(uint32_t  pu_index, //[IN]
                                uint8_t   fracPosition, //[IN]
                                uint32_t  pu_width, //[IN] Refrence picture list index
@@ -8532,7 +8554,7 @@ static void select_buffer_luma(uint32_t  pu_index, //[IN]
 
     return;
 }
-
+#endif
 static void quarder_pel_compensation(uint32_t pu_index, //[IN]
                                      uint8_t  fracPosition, //[IN]
                                      uint32_t pu_width, //[IN] Refrence picture list index
@@ -8742,7 +8764,8 @@ uint32_t bi_pred_averaging(MeContext *context_ptr, MePredUnit *me_candidate, uin
 
     return me_candidate->distortion;
 }
-
+#endif
+#if !REMOVE_ME_BIPRED_SEARCH
 /*******************************************
  * BiPredictionComponsation
  *   performs componsation fro List 0 and
@@ -12652,11 +12675,17 @@ EbErrorType motion_estimate_sb(
                                 ((ME_FILTER_TAP >> 1) *
                                  context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
                             context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+#if REMOVE_ME_BIPRED_SEARCH
+                            &(context_ptr->pos_b_buffer[(ME_FILTER_TAP >> 1) * context_ptr->interpolated_stride]),
+                            &(context_ptr->pos_h_buffer[1]),
+                            &(context_ptr->pos_j_buffer[0]),
+#else
                             &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
                                                        [(ME_FILTER_TAP >> 1) *
                                                         context_ptr->interpolated_stride]),
                             &(context_ptr->pos_h_buffer[list_index][ref_pic_index][1]),
                             &(context_ptr->pos_j_buffer[list_index][ref_pic_index][0]),
+#endif
                             context_ptr->x_search_area_origin[list_index][ref_pic_index],
                             context_ptr->y_search_area_origin[list_index][ref_pic_index],
                             enable_half_pel_32x32,
@@ -12673,6 +12702,11 @@ EbErrorType motion_estimate_sb(
                                 ((ME_FILTER_TAP >> 1) *
                                  context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
                             context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+#if REMOVE_ME_BIPRED_SEARCH
+                            &(context_ptr->pos_b_buffer[(ME_FILTER_TAP >> 1) * context_ptr->interpolated_stride]), // points to b position of the figure above
+                            &(context_ptr->pos_h_buffer[1]), // points to h position of the figure above
+                            &(context_ptr->pos_j_buffer[0]), // points to j position of the figure above
+#else
                             &(context_ptr
                                   ->pos_b_buffer[list_index][ref_pic_index]
                                                 [(ME_FILTER_TAP >> 1) *
@@ -12687,6 +12721,7 @@ EbErrorType motion_estimate_sb(
                             &(context_ptr->pos_j_buffer[list_index][ref_pic_index]
                                                        [0]), // points to j position
                             // of the figure above
+#endif
                             context_ptr->x_search_area_origin[list_index][ref_pic_index],
                             context_ptr->y_search_area_origin[list_index][ref_pic_index],
                             enable_half_pel_32x32,
@@ -12774,11 +12809,12 @@ EbErrorType motion_estimate_sb(
                     cand_index++;
                 }
             }
-
+#if !REMOVE_ME_BIPRED_SEARCH
             total_me_candidate_index = cand_index;
-
-            uint8_t ref_type_table[7];
+#endif
 #if !SHUT_ME_CAND_SORTING
+            uint8_t ref_type_table[7];
+
             if (pcs_ptr->prune_unipred_at_me) {
                 // Sorting of the ME candidates
                 for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
@@ -12809,8 +12845,91 @@ EbErrorType motion_estimate_sb(
                 }
             }
 #endif
-#if !REMOVE_ME_BIPRED_SEARCH
+
             if (num_of_list_to_search) {
+#if REMOVE_ME_BIPRED_SEARCH
+                uint32_t first_list_ref_pict_idx;
+                uint32_t second_list_ref_pict_idx;
+
+                uint32_t n_index;
+                if (pu_index > 20)
+                    n_index = tab8x8[pu_index - 21] + 21;
+                else if (pu_index > 4)
+                    n_index = tab16x16[pu_index - 5] + 5;
+                else
+                    n_index = pu_index;
+
+                // 1st set of BIPRED cand
+                // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
+                // (LAST2,BWD), (LAST2,ALT), (LAST2,ALT2)
+                // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
+                // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
+                for (first_list_ref_pict_idx = 0;
+                     first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+                     first_list_ref_pict_idx++) {
+                    for (second_list_ref_pict_idx = 0;
+                         second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
+                         second_list_ref_pict_idx++) {
+                        {
+
+                            if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx]
+                                    .do_ref &&
+                                context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx]
+                                    .do_ref) {
+
+                                me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                                me_candidate->prediction_direction = BI_PRED;
+                                me_candidate->ref_index[0] = (uint8_t)first_list_ref_pict_idx;
+                                me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                                me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                                me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+
+                                cand_index++;
+                            }
+                        }
+                    }
+                }
+               
+                if (scs_ptr->mrp_mode == 0) {
+                    // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
+                    for (first_list_ref_pict_idx = 1;
+                         first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+                         first_list_ref_pict_idx++) {
+
+                        if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
+                            context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+
+                            me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                            me_candidate->prediction_direction = BI_PRED;
+                            me_candidate->ref_index[0] = (uint8_t)0;
+                            me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                            me_candidate->ref_index[1] = (uint8_t)first_list_ref_pict_idx;
+                            me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_0;
+
+                            cand_index++;
+                        }
+                    }
+                    // 3rd set of BIPRED cand: (BWD, ALT)
+                    for (second_list_ref_pict_idx = 1;
+                         second_list_ref_pict_idx < (uint32_t) MIN(pcs_ptr->ref_list1_count_try, 1);
+                         second_list_ref_pict_idx++) {
+
+                        if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
+                            context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
+
+                            me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                            me_candidate->prediction_direction = BI_PRED;
+                            me_candidate->ref_index[0] = (uint8_t)0;
+                            me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_1;
+                            me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                            me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+
+                            cand_index++;
+                        }
+                    }
+                }
+                total_me_candidate_index = cand_index;
+#else
                 bi_prediction_search(scs_ptr,
                                         context_ptr,
                                         pu_index,
@@ -12825,8 +12944,9 @@ EbErrorType motion_estimate_sb(
                                         &total_me_candidate_index,
                                         ref_type_table,
                                         pcs_ptr);
-            }
 #endif
+            }
+
 #if !SHUT_ME_CAND_SORTING
             // Sorting of the ME candidates
             for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;

@@ -336,11 +336,17 @@ typedef struct MeContext {
     uint8_t * sixteenth_sb_buffer;
     uint32_t  sixteenth_sb_buffer_stride;
     uint8_t * integer_buffer_ptr[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+#if REMOVE_ME_BIPRED_SEARCH
+    uint8_t *pos_b_buffer;
+    uint8_t *pos_h_buffer;
+    uint8_t *pos_j_buffer;
+#else
     uint8_t * pos_b_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint8_t * pos_h_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint8_t * pos_j_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint8_t * one_d_intermediate_results_buf0;
     uint8_t * one_d_intermediate_results_buf1;
+#endif
     int16_t   x_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     int16_t   y_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     // ME Parameters

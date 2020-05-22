@@ -23,7 +23,11 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ALIGNED_ARRAY(obj->quarter_sb_buffer);
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
-
+#if REMOVE_ME_BIPRED_SEARCH
+    EB_FREE_ARRAY(obj->pos_b_buffer);
+    EB_FREE_ARRAY(obj->pos_h_buffer);
+    EB_FREE_ARRAY(obj->pos_j_buffer);
+#else
     for (list_index = 0; list_index < MAX_NUM_OF_REF_PIC_LIST; list_index++) {
         for (ref_pic_index = 0; ref_pic_index < MAX_REF_IDX; ref_pic_index++) {
             EB_FREE_ARRAY(obj->pos_b_buffer[list_index][ref_pic_index]);
@@ -34,6 +38,7 @@ static void me_context_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->one_d_intermediate_results_buf0);
     EB_FREE_ARRAY(obj->one_d_intermediate_results_buf1);
+#endif
     EB_FREE_ARRAY(obj->me_candidate);
     EB_FREE_ARRAY(obj->avctemp_buffer);
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
@@ -117,7 +122,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     // O   O   O
     //   I   I
     // O   O   O
-
+#if REMOVE_ME_BIPRED_SEARCH
+    EB_MALLOC_ARRAY(object_ptr->pos_b_buffer, object_ptr->interpolated_stride * max_search_area_height);
+    EB_MALLOC_ARRAY(object_ptr->pos_h_buffer, object_ptr->interpolated_stride * max_search_area_height);
+    EB_MALLOC_ARRAY(object_ptr->pos_j_buffer, object_ptr->interpolated_stride * max_search_area_height);
+#else
     for (list_index = 0; list_index < MAX_NUM_OF_REF_PIC_LIST; list_index++) {
         for (ref_pic_index = 0; ref_pic_index < MAX_REF_IDX; ref_pic_index++) {
             EB_MALLOC_ARRAY(object_ptr->pos_b_buffer[list_index][ref_pic_index],
@@ -132,7 +141,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf0, BLOCK_SIZE_64 * BLOCK_SIZE_64);
 
     EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf1, BLOCK_SIZE_64 * BLOCK_SIZE_64);
-
+#endif
     EB_MALLOC_ARRAY(object_ptr->me_candidate,
                     ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1));
 #if NSQ_REMOVAL_CODE_CLEAN_UP
