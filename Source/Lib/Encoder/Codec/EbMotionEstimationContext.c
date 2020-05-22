@@ -18,8 +18,10 @@ void motion_estimation_pred_unit_ctor(MePredUnit *pu) {
 
 static void me_context_dctor(EbPtr p) {
     MeContext *obj = (MeContext *)p;
+#if !REMOVE_ME_BIPRED_SEARCH
     uint32_t   list_index;
     uint32_t   ref_pic_index;
+#endif
     EB_FREE_ALIGNED_ARRAY(obj->quarter_sb_buffer);
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
@@ -45,15 +47,20 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
 }
-#if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
+    uint16_t max_input_luma_height) {
+#elif NSQ_REMOVAL_CODE_CLEAN_UP
 EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
                             uint16_t max_input_luma_height, uint8_t mrp_mode) {
 #else
 EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
                             uint16_t max_input_luma_height, uint8_t nsq_present, uint8_t mrp_mode) {
 #endif
+#if !REMOVE_ME_BIPRED_SEARCH
     uint32_t list_index;
     uint32_t ref_pic_index;
+#endif
     uint32_t pu_index;
     uint32_t me_candidate_index;
 
@@ -142,8 +149,12 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
 
     EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf1, BLOCK_SIZE_64 * BLOCK_SIZE_64);
 #endif
+#if  REMOVE_MRP_MODE
+    EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_ME_CAND);
+#else
     EB_MALLOC_ARRAY(object_ptr->me_candidate,
                     ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1));
+#endif
 #if NSQ_REMOVAL_CODE_CLEAN_UP
     for (pu_index = 0; pu_index < SQUARE_PU_COUNT;
 #else
@@ -151,8 +162,12 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
 #endif
          pu_index++) {
         for (me_candidate_index = 0;
+#if  REMOVE_MRP_MODE
+            me_candidate_index < MAX_ME_CAND;
+#else
              me_candidate_index <
              (uint32_t)((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1);
+#endif
              me_candidate_index++) {
             motion_estimation_pred_unit_ctor(
                 &(object_ptr->me_candidate[me_candidate_index]).pu[pu_index]);

@@ -1015,7 +1015,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
+#if !REMOVE_MRP_MODE
         input_data.mrp_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_mode;
+#endif
 #if !NSQ_REMOVAL_CODE_CLEAN_UP
         input_data.nsq_present = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->nsq_present;
 #endif
@@ -2008,7 +2010,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         (scs_ptr->static_config.rate_control_mode > 0) ||
         scs_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : scs_ptr->static_config.enable_overlays;
-
+#if !REMOVE_MRP_MODE
     //0: MRP Mode 0 (4,3)
     //1: MRP Mode 1 (2,2)
 #if MAR2_M8_ADOPTIONS
@@ -2016,6 +2018,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->mrp_mode = 0;
 #else
     scs_ptr->mrp_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
+#endif
 #endif
     //0: ON
     //1: OFF

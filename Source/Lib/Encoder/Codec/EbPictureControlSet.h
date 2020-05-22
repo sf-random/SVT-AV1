@@ -859,7 +859,9 @@ typedef struct PictureControlSetInitData {
     uint8_t   hbd_mode_decision;
     uint16_t  film_grain_noise_level;
     EbBool    ext_block_flag;
+#if !REMOVE_MRP_MODE
     uint8_t   mrp_mode;
+#endif
     uint8_t   cdf_mode;
 #if !NSQ_REMOVAL_CODE_CLEAN_UP
     uint8_t   nsq_present;

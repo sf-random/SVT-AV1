@@ -2246,8 +2246,11 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
         }
     }
-
+#if  REMOVE_MRP_MODE
+    if (parent_pcs_ptr->slice_type == B_SLICE)
+#else
     if (scs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+#endif
     {
 
         //compound Uni-Dir

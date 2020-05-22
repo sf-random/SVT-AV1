@@ -87,15 +87,22 @@ static void me_sb_results_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->total_me_candidate_index);
 }
 #if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t maxNumberOfMeCandidatesPerPU) {
+#else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode,
                                uint32_t maxNumberOfMeCandidatesPerPU) {
+#endif
 #else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU) {
 #endif
     uint32_t pu_index;
-
+#if  REMOVE_MRP_MODE
+    size_t count = MAX_ME_MV;
+#else
     size_t count                      = ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
+#endif
     obj_ptr->dctor                    = me_sb_results_dctor;
 #if !NSQ_REMOVAL_CODE_CLEAN_UP
     obj_ptr->max_number_of_pus_per_sb = max_number_of_blks_per_sb;
@@ -1435,17 +1442,23 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #endif
     }
 #endif
-
+#if REMOVE_MRP_MODE
+    object_ptr->max_number_of_candidates_per_block = MAX_ME_CAND;
+#else
     object_ptr->max_number_of_candidates_per_block =
         (init_data_ptr->mrp_mode == 0)
             ? ME_RES_CAND_MRP_MODE_0
             : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
             ME_RES_CAND_MRP_MODE_1; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
-
+#endif
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-#if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+        EB_NEW(object_ptr->me_results[sb_index],
+            me_sb_results_ctor,
+            object_ptr->max_number_of_candidates_per_block);
+#elif NSQ_REMOVAL_CODE_CLEAN_UP
         EB_NEW(object_ptr->me_results[sb_index],
             me_sb_results_ctor,
             init_data_ptr->mrp_mode,

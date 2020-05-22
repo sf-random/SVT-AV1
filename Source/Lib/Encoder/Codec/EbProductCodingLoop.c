@@ -4451,6 +4451,16 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 int16_t me_mv_x;
                 int16_t me_mv_y;
 #if ME_MEM_OPT
+#if REMOVE_MRP_MODE
+                if (list_idx == 0) {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + ref_idx].y_mv) << 1;
+                }
+                else {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + 4 + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + 4 + ref_idx].y_mv) << 1;
+                }
+#else
                 uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
                 if (list_idx == 0) {
                     me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + ref_idx].x_mv)<< 1;
@@ -4460,6 +4470,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].x_mv)<< 1;
                     me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].y_mv)<< 1;
                 }
+#endif
 #else
                 if (list_idx == 0) {
                     me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].x_mv)

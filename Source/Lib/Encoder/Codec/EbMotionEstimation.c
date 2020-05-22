@@ -12892,44 +12892,43 @@ EbErrorType motion_estimate_sb(
                     }
                 }
 
-                if (scs_ptr->mrp_mode == 0) {
-                    // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
-                    for (first_list_ref_pict_idx = 1;
-                        first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-                        first_list_ref_pict_idx++) {
+                // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
+                for (first_list_ref_pict_idx = 1;
+                    first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+                    first_list_ref_pict_idx++) {
 
-                        if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
-                            context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+                    if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
+                        context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
 
-                            me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                            me_candidate->prediction_direction = BI_PRED;
-                            me_candidate->ref_index[0] = (uint8_t)0;
-                            me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
-                            me_candidate->ref_index[1] = (uint8_t)first_list_ref_pict_idx;
-                            me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                        me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                        me_candidate->prediction_direction = BI_PRED;
+                        me_candidate->ref_index[0] = (uint8_t)0;
+                        me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                        me_candidate->ref_index[1] = (uint8_t)first_list_ref_pict_idx;
+                        me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_0;
 
-                            cand_index++;
-                        }
-                    }
-                    // 3rd set of BIPRED cand: (BWD, ALT)
-                    for (second_list_ref_pict_idx = 1;
-                        second_list_ref_pict_idx < (uint32_t)MIN(pcs_ptr->ref_list1_count_try, 1);
-                        second_list_ref_pict_idx++) {
-
-                        if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
-                            context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
-
-                            me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                            me_candidate->prediction_direction = BI_PRED;
-                            me_candidate->ref_index[0] = (uint8_t)0;
-                            me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_1;
-                            me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
-                            me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
-
-                            cand_index++;
-                        }
+                        cand_index++;
                     }
                 }
+                // 3rd set of BIPRED cand: (BWD, ALT)
+                for (second_list_ref_pict_idx = 1;
+                    second_list_ref_pict_idx < (uint32_t)MIN(pcs_ptr->ref_list1_count_try, 1);
+                    second_list_ref_pict_idx++) {
+
+                    if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
+                        context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
+
+                        me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                        me_candidate->prediction_direction = BI_PRED;
+                        me_candidate->ref_index[0] = (uint8_t)0;
+                        me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_1;
+                        me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                        me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+
+                        cand_index++;
+                    }
+                }
+                
             }
             
             total_me_candidate_index = cand_index;
@@ -12970,9 +12969,13 @@ EbErrorType motion_estimate_sb(
 #endif
             MeSbResults *me_pu_result                        = pcs_ptr->me_results[sb_index];
             me_pu_result->total_me_candidate_index[pu_index] = total_me_candidate_index;
-
+#if REMOVE_MRP_MODE
+            me_pu_result->total_me_candidate_index[pu_index] =
+                MIN(total_me_candidate_index, MAX_ME_CAND);
+#else
             me_pu_result->total_me_candidate_index[pu_index] =
                 MIN(total_me_candidate_index, ME_RES_CAND_MRP_MODE_0);
+#endif
             // Assining the ME candidates to the me Results buffer
             for (cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
                 me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
@@ -13026,12 +13029,20 @@ EbErrorType motion_estimate_sb(
                 for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
 #if  ME_MEM_OPT
+#if REMOVE_MRP_MODE
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].x_mv =
+                        _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
+                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#else
                      uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
                      pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0)? 4: list_index ? 2 : 0) + ref_pic_index].x_mv =
                          _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 
                       pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0) ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
                           _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#endif
 #else
                     pcs_ptr->me_results[sb_index]
                         ->me_mv_array[pu_index][((list_index && scs_ptr->mrp_mode == 0)
