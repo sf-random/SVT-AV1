@@ -264,11 +264,11 @@ typedef enum EbMeTierZeroPu {
     ME_TIER_ZERO_PU_16x64_2 = 207,
     ME_TIER_ZERO_PU_16x64_3 = 208
 } EbMeTierZeroPu;
-
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 typedef struct MeTierZero {
     MePredictionUnit pu[MAX_ME_PU_COUNT];
 } MeTierZero;
-
+#endif
 typedef struct IntraReferenceSamplesOpenLoop {
     EbDctor  dctor;
     uint8_t *y_intra_reference_array_reverse;
@@ -289,7 +289,11 @@ typedef struct MePredUnit {
 } MePredUnit;
 
 typedef struct MotionEstimationTierZero {
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    MePredUnit pu[SQUARE_PU_COUNT];
+#else
     MePredUnit pu[MAX_ME_PU_COUNT];
+#endif
 } MotionEstimationTierZero;
 #if ME_HME_PRUNING_CLEANUP
 typedef struct MeHmeRefPruneCtrls {
@@ -397,11 +401,17 @@ typedef struct MeContext {
     uint8_t psub_pel_direction8x32[16];
     uint8_t psub_pel_direction64x16[4];
     uint8_t psub_pel_direction16x64[4];
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+    uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+    uint32_t  p_sb_bipred_sad[SQUARE_PU_COUNT]; //needs to be upgraded to 209 pus
+    uint32_t  p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+#else
     uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
     uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
     uint32_t  p_sb_bipred_sad[MAX_ME_PU_COUNT]; //needs to be upgraded to 209 pus
     uint32_t  p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
+#endif
     uint32_t *p_best_full_pel_mv8x8;
     uint32_t *p_best_full_pel_mv16x16;
     uint32_t *p_best_full_pel_mv32x32;
@@ -417,7 +427,11 @@ typedef struct MeContext {
     uint32_t *p_best_full_pel_mv64x16;
     uint32_t *p_best_full_pel_mv16x64;
     uint8_t   full_quarter_pel_refinement;
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+#else
     uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
+#endif
     uint32_t *p_best_ssd8x8;
     uint32_t *p_best_ssd16x16;
     uint32_t *p_best_ssd32x32;

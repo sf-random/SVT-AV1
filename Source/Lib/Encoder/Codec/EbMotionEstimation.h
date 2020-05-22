@@ -171,8 +171,11 @@ extern "C" {
         16, 17, 18, 19, 24, 25, 26, 27,
         20, 21, 22, 23, 28, 29, 30, 31,
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t partition_width[SQUARE_PU_COUNT] = {
+#else
     static const uint32_t partition_width[MAX_ME_PU_COUNT] = {
+#endif
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -203,8 +206,11 @@ extern "C" {
          16,16,16,16
 #endif
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t partition_height[SQUARE_PU_COUNT] = {
+#else
     static const uint32_t partition_height[MAX_ME_PU_COUNT] = {
+#endif
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -235,8 +241,11 @@ extern "C" {
          64,64,64,64
 #endif
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t pu_search_index_map[SQUARE_PU_COUNT][2] = {
+#else
     static const uint32_t pu_search_index_map[MAX_ME_PU_COUNT][2] = {
+#endif
         { 0, 0 },
         { 0, 0 }, { 32, 0 }, { 0, 32 }, { 32, 32 },
         { 0, 0 }, { 16, 0 }, { 32, 0 }, { 48, 0 },

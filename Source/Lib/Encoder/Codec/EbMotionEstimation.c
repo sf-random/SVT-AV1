@@ -12179,7 +12179,11 @@ EbErrorType motion_estimate_sb(
 #if OVERLAY_R2R_FIX
             // R2R FIX: no winner integer MV is set in special case like initial p_sb_best_mv for overlay case,
             // then it sends dirty p_sb_best_mv to MD, initializing it is necessary
+#if NSQ_ME_CONTEXT_CLEAN_UP
+            for (uint32_t pi = 0; pi < SQUARE_PU_COUNT; pi++)
+#else
             for(uint32_t pi = 0; pi < MAX_ME_PU_COUNT; pi++)
+#endif
                 context_ptr->p_sb_best_mv[li][ri][pi] = 0;
 #endif
 #if PRUNE_HME_L0
@@ -12473,7 +12477,11 @@ EbErrorType motion_estimate_sb(
                                 MAX_SSE_VALUE);
                             memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
                                    context_ptr->p_sb_best_mv[list_index][ref_pic_index],
+#if NSQ_ME_CONTEXT_CLEAN_UP
+                                   SQUARE_PU_COUNT * sizeof(uint32_t));
+#else
                                    MAX_ME_PU_COUNT * sizeof(uint32_t));
+#endif
                             context_ptr->full_quarter_pel_refinement = 1;
                             context_ptr->p_best_full_pel_mv64x64 =
                                 &(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index]
