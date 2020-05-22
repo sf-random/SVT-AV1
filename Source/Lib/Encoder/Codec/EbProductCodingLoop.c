@@ -4291,9 +4291,21 @@ uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr,const MeSbRes
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr) {
 
-    const BlockGeom *sq_blk_geom = (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) ?
-        get_blk_geom_mds(context_ptr->blk_geom->sqi_mds) :
-        context_ptr->blk_geom;
+    // Get parent_depth_idx_mds
+    uint16_t parent_depth_idx_mds = 0;
+    if (context_ptr->blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
+        //Set parent to be considered
+        parent_depth_idx_mds =
+        (context_ptr->blk_geom->sqi_mds -
+        (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
+        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
+
+    const BlockGeom *sq_blk_geom =
+        (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)
+        ? get_blk_geom_mds(context_ptr->blk_geom->sqi_mds) // Use parent block SQ info as ME not performed for NSQ
+        : (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) // Use parent_depth SQ block info as ME not performed for 4x4
+        ? get_blk_geom_mds(parent_depth_idx_mds)
+        : context_ptr->blk_geom;
 
     context_ptr->geom_offset_x = 0;
     context_ptr->geom_offset_y = 0;
@@ -4311,39 +4323,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
     else
         context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
 
-    // Derive whether if current block would need to have offsets made
-    uint32_t bwidth_offset_to_8 = (sq_blk_geom->bwidth == 4) << 2;
-    uint32_t bheight_offset_to_8 = (sq_blk_geom->bheight == 4) << 2;
-
-    // if there is an offset needed to set either dimension to 8
-    if (bwidth_offset_to_8 || bheight_offset_to_8) {
-        // Align parent block has dimensions inherited by current block, if current block has a dimension of 4
-        // add 4 so the resulting block follows an 8x8 basis
-        uint32_t bwidth_to_search = sq_blk_geom->bwidth + bwidth_offset_to_8;
-        uint32_t bheight_to_search = sq_blk_geom->bheight + bheight_offset_to_8;
-
-        // Align parent block has origin inherited by current block
-        uint32_t x_to_search =
-            sq_blk_geom->origin_x -
-            (context_ptr->geom_offset_x + ((sq_blk_geom->origin_x & 0x7) ? 4 : 0));
-        uint32_t y_to_search =
-            sq_blk_geom->origin_y -
-            (context_ptr->geom_offset_y + ((sq_blk_geom->origin_y & 0x7) ? 4 : 0));
-
-        // Search the me_block_offset to the parent block
-        for (uint32_t block_index = 0;
-            block_index < pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
-            block_index++) {
-            if ((bwidth_to_search == partition_width[block_index]) &&
-                (bheight_to_search == partition_height[block_index]) &&
-                (x_to_search == pu_search_index_map[block_index][0]) &&
-                (y_to_search == pu_search_index_map[block_index][1])) {
-                context_ptr->me_block_offset = block_index;
-                break;
-            }
-        }
-    }
-    else if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
+    if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
         context_ptr->me_block_offset = 0;
     }
     else {
@@ -4506,6 +4486,37 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->refine_nsq_mv_ctrls.enabled) {
                     uint8_t  search_pattern = 0;
 
+#if USE_SUB_BLOCK_MVC
+                    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 child MV(s)
+                    int16_t mvc_x_array[5];
+                    int16_t mvc_y_array[5];
+                    int8_t  mvc_count = 0;
+                    // SQ MV (default MV for NSQ)
+                    mvc_x_array[mvc_count] = me_mv_x;
+                    mvc_y_array[mvc_count] = me_mv_y;
+                    if ((context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4) && context_ptr->blk_geom->sq_size >= 16) {
+                        uint32_t me_block_offset;
+                        uint16_t child_block_idx_1 = context_ptr->blk_geom->sqi_mds + d1_depth_offset[(scs_ptr->seq_header.sb_size == BLOCK_128X128)][context_ptr->blk_geom->depth];
+                        me_block_offset =
+                            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+                                get_blk_geom_mds(child_block_idx_1),
+                                context_ptr->geom_offset_x,
+                                context_ptr->geom_offset_y);
+                        if (list_idx == 0) {
+                            me_mv_x = (me_results->me_mv_array[me_block_offset*pu_stride + ref_idx].x_mv) << 1;
+                            me_mv_y = (me_results->me_mv_array[me_block_offset*pu_stride + ref_idx].y_mv) << 1;
+                        }
+                        else {
+                            me_mv_x = (me_results->me_mv_array[me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].x_mv) << 1;
+                            me_mv_y = (me_results->me_mv_array[me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].y_mv) << 1;
+                        }
+
+                        uint16_t child_block_idx_2 = child_block_idx_1 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
+                        uint16_t child_block_idx_3 = child_block_idx_2 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
+                        uint16_t child_block_idx_4 = child_block_idx_3 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
+
+                    }
+#else
                     // Search Center
                     int16_t  search_center_mvx = me_mv_x;
                     int16_t  search_center_mvy = me_mv_y;
@@ -4531,7 +4542,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &search_center_distortion,
                         1,
                         search_pattern);
-
+#endif
                     int16_t  best_search_mvx = (int16_t)~0;
                     int16_t  best_search_mvy = (int16_t)~0;
                     uint32_t best_search_distortion = (uint32_t)~0;

@@ -423,9 +423,11 @@ extern "C" {
 #define FIX_SHUT_ME_NSQ_SEARCH 1 
 #define ADD_MD_NSQ_SEARCH 1
 #define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
-#define REMOVE_MRP_MODE 1 // to do
 #define NSQ_ME_CONTEXT_CLEAN_UP 1
 #define REMOVE_ME_BIPRED_SEARCH 1
+#define USE_SUB_BLOCK_MVC 0
+
+#define REMOVE_MRP_MODE 1 // to do
 #define REDESIGN_ME_RESULTS_MD 0
 
 /********************************/
