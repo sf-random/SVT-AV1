@@ -391,6 +391,7 @@ typedef struct MeContext {
     uint8_t psub_pel_direction32x32[4];
     uint8_t psub_pel_direction16x16[16];
     uint8_t psub_pel_direction8x8[64];
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint8_t psub_pel_direction64x32[2];
     uint8_t psub_pel_direction32x16[8];
     uint8_t psub_pel_direction16x8[32];
@@ -401,6 +402,7 @@ typedef struct MeContext {
     uint8_t psub_pel_direction8x32[16];
     uint8_t psub_pel_direction64x16[4];
     uint8_t psub_pel_direction16x64[4];
+#endif
 #if NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
     uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
@@ -416,6 +418,7 @@ typedef struct MeContext {
     uint32_t *p_best_full_pel_mv16x16;
     uint32_t *p_best_full_pel_mv32x32;
     uint32_t *p_best_full_pel_mv64x64;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t *p_best_full_pel_mv64x32;
     uint32_t *p_best_full_pel_mv32x16;
     uint32_t *p_best_full_pel_mv16x8;
@@ -426,6 +429,7 @@ typedef struct MeContext {
     uint32_t *p_best_full_pel_mv8x32;
     uint32_t *p_best_full_pel_mv64x16;
     uint32_t *p_best_full_pel_mv16x64;
+#endif
     uint8_t   full_quarter_pel_refinement;
 #if NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
@@ -450,8 +454,10 @@ typedef struct MeContext {
 #endif
     uint8_t * p_best_nsq8x8;
     uint8_t * p_best_nsq16x16;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint8_t * p_best_nsq32x32;
     uint8_t * p_best_nsq64x64;
+#endif
     uint16_t *p_eight_pos_sad16x16;
     EB_ALIGN(64) uint32_t p_eight_sad32x32[4][8];
     EB_ALIGN(64) uint16_t p_eight_sad16x16[16][8];
