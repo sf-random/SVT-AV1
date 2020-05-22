@@ -397,6 +397,9 @@ typedef struct BlkStruct {
 #if SB_MEM_OPT
     uint8_t                  use_intrabc;
 #endif
+#if TXS_STATS
+    CandClass              cand_class;
+#endif
 } BlkStruct;
 #else
 typedef struct BlkStruct {

@@ -1293,12 +1293,13 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
 #endif
 #if TXS_STATS
-    uint8_t band, depthidx, partidx, txs_idx;
-    for (depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
-        for (partidx = 0; partidx < STATS_SHAPES; partidx++) {
-            for (band = 0; band < STATS_BANDS; band += 2) {
-                for (txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                    scs_ptr->part_cnt[depthidx][partidx][band][txs_idx] += pcs_ptr->part_cnt[depthidx][partidx][band][txs_idx];
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+            for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        scs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += pcs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                    }
                 }
             }
         }
@@ -5961,12 +5962,14 @@ void generate_statistics(
     uint32_t p_count[20] = { 0 };
     uint32_t p1_count[20] = { 0 };
 
-    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_LEVELS];
+    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
     for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
         for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
             for (uint8_t band = 0; band < STATS_BANDS; band++) {
-                for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                    part_cnt[depthidx][partidx][band][txs_idx] = 0;
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        part_cnt[depthidx][partidx][band][classidx][txs_idx] = 0;
+                    }
                 }
             }
         }
@@ -5982,41 +5985,109 @@ void generate_statistics(
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
 
-                    count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
-                    total_samples = (blk_geom->bwidth*blk_geom->bheight);
+                    //count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
+                    //total_samples = (blk_geom->bwidth*blk_geom->bheight);
 
+                    // Here, blk_index == block index of the sq
+                    //
                     uint8_t part_idx = context_ptr->md_blk_arr_nsq[blk_index].part;
-                    uint8_t tx_depth = context_ptr->md_blk_arr_nsq[blk_index].tx_depth;
-                    uint32_t count_unit = 1;// (blk_geom->bwidth*blk_geom->bheight);
-                    if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][18][tx_depth] += count_unit;
+                    // part the best partition
+                    // compute the block index of the best_partition
+                    // And then you get its calss
+                    // sq = 0 / h 1 h2/ v3 v4
+
+                    //uint8_t tx_depth = context_ptr->md_blk_arr_nsq[blk_index].tx_depth;
+                    //uint32_t count_unit = (blk_geom->bwidth*blk_geom->bheight);
+                    //uint8_t is_intra = (context_ptr->md_blk_arr_nsq[blk_index].cand_class == CAND_CLASS_0 ||
+                    //    context_ptr->md_blk_arr_nsq[blk_index].cand_class == CAND_CLASS_3);
+
+                    // Select the best partition, blk_index refers to the SQ block
+                    uint8_t best_idx, blks_in_best;
+                    switch (context_ptr->md_blk_arr_nsq[blk_index].part) {
+                        case PARTITION_NONE:
+                            best_idx = blk_index;
+                            blks_in_best = 1;
+                            break;
+                        case PARTITION_HORZ:
+                            best_idx = blk_index + 1;
+                            blks_in_best = 2;
+                            break;
+                        case PARTITION_VERT:
+                            best_idx = blk_index + 3;
+                            blks_in_best = 2;
+                            break;
+                        case PARTITION_HORZ_A:
+                            best_idx = blk_index + 5;
+                            blks_in_best = 3;
+                            break;
+                        case PARTITION_HORZ_B:
+                            best_idx = blk_index + 8;
+                            blks_in_best = 3;
+                            break;
+                        case PARTITION_VERT_A:
+                            best_idx = blk_index + 11;
+                            blks_in_best = 3;
+                            break;
+                        case PARTITION_VERT_B:
+                            best_idx = blk_index + 14;
+                            blks_in_best = 3;
+                            break;
+                        case PARTITION_HORZ_4:
+                            best_idx = blk_index + 17;
+                            blks_in_best = 4;
+                            break;
+                        case PARTITION_VERT_4:
+                            best_idx = blk_index + 21;
+                            blks_in_best = 4;
+                            break;
+                        default:
+                            assert(0);
+                            break;
                     }
-                    else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][16][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][14][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][12][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][10][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][8][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][6][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][4][tx_depth] += count_unit;
-                    }
-                    else if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
-                        part_cnt[blk_geom->depth][part_idx][2][tx_depth] += count_unit;
-                    }
-                    else {
-                        part_cnt[blk_geom->depth][part_idx][0][tx_depth] += count_unit;
+
+                    // Loop over the blocks in the best partition
+                    for (uint8_t curr_idx = best_idx; curr_idx < best_idx + blks_in_best; curr_idx++) {
+
+                        // Use the info of the best partition, not the square (only partition, cost,
+                        // and split_flag are updated in the SQ block as the best
+                        const BlockGeom * best_blk_geom = get_blk_geom_mds(curr_idx);
+                        count_non_zero_coeffs = context_ptr->md_local_blk_unit[curr_idx].count_non_zero_coeffs;
+                        uint8_t tx_depth = context_ptr->md_blk_arr_nsq[curr_idx].tx_depth;
+                        total_samples = (best_blk_geom->bwidth * best_blk_geom->bheight);
+                        uint32_t count_unit = (best_blk_geom->bwidth * best_blk_geom->bheight); // count the area, not just the occurence
+                        uint8_t is_intra = (context_ptr->md_blk_arr_nsq[curr_idx].cand_class == CAND_CLASS_0 ||
+                                            context_ptr->md_blk_arr_nsq[curr_idx].cand_class == CAND_CLASS_3);
+
+                        if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][18][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][16][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][14][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][12][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][10][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][8][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][6][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][4][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
+                            part_cnt[blk_geom->depth][part_idx][2][is_intra][tx_depth] += count_unit;
+                        }
+                        else {
+                            part_cnt[blk_geom->depth][part_idx][0][is_intra][tx_depth] += count_unit;
+                        }
                     }
                 }
             }
@@ -6029,8 +6100,10 @@ void generate_statistics(
     for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
         for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
             for (uint8_t band = 0; band < STATS_BANDS; band++) {
-                for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                    context_ptr->part_cnt[depthidx][partidx][band][txs_idx] += part_cnt[depthidx][partidx][band][txs_idx];
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        context_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                    }
                 }
             }
         }
@@ -6923,8 +6996,10 @@ void *enc_dec_kernel(void *input_ptr) {
         for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
             for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
                 for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                        context_ptr->md_context->part_cnt[depthidx][partidx][band][txs_idx] = 0;
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            context_ptr->md_context->part_cnt[depthidx][partidx][band][classidx][txs_idx] = 0;
+                        }
                     }
                 }
             }
@@ -7420,8 +7495,10 @@ void *enc_dec_kernel(void *input_ptr) {
         for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
             for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
                 for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                        pcs_ptr->part_cnt[depthidx][partidx][band][txs_idx] += context_ptr->md_context->part_cnt[depthidx][partidx][band][txs_idx];
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            pcs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += context_ptr->md_context->part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                        }
                     }
                 }
             }

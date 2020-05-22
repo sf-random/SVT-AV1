@@ -1793,8 +1793,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
             for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
                 for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
-                        pcs_ptr->part_cnt[depthidx][partidx][band][txs_idx] = 0;
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            pcs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] = 0;
+                        }
                     }
                 }
             }

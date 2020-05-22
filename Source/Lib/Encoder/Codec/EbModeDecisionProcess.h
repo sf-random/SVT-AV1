@@ -620,7 +620,7 @@ typedef struct ModeDecisionContext {
     SbClassControls sb_class_ctrls;
 #endif
 #if TXS_STATS
-    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_LEVELS];
+    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
 #endif
 } ModeDecisionContext;
 

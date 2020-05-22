@@ -402,7 +402,7 @@ typedef struct PictureControlSet {
     int32_t *                       rst_tmpbuf;
 #endif
 #if TXS_STATS
-    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_LEVELS];
+    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
 #endif
 } PictureControlSet;
 
