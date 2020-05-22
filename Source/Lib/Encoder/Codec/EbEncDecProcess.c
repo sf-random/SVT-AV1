@@ -6002,8 +6002,8 @@ void generate_statistics(
                     //    context_ptr->md_blk_arr_nsq[blk_index].cand_class == CAND_CLASS_3);
 
                     // Select the best partition, blk_index refers to the SQ block
-                    uint8_t best_idx, blks_in_best;
-                    switch (context_ptr->md_blk_arr_nsq[blk_index].part) {
+                    uint32_t best_idx, blks_in_best;
+                    switch (part_idx) {
                         case PARTITION_NONE:
                             best_idx = blk_index;
                             blks_in_best = 1;
@@ -6046,7 +6046,7 @@ void generate_statistics(
                     }
 
                     // Loop over the blocks in the best partition
-                    for (uint8_t curr_idx = best_idx; curr_idx < best_idx + blks_in_best; curr_idx++) {
+                    for (uint32_t curr_idx = best_idx; curr_idx < best_idx + blks_in_best; curr_idx++) {
 
                         // Use the info of the best partition, not the square (only partition, cost,
                         // and split_flag are updated in the SQ block as the best
@@ -6059,34 +6059,34 @@ void generate_statistics(
                                             context_ptr->md_blk_arr_nsq[curr_idx].cand_class == CAND_CLASS_3);
 
                         if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][18][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][18][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][16][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][16][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][14][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][14][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][12][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][12][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][10][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][10][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][8][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][8][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][6][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][6][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][4][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][4][is_intra][tx_depth] += count_unit;
                         }
                         else if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
-                            part_cnt[blk_geom->depth][part_idx][2][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][2][is_intra][tx_depth] += count_unit;
                         }
                         else {
-                            part_cnt[blk_geom->depth][part_idx][0][is_intra][tx_depth] += count_unit;
+                            part_cnt[best_blk_geom->depth][part_idx][0][is_intra][tx_depth] += count_unit;
                         }
                     }
                 }

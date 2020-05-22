@@ -32,7 +32,7 @@ static void eb_sequence_control_set_dctor(EbPtr p) {
                         continue;
                     for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
                         for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
-                            printf("%d\t", obj->part_cnt[depthidx][partidx][band][txs_idx]);
+                            printf("%d\t", obj->part_cnt[depthidx][partidx][band][classidx][txs_idx]);
                         }
                     }
                     printf("\n");
