@@ -12752,7 +12752,7 @@ EbErrorType motion_estimate_sb(
             cand_index = 0;
 
             uint32_t n_idx;
-
+#if !REMOVE_ME_BIPRED_SEARCH
             if (pu_index > 200)
                 n_idx = pu_index;
             else if (pu_index > 184)
@@ -12771,7 +12771,9 @@ EbErrorType motion_estimate_sb(
                 n_idx = tab32x16[pu_index - 87] + 87;
             else if (pu_index > 84)
                 n_idx = pu_index;
-            else if (pu_index > 20)
+            else 
+#endif
+            if (pu_index > 20)
                 n_idx = tab8x8[pu_index - 21] + 21;
             else if (pu_index > 4)
                 n_idx = tab16x16[pu_index - 5] + 5;
@@ -12811,10 +12813,11 @@ EbErrorType motion_estimate_sb(
             }
 #if !REMOVE_ME_BIPRED_SEARCH
             total_me_candidate_index = cand_index;
+
+
+            uint8_t ref_type_table[7];
 #endif
 #if !SHUT_ME_CAND_SORTING
-            uint8_t ref_type_table[7];
-
             if (pcs_ptr->prune_unipred_at_me) {
                 // Sorting of the ME candidates
                 for (candidate_index = 0; candidate_index < total_me_candidate_index - 1;
