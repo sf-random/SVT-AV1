@@ -12848,9 +12848,8 @@ EbErrorType motion_estimate_sb(
                 }
             }
 #endif
-
-            if (num_of_list_to_search) {
 #if REMOVE_ME_BIPRED_SEARCH
+            if (num_of_list_to_search) {
                 uint32_t first_list_ref_pict_idx;
                 uint32_t second_list_ref_pict_idx;
 
@@ -12868,36 +12867,36 @@ EbErrorType motion_estimate_sb(
                 // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
                 // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
                 for (first_list_ref_pict_idx = 0;
-                     first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-                     first_list_ref_pict_idx++) {
+                    first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+                    first_list_ref_pict_idx++) {
                     for (second_list_ref_pict_idx = 0;
-                         second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
-                         second_list_ref_pict_idx++) {
-                        {
+                        second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
+                        second_list_ref_pict_idx++) {
+                            {
 
-                            if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx]
+                                if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx]
                                     .do_ref &&
-                                context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx]
+                                    context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx]
                                     .do_ref) {
 
-                                me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                                me_candidate->prediction_direction = BI_PRED;
-                                me_candidate->ref_index[0] = (uint8_t)first_list_ref_pict_idx;
-                                me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
-                                me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
-                                me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+                                    me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+                                    me_candidate->prediction_direction = BI_PRED;
+                                    me_candidate->ref_index[0] = (uint8_t)first_list_ref_pict_idx;
+                                    me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                                    me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                                    me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
 
-                                cand_index++;
+                                    cand_index++;
+                                }
                             }
-                        }
                     }
                 }
-               
+
                 if (scs_ptr->mrp_mode == 0) {
                     // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
                     for (first_list_ref_pict_idx = 1;
-                         first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-                         first_list_ref_pict_idx++) {
+                        first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+                        first_list_ref_pict_idx++) {
 
                         if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
                             context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
@@ -12914,8 +12913,8 @@ EbErrorType motion_estimate_sb(
                     }
                     // 3rd set of BIPRED cand: (BWD, ALT)
                     for (second_list_ref_pict_idx = 1;
-                         second_list_ref_pict_idx < (uint32_t) MIN(pcs_ptr->ref_list1_count_try, 1);
-                         second_list_ref_pict_idx++) {
+                        second_list_ref_pict_idx < (uint32_t)MIN(pcs_ptr->ref_list1_count_try, 1);
+                        second_list_ref_pict_idx++) {
 
                         if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
                             context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
@@ -12931,8 +12930,11 @@ EbErrorType motion_estimate_sb(
                         }
                     }
                 }
-                total_me_candidate_index = cand_index;
+            }
+            
+            total_me_candidate_index = cand_index;
 #else
+            if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
                                         context_ptr,
                                         pu_index,
@@ -12947,8 +12949,8 @@ EbErrorType motion_estimate_sb(
                                         &total_me_candidate_index,
                                         ref_type_table,
                                         pcs_ptr);
-#endif
             }
+#endif
 
 #if !SHUT_ME_CAND_SORTING
             // Sorting of the ME candidates
