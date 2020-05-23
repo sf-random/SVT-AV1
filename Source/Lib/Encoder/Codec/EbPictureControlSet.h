@@ -581,7 +581,9 @@ typedef struct PictureParentControlSet {
 
     // Motion Estimation Results
     uint8_t       max_number_of_pus_per_sb;
+#if !REMOVE_MRP_MODE
     uint8_t       max_number_of_candidates_per_block;
+#endif
     MeSbResults **me_results;
     uint32_t *    rc_me_distortion;
 
@@ -901,7 +903,11 @@ extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
 #if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr);
+#else
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
+#endif
 #else
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                       uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);

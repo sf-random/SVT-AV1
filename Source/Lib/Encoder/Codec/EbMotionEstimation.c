@@ -12984,7 +12984,11 @@ EbErrorType motion_estimate_sb(
                     me_candidate->distortion;
 #endif
 #if  ME_MEM_OPT
+#if REMOVE_MRP_MODE
+                uint32_t me_cand_off = pu_index * MAX_ME_CAND + cand_index;
+#else
                 uint32_t me_cand_off = pu_index * pcs_ptr->max_number_of_candidates_per_block + cand_index;
+#endif
                 pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].direction =
                     me_candidate->prediction_direction;
                 pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l0 =

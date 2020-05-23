@@ -4334,7 +4334,11 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
                 context_ptr->geom_offset_y);
     }
 #if ME_MEM_OPT
+#if REMOVE_MRP_MODE
+    context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_ME_CAND;
+#else
     context_ptr->me_cand_offset = context_ptr->me_block_offset *pcs_ptr->parent_pcs_ptr->max_number_of_candidates_per_block;
+#endif
 #endif
 }
 #else

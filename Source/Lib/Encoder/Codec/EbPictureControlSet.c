@@ -88,7 +88,7 @@ static void me_sb_results_dctor(EbPtr p) {
 }
 #if NSQ_REMOVAL_CODE_CLEAN_UP
 #if REMOVE_MRP_MODE
-EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t maxNumberOfMeCandidatesPerPU) {
+EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
 #else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode,
                                uint32_t maxNumberOfMeCandidatesPerPU) {
@@ -98,9 +98,7 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
                                uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU) {
 #endif
     uint32_t pu_index;
-#if  REMOVE_MRP_MODE
-    size_t count = MAX_ME_MV;
-#else
+#if  !REMOVE_MRP_MODE
     size_t count                      = ((mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
 #endif
     obj_ptr->dctor                    = me_sb_results_dctor;
@@ -109,8 +107,13 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
 #endif
 #if ME_MEM_OPT
 #if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * MAX_ME_MV);
+    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * MAX_ME_CAND);
+#else
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * count);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * maxNumberOfMeCandidatesPerPU);
+#endif
 #else
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, max_number_of_blks_per_sb * count);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array,
@@ -129,6 +132,17 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
     for (pu_index = 0; pu_index < max_number_of_blks_per_sb; ++pu_index) {
 #endif
 #if  ME_MEM_OPT
+#if REMOVE_MRP_MODE
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].direction = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].direction = 1;
+        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].direction = 2;
+#else
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l0 = 0;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l1 = 0;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 1].ref_idx_l0 = 0;
@@ -138,6 +152,7 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].direction = 0;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 1].direction = 1;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 2].direction = 2;
+#endif
 #else
         obj_ptr->me_candidate[pu_index] =
             &obj_ptr->me_candidate_array[pu_index * maxNumberOfMeCandidatesPerPU];
@@ -1442,9 +1457,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #endif
     }
 #endif
-#if REMOVE_MRP_MODE
-    object_ptr->max_number_of_candidates_per_block = MAX_ME_CAND;
-#else
+#if !REMOVE_MRP_MODE
     object_ptr->max_number_of_candidates_per_block =
         (init_data_ptr->mrp_mode == 0)
             ? ME_RES_CAND_MRP_MODE_0
@@ -1456,8 +1469,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
 #if REMOVE_MRP_MODE
         EB_NEW(object_ptr->me_results[sb_index],
-            me_sb_results_ctor,
-            object_ptr->max_number_of_candidates_per_block);
+            me_sb_results_ctor);
 #elif NSQ_REMOVAL_CODE_CLEAN_UP
         EB_NEW(object_ptr->me_results[sb_index],
             me_sb_results_ctor,
