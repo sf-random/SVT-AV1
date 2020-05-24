@@ -108,8 +108,8 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
 #if ME_MEM_OPT
 #if NSQ_REMOVAL_CODE_CLEAN_UP
 #if REMOVE_MRP_MODE
-    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * MAX_ME_MV);
-    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * MAX_ME_CAND);
+    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * MAX_PA_ME_MV);
+    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * MAX_PA_ME_CAND);
 #else
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * count);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * maxNumberOfMeCandidatesPerPU);
@@ -133,15 +133,15 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
 #endif
 #if  ME_MEM_OPT
 #if REMOVE_MRP_MODE
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].ref_idx_l0 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].ref_idx_l1 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].ref_idx_l0 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].ref_idx_l1 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].ref_idx_l0 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].ref_idx_l1 = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 0].direction = 0;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 1].direction = 1;
-        obj_ptr->me_candidate_array[pu_index*MAX_ME_CAND + 2].direction = 2;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 0].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 0].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 1].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 1].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 2].ref_idx_l0 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 2].ref_idx_l1 = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 0].direction = 0;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 1].direction = 1;
+        obj_ptr->me_candidate_array[pu_index*MAX_PA_ME_CAND + 2].direction = 2;
 #else
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l0 = 0;
         obj_ptr->me_candidate_array[pu_index*maxNumberOfMeCandidatesPerPU + 0].ref_idx_l1 = 0;

@@ -4335,7 +4335,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
     }
 #if ME_MEM_OPT
 #if REMOVE_MRP_MODE
-    context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_ME_CAND;
+    context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
 #else
     context_ptr->me_cand_offset = context_ptr->me_block_offset *pcs_ptr->parent_pcs_ptr->max_number_of_candidates_per_block;
 #endif
@@ -4452,12 +4452,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if ME_MEM_OPT
 #if REMOVE_MRP_MODE
                 if (list_idx == 0) {
-                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + ref_idx].x_mv) << 1;
-                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + ref_idx].y_mv) << 1;
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
                 }
                 else {
-                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + 4 + ref_idx].x_mv) << 1;
-                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_ME_MV + 4 + ref_idx].y_mv) << 1;
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
                 }
 #else
                 uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
@@ -4496,7 +4496,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->refine_nsq_mv_ctrls.enabled) {
                     uint8_t  search_pattern = 0;
 #if USE_SUB_BLOCK_MVC
-                    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 child MV(s)
+                    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s): 2 NxN if 2NxN or Nx2N, and 4 NxN if 4NxN or Nx4N 
                     int16_t mvc_x_array[5];
                     int16_t mvc_y_array[5];
                     int8_t  mvc_count = 0;
@@ -4512,12 +4512,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                 ((pu_search_index_map[block_index][0] >= (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)) && (pu_search_index_map[block_index][0] < context_ptr->blk_geom->bwidth + (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)))  &&
                                 ((pu_search_index_map[block_index][1] >= (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) && (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight + (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) ){
                                 if (list_idx == 0) {
-                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + ref_idx].x_mv) << 1;
-                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + ref_idx].y_mv) << 1;
+                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
+                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
                                 }
                                 else {
-                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + 4 + ref_idx].x_mv) << 1;
-                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + 4 + ref_idx].y_mv) << 1;
+                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
+                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
                                 }
                                 mvc_count++;
                             }

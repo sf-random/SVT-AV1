@@ -150,7 +150,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     EB_MALLOC_ARRAY(object_ptr->one_d_intermediate_results_buf1, BLOCK_SIZE_64 * BLOCK_SIZE_64);
 #endif
 #if  REMOVE_MRP_MODE
-    EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_ME_CAND);
+    EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_PA_ME_CAND);
 #else
     EB_MALLOC_ARRAY(object_ptr->me_candidate,
                     ((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1));
@@ -163,7 +163,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
          pu_index++) {
         for (me_candidate_index = 0;
 #if  REMOVE_MRP_MODE
-            me_candidate_index < MAX_ME_CAND;
+            me_candidate_index < MAX_PA_ME_CAND;
 #else
              me_candidate_index <
              (uint32_t)((mrp_mode == 0) ? ME_RES_CAND_MRP_MODE_0 : ME_RES_CAND_MRP_MODE_1);

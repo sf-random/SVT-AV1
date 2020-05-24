@@ -1157,7 +1157,7 @@ void tpl_mc_flow_dispenser(
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
 #if REMOVE_MRP_MODE
-                    uint32_t max_inter_ref = MAX_ME_MV;
+                    uint32_t max_inter_ref = MAX_PA_ME_MV;
 #else
                     uint32_t max_inter_ref = ((scs_ptr->mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
 #endif
@@ -1203,8 +1203,8 @@ void tpl_mc_flow_dispenser(
                         const MeSbResults *me_results = pcs_ptr->me_results[sb_index];
 #if ME_MEM_OPT
 #if REMOVE_MRP_MODE
-                        x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
-                        y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
+                        x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
+                        y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
 #else
                         uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
                         x_curr_mv = me_results->me_mv_array[me_mb_offset * pu_stride + (list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
