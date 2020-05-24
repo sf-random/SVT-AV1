@@ -1426,6 +1426,104 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 }
 #endif
 #if MD_REFERENCE_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+void set_inter_inter_distortion_based_reference_pruning_controls(
+    ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
+    RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
+
+    switch (inter_inter_distortion_based_reference_pruning_mode) {
+    case 0: ref_pruning_ctrls->inter_to_inter_pruning_enabled = 0; break;
+    case 1:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 7;
+#if PRUNING_PER_INTER_TYPE //--
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 7;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 7;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 7;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 7;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 7;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 7;
+        break;
+    case 2:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 6;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 6;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 6;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 6;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 6;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 6;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 6;
+        break;
+    case 3:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 5;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 5;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 5;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 5;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 5;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 5;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 5;
+        break;
+    case 4:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 4;
+#if PRUNING_PER_INTER_TYPE //--
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 4;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 4;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 4;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 4;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 4;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 4;
+        break;
+    case 5:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 3;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+#else
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 3;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 3;
+#endif
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 3;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 3;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 3;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 3;
+
+        break;
+    case 6:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled      = 1;
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 2;
+        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 2;
+        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 2;
+
+        break;
+    default: assert(0); break;
+    }
+}
+#else
 void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
 
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1447,20 +1545,24 @@ void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionCon
     case 3:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 4;
+
         break;
     case 4:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 3;
+
         break;
     case 5:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag = 2;
+
         break;
     default:
         assert(0);
         break;
     }
 }
+#endif
 void set_inter_intra_distortion_based_reference_pruning_controls(ModeDecisionContext *mdctxt, uint8_t inter_intra_distortion_based_reference_pruning_mode) {
 
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1531,6 +1633,44 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
 
         break;
 
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+#if ADD_MD_NSQ_SEARCH
+void set_refine_nsq_mv_controls(ModeDecisionContext *mdctxt, uint8_t md_refine_nsq_mv) {
+
+    RefineNsqMvCtrls *refine_nsq_mv_ctrls = &mdctxt->refine_nsq_mv_ctrls;
+
+    switch (md_refine_nsq_mv)
+    {
+    case 0:
+        refine_nsq_mv_ctrls->enabled = 0;
+        break;
+    case 1:
+        refine_nsq_mv_ctrls->enabled = 1;
+        refine_nsq_mv_ctrls->use_ssd = 0;
+        refine_nsq_mv_ctrls->full_pel_search_width = 15;
+        refine_nsq_mv_ctrls->full_pel_search_height = 15;
+        refine_nsq_mv_ctrls->perform_sub_pel = 1;
+        refine_nsq_mv_ctrls->half_pel_search_width = 3;
+        refine_nsq_mv_ctrls->half_pel_search_height = 3;
+        refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
+        refine_nsq_mv_ctrls->quarter_pel_search_height = 3;
+        break;
+    case 2:
+        refine_nsq_mv_ctrls->enabled = 1;
+        refine_nsq_mv_ctrls->use_ssd = 0;
+        refine_nsq_mv_ctrls->full_pel_search_width = 31;
+        refine_nsq_mv_ctrls->full_pel_search_height = 31;
+        refine_nsq_mv_ctrls->perform_sub_pel = 1;
+        refine_nsq_mv_ctrls->half_pel_search_width = 3;
+        refine_nsq_mv_ctrls->half_pel_search_height = 3;
+        refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
+        refine_nsq_mv_ctrls->quarter_pel_search_height = 3;
+        break;
     default:
         assert(0);
         break;
@@ -4360,7 +4500,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if M2_COMBO_2
             context_ptr->inter_inter_distortion_based_reference_pruning = 5;
 #else
+#if REFACTOR_REF_FRAME_MASKING
+            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
+#endif
 #endif
 #else
         else
@@ -4446,9 +4590,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
 #endif
+#if ADD_MD_NSQ_SEARCH
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_refine_nsq_mv = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_refine_nsq_mv = 0;
+    else
+        if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
+            context_ptr->md_refine_nsq_mv = 2; 
+        else
+            context_ptr->md_refine_nsq_mv = 1;
+
+    set_refine_nsq_mv_controls(context_ptr, context_ptr->md_refine_nsq_mv);
+#endif
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_max_ref_count = 4;
+        context_ptr->md_max_ref_count = 4; 
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_max_ref_count = 1;
 #if M8_CAP_NUMBER_OF_REF_IN_MD
@@ -4460,7 +4617,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_max_ref_count = 4;
 #endif
-
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     if (pd_pass == PD_PASS_0)
         context_ptr->bipred3x3_number_input_mv = 4;
@@ -4475,7 +4632,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->bipred3x3_number_input_mv = 1;
 #endif
-
+#endif
     // Set md_skip_mvp_generation (and use (0,0) as MVP instead)
     if (pd_pass == PD_PASS_0)
         context_ptr->md_skip_mvp_generation = EB_TRUE;
@@ -4518,7 +4675,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
     else
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
-
+#if !PD0_INTER_CAND 
     // Set best_me_cand_only_flag
     if (pd_pass == PD_PASS_0)
         context_ptr->best_me_cand_only_flag = EB_TRUE;
@@ -4526,7 +4683,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->best_me_cand_only_flag = EB_FALSE;
     else
         context_ptr->best_me_cand_only_flag = EB_FALSE;
-
+#endif
     // Set skip_depth
     if (pd_pass == PD_PASS_0)
         context_ptr->skip_depth = 0;

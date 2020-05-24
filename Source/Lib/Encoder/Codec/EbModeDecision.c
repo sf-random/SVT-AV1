@@ -885,17 +885,23 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t     mi_col                 = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
     // (8 Best_L0 neighbors)
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
 #if UNIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_0][list0_ref_index].do_ref) continue;
+#else
         if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
 #endif
         if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 0) {
@@ -1056,17 +1062,23 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     }
 
     // (8 Best_L1 neighbors)
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
     total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if UNIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_1][list1_ref_index].do_ref) continue;
+#else
         if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
 #endif
         if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 1) {
@@ -1279,10 +1291,12 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
         /**************
        NEW_NEWMV
        ************* */
+#if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
         total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
 #else
         total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
 #endif
         for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt;
              ++me_candidate_index) {
@@ -1291,7 +1305,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if BIPRED_3x3_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+#endif
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                 list1_ref_index > context_ptr->md_max_ref_count - 1)
@@ -1764,7 +1782,12 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         uint8_t          list_idx   = get_list_idx(rf[0]);
         uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if NEAREST_NEAR_REF_MASKING
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if REFACTOR_REF_FRAME_MASKING
+        if (!context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx][ref_idx].do_ref && ref_idx) return;
+#else
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
+#endif
 #if 0
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) return;
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
@@ -2026,9 +2049,12 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
 
         uint8_t list_idx_0 = get_list_idx(rf[0]);
         uint8_t list_idx_1 = get_list_idx(rf[1]);
-
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if REFACTOR_REF_FRAME_MASKING
+        if ((!context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
+#else
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
-
+#endif
 #if 0
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref)) return;
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
@@ -2367,9 +2393,17 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         uint8_t list_idx_0 = get_list_idx(rf[0]);
         uint8_t list_idx_1 = get_list_idx(rf[1]);
         if (list_idx_0 != INVALID_REF)
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[NRST_NEW_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref) return;
+#else
             if (!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref) return;
+#endif
         if (list_idx_1 != INVALID_REF)
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[NRST_NEW_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref) return;
+#else
             if (!context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) return;
+#endif
 #endif
         if (ref_idx_0 > context_ptr->md_max_ref_count - 1 ||
             ref_idx_1 > context_ptr->md_max_ref_count - 1)
@@ -2978,7 +3012,11 @@ void inject_warped_motion_candidates(
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][list_idx][ref_idx].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
+#endif
 #endif
             if (ref_idx > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3144,7 +3182,11 @@ void inject_warped_motion_candidates(
         ************* */
         if (inter_direction == 0) {
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_0][list0_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3243,7 +3285,11 @@ void inject_warped_motion_candidates(
        ************* */
         if (inter_direction == 1) {
 #if WARP_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_1][list1_ref_index].do_ref) continue;
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
 #endif
             if (list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -3631,7 +3677,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         ************* */
         if (inter_direction == 0) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+            if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_0][list0_ref_index].do_ref)
+#else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref)
+#endif
                 continue;
 #endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
@@ -3777,7 +3827,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 context_ptr->injected_ref_type_l0_array[context_ptr->injected_mv_count_l0] =
                     to_inject_ref_type;
                 ++context_ptr->injected_mv_count_l0;
+#if !PD0_INTER_CAND
                 if (context_ptr->best_me_cand_only_flag) break;
+#endif
             }
         }
 
@@ -3787,7 +3839,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
            ************* */
             if (inter_direction == 1) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_1][list1_ref_index].do_ref)
+#else
                 if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref)
+#endif
                     continue;
 #endif
                 if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
@@ -3927,7 +3983,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr->injected_ref_type_l1_array[context_ptr->injected_mv_count_l1] =
                         to_inject_ref_type;
                     ++context_ptr->injected_mv_count_l1;
+#if !PD0_INTER_CAND
                     if (context_ptr->best_me_cand_only_flag) break;
+#endif
                 }
             }
             /**************
@@ -3935,7 +3993,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
             ************* */
             if (allow_bipred) {
 #if NEW_MV_REF_MASKING
+#if REFACTOR_REF_FRAME_MASKING
+                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
+#else
                 if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
+#endif
                     continue;
 #endif
                 if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
@@ -4107,7 +4169,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                             context_ptr->injected_ref_type_bipred_array
                                 [context_ptr->injected_mv_count_bipred] = to_inject_ref_type;
                             ++context_ptr->injected_mv_count_bipred;
+#if !PD0_INTER_CAND
                             if (context_ptr->best_me_cand_only_flag) break;
+#endif
                         }
                     }
                 }
@@ -4633,6 +4697,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             }
         }
     }
+
     inject_new_candidates(scs_ptr,
                           context_ptr,
                           pcs_ptr,
@@ -4641,6 +4706,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                           context_ptr->me_sb_addr,
                           context_ptr->me_block_offset,
                           &cand_total_cnt);
+
     if (context_ptr->global_mv_injection) {
         if (pcs_ptr->parent_pcs_ptr->gm_level <= GM_DOWN) {
             for (unsigned list_ref_index_l0 = 0; list_ref_index_l0 < 1; ++list_ref_index_l0)
