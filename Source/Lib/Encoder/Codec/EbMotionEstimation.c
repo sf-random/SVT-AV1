@@ -12129,6 +12129,96 @@ void prune_references_sc(
     }
 }
 #endif
+#if REMOVE_ME_BIPRED_SEARCH
+void build_me_candidate_array(
+    PictureParentControlSet *pcs_ptr,
+    MeContext* context_ptr,
+    uint8_t *total_me_candidate_index,
+    uint32_t num_of_list_to_search,
+    uint32_t pu_index) {
+    MePredUnit *me_candidate;
+    if (num_of_list_to_search) {
+        uint32_t first_list_ref_pict_idx;
+        uint32_t second_list_ref_pict_idx;
+
+        uint32_t n_index;
+        if (pu_index > 20)
+            n_index = tab8x8[pu_index - 21] + 21;
+        else if (pu_index > 4)
+            n_index = tab16x16[pu_index - 5] + 5;
+        else
+            n_index = pu_index;
+
+        // 1st set of BIPRED cand
+        // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
+        // (LAST2,BWD), (LAST2,ALT), (LAST2,ALT2)
+        // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
+        // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
+        for (first_list_ref_pict_idx = 0;
+            first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+            first_list_ref_pict_idx++) {
+            for (second_list_ref_pict_idx = 0;
+                second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
+                second_list_ref_pict_idx++) {
+                    {
+
+                        if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx]
+                            .do_ref &&
+                            context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx]
+                            .do_ref) {
+
+                            me_candidate = &(context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
+                            me_candidate->prediction_direction = BI_PRED;
+                            me_candidate->ref_index[0] = (uint8_t)first_list_ref_pict_idx;
+                            me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                            me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                            me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+
+                            (*total_me_candidate_index)++;
+                        }
+                    }
+            }
+        }
+
+        // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
+        for (first_list_ref_pict_idx = 1;
+            first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
+            first_list_ref_pict_idx++) {
+
+            if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+
+                me_candidate = &(context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
+                me_candidate->prediction_direction = BI_PRED;
+                me_candidate->ref_index[0] = (uint8_t)0;
+                me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
+                me_candidate->ref_index[1] = (uint8_t)first_list_ref_pict_idx;
+                me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_0;
+
+                (*total_me_candidate_index)++;
+            }
+        }
+        // 3rd set of BIPRED cand: (BWD, ALT)
+        for (second_list_ref_pict_idx = 1;
+            second_list_ref_pict_idx < (uint32_t)MIN(pcs_ptr->ref_list1_count_try, 1);
+            second_list_ref_pict_idx++) {
+
+            if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
+                context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
+
+                me_candidate = &(context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
+                me_candidate->prediction_direction = BI_PRED;
+                me_candidate->ref_index[0] = (uint8_t)0;
+                me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_1;
+                me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
+                me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
+
+                (*total_me_candidate_index)++;
+            }
+        }
+    }
+}
+#endif
 /*******************************************
  * motion_estimate_sb
  *   performs ME (SB)
@@ -12849,89 +12939,13 @@ EbErrorType motion_estimate_sb(
             }
 #endif
 #if REMOVE_ME_BIPRED_SEARCH
-            if (num_of_list_to_search) {
-                uint32_t first_list_ref_pict_idx;
-                uint32_t second_list_ref_pict_idx;
-
-                uint32_t n_index;
-                if (pu_index > 20)
-                    n_index = tab8x8[pu_index - 21] + 21;
-                else if (pu_index > 4)
-                    n_index = tab16x16[pu_index - 5] + 5;
-                else
-                    n_index = pu_index;
-
-                // 1st set of BIPRED cand
-                // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
-                // (LAST2,BWD), (LAST2,ALT), (LAST2,ALT2)
-                // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
-                // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
-                for (first_list_ref_pict_idx = 0;
-                    first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-                    first_list_ref_pict_idx++) {
-                    for (second_list_ref_pict_idx = 0;
-                        second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
-                        second_list_ref_pict_idx++) {
-                            {
-
-                                if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx]
-                                    .do_ref &&
-                                    context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx]
-                                    .do_ref) {
-
-                                    me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                                    me_candidate->prediction_direction = BI_PRED;
-                                    me_candidate->ref_index[0] = (uint8_t)first_list_ref_pict_idx;
-                                    me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
-                                    me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
-                                    me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
-
-                                    cand_index++;
-                                }
-                            }
-                    }
-                }
-
-                // 2nd set of BIPRED cand: (LAST,LAST2)    (LAST,LAST3) (LAST,GOLD)
-                for (first_list_ref_pict_idx = 1;
-                    first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-                    first_list_ref_pict_idx++) {
-
-                    if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
-                        context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
-
-                        me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                        me_candidate->prediction_direction = BI_PRED;
-                        me_candidate->ref_index[0] = (uint8_t)0;
-                        me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_0;
-                        me_candidate->ref_index[1] = (uint8_t)first_list_ref_pict_idx;
-                        me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_0;
-
-                        cand_index++;
-                    }
-                }
-                // 3rd set of BIPRED cand: (BWD, ALT)
-                for (second_list_ref_pict_idx = 1;
-                    second_list_ref_pict_idx < (uint32_t)MIN(pcs_ptr->ref_list1_count_try, 1);
-                    second_list_ref_pict_idx++) {
-
-                    if (context_ptr->hme_results[REF_LIST_1][0].do_ref &&
-                        context_ptr->hme_results[REF_LIST_1][first_list_ref_pict_idx].do_ref) {
-
-                        me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                        me_candidate->prediction_direction = BI_PRED;
-                        me_candidate->ref_index[0] = (uint8_t)0;
-                        me_candidate->ref0_list = (uint8_t)REFERENCE_PIC_LIST_1;
-                        me_candidate->ref_index[1] = (uint8_t)second_list_ref_pict_idx;
-                        me_candidate->ref1_list = (uint8_t)REFERENCE_PIC_LIST_1;
-
-                        cand_index++;
-                    }
-                }
-                
-            }
-            
             total_me_candidate_index = cand_index;
+            build_me_candidate_array(             
+                pcs_ptr,
+                context_ptr,
+                &total_me_candidate_index,
+                num_of_list_to_search,
+                pu_index);
 #else
             if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
