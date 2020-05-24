@@ -4416,11 +4416,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint32_t blk_origin_index) {
     const SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-#if REDESIGN_ME_RESULTS_MD
-    // Reset valid_pa_me_mv
-    memset(context_ptr->valid_pa_me_mv, 0, 8); // [2][4]
-#endif
-
     derive_me_offsets(scs_ptr, pcs_ptr, context_ptr);
 #if !ADD_MD_NSQ_SEARCH
     EbBool                    use_ssd = EB_TRUE;
@@ -4500,43 +4495,68 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if ADD_MD_NSQ_SEARCH
                 if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->refine_nsq_mv_ctrls.enabled) {
                     uint8_t  search_pattern = 0;
-
 #if USE_SUB_BLOCK_MVC
                     // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 child MV(s)
                     int16_t mvc_x_array[5];
                     int16_t mvc_y_array[5];
                     int8_t  mvc_count = 0;
-                    // SQ MV (default MV for NSQ)
+                    // SQ MV (default MVC for NSQ)
                     mvc_x_array[mvc_count] = me_mv_x;
                     mvc_y_array[mvc_count] = me_mv_y;
+                    mvc_count++;
                     if ((context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4) && context_ptr->blk_geom->sq_size >= 16) {
-                        uint32_t me_block_offset;
-                        uint16_t child_block_idx_1 = context_ptr->blk_geom->sqi_mds + d1_depth_offset[(scs_ptr->seq_header.sb_size == BLOCK_128X128)][context_ptr->blk_geom->depth];
-                        me_block_offset =
-                            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
-                                get_blk_geom_mds(child_block_idx_1),
-                                context_ptr->geom_offset_x,
-                                context_ptr->geom_offset_y);
-                        if (list_idx == 0) {
-                            me_mv_x = (me_results->me_mv_array[me_block_offset*pu_stride + ref_idx].x_mv) << 1;
-                            me_mv_y = (me_results->me_mv_array[me_block_offset*pu_stride + ref_idx].y_mv) << 1;
+                        uint8_t min_size = MIN(context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight);
+                        // Derive the sub-block(s) MVs (additional MVC for NSQ)
+                        for (uint32_t block_index = 0; block_index < pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb; block_index++) {
+                            if ((min_size == partition_width[block_index] || min_size == partition_height[block_index]) &&
+                                ((pu_search_index_map[block_index][0] >= (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)) && (pu_search_index_map[block_index][0] < context_ptr->blk_geom->bwidth + (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)))  &&
+                                ((pu_search_index_map[block_index][1] >= (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) && (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight + (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) ){
+                                if (list_idx == 0) {
+                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + ref_idx].x_mv) << 1;
+                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + ref_idx].y_mv) << 1;
+                                }
+                                else {
+                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + 4 + ref_idx].x_mv) << 1;
+                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_ME_MV + 4 + ref_idx].y_mv) << 1;
+                                }
+                                mvc_count++;
+                            }
                         }
-                        else {
-                            me_mv_x = (me_results->me_mv_array[me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].x_mv) << 1;
-                            me_mv_y = (me_results->me_mv_array[me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].y_mv) << 1;
-                        }
+                    }
 
-                        uint16_t child_block_idx_2 = child_block_idx_1 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
-                        uint16_t child_block_idx_3 = child_block_idx_2 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
-                        uint16_t child_block_idx_4 = child_block_idx_3 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth + 1];
+                    // Search Center
+                    int16_t  search_center_mvx = mvc_x_array[0];
+                    int16_t  search_center_mvy = mvc_y_array[0];
+                    uint32_t search_center_distortion = (uint32_t)~0;
 
+                    for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
+
+                        md_sub_pel_search(pcs_ptr,
+                            context_ptr,
+                            input_picture_ptr,
+                            input_origin_index,
+                            blk_origin_index,
+                            context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                            list_idx,
+                            ref_idx,
+                            mvc_x_array[mvc_index],
+                            mvc_y_array[mvc_index],
+                            0,
+                            0,
+                            0,
+                            0,
+                            -1, // not used as only 1 position to search = central position
+                            &search_center_mvx,
+                            &search_center_mvy,
+                            &search_center_distortion,
+                            1,
+                            search_pattern);
                     }
 #else
                     // Search Center
                     int16_t  search_center_mvx = me_mv_x;
                     int16_t  search_center_mvy = me_mv_y;
                     uint32_t search_center_distortion = (uint32_t)~0;
-                    if(context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
@@ -4671,12 +4691,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     me_mv_x;
                 context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
                     me_mv_y;
-
-#if REDESIGN_ME_RESULTS_MD
-                context_ptr->pa_me_mv[list_idx][ref_idx][0] = me_mv_x;
-                context_ptr->pa_me_mv[list_idx][ref_idx][1] = me_mv_y;
-                context_ptr->valid_pa_me_mv[list_idx][ref_idx] = EB_TRUE;
-#endif
             }
         }
     }
@@ -10690,6 +10704,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         mvp_bypass_init(pcs_ptr, context_ptr);
     }
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
+#if ADD_MD_NSQ_SEARCH
+    if (pcs_ptr->slice_type != I_SLICE)
+#endif
     read_refine_me_mvs(
         pcs_ptr, context_ptr, input_picture_ptr, input_origin_index, blk_origin_index);
 
