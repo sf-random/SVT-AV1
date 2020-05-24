@@ -12130,24 +12130,54 @@ void prune_references_sc(
 }
 #endif
 #if REMOVE_ME_BIPRED_SEARCH
-void build_me_candidate_array(
+void construct_me_candidate_array(
     PictureParentControlSet *pcs_ptr,
     MeContext* context_ptr,
     uint8_t *total_me_candidate_index,
     uint32_t num_of_list_to_search,
-    uint32_t pu_index) {
+    uint32_t pu_index,
+    uint32_t n_idx) {
+
     MePredUnit *me_candidate;
+    uint8_t num_of_ref_pic_to_search;
+    uint32_t list_index;
+    uint32_t ref_pic_index;
+    for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#if MRP_CTRL
+        num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+            ? pcs_ptr->ref_list0_count_try
+            : (list_index == REF_LIST_0)
+            ? pcs_ptr->ref_list0_count_try
+            : pcs_ptr->ref_list1_count_try;
+#else
+        num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+            ? pcs_ptr->ref_list0_count
+            : (list_index == REF_LIST_0)
+            ? pcs_ptr->ref_list0_count
+            : pcs_ptr->ref_list1_count;
+#endif
+
+        // Ref Picture Loop
+        for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+            //ME was skipped, so do not add this Unipred candidate
+            if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
+                continue;
+            me_candidate = &(context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
+            me_candidate->prediction_direction = list_index;
+            me_candidate->ref_index[list_index] = ref_pic_index;
+            me_candidate->ref0_list =
+                me_candidate->prediction_direction == 0 ? list_index : 24;
+            me_candidate->ref1_list =
+                me_candidate->prediction_direction == 1 ? list_index : 24;
+            me_candidate->distortion =
+                context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
+            (*total_me_candidate_index) ++;
+        }
+    }
+
     if (num_of_list_to_search) {
         uint32_t first_list_ref_pict_idx;
         uint32_t second_list_ref_pict_idx;
-
-        uint32_t n_index;
-        if (pu_index > 20)
-            n_index = tab8x8[pu_index - 21] + 21;
-        else if (pu_index > 4)
-            n_index = tab16x16[pu_index - 5] + 5;
-        else
-            n_index = pu_index;
 
         // 1st set of BIPRED cand
         // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
@@ -12839,8 +12869,9 @@ EbErrorType motion_estimate_sb(
     if (context_ptr->me_alt_ref == EB_FALSE) {
         // Bi-Prediction motion estimation loop
         for (pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
+#if !REMOVE_ME_BIPRED_SEARCH
             cand_index = 0;
-
+#endif
             uint32_t n_idx;
 #if !REMOVE_ME_BIPRED_SEARCH
             if (pu_index > 200)
@@ -12869,6 +12900,7 @@ EbErrorType motion_estimate_sb(
                 n_idx = tab16x16[pu_index - 5] + 5;
             else
                 n_idx = pu_index;
+#if !REMOVE_ME_BIPRED_SEARCH
             for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
 #if MRP_CTRL
                 num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
@@ -12901,7 +12933,6 @@ EbErrorType motion_estimate_sb(
                     cand_index++;
                 }
             }
-#if !REMOVE_ME_BIPRED_SEARCH
             total_me_candidate_index = cand_index;
 
 
@@ -12939,13 +12970,14 @@ EbErrorType motion_estimate_sb(
             }
 #endif
 #if REMOVE_ME_BIPRED_SEARCH
-            total_me_candidate_index = cand_index;
-            build_me_candidate_array(             
+            total_me_candidate_index = 0;
+            construct_me_candidate_array(             
                 pcs_ptr,
                 context_ptr,
                 &total_me_candidate_index,
                 num_of_list_to_search,
-                pu_index);
+                pu_index,
+                n_idx);
 #else
             if (num_of_list_to_search) {
                 bi_prediction_search(scs_ptr,
