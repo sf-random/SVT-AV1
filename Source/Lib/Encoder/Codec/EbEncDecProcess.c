@@ -6571,6 +6571,14 @@ void generate_statistics(
                     int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[blk_geom->sqi_mds].pred_depth_refinement;
                     if (pred_depth_refinement < -1 || pred_depth_refinement > 1)
                         printf("pred_depth_refinement error\t%d\n", pred_depth_refinement);
+
+                    // Set the bounds of pred_depth_refinement for array indexing
+                    pred_depth_refinement = MIN(pred_depth_refinement, 1);
+                    pred_depth_refinement = MAX(pred_depth_refinement, -1);
+                    // Add one b/c starts at -1 (need proper offset for array)
+                    pred_depth_refinement++;
+                    if (pred_depth_refinement < 0 || pred_depth_refinement > (STATS_DELTAS - 1))
+                        printf("pred_depth_refinement array idx error\t%d\n", pred_depth_refinement);
 #endif
                     // part the best partition
                     // compute the block index of the best_partition
