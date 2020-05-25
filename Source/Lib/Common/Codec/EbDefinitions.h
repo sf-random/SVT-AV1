@@ -417,6 +417,19 @@ extern "C" {
 #define MAY23_M0_ADOPTIONS         1 // M0 adoptions towards a better slope M0
 #define NON_UNIFORM_NSQ_BANDING    1 // Change the NSQ cycles reduction frequency bands and TH for better behaviour
 
+// STATISTICS MACROS
+#define SHUT_TXS_IMPACT_FEATURES 1 // Shut features that strongly impact TXS
+
+#define TXS_STATS 1 // Add code for generating TXS statistics
+#if TXS_STATS
+#define STATS_DEPTHS 6 // # of partition depths
+#define STATS_SHAPES 10 // SQ, H, V, HA, HB, VA, VB, H4, V4 (not necessarily in order) - split to be ignored
+#define STATS_BANDS  20
+#define STATS_LEVELS 3 // 3 TXS levels (i.e. TXS depths): 0, 1, 2
+#define STATS_CLASSES 2 // INTRA/INTER
+#endif
+
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

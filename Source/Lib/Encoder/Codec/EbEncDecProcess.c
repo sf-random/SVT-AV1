@@ -1340,6 +1340,19 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         (100 * pcs_ptr->below32_coded_area) /
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
 #endif
+#if TXS_STATS
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+            for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        scs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += pcs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                    }
+                }
+            }
+        }
+    }
+#endif
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->intra_coded_area = 0;
 #if REDUCE_COMPLEX_CLIP_CYCLES
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->coef_coded_area = 0;
@@ -2320,6 +2333,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->tx_search_reduced_set = 0;
     else
         context_ptr->tx_search_reduced_set = 1;
+#endif
+
+#if SHUT_TXS_IMPACT_FEATURES
+    if (pd_pass == PD_PASS_2)
+        context_ptr->md_txt_search_level = 0;
 #endif
     // Interpolation search Level                     Settings
     // 0                                              OFF
@@ -3802,6 +3820,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         else
             context_ptr->md_stage_2_3_cand_prune_th = 5;
+#endif
+
+#if SHUT_TXS_IMPACT_FEATURES
+    context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
 #endif
 
     // md_stage_2_3_class_prune_th (for class removal)
@@ -6410,6 +6432,182 @@ static uint64_t generate_best_part_cost(
     }
     return best_part_cost;
 }
+
+#if TXS_STATS
+//Part part_to_shape[10] = {
+//    PART_N,
+//    PART_H,
+//    PART_V,
+//    PART_S,
+//    PART_HA,
+//    PART_HB,
+//    PART_VA,
+//    PART_VB,
+//    PART_H4,
+//    PART_V4
+//};
+void generate_statistics(
+    SequenceControlSet  *scs_ptr,
+    PictureControlSet   *pcs_ptr,
+    ModeDecisionContext *context_ptr,
+    uint32_t             sb_index) {
+    uint32_t blk_index = 0;
+    uint32_t total_samples = 0;
+    uint32_t count_non_zero_coeffs = 0;
+
+    uint32_t m1_count[20] = { 0 };
+    uint32_t p_count[20] = { 0 };
+    uint32_t p1_count[20] = { 0 };
+
+    uint32_t part_cnt[STATS_DEPTHS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+            for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        part_cnt[depthidx][partidx][band][classidx][txs_idx] = 0;
+                    }
+                }
+            }
+        }
+    }
+    SbClassControls *sb_class_ctrls = &context_ptr->sb_class_ctrls;
+    EbBool split_flag;
+    while (blk_index < scs_ptr->max_block_cnt) {
+        const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
+        uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
+            (blk_geom->sq_size < 128) ? 1 : 0;
+        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
+            if (blk_geom->shape == PART_N) {
+                if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
+
+                    //count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
+                    //total_samples = (blk_geom->bwidth*blk_geom->bheight);
+
+                    // Here, blk_index == block index of the sq
+                    //
+                    uint8_t part_idx = context_ptr->md_blk_arr_nsq[blk_index].part;
+                    // part the best partition
+                    // compute the block index of the best_partition
+                    // And then you get its calss
+                    // sq = 0 / h 1 h2/ v3 v4
+
+                    //uint8_t tx_depth = context_ptr->md_blk_arr_nsq[blk_index].tx_depth;
+                    //uint32_t count_unit = (blk_geom->bwidth*blk_geom->bheight);
+                    //uint8_t is_intra = (context_ptr->md_blk_arr_nsq[blk_index].cand_class == CAND_CLASS_0 ||
+                    //    context_ptr->md_blk_arr_nsq[blk_index].cand_class == CAND_CLASS_3);
+
+                    // Select the best partition, blk_index refers to the SQ block
+                    uint32_t best_idx, blks_in_best;
+                    switch (part_idx) {
+                    case PARTITION_NONE:
+                        best_idx = blk_index;
+                        blks_in_best = 1;
+                        break;
+                    case PARTITION_HORZ:
+                        best_idx = blk_index + 1;
+                        blks_in_best = 2;
+                        break;
+                    case PARTITION_VERT:
+                        best_idx = blk_index + 3;
+                        blks_in_best = 2;
+                        break;
+                    case PARTITION_HORZ_A:
+                        best_idx = blk_index + 5;
+                        blks_in_best = 3;
+                        break;
+                    case PARTITION_HORZ_B:
+                        best_idx = blk_index + 8;
+                        blks_in_best = 3;
+                        break;
+                    case PARTITION_VERT_A:
+                        best_idx = blk_index + 11;
+                        blks_in_best = 3;
+                        break;
+                    case PARTITION_VERT_B:
+                        best_idx = blk_index + 14;
+                        blks_in_best = 3;
+                        break;
+                    case PARTITION_HORZ_4:
+                        best_idx = blk_index + 17;
+                        blks_in_best = 4;
+                        break;
+                    case PARTITION_VERT_4:
+                        best_idx = blk_index + 21;
+                        blks_in_best = 4;
+                        break;
+                    default:
+                        assert(0);
+                        break;
+                    }
+
+                    // Loop over the blocks in the best partition
+                    for (uint32_t curr_idx = best_idx; curr_idx < best_idx + blks_in_best; curr_idx++) {
+
+                        // Use the info of the best partition, not the square (only partition, cost,
+                        // and split_flag are updated in the SQ block as the best
+                        const BlockGeom * best_blk_geom = get_blk_geom_mds(curr_idx);
+                        count_non_zero_coeffs = context_ptr->md_local_blk_unit[curr_idx].count_non_zero_coeffs;
+                        uint8_t tx_depth = context_ptr->md_blk_arr_nsq[curr_idx].tx_depth;
+                        total_samples = (best_blk_geom->bwidth * best_blk_geom->bheight);
+                        uint32_t count_unit = (best_blk_geom->bwidth * best_blk_geom->bheight); // count the area, not just the occurence
+                        uint8_t is_intra = (context_ptr->md_blk_arr_nsq[curr_idx].cand_class == CAND_CLASS_0 ||
+                            context_ptr->md_blk_arr_nsq[curr_idx].cand_class == CAND_CLASS_3);
+
+                        if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][18][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][16][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][14][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][12][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][10][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][8][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][6][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][4][is_intra][tx_depth] += count_unit;
+                        }
+                        else if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
+                            part_cnt[best_blk_geom->depth][part_idx][2][is_intra][tx_depth] += count_unit;
+                        }
+                        else {
+                            part_cnt[best_blk_geom->depth][part_idx][0][is_intra][tx_depth] += count_unit;
+                        }
+                    }
+                }
+            }
+        }
+        blk_index += split_flag ?
+            d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] :
+            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+    }
+
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+            for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                        context_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
+
 #if SB_CLASSIFIER
 static uint8_t determine_sb_class(
     SequenceControlSet  *scs_ptr,
@@ -7398,7 +7596,19 @@ void *enc_dec_kernel(void *input_ptr) {
         end_of_row_flag    = EB_FALSE;
         sb_row_index_start = sb_row_index_count = 0;
         context_ptr->tot_intra_coded_area       = 0;
-
+#if TXS_STATS
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            context_ptr->md_context->part_cnt[depthidx][partidx][band][classidx][txs_idx] = 0;
+                        }
+                    }
+                }
+            }
+        }
+#endif
 #if REDUCE_COMPLEX_CLIP_CYCLES
         context_ptr->tot_coef_coded_area = 0;
         context_ptr->tot_below32_coded_area = 0;
@@ -7851,6 +8061,9 @@ void *enc_dec_kernel(void *input_ptr) {
                                      sb_origin_y,
                                      sb_index,
                                      context_ptr->md_context);
+#if TXS_STATS
+                    generate_statistics(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
 
                     //Jing: Skip configure SB for encdec
                     //      Currently EDcontext only stores frame_level lambda/qp
@@ -7890,6 +8103,19 @@ void *enc_dec_kernel(void *input_ptr) {
 #if REDUCE_COMPLEX_CLIP_CYCLES
         pcs_ptr->coef_coded_area += (uint32_t)context_ptr->tot_coef_coded_area;
         pcs_ptr->below32_coded_area += (uint32_t)context_ptr->tot_below32_coded_area;
+#endif
+#if TXS_STATS
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            pcs_ptr->part_cnt[depthidx][partidx][band][classidx][txs_idx] += context_ptr->md_context->part_cnt[depthidx][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
 #endif
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);

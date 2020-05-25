@@ -6533,6 +6533,10 @@ uint32_t product_full_mode_decision(
 
     blk_ptr->prediction_mode_flag = candidate_ptr->type;
     blk_ptr->tx_depth = candidate_ptr->tx_depth;
+#if TXS_STATS
+    // Save inter/intra info for stats
+    blk_ptr->cand_class = candidate_ptr->cand_class;
+#endif
     blk_ptr->skip_flag = candidate_ptr->skip_flag; // note, the skip flag is re-checked in the ENCDEC process
     blk_ptr->block_has_coeff = ((candidate_ptr->block_has_coeff) > 0) ? EB_TRUE : EB_FALSE;
 #if CLEAN_UP_SB_DATA_4
