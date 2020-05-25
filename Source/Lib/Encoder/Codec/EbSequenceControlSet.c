@@ -11,6 +11,46 @@
 static void eb_sequence_control_set_dctor(EbPtr p) {
     SequenceControlSet *obj = (SequenceControlSet *)p;
 #if TXS_STATS
+#if STATS_PER_DEPTH_DELTA
+    uint64_t total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            total += obj->part_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("Satistics start\n");
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        if (partidx == PARTITION_SPLIT)
+                            continue;
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                                printf("%d\t", obj->part_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx]);
+                            }
+                        }
+                        printf("\n");
+                    }
+                    printf("\n");
+                }
+                //printf("\n");
+            }
+        }
+        printf("\n");
+        printf("Satistics end\n");
+        fflush(stdout);
+    }
+#else
     uint64_t total = 0;
     for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
         for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
@@ -45,6 +85,7 @@ static void eb_sequence_control_set_dctor(EbPtr p) {
         printf("Satistics end\n");
         fflush(stdout);
     }
+#endif
 #endif
     EB_FREE_ARRAY(obj->sb_params_array);
     EB_FREE_ARRAY(obj->sb_geom);

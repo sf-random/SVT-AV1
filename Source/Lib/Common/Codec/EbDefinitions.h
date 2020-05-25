@@ -429,6 +429,10 @@ extern "C" {
 #define STATS_CLASSES 2 // INTRA/INTER
 #endif
 
+#define STATS_PER_DEPTH_DELTA 0
+#if STATS_PER_DEPTH_DELTA
+#define STATS_DELTAS 3 // -1, 0 , +1
+#endif
 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

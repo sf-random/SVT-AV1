@@ -1790,6 +1790,21 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         pcs_ptr->below32_coded_area = 0;
 #endif
 #if TXS_STATS
+#if STATS_PER_DEPTH_DELTA
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                    for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
+                        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                pcs_ptr->part_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#else
         for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
             for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
                 for (uint8_t band = 0; band < STATS_BANDS; band += 2) {
@@ -1801,6 +1816,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 }
             }
         }
+#endif
 #endif
         // Compute Tc, and Beta offsets for a given picture
         // Set reference cdef strength
