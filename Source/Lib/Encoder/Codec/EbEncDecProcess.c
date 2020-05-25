@@ -4465,7 +4465,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M0)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
         else
+#if REFACTOR_REF_FRAME_MASKING
+            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
+#endif
 #else
 #if MAY19_ADOPTIONS
         else if (MR_MODE)
