@@ -4462,12 +4462,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (pd_pass == PD_PASS_1)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
 #if MAY23_M0_ADOPTIONS
-        else if (enc_mode <= ENC_M0)
-            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
-        else
 #if REFACTOR_REF_FRAME_MASKING
+        else if (MR_MODE)
+            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+        else if (enc_mode <= ENC_M0)
+            context_ptr->inter_inter_distortion_based_reference_pruning = 1;
+        else
             context_ptr->inter_inter_distortion_based_reference_pruning = 4;
 #else
+       else if (enc_mode <= ENC_M0)
+            context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+        else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
 #endif
 #else
