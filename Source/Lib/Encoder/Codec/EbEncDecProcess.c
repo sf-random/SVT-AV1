@@ -1437,8 +1437,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 7;
 #if PRUNING_PER_INTER_TYPE //--
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 1;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 7;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 7;
@@ -1452,8 +1452,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 6;
 #if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 6;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 6;
@@ -1467,8 +1467,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 5;
 #if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 5;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 5;
@@ -1482,8 +1482,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 4;
 #if PRUNING_PER_INTER_TYPE //--
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 4;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 4;
@@ -1497,8 +1497,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 3;
 #if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 2;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
 #else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 3;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 3;
@@ -1512,8 +1512,13 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
     case 6:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled      = 1;
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 2;
+#if PRUNING_PER_INTER_TYPE
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
+#else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
+#endif
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 2;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 2;
