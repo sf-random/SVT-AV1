@@ -1670,36 +1670,36 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
 }
 #endif
 #if ADD_MD_NSQ_SEARCH
-void set_refine_nsq_mv_controls(ModeDecisionContext *mdctxt, uint8_t md_refine_nsq_mv) {
+void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
 
-    RefineNsqMvCtrls *refine_nsq_mv_ctrls = &mdctxt->refine_nsq_mv_ctrls;
+    MdNsqMvSearchCtrls *md_nsq_mv_search_ctrls = &mdctxt->md_nsq_mv_search_ctrls;
 
-    switch (md_refine_nsq_mv)
+    switch (md_nsq_mv_search_level)
     {
     case 0:
-        refine_nsq_mv_ctrls->enabled = 0;
+        md_nsq_mv_search_ctrls->enabled = 0;
         break;
     case 1:
-        refine_nsq_mv_ctrls->enabled = 1;
-        refine_nsq_mv_ctrls->use_ssd = 0;
-        refine_nsq_mv_ctrls->full_pel_search_width = 15;
-        refine_nsq_mv_ctrls->full_pel_search_height = 15;
-        refine_nsq_mv_ctrls->perform_sub_pel = 1;
-        refine_nsq_mv_ctrls->half_pel_search_width = 3;
-        refine_nsq_mv_ctrls->half_pel_search_height = 3;
-        refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
-        refine_nsq_mv_ctrls->quarter_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->enabled = 1;
+        md_nsq_mv_search_ctrls->use_ssd = 0;
+        md_nsq_mv_search_ctrls->full_pel_search_width = 15;
+        md_nsq_mv_search_ctrls->full_pel_search_height = 15;
+        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
         break;
     case 2:
-        refine_nsq_mv_ctrls->enabled = 1;
-        refine_nsq_mv_ctrls->use_ssd = 0;
-        refine_nsq_mv_ctrls->full_pel_search_width = 31;
-        refine_nsq_mv_ctrls->full_pel_search_height = 31;
-        refine_nsq_mv_ctrls->perform_sub_pel = 1;
-        refine_nsq_mv_ctrls->half_pel_search_width = 3;
-        refine_nsq_mv_ctrls->half_pel_search_height = 3;
-        refine_nsq_mv_ctrls->quarter_pel_search_width = 3;
-        refine_nsq_mv_ctrls->quarter_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->enabled = 1;
+        md_nsq_mv_search_ctrls->use_ssd = 0;
+        md_nsq_mv_search_ctrls->full_pel_search_width = 31;
+        md_nsq_mv_search_ctrls->full_pel_search_height = 31;
+        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
         break;
     default:
         assert(0);
@@ -4627,16 +4627,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if ADD_MD_NSQ_SEARCH
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_refine_nsq_mv = 0;
+        context_ptr->md_nsq_mv_search_level = 0;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_refine_nsq_mv = 0;
+        context_ptr->md_nsq_mv_search_level = 0;
     else
         if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
-            context_ptr->md_refine_nsq_mv = 2; 
+            context_ptr->md_nsq_mv_search_level = 2; 
         else
-            context_ptr->md_refine_nsq_mv = 1;
+            context_ptr->md_nsq_mv_search_level = 1;
 
-    set_refine_nsq_mv_controls(context_ptr, context_ptr->md_refine_nsq_mv);
+    md_nsq_mv_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)

@@ -4493,7 +4493,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 //printf("%d\t%d\t%d\t\%d\n", context_ptr->me_sb_addr, context_ptr->blk_geom->blkidx_mds, me_mv_x, me_mv_y);
 
 #if ADD_MD_NSQ_SEARCH
-                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->refine_nsq_mv_ctrls.enabled) {
+                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_nsq_mv_search_ctrls.enabled) {
                     uint8_t  search_pattern = 0;
 #if USE_SUB_BLOCK_MVC
                     // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s): 2 NxN if 2NxN or Nx2N, and 4 NxN if 4NxN or Nx4N 
@@ -4536,7 +4536,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             input_picture_ptr,
                             input_origin_index,
                             blk_origin_index,
-                            context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                            context_ptr->md_nsq_mv_search_ctrls.use_ssd,
                             list_idx,
                             ref_idx,
                             mvc_x_array[mvc_index],
@@ -4562,7 +4562,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         input_picture_ptr,
                         input_origin_index,
                         blk_origin_index,
-                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
                         list_idx,
                         ref_idx,
                         search_center_mvx,
@@ -4590,34 +4590,34 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
-                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
                         list_idx,
                         ref_idx,
                         search_center_mvx,
                         search_center_mvy,
-                        -(context_ptr->refine_nsq_mv_ctrls.full_pel_search_width >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.full_pel_search_width >> 1),
-                        -(context_ptr->refine_nsq_mv_ctrls.full_pel_search_height >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.full_pel_search_height >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
                         8,
                         &best_search_mvx,
                         &best_search_mvy,
                         &best_search_distortion);
-                    if (context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
+                    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
                         blk_origin_index,
-                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
                         list_idx,
                         ref_idx,
                         best_search_mvx,
                         best_search_mvy,
-                        -(context_ptr->refine_nsq_mv_ctrls.half_pel_search_width >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.half_pel_search_width >> 1),
-                        -(context_ptr->refine_nsq_mv_ctrls.half_pel_search_height >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.half_pel_search_height >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
                         4,
                         &best_search_mvx,
                         &best_search_mvy,
@@ -4625,21 +4625,21 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         0,
                         search_pattern);
 
-                    if (context_ptr->refine_nsq_mv_ctrls.perform_sub_pel)
+                    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
                     md_sub_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
                         blk_origin_index,
-                        context_ptr->refine_nsq_mv_ctrls.use_ssd,
+                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
                         list_idx,
                         ref_idx,
                         best_search_mvx,
                         best_search_mvy,
-                        -(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_width >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_width >> 1),
-                        -(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_height >> 1),
-                        +(context_ptr->refine_nsq_mv_ctrls.quarter_pel_search_height >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
+                        -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
+                        +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
                         2,
                         &best_search_mvx,
                         &best_search_mvy,

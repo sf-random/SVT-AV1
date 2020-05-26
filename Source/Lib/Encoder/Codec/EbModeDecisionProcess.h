@@ -243,7 +243,7 @@ typedef struct DepthReductionCtrls {
 }DepthReductionCtrls;
 #endif
 #if ADD_MD_NSQ_SEARCH
-typedef struct RefineNsqMvCtrls {
+typedef struct MdNsqMvSearchCtrls {
     uint8_t enabled;
     uint8_t use_ssd;
     uint8_t perform_sub_pel;
@@ -253,7 +253,7 @@ typedef struct RefineNsqMvCtrls {
     uint8_t half_pel_search_height;
     uint8_t quarter_pel_search_width;
     uint8_t quarter_pel_search_height;
-}RefineNsqMvCtrls;
+}MdNsqMvSearchCtrls;
 #endif
 #if TXT_CONTROL
 typedef struct TxTSearchCtrls {
@@ -602,8 +602,8 @@ typedef struct ModeDecisionContext {
     DepthReductionCtrls depth_reduction_ctrls;
 #endif
 #if ADD_MD_NSQ_SEARCH
-    uint8_t      md_refine_nsq_mv ;
-    RefineNsqMvCtrls refine_nsq_mv_ctrls;
+    uint8_t      md_nsq_mv_search_level ;
+    MdNsqMvSearchCtrls md_nsq_mv_search_ctrls;
 #endif
 #if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
