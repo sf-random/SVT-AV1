@@ -402,6 +402,7 @@ extern "C" {
 #endif
 #define DEPTH_STAT 0
 
+#define DEPTH_1_2 0
 #define DEPTH_MODULATION 0
 #if DEPTH_MODULATION
 #define DEPTH_TH  1

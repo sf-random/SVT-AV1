@@ -7870,6 +7870,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if NSQ_CYCLE_PRED_DEPTH_MOD
                     uint8_t pred_cost_band = 0;
 #endif
+#if DEPTH_1_2
+                    s_depth = -1;
+                    e_depth = 2;
+#endif
 #if DEPTH_STAT || GEN_STAT
                     s_depth = -1;
                     e_depth =  2;
