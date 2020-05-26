@@ -7121,35 +7121,35 @@ void generate_statistics(
                         uint64_t band_width = (context_ptr->blk_geom->depth == 0) ? 100 : (context_ptr->blk_geom->depth == 1) ? 50 : 20;
                         if (context_ptr->blk_geom->depth == 0) {
                             if (count_non_zero_coeffs >= ((total_samples * 6) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else if (count_non_zero_coeffs >= ((total_samples * 2) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                         }
                         else if (context_ptr->blk_geom->depth == 1) {
                             if (count_non_zero_coeffs >= ((total_samples * 8) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else if (count_non_zero_coeffs >= ((total_samples * 2) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                         }
                         else {
                             if (count_non_zero_coeffs >= ((total_samples * 18) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][2][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else if (count_non_zero_coeffs >= ((total_samples * 2) / band_width)) {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][1][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                             else {
-                                part_cnt[blk_geom->depth][pred_depth_refinement][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
+                                part_cnt[blk_geom->depth][pred_depth_refinement + 2][part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part]][0][sse_g_band] += (blk_geom->bwidth*blk_geom->bheight);
                             }
                         }
 #endif
