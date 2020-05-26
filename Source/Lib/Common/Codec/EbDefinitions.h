@@ -408,6 +408,7 @@ extern "C" {
 #define DEPTH_TH  1
 #define DEPTH_MERGER_TABLE 1
 #define NEW_DEPTH_MERGE 1
+#define T25M_STAT 1
 #endif
 
 #define FIX_NSQ_OFF 1
