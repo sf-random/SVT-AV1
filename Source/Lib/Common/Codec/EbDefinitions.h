@@ -436,6 +436,11 @@ extern "C" {
 #define REMOVE_MRP_MODE 1 
 #define USE_SUB_BLOCK_MVC 1
 #endif
+#define MOVE_SUB_PEL_ME_TO_MD 1
+#if MOVE_SUB_PEL_ME_TO_MD
+#define SHUT_SUB_PEL_ME 1
+#define PERFORM_SUB_PEL_MD 0 
+#endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

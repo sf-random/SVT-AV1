@@ -12395,6 +12395,9 @@ EbErrorType motion_estimate_sb(
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
 
+#if SHUT_SUB_PEL_ME
+    if (context_ptr->me_alt_ref == EB_TRUE) {
+#endif
     // Uni-Prediction motion estimation loop
     // List Loop
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
@@ -12865,7 +12868,9 @@ EbErrorType motion_estimate_sb(
             }
         }
     }
-
+#if SHUT_SUB_PEL_ME
+    }
+#endif
     if (context_ptr->me_alt_ref == EB_FALSE) {
         // Bi-Prediction motion estimation loop
         for (pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {

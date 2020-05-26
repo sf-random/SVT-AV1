@@ -248,7 +248,9 @@ typedef struct DepthReductionCtrls {
 typedef struct MdNsqMvSearchCtrls {
     uint8_t enabled;
     uint8_t use_ssd;
+#if !PERFORM_SUB_PEL_MD
     uint8_t perform_sub_pel;
+#endif
     uint8_t full_pel_search_width;
     uint8_t full_pel_search_height;
     uint8_t half_pel_search_width;

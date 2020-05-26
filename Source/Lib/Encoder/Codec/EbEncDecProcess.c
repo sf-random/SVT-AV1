@@ -1695,7 +1695,9 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
         md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 7;
         md_nsq_mv_search_ctrls->full_pel_search_height = 7;
+#if !PERFORM_SUB_PEL_MD 
         md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+#endif
         md_nsq_mv_search_ctrls->half_pel_search_width = 3;
         md_nsq_mv_search_ctrls->half_pel_search_height = 3;
         md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
@@ -1706,7 +1708,9 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
         md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 11;
         md_nsq_mv_search_ctrls->full_pel_search_height = 11;
+#if !PERFORM_SUB_PEL_MD 
         md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+#endif
         md_nsq_mv_search_ctrls->half_pel_search_width = 3;
         md_nsq_mv_search_ctrls->half_pel_search_height = 3;
         md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
@@ -1717,7 +1721,9 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
         md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 15;
         md_nsq_mv_search_ctrls->full_pel_search_height = 15;
+#if !PERFORM_SUB_PEL_MD 
         md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+#endif
         md_nsq_mv_search_ctrls->half_pel_search_width = 3;
         md_nsq_mv_search_ctrls->half_pel_search_height = 3;
         md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
@@ -1728,7 +1734,9 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
         md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 31;
         md_nsq_mv_search_ctrls->full_pel_search_height = 31;
+#if !PERFORM_SUB_PEL_MD 
         md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+#endif
         md_nsq_mv_search_ctrls->half_pel_search_width = 3;
         md_nsq_mv_search_ctrls->half_pel_search_height = 3;
         md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
