@@ -4656,9 +4656,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
             context_ptr->md_nsq_mv_search_level = 4; 
         else if (enc_mode <= ENC_M0)
-            context_ptr->md_nsq_mv_search_level = 3;
+            context_ptr->md_nsq_mv_search_level = 1;
         else
-            context_ptr->md_nsq_mv_search_level = 2;
+            context_ptr->md_nsq_mv_search_level = 1;
 
     md_nsq_mv_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
