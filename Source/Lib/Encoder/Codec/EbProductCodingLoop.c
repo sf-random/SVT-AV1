@@ -5162,12 +5162,6 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 }
             }
         }
-
-        // Tag the closest ref if applicable
-        //if (context_ptr->ref_pruning_ctrls.use_closest_ref[gi]) {
-        //    context_ptr->ref_filtering_res[gi][0][0].do_ref = 1;
-        //    context_ptr->ref_filtering_res[gi][1][0].do_ref = 1;
-        //}
     }
 #else
     // Tag ref: do_ref or not
@@ -5280,7 +5274,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref) continue;
+            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.test_d1_cand[PRED_ME_GROUP])) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
 #endif

@@ -218,7 +218,7 @@ typedef struct RefPruningControls {
     uint8_t inter_to_inter_pruning_enabled;
 #if PRUNING_PER_INTER_TYPE
     uint8_t max_ref_to_tag[TOT_INTER_GROUP];
-    uint8_t use_closest_ref[TOT_INTER_GROUP];
+    uint8_t test_d1_cand[TOT_INTER_GROUP];
 #else
     uint8_t max_ref_to_tag;
 #endif

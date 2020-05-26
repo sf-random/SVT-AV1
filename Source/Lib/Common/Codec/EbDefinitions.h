@@ -417,20 +417,21 @@ extern "C" {
 #define MAY23_M0_ADOPTIONS         1 // M0 adoptions towards a better slope M0
 #define NON_UNIFORM_NSQ_BANDING    1 // Change the NSQ cycles reduction frequency bands and TH for better behaviour
 
-/********************************/
+#define MOVE_NSQ_MON_UNIPRED_ME_TO_MD 1 // Movenon-sq/non-unipred ME to MD
+#if MOVE_NSQ_MON_UNIPRED_ME_TO_MD
 #define SHUT_ME_CAND_SORTING 1 
 #define PRUNING_PER_INTER_TYPE 1
 #define PD0_INTER_CAND 1
 
-//#define SHUT_ME_NSQ_SEARCH 1 
-//#define FIX_SHUT_ME_NSQ_SEARCH 1 
-//#define ADD_MD_NSQ_SEARCH 1
-//#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
-//#define NSQ_ME_CONTEXT_CLEAN_UP 1
-//#define REMOVE_ME_BIPRED_SEARCH 1
-//#define REMOVE_MRP_MODE 1 
-//#define USE_SUB_BLOCK_MVC 1
-/********************************/
+#define SHUT_ME_NSQ_SEARCH 1 
+#define FIX_SHUT_ME_NSQ_SEARCH 1 
+#define ADD_MD_NSQ_SEARCH 1
+#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
+#define NSQ_ME_CONTEXT_CLEAN_UP 1
+#define REMOVE_ME_BIPRED_SEARCH 1
+#define REMOVE_MRP_MODE 1 
+#define USE_SUB_BLOCK_MVC 1
+#endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
