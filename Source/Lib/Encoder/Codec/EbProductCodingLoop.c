@@ -8031,6 +8031,787 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     update_tx_candidate_buffer(candidate_buffer, context_ptr, best_tx_depth);
 }
 
+#if COEFF_BASED_BYPASS_TXS
+// Stats table for TXS
+uint8_t m0_intra_txs_depth_1_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {// SQ
+                3,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                7,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                3,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {// SQ
+                2,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                4,// freq band [0%,10%]
+                18 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                3,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                4,// freq band [0%,10%]
+                14 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                6 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                10 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                4 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    }
+};
+uint8_t m0_intra_txs_depth_2_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {// SQ
+                4,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                10,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                3,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {// SQ
+                3,// freq band [0%,10%]
+                8 // freq band [10%,100%]
+            },
+            {// NSQ
+                5,// freq band [0%,10%]
+                29 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                3,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            },
+            {// NSQ
+                3,// freq band [0%,10%]
+                14 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    }
+};
+
+// INTER TXS tables
+uint8_t m0_inter_txs_depth_1_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {// SQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                5,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {// SQ
+                3,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                4,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                4,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                3,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                1,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {// SQ
+                3,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            },
+            {// NSQ
+                4,// freq band [0%,10%]
+                9 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                8,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            },
+            {// NSQ
+                6,// freq band [0%,10%]
+                8 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                3,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                2,// freq band [0%,10%]
+                6 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                1,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    }
+};
+uint8_t m0_inter_txs_depth_2_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {// SQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                4,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                2,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {// SQ
+                4,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                3,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                4,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                1,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                1 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {// SQ
+                4,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                7,// freq band [0%,10%]
+                24 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                5,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                7,// freq band [0%,10%]
+                17 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                1,// freq band [0%,10%]
+                2 // freq band [10%,100%]
+            },
+            {// NSQ
+                1,// freq band [0%,10%]
+                3 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred depth
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        },
+        {// pred + 1
+            {// SQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            },
+            {// NSQ
+                0,// freq band [0%,10%]
+                0 // freq band [10%,100%]
+            }
+        }
+    }
+};
+#endif
 void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                     ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                     ModeDecisionCandidate *candidate_ptr, EbPictureBufferDesc *input_picture_ptr,
@@ -8117,17 +8898,71 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     } else if (context_ptr->md_staging_tx_size_mode == 0) {
 #endif
         start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    } else {
+    }
+    else {
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
-                     context_ptr->blk_geom->bwidth <
-                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
-             context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
-                     context_ptr->blk_geom->bheight <
-                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+            context_ptr->blk_geom->bwidth <
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
+            context_ptr->blk_geom->bheight <
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
         else
             end_tx_depth = 0;
+
+#if COEFF_BASED_BYPASS_TXS
+        // Bypass TXS based on statistics
+        int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].pred_depth_refinement;
+        // adjust the recorded pred depth refinement to avoid array access issues
+        pred_depth_refinement = MIN(pred_depth_refinement, 1);
+        pred_depth_refinement = MAX(pred_depth_refinement, -1);
+        pred_depth_refinement++;
+
+        // Bypass TXS only for INTRA classes
+        if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
+            // Check TXS depth 1 first; if depth 1 becomes disallowed, do not allow depth 2
+            if (end_tx_depth != 0) {
+                end_tx_depth =
+                    m0_intra_txs_depth_1_cycles_reduction_stats[context_ptr->blk_geom->depth]
+                                                            [pred_depth_refinement]
+                                                            [(context_ptr->blk_geom->shape != PART_N)]
+                                                            [context_ptr->sb_class <= SB_CLASS_15]
+                    < context_ptr->md_intra_txs_cycles_reduction_th
+                    ? 0 : end_tx_depth;
+            }
+            if (end_tx_depth == 2) {
+                end_tx_depth =
+                    m0_intra_txs_depth_2_cycles_reduction_stats[context_ptr->blk_geom->depth]
+                                                               [pred_depth_refinement]
+                                                               [(context_ptr->blk_geom->shape != PART_N)]
+                                                               [context_ptr->sb_class <= SB_CLASS_15]
+                    < context_ptr->md_intra_txs_cycles_reduction_th
+                    ? 1 : end_tx_depth;
+            }
+        }
+        else {// Bypass TXS only for INTER classes
+            // Check TXS depth 1 first; if depth 1 becomes disallowed, do not allow depth 2
+            if (end_tx_depth != 0) {
+                end_tx_depth =
+                    m0_inter_txs_depth_1_cycles_reduction_stats[context_ptr->blk_geom->depth]
+                                                               [pred_depth_refinement]
+                                                               [(context_ptr->blk_geom->shape != PART_N)]
+                                                               [context_ptr->sb_class <= SB_CLASS_15]
+                < context_ptr->md_inter_txs_cycles_reduction_th
+                    ? 0 : end_tx_depth;
+            }
+            if (end_tx_depth == 2) {
+                end_tx_depth =
+                    m0_inter_txs_depth_2_cycles_reduction_stats[context_ptr->blk_geom->depth]
+                                                               [pred_depth_refinement]
+                                                               [(context_ptr->blk_geom->shape != PART_N)]
+                                                               [context_ptr->sb_class <= SB_CLASS_15]
+                < context_ptr->md_inter_txs_cycles_reduction_th
+                    ? 1 : end_tx_depth;
+            }
+        }
+#endif
     }
 #if !FIX_CFL_OFF
     // Transform partitioning path (INTRA Luma)

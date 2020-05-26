@@ -420,7 +420,7 @@ extern "C" {
 // STATISTICS MACROS
 #define SHUT_TXS_IMPACT_FEATURES 1 // Shut features that strongly impact TXS
 
-#define TXS_STATS 1 // Add code for generating TXS statistics
+#define TXS_STATS 0 // Add code for generating TXS statistics
 #if TXS_STATS
 #define STATS_DEPTHS 6 // # of partition depths
 #define STATS_SHAPES 10 // SQ, H, V, HA, HB, VA, VB, H4, V4 (not necessarily in order) - split to be ignored
@@ -429,12 +429,14 @@ extern "C" {
 #define STATS_CLASSES 2 // INTRA/INTER
 #endif
 
-#define STATS_PER_DEPTH_DELTA 0
+#define STATS_PER_DEPTH_DELTA 1
 #if STATS_PER_DEPTH_DELTA
 #define STATS_DELTAS 3 // -1, 0 , +1
 #endif
 
-#define M0_DEPTH_REFINEMENT_ADOPTS  1 // Expand the M0/MR depth refinement
+#define M0_DEPTH_REFINEMENT_ADOPTS  0 // Expand the M0/MR depth refinement
+#define COEFF_BASED_BYPASS_TXS 1 // Bypass TXS based on statistical data
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common

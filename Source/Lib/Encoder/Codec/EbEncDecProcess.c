@@ -4318,6 +4318,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_tx_size_search_mode = 0;
     else
         context_ptr->md_tx_size_search_mode = pcs_ptr->parent_pcs_ptr->tx_size_search_mode;
+
+#if COEFF_BASED_BYPASS_TXS
+    if (pd_pass == PD_PASS_0) {
+        context_ptr->md_intra_txs_cycles_reduction_th = 0;
+        context_ptr->md_inter_txs_cycles_reduction_th = 0;
+    }
+    else if (pd_pass == PD_PASS_1) {
+        context_ptr->md_intra_txs_cycles_reduction_th = 0;
+        context_ptr->md_inter_txs_cycles_reduction_th = 0;
+    }
+    else {
+        context_ptr->md_intra_txs_cycles_reduction_th = 1;
+        context_ptr->md_inter_txs_cycles_reduction_th = 1;
+    }
+#endif
 #if OPT_BLOCK_INDICES_GEN_2 && !NEW_CYCLE_ALLOCATION
     // Update txs settings based on the sb_class
     context_ptr->md_tx_size_search_mode = (context_ptr->enable_area_based_cycles_allocation && context_ptr->sb_class == MEDIUM_COMPLEX_CLASS) ? 0 : context_ptr->md_tx_size_search_mode;

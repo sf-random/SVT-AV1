@@ -554,6 +554,10 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t      interpolation_search_level;
     uint8_t      md_tx_size_search_mode;
+#if COEFF_BASED_BYPASS_TXS
+    uint8_t      md_intra_txs_cycles_reduction_th;
+    uint8_t      md_inter_txs_cycles_reduction_th;
+#endif
     uint8_t      md_pic_obmc_mode;
     uint8_t      md_enable_paeth;
     uint8_t      md_enable_smooth;
