@@ -898,7 +898,8 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
 #if UNIPRED_3x3_REF_MASKING
 #if REFACTOR_REF_FRAME_MASKING
-        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_0][list0_ref_index].do_ref) continue;
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ unipred_3x3
+        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_0][list0_ref_index].do_ref && list0_ref_index) continue;
 #else
         if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
 #endif
@@ -1075,7 +1076,8 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if UNIPRED_3x3_REF_MASKING
 #if REFACTOR_REF_FRAME_MASKING
-        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_1][list1_ref_index].do_ref) continue;
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ unipred_3x3
+        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_1][list1_ref_index].do_ref && list1_ref_index) continue;
 #else
         if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
 #endif
@@ -1306,7 +1308,9 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if BIPRED_3x3_REF_MASKING
 #if REFACTOR_REF_FRAME_MASKING
-            if (!context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+            // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ bipred_3x3
+            if ((!context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || 
+                !context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref) && (list0_ref_index || list1_ref_index)) continue;                   
 #else
             if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
 #endif

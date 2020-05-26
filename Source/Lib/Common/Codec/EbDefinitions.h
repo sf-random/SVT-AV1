@@ -423,14 +423,14 @@ extern "C" {
 #define PRUNING_PER_INTER_TYPE 1
 #define PD0_INTER_CAND 1
 
-#define SHUT_ME_NSQ_SEARCH 1 
-#define FIX_SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
-#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
-#define NSQ_ME_CONTEXT_CLEAN_UP 1
-#define REMOVE_ME_BIPRED_SEARCH 1
-#define REMOVE_MRP_MODE 1 
-#define USE_SUB_BLOCK_MVC 1
+//#define SHUT_ME_NSQ_SEARCH 1 
+//#define FIX_SHUT_ME_NSQ_SEARCH 1 
+//#define ADD_MD_NSQ_SEARCH 1
+//#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
+//#define NSQ_ME_CONTEXT_CLEAN_UP 1
+//#define REMOVE_ME_BIPRED_SEARCH 1
+//#define REMOVE_MRP_MODE 1 
+//#define USE_SUB_BLOCK_MVC 1
 /********************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
