@@ -434,6 +434,7 @@ extern "C" {
 #define STATS_DELTAS 3 // -1, 0 , +1
 #endif
 
+#define M0_DEPTH_REFINEMENT_ADOPTS  1 // Expand the M0/MR depth refinement
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
