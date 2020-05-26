@@ -143,7 +143,7 @@ typedef struct MdBlkStruct {
 #if SSE_BASED_SPLITTING
     uint8_t sse_gradian_band[NUMBER_OF_SHAPES];
 #endif
-#if DEPTH_STAT || GEN_STAT
+#if DEPTH_STAT || GEN_STAT || NSQ_CYCLE_PRED_DEPTH_MOD
     int8_t pred_depth_refinement;
     int8_t pred_cost_band;
     int8_t pred_depth;

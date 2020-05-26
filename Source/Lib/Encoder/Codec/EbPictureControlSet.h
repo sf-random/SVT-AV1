@@ -151,7 +151,7 @@ typedef struct EbMdcLeafData {
     EbBool   split_flag;
     uint8_t  consider_block;
     uint8_t  refined_split_flag;
-#if DEPTH_STAT || GEN_STAT
+#if DEPTH_STAT || GEN_STAT || NSQ_CYCLE_PRED_DEPTH_MOD
     int8_t  pred_depth_refinement;
     int8_t  final_pred_depth_refinement;
     int8_t  pred_cost_band;

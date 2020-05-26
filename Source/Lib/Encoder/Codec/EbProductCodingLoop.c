@@ -11546,12 +11546,19 @@ uint8_t get_allowed_block(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 #if SSE_BASED_SPLITTING 
                 uint8_t sse_gradian_band = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag ?
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].sse_gradian_band[context_ptr->blk_geom->shape] : 1;
+#if NSQ_CYCLE_PRED_DEPTH_MOD
+                uint8_t pred_depth = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag ?
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].pred_depth : 0;
+                uint64_t nsq_prob = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag ? 
+                    test_prob[context_ptr->blk_geom->depth][pred_depth][context_ptr->blk_geom->shape][band_idx][sse_gradian_band] : 100;
+#else
 #if TM25_NSQ_CYCLES_ALLOCATION
                 uint64_t nsq_prob = !sse_gradian_band ? tm25_allowed_part_sse_b0_prob[context_ptr->blk_geom->depth][context_ptr->blk_geom->shape][band_idx] :
                     tm25_allowed_part_sse_b1_prob[context_ptr->blk_geom->depth][context_ptr->blk_geom->shape][band_idx];
 #else
                 uint64_t nsq_prob = allowed_part_weight[context_ptr->blk_geom->depth][context_ptr->blk_geom->shape][band_idx];
                 nsq_prob = sse_gradian_band == 0 ? (((100 * nsq_prob) - (nsq_prob * sse_grad_weight[context_ptr->blk_geom->depth][context_ptr->blk_geom->shape][band_idx])) / (uint64_t)100) : nsq_prob;
+#endif
 #endif
 #if SPEED_WEIGHT
                 if (SPEED_WEIGHT == 1)
@@ -11842,7 +11849,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         context_ptr->md_blk_arr_nsq[blk_idx_mds].mdc_split_flag =
             (uint16_t)leaf_data_ptr->split_flag;
-#if DEPTH_STAT || GEN_STAT
+#if DEPTH_STAT || GEN_STAT || NSQ_CYCLE_PRED_DEPTH_MOD
         context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement = leaf_data_ptr->final_pred_depth_refinement;
         context_ptr->md_local_blk_unit[blk_idx_mds].pred_cost_band = leaf_data_ptr->final_pred_cost_band;
         context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth = leaf_data_ptr->final_pred_depth;

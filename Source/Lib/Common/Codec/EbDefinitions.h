@@ -369,6 +369,7 @@ extern "C" {
 #define CR_T2 0
 #define CR_T3 0
 
+#define NSQ_CYCLE_PRED_DEPTH_MOD 0
 #define PRINT_TX_ENRGY_COUNT 0 
 #if PRINT_TX_ENRGY_COUNT
 #define TX_SSE 0
