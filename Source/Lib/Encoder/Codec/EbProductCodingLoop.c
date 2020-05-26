@@ -4786,7 +4786,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
     uint32_t early_inter_distortion_array[MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH];
 
     // Reset ref_filtering_res
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
     for (uint32_t gi = 0; gi < TOT_INTER_GROUP; gi++) {
         for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
             for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
@@ -5081,7 +5081,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
 
             // early_inter_distortion_array
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
             for (uint32_t gi = 0; gi < TOT_INTER_GROUP; gi++) {
                 context_ptr->ref_filtering_res[gi][list_idx][ref_idx].valid_ref = EB_TRUE;
                 context_ptr->ref_filtering_res[gi][list_idx][ref_idx].dist = MIN(pa_me_distortion, best_mvp_distortion);
@@ -5108,7 +5108,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
         }
     }
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
     for (uint32_t gi = 0; gi < TOT_INTER_GROUP; gi++) {
         // Tag ref: do_ref or not
 // tag to_do the best ?
@@ -5162,6 +5162,12 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 }
             }
         }
+
+        // Tag the closest ref if applicable
+        //if (context_ptr->ref_pruning_ctrls.use_closest_ref[gi]) {
+        //    context_ptr->ref_filtering_res[gi][0][0].do_ref = 1;
+        //    context_ptr->ref_filtering_res[gi][1][0].do_ref = 1;
+        //}
     }
 #else
     // Tag ref: do_ref or not
@@ -5273,7 +5279,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             uint8_t          list_idx   = get_list_idx(rf[0]);
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
             if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;

@@ -158,16 +158,16 @@ typedef struct RefResults {
     EbBool valid_ref;
 #endif
 } RefResults;
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
 typedef enum InterCandGroup {
-    PA_ME_GROUP = 0,
-    UNI_3x3_GROUP = 1,
-    BI_3x3_GROUP = 2,
+    PA_ME_GROUP         = 0,
+    UNI_3x3_GROUP       = 1,
+    BI_3x3_GROUP        = 2,
     NRST_NEW_NEAR_GROUP = 3,
-    WARP_GROUP = 4,
-    NRST_NEAR_GROUP = 5,
-    PRED_ME_GROUP = 6,
-    TOT_INTER_GROUP = 7
+    WARP_GROUP          = 4,
+    NRST_NEAR_GROUP     = 5,
+    PRED_ME_GROUP       = 6,
+    TOT_INTER_GROUP     = 7
 } InterCandGroup;
 #endif
 #endif
@@ -216,8 +216,9 @@ typedef struct  InterCompoundControls {
 typedef struct RefPruningControls {
     uint8_t intra_to_inter_pruning_enabled;
     uint8_t inter_to_inter_pruning_enabled;
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
     uint8_t max_ref_to_tag[TOT_INTER_GROUP];
+    uint8_t use_closest_ref[TOT_INTER_GROUP];
 #else
     uint8_t max_ref_to_tag;
 #endif
@@ -624,7 +625,7 @@ typedef struct ModeDecisionContext {
     InterCompoundControls inter_comp_ctrls;
 #endif
 #if MD_REFERENCE_MASKING
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
     RefResults ref_filtering_res[TOT_INTER_GROUP][MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #else
     RefResults ref_filtering_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];

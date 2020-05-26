@@ -419,7 +419,6 @@ extern "C" {
 
 /********************************/
 #define SHUT_ME_CAND_SORTING 1 
-#define REFACTOR_REF_FRAME_MASKING 1
 #define PRUNING_PER_INTER_TYPE 1
 #define PD0_INTER_CAND 1
 

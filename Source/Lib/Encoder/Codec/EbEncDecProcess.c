@@ -1426,7 +1426,7 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 }
 #endif
 #if MD_REFERENCE_MASKING
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
 void set_inter_inter_distortion_based_reference_pruning_controls(
     ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) {
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1434,95 +1434,120 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
     switch (inter_inter_distortion_based_reference_pruning_mode) {
     case 0: ref_pruning_ctrls->inter_to_inter_pruning_enabled = 0; break;
     case 1:
-        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 7;
-#if PRUNING_PER_INTER_TYPE //--
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 1;
-#else
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 7;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 7;
-#endif
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled      = 1;
+
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 7;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 7;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 7;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 7;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 7;
+
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
+
         break;
     case 2:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 6;
-#if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
-#else
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 6;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 6;
-#endif
+
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 6;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 6;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 6;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 6;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 6;
+
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
         break;
     case 3:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 5;
-#if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
-#else
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 5;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 5;
-#endif
+
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 5;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 5;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 5;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 5;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 5;
+
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
         break;
     case 4:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 4;
-#if PRUNING_PER_INTER_TYPE //--
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
-#else
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 4;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 4;
-#endif
+
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 4;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 4;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 4;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 4;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 4;
+
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
         break;
     case 5:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]    = 3;
-#if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
-#else
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 3;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]  = 3;
-#endif
+
+        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 3;
+        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 3;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 3;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 3;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 3;
 
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
+
         break;
     case 6:
-        ref_pruning_ctrls->inter_to_inter_pruning_enabled      = 1;
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+
         ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 2;
-#if PRUNING_PER_INTER_TYPE
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP] = 1;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP] = 1;
-#else
         ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
         ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-#endif
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 2;
         ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 2;
         ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 2;
         ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 2;
+
+        ref_pruning_ctrls->use_closest_ref[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->use_closest_ref[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->use_closest_ref[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->use_closest_ref[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->use_closest_ref[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->use_closest_ref[PRED_ME_GROUP]       = 0;
 
         break;
     default: assert(0); break;
@@ -4467,7 +4492,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (pd_pass == PD_PASS_1)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
 #if MAY23_M0_ADOPTIONS
-#if REFACTOR_REF_FRAME_MASKING
+#if PRUNING_PER_INTER_TYPE
         else if (MR_MODE)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
         else if (enc_mode <= ENC_M0)
@@ -4514,11 +4539,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if M2_COMBO_2
             context_ptr->inter_inter_distortion_based_reference_pruning = 5;
 #else
-#if REFACTOR_REF_FRAME_MASKING
-            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
-#else
             context_ptr->inter_inter_distortion_based_reference_pruning = 3;
-#endif
 #endif
 #else
         else
