@@ -439,7 +439,7 @@ extern "C" {
 #define MOVE_SUB_PEL_ME_TO_MD 1
 #if MOVE_SUB_PEL_ME_TO_MD
 #define SHUT_SUB_PEL_ME 1
-#define PERFORM_SUB_PEL_MD 0 
+#define PERFORM_SUB_PEL_MD 1 
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
