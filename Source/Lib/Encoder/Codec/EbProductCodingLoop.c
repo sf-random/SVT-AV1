@@ -4409,6 +4409,172 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
 
 }
 #endif
+
+#if ADD_MD_NSQ_SEARCH
+#define MAX_MD_NSQ_SARCH_MVC_CNT 5
+void md_nsq_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+                   EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+                   uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx,
+                   const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
+    uint8_t  search_pattern = 0;
+#if USE_SUB_BLOCK_MVC
+    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s): 2 NxN if 2NxN or Nx2N, and 4 NxN if 4NxN or Nx4N 
+    int16_t mvc_x_array[MAX_MD_NSQ_SARCH_MVC_CNT];
+    int16_t mvc_y_array[MAX_MD_NSQ_SARCH_MVC_CNT];
+    int8_t  mvc_count = 0;
+    // SQ MV (default MVC for NSQ)
+    mvc_x_array[mvc_count] = *me_mv_x;
+    mvc_y_array[mvc_count] = *me_mv_y;
+    mvc_count++;
+    if ((context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4) && context_ptr->blk_geom->sq_size >= 16) {
+        uint8_t min_size = MIN(context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight);
+        // Derive the sub-block(s) MVs (additional MVC for NSQ)
+        for (uint32_t block_index = 0; block_index < pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb; block_index++) {
+            if ((min_size == partition_width[block_index] || min_size == partition_height[block_index]) &&
+                ((pu_search_index_map[block_index][0] >= (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)) && (pu_search_index_map[block_index][0] < context_ptr->blk_geom->bwidth + (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x))) &&
+                ((pu_search_index_map[block_index][1] >= (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) && (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight + (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)))) {
+                if (list_idx == 0) {
+                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
+                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
+                }
+                else {
+                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
+                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
+                }
+                mvc_count++;
+            }
+        }
+    }
+
+    // Search Center
+    int16_t  search_center_mvx = mvc_x_array[0];
+    int16_t  search_center_mvy = mvc_y_array[0];
+    uint32_t search_center_distortion = (uint32_t)~0;
+
+    for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
+
+        md_sub_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            blk_origin_index,
+            context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            mvc_x_array[mvc_index],
+            mvc_y_array[mvc_index],
+            0,
+            0,
+            0,
+            0,
+            -1, // not used as only 1 position to search = central position
+            &search_center_mvx,
+            &search_center_mvy,
+            &search_center_distortion,
+            1,
+            search_pattern);
+    }
+#else
+    // Search Center
+    int16_t  search_center_mvx = me_mv_x;
+    int16_t  search_center_mvy = me_mv_y;
+    uint32_t search_center_distortion = (uint32_t)~0;
+    md_sub_pel_search(pcs_ptr,
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        blk_origin_index,
+        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+        list_idx,
+        ref_idx,
+        search_center_mvx,
+        search_center_mvy,
+        0,
+        0,
+        0,
+        0,
+        -1, // not used as only 1 position to search = central position
+        &search_center_mvx,
+        &search_center_mvy,
+        &search_center_distortion,
+        1,
+        search_pattern);
+#endif
+    int16_t  best_search_mvx = (int16_t)~0;
+    int16_t  best_search_mvy = (int16_t)~0;
+    uint32_t best_search_distortion = (uint32_t)~0;
+
+    // Round-up the search center to the closest integer
+    search_center_mvx = (search_center_mvx + 4) & ~0x07;
+    search_center_mvy = (search_center_mvy + 4) & ~0x07;
+
+    md_full_pel_search(pcs_ptr,
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+        list_idx,
+        ref_idx,
+        search_center_mvx,
+        search_center_mvy,
+        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
+        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
+        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
+        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
+        8,
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_distortion);
+    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
+        md_sub_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            blk_origin_index,
+            context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            best_search_mvx,
+            best_search_mvy,
+            -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
+            +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
+            -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
+            +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
+            4,
+            &best_search_mvx,
+            &best_search_mvy,
+            &best_search_distortion,
+            0,
+            search_pattern);
+
+    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
+        md_sub_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            blk_origin_index,
+            context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            best_search_mvx,
+            best_search_mvy,
+            -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
+            +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
+            -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
+            +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
+            2,
+            &best_search_mvx,
+            &best_search_mvy,
+            &best_search_distortion,
+            0,
+            search_pattern);
+
+    if (best_search_distortion < search_center_distortion) {
+        *me_mv_x = best_search_mvx;
+        *me_mv_y = best_search_mvy;
+    }
+}
+#endif
 // Copy ME_MVs (generated @ PA) from input buffer (pcs_ptr-> .. ->me_results) to local
 // MD buffers (context_ptr->sb_me_mv)
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -4494,163 +4660,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
 #if ADD_MD_NSQ_SEARCH
                 if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_nsq_mv_search_ctrls.enabled) {
-                    uint8_t  search_pattern = 0;
-#if USE_SUB_BLOCK_MVC
-                    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s): 2 NxN if 2NxN or Nx2N, and 4 NxN if 4NxN or Nx4N 
-                    int16_t mvc_x_array[5];
-                    int16_t mvc_y_array[5];
-                    int8_t  mvc_count = 0;
-                    // SQ MV (default MVC for NSQ)
-                    mvc_x_array[mvc_count] = me_mv_x;
-                    mvc_y_array[mvc_count] = me_mv_y;
-                    mvc_count++;
-                    if ((context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4) && context_ptr->blk_geom->sq_size >= 16) {
-                        uint8_t min_size = MIN(context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight);
-                        // Derive the sub-block(s) MVs (additional MVC for NSQ)
-                        for (uint32_t block_index = 0; block_index < pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb; block_index++) {
-                            if ((min_size == partition_width[block_index] || min_size == partition_height[block_index]) &&
-                                ((pu_search_index_map[block_index][0] >= (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)) && (pu_search_index_map[block_index][0] < context_ptr->blk_geom->bwidth + (context_ptr->blk_geom->origin_x - context_ptr->geom_offset_x)))  &&
-                                ((pu_search_index_map[block_index][1] >= (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) && (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight + (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) ){
-                                if (list_idx == 0) {
-                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
-                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
-                                }
-                                else {
-                                    mvc_x_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
-                                    mvc_y_array[mvc_count] = (me_results->me_mv_array[block_index*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
-                                }
-                                mvc_count++;
-                            }
-                        }
-                    }
-
-                    // Search Center
-                    int16_t  search_center_mvx = mvc_x_array[0];
-                    int16_t  search_center_mvy = mvc_y_array[0];
-                    uint32_t search_center_distortion = (uint32_t)~0;
-
-                    for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
-
-                        md_sub_pel_search(pcs_ptr,
-                            context_ptr,
-                            input_picture_ptr,
-                            input_origin_index,
-                            blk_origin_index,
-                            context_ptr->md_nsq_mv_search_ctrls.use_ssd,
-                            list_idx,
-                            ref_idx,
-                            mvc_x_array[mvc_index],
-                            mvc_y_array[mvc_index],
-                            0,
-                            0,
-                            0,
-                            0,
-                            -1, // not used as only 1 position to search = central position
-                            &search_center_mvx,
-                            &search_center_mvy,
-                            &search_center_distortion,
-                            1,
-                            search_pattern);
-                    }
-#else
-                    // Search Center
-                    int16_t  search_center_mvx = me_mv_x;
-                    int16_t  search_center_mvy = me_mv_y;
-                    uint32_t search_center_distortion = (uint32_t)~0;
-                    md_sub_pel_search(pcs_ptr,
-                        context_ptr,
-                        input_picture_ptr,
-                        input_origin_index,
-                        blk_origin_index,
-                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
-                        list_idx,
-                        ref_idx,
-                        search_center_mvx,
-                        search_center_mvy,
-                        0,
-                        0,
-                        0,
-                        0,
-                        -1, // not used as only 1 position to search = central position
-                        &search_center_mvx,
-                        &search_center_mvy,
-                        &search_center_distortion,
-                        1,
-                        search_pattern);
-#endif
-                    int16_t  best_search_mvx = (int16_t)~0;
-                    int16_t  best_search_mvy = (int16_t)~0;
-                    uint32_t best_search_distortion = (uint32_t)~0;
-
-                    // Round-up the search center to the closest integer
-                    search_center_mvx = (search_center_mvx + 4) & ~0x07;
-                    search_center_mvy = (search_center_mvy + 4) & ~0x07;
-
-                    md_full_pel_search(pcs_ptr,
-                        context_ptr,
-                        input_picture_ptr,
-                        input_origin_index,
-                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
-                        list_idx,
-                        ref_idx,
-                        search_center_mvx,
-                        search_center_mvy,
-                        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_width >> 1),
-                        -(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.full_pel_search_height >> 1),
-                        8,
-                        &best_search_mvx,
-                        &best_search_mvy,
-                        &best_search_distortion);
-                    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
-                    md_sub_pel_search(pcs_ptr,
-                        context_ptr,
-                        input_picture_ptr,
-                        input_origin_index,
-                        blk_origin_index,
-                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
-                        list_idx,
-                        ref_idx,
-                        best_search_mvx,
-                        best_search_mvy,
-                        -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
-                        -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
-                        4,
-                        &best_search_mvx,
-                        &best_search_mvy,
-                        &best_search_distortion,
-                        0,
-                        search_pattern);
-
-                    if (context_ptr->md_nsq_mv_search_ctrls.perform_sub_pel)
-                    md_sub_pel_search(pcs_ptr,
-                        context_ptr,
-                        input_picture_ptr,
-                        input_origin_index,
-                        blk_origin_index,
-                        context_ptr->md_nsq_mv_search_ctrls.use_ssd,
-                        list_idx,
-                        ref_idx,
-                        best_search_mvx,
-                        best_search_mvy,
-                        -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
-                        -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
-                        +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
-                        2,
-                        &best_search_mvx,
-                        &best_search_mvy,
-                        &best_search_distortion,
-                        0,
-                        search_pattern);
-
-                    if (best_search_distortion < search_center_distortion) {
-                        me_mv_x = best_search_mvx;
-                        me_mv_y = best_search_mvy;
-                    }
+                    md_nsq_search(pcs_ptr, context_ptr,
+                        input_picture_ptr, input_origin_index,
+                        blk_origin_index, list_idx, ref_idx,me_results, &me_mv_x, &me_mv_y);
                 }
 #endif
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
