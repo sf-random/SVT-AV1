@@ -1682,6 +1682,28 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
     case 1:
         md_nsq_mv_search_ctrls->enabled = 1;
         md_nsq_mv_search_ctrls->use_ssd = 0;
+        md_nsq_mv_search_ctrls->full_pel_search_width = 7;
+        md_nsq_mv_search_ctrls->full_pel_search_height = 7;
+        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        break;
+    case 2:
+        md_nsq_mv_search_ctrls->enabled = 1;
+        md_nsq_mv_search_ctrls->use_ssd = 0;
+        md_nsq_mv_search_ctrls->full_pel_search_width = 11;
+        md_nsq_mv_search_ctrls->full_pel_search_height = 11;
+        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
+        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        break;
+    case 3:
+        md_nsq_mv_search_ctrls->enabled = 1;
+        md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 15;
         md_nsq_mv_search_ctrls->full_pel_search_height = 15;
         md_nsq_mv_search_ctrls->perform_sub_pel = 1;
@@ -1690,7 +1712,7 @@ void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_se
         md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
         md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
         break;
-    case 2:
+    case 4:
         md_nsq_mv_search_ctrls->enabled = 1;
         md_nsq_mv_search_ctrls->use_ssd = 0;
         md_nsq_mv_search_ctrls->full_pel_search_width = 31;
@@ -4632,9 +4654,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_nsq_mv_search_level = 0;
     else
         if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
-            context_ptr->md_nsq_mv_search_level = 2; 
+            context_ptr->md_nsq_mv_search_level = 4; 
+        else if (enc_mode <= ENC_M0)
+            context_ptr->md_nsq_mv_search_level = 3;
         else
-            context_ptr->md_nsq_mv_search_level = 1;
+            context_ptr->md_nsq_mv_search_level = 2;
 
     md_nsq_mv_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
