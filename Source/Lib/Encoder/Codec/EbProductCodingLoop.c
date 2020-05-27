@@ -4666,7 +4666,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         blk_origin_index, list_idx, ref_idx,me_results, &me_mv_x, &me_mv_y);
                 } 
 #if PERFORM_SUB_PEL_MD
-                if (context_ptr->md_nsq_mv_search_ctrls.enabled)
+                if (context_ptr->md_subpel_search_ctrls.enabled)
                 {
 
                     int16_t  best_search_mvx = (int16_t)~0;
@@ -4679,15 +4679,15 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             input_picture_ptr,
                             input_origin_index,
                             blk_origin_index,
-                            1,//context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+                            context_ptr->md_subpel_search_ctrls.use_ssd,
                             list_idx,
                             ref_idx,
                             me_mv_x,
                             me_mv_y,
-                            -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
-                            +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_width >> 1),
-                            -(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
-                            +(context_ptr->md_nsq_mv_search_ctrls.half_pel_search_height >> 1),
+                            -(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
+                            -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                             4,
                             &best_search_mvx,
                             &best_search_mvy,
@@ -4700,15 +4700,15 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             input_picture_ptr,
                             input_origin_index,
                             blk_origin_index,
-                            1,//context_ptr->md_nsq_mv_search_ctrls.use_ssd,
+                            context_ptr->md_subpel_search_ctrls.use_ssd,
                             list_idx,
                             ref_idx,
                             best_search_mvx,
                             best_search_mvy,
-                            -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
-                            +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_width >> 1),
-                            -(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
-                            +(context_ptr->md_nsq_mv_search_ctrls.quarter_pel_search_height >> 1),
+                            -(context_ptr->md_subpel_search_ctrls.quarter_pel_search_width >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.quarter_pel_search_width >> 1),
+                            -(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
                             2,
                             &best_search_mvx,
                             &best_search_mvy,
