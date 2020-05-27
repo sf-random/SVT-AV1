@@ -4666,7 +4666,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         blk_origin_index, list_idx, ref_idx,me_results, &me_mv_x, &me_mv_y);
                 } 
 #if PERFORM_SUB_PEL_MD
-                //if (context_ptr->md_sub_pel_search_ctrls.enabled)
+                if (context_ptr->md_nsq_mv_search_ctrls.enabled)
                 {
 
                     int16_t  best_search_mvx = (int16_t)~0;
