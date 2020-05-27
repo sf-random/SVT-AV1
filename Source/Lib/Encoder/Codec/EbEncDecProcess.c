@@ -2085,6 +2085,29 @@ uint8_t m0_nsq_cycles_reduction_th[19] = {
  2,//[3%;6%]
  1 //[0%;3%]
 };
+#if COEFF_BASED_BYPASS_DEPTH
+uint8_t m0_safe_nsq_cycles_reduction_th[19] = {
+ 0,  // NONE
+ 15, //[85%;100%]
+ 13, //[75%;85%]
+ 12, //[65%;75%]
+ 11, //[60%;65%]
+ 10, //[55%;60%]
+ 9,  //[50%;65%]
+ 8,  //[45%;50%]
+ 7,  //[40%;45%]
+ 7,  //[35%;40%]
+ 6,  //[30%;35%]
+ 5,  //[25%;30%]
+ 5,  //[20%;25%]
+ 4,  //[17%;20%]
+ 3,  //[14%;17%]
+ 3,  //[10%;14%]
+ 2,  //[6%;10%]
+ 2,  //[3%;6%]
+ 1   //[0%;3%]
+};
+#endif
 uint8_t m1_nsq_cycles_reduction_th[19] = {
  0, // NONE
  17, //[85%;100%]
@@ -2192,8 +2215,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else {
         if (pcs_ptr->slice_type == I_SLICE)
             context_ptr->enable_area_based_cycles_allocation = 0;
+#if COEFF_BASED_BYPASS_OFF_480P
+        // Do not use cycles reduction algorithms in 480p and below
+        else if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+            context_ptr->enable_area_based_cycles_allocation = 0;
         else
             context_ptr->enable_area_based_cycles_allocation = 1;
+#else
+        else
+            context_ptr->enable_area_based_cycles_allocation = 1;
+#endif
     }
  #if MULTI_BAND_ACTIONS
     context_ptr->coeffcients_area_based_cycles_allocation_level = 1;
@@ -4090,18 +4121,37 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->coeff_area_based_bypass_nsq_th = 0; // TH to be identified for M2-M8
 #endif
 
+#if COEFF_BASED_BYPASS_DEPTH
+    // Use depth cycles reduction only for NSC
+    if (pd_pass == PD_PASS_0)
+        context_ptr->enable_coeff_area_based_depth_bypass = pcs_ptr->parent_pcs_ptr->sc_content_detected ? 0 : context_ptr->enable_area_based_cycles_allocation;
+    else
+        context_ptr->enable_coeff_area_based_depth_bypass = 0;
+#endif
 #if MULTI_BAND_ACTIONS
     if (pd_pass == PD_PASS_0)
         context_ptr->coeff_area_based_bypass_nsq_th = 0;
     else if (pd_pass == PD_PASS_1)
         context_ptr->coeff_area_based_bypass_nsq_th = 0;
     else if (pd_pass == PD_PASS_2)
+#if COEFF_BASED_BYPASS_DEPTH
+        // SC uses the aggressive NSQ THs, since depth cycles reduction is not used
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+            if (enc_mode <= ENC_M0)
+                context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m0_nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
+            else
+                context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m1_nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
+        // NSC uses safer NSQ THs, as depth cycles reduction is used in addition to NSQ cycles reduction
+        else
+            context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m0_safe_nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
+#else
         if (enc_mode == ENC_M0)
             context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m0_nsq_cycles_reduction_th [context_ptr->sb_class] : 0;
         else if (enc_mode <= ENC_M1)
             context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m1_nsq_cycles_reduction_th [context_ptr->sb_class] : 0;
         else
             context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? m1_nsq_cycles_reduction_th [context_ptr->sb_class] : 0;
+#endif
 #endif
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
@@ -6768,6 +6818,74 @@ static uint8_t determine_sb_class(
     return sb_class;
 }
 #endif
+#if COEFF_BASED_BYPASS_DEPTH
+uint16_t m0_depth_cycles_reduction_stats[6][5][4] = {
+{
+{ 0,0,0,0},
+{ 0,0,0,0},
+{300,300,300,300},
+{ 0,3,6,30},
+{ 0,1,1,1},
+},
+{
+{ 0,0,0,0},
+{ 1,11,26,234},
+{300,300,300,300},
+{ 7,19,10,12},
+{ 6,3,1,0},
+},
+{
+{ 0,0,0,0},
+{ 11,44,82,108},
+{300,300,300,300},
+{ 29,14,5,2},
+{ 7,0,0,0},
+},
+{
+{ 0,0,0,0},
+{ 24,90,73,32},
+{300,300,300,300},
+{ 28,6,1,0},
+{ 2,0,0,0},
+},
+{
+{ 0,0,0,0},
+{ 26,24,8,1},
+{300,300,300,300},
+{ 4,1,0,0},
+{ 0,0,0,0},
+},
+{
+{ 0,0,0,0},
+{ 4,1,0,0},
+{300,300,300,300},
+{ 0,0,0,0},
+{ 0,0,0,0}
+}
+};
+
+uint16_t m0_depth_cycles_reduction_th[19] = {
+ 0, // NONE
+ 8, //[85%;100%]
+ 7, //[75%;85%]
+ 7, //[65%;75%]
+ 7, //[60%;65%]
+ 7, //[55%;60%]
+ 7, //[50%;65%]
+ 7, //[45%;50%]
+ 6, //[40%;45%]
+ 6, //[35%;40%]
+ 5, //[30%;35%]
+ 4, //[25%;30%]
+ 3, //[20%;25%]
+ 2, //[17%;20%]
+ 2, //[14%;17%]
+ 1, //[10%;14%]
+ 1, //[6%;10%]
+ 1, //[3%;6%]
+ 1  //[0%;3%]
+};
+#endif
 static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                           ModeDecisionContext *context_ptr, uint32_t sb_index) {
 #if DEPTH_PART_CLEAN_UP
@@ -7247,6 +7365,22 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     if (!pcs_ptr->parent_pcs_ptr->sc_content_detected) {
                         s_depth = (context_ptr->sb_class == HIGH_COMPLEX_CLASS || context_ptr->sb_class == MEDIUM_COMPLEX_CLASS) ? 0 : s_depth;
                         e_depth = (context_ptr->sb_class == HIGH_COMPLEX_CLASS || context_ptr->sb_class == MEDIUM_COMPLEX_CLASS) ? 0 : e_depth;
+                    }
+#endif
+#if COEFF_BASED_BYPASS_DEPTH
+                    // Set the depth refinement based on statistics
+                    if (context_ptr->sb_class && context_ptr->enable_coeff_area_based_depth_bypass) {
+                        uint8_t frequency_band = context_ptr->sb_class <= 11 ? 0 : context_ptr->sb_class <= 18 ? 1 : context_ptr->sb_class <= 23 ? 2 : 3;
+                        // Need to use the depth TH from the table directly, insetad of a signal, as the sb_class is not available before PD0,
+                        // when the signal would need to be set
+                        uint16_t coeff_area_based_bypass_depth_th = m0_depth_cycles_reduction_th[context_ptr->sb_class];
+                        s_depth = m0_depth_cycles_reduction_stats[blk_geom->depth][0][frequency_band] < coeff_area_based_bypass_depth_th ? 0 : -2;
+                        if (s_depth == 0)
+                            s_depth = m0_depth_cycles_reduction_stats[blk_geom->depth][1][frequency_band] < coeff_area_based_bypass_depth_th ? 0 : -1;
+
+                        e_depth = m0_depth_cycles_reduction_stats[blk_geom->depth][4][frequency_band] < coeff_area_based_bypass_depth_th ? 0 : 2;
+                        if (e_depth == 0)
+                            e_depth = m0_depth_cycles_reduction_stats[blk_geom->depth][3][frequency_band] < coeff_area_based_bypass_depth_th ? 0 : 1;
                     }
 #endif
 #if ADOPT_SKIPPING_PD1

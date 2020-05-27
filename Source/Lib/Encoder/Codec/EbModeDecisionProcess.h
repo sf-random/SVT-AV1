@@ -675,6 +675,9 @@ typedef struct ModeDecisionContext {
 #if COEFF_BASED_BYPASS_NSQ
     uint16_t coeff_area_based_bypass_nsq_th;
 #endif
+#if COEFF_BASED_BYPASS_DEPTH
+    uint8_t enable_coeff_area_based_depth_bypass;
+#endif
 #if SB64_MEM_OPT
     uint8_t sb_size;
 #endif

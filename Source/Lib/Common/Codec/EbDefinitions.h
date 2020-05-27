@@ -438,6 +438,8 @@ extern "C" {
 #endif
 
 #define OUTPUT_MEM_OPT              1 // Memory reduction for output bitstream
+#define COEFF_BASED_BYPASS_DEPTH    1 // Coeff-based depth cycles reduction
+#define COEFF_BASED_BYPASS_OFF_480P 1 // Use coeff-based cycles reduction methods (nsq/depth) in >=720p resolution
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 #define COMMON_16BIT 1 // 16Bit pipeline support for common
