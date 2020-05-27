@@ -438,9 +438,11 @@ extern "C" {
 #endif
 #define MOVE_SUB_PEL_ME_TO_MD 1
 #if MOVE_SUB_PEL_ME_TO_MD
-#define SHUT_SUB_PEL_ME 1
-#define PERFORM_SUB_PEL_MD 1 
-#define SKIP_4x4_SUBPEL_SEARCH 1
+
+#define SHUT_SUB_PEL_ME 0
+#define PERFORM_SUB_PEL_MD 0 
+#define SKIP_4x4_SUBPEL_SEARCH 0
+
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
