@@ -349,6 +349,7 @@ typedef struct MeContext {
     uint8_t * one_d_intermediate_results_buf0;
     uint8_t * one_d_intermediate_results_buf1;
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
     int16_t   x_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     int16_t   y_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     // ME Parameters
@@ -360,7 +361,9 @@ typedef struct MeContext {
     *
     * Default depends on input resolution. */
     uint32_t sa_height[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+
     uint8_t * avctemp_buffer;
+#endif
     uint32_t *p_best_sad_8x8;
     uint32_t *p_best_sad_16x16;
     uint32_t *p_best_sad_32x32;
@@ -473,10 +476,11 @@ typedef struct MeContext {
     EbBitFraction *mvd_bits_array;
     uint64_t       lambda;
     uint8_t        hme_search_type;
-
+#if !REMOVE_ME_SUBPEL_CODE
     uint8_t fractional_search_method;
 
     uint8_t fractional_search_model;
+#endif
     uint8_t hme_search_method;
     uint8_t me_search_method;
 
@@ -484,10 +488,10 @@ typedef struct MeContext {
     EbBool enable_hme_level0_flag;
     EbBool enable_hme_level1_flag;
     EbBool enable_hme_level2_flag;
-
+#if !REMOVE_ME_SUBPEL_CODE
     EbBool use_subpel_flag;
     EbBool half_pel_mode;
-
+#endif
     EbBool compute_global_motion;
 #if ME_HME_PRUNING_CLEANUP
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
@@ -539,7 +543,9 @@ typedef struct MeContext {
 #else
     uint32_t reduce_me_sr_flag[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
     EbBool local_hp_mode[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 #if MULTI_STAGE_HME
     int16_t x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
@@ -562,7 +568,9 @@ typedef struct MeContext {
     // tf
     int tf_frame_index;
     int tf_index_center;
+#if !REMOVE_ME_SUBPEL_CODE
     uint8_t h_pel_search_wind;
+#endif
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t tf_16x16_block_error[16];

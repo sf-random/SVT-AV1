@@ -685,7 +685,7 @@ EbErrorType signal_derivation_me_kernel_oq(
     context_ptr->me_context_ptr->max_me_search_height =
         max_me_search_height[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][hmeMeLevel];
 #endif
-
+#if !REMOVE_ME_SUBPEL_CODE
     if (pcs_ptr->sc_content_detected)
 #if MAR11_ADOPTIONS
         // fractional_search_method is not used if subpel is OFF
@@ -703,12 +703,13 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
 #endif
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
-
+#if !REMOVE_ME_SUBPEL_CODE
     if (scs_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (pcs_ptr->sc_content_detected)
@@ -766,7 +767,7 @@ EbErrorType signal_derivation_me_kernel_oq(
     }
     else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-
+#endif
     // HME Search Method
     if (pcs_ptr->sc_content_detected)
         context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
@@ -1224,7 +1225,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     context_ptr->me_context_ptr->max_me_search_height =
         max_metf_search_height[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][hmeMeLevel];
 #endif
-
+#if !REMOVE_ME_SUBPEL_CODE
     if (pcs_ptr->sc_content_detected)
 #if MAR11_ADOPTIONS
         // fractional_search_method is irrelevant if subpel is OFF
@@ -1245,12 +1246,13 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
 #endif
-
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag = pcs_ptr->tf_enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->tf_enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->tf_enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->tf_enable_hme_level2_flag;
+#if !REMOVE_ME_SUBPEL_CODE
     if (scs_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (pcs_ptr->sc_content_detected)
@@ -1317,7 +1319,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     }
     else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-
+#endif
     // HME Search Method
     if (pcs_ptr->sc_content_detected)
 #if MAR17_ADOPTIONS

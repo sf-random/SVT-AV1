@@ -471,11 +471,11 @@ extern "C" {
     ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
     (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
-
+#if !REMOVE_ME_SUBPEL_CODE
 #define H_PEL_SEARCH_WIND_3 3  // 1/2-pel serach window 3
 #define H_PEL_SEARCH_WIND_2 2  // 1/2-pel serach window 2
 #define HP_REF_OPT 1 // Remove redundant positions.
-
+#endif
 #define ENABLE_PME_SAD 0
 #define SWITCH_XY_LOOPS_PME_SAD_SSD 0
 #if SWITCH_XY_LOOPS_PME_SAD_SSD
@@ -483,12 +483,13 @@ extern "C" {
 #endif
 
 #define BOUNDARY_CHECK 1
-
+#if !REMOVE_ME_SUBPEL_CODE
 typedef enum MeHpMode {
     EX_HP_MODE        = 0, // Exhaustive  1/2-pel serach mode.
     REFINEMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
     , SWITCHABLE_HP_MODE = 2 // Switch between EX_HP_MODE and REFINEMENT_HP_MODE mode.
 } MeHpMode;
+#endif
 typedef enum GM_LEVEL {
     GM_FULL      = 0, // Exhaustive search mode.
     GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension

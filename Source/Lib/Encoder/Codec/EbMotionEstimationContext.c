@@ -44,7 +44,9 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->one_d_intermediate_results_buf1);
 #endif
     EB_FREE_ARRAY(obj->me_candidate);
+#if !REMOVE_ME_SUBPEL_CODE
     EB_FREE_ARRAY(obj->avctemp_buffer);
+#endif
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
@@ -177,9 +179,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
                 &(object_ptr->me_candidate[me_candidate_index]).pu[pu_index]);
         }
     }
-
+    
+#if !REMOVE_ME_SUBPEL_CODE
     EB_MALLOC_ARRAY(object_ptr->avctemp_buffer,
                     object_ptr->interpolated_stride * max_search_area_height);
+#endif
     EB_MALLOC_ARRAY(object_ptr->p_eight_pos_sad16x16,
                     8 * 16); //16= 16 16x16 blocks in a SB.       8=8search points
 
