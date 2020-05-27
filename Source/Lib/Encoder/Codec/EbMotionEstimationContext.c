@@ -81,8 +81,10 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     object_ptr->sixteenth_sb_buffer_stride = (BLOCK_SIZE_64 >> 2);
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sixteenth_sb_buffer,
                             (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);
+#if !REMOVE_ME_SUBPEL_CODE
     object_ptr->interpolated_stride =
         MIN((uint16_t)MAX_SEARCH_AREA_WIDTH, (uint16_t)(max_input_luma_width + (PAD_VALUE << 1)));
+
 #if ME_MEM_OPT2
     uint16_t max_search_area_height = MIN((uint16_t)MAX_SEARCH_AREA_HEIGHT,
         (uint16_t)(max_input_luma_height + (PAD_VALUE << 1)));
@@ -90,8 +92,10 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     uint16_t max_search_area_height = MIN((uint16_t)MAX_PICTURE_HEIGHT_SIZE,
                                           (uint16_t)(max_input_luma_height + (PAD_VALUE << 1)));
 #endif
+#endif
     EB_MEMSET(
         object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
+#if !REMOVE_ME_SUBPEL_CODE
     EB_MALLOC_ARRAY(object_ptr->mvd_bits_array, NUMBER_OF_MVD_CASES);
     // 15 intermediate buffers to retain the interpolated reference samples
 
@@ -133,6 +137,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     // O   O   O
     //   I   I
     // O   O   O
+#endif
 #if REMOVE_ME_BIPRED_SEARCH
 #if !REMOVE_ME_SUBPEL_CODE
     EB_MALLOC_ARRAY(object_ptr->pos_b_buffer, object_ptr->interpolated_stride * max_search_area_height);

@@ -13,7 +13,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if !REMOVE_ME_SUBPEL_CODE
 // Max Search Area
 #if ME_MEM_OPT2
 #define MAX_SEARCH_AREA_WIDTH 800
@@ -24,6 +24,7 @@ extern "C" {
 #endif
 #define MAX_SEARCH_AREA_WIDTH_CH MAX_SEARCH_AREA_WIDTH + PAD_VALUE
 #define MAX_SEARCH_AREA_HEIGHT_CH MAX_SEARCH_AREA_HEIGHT + PAD_VALUE
+#endif
 // 1-D interpolation shift value
 #define if_shift 6
 #define NUMBER_OF_SB_QUAD 4
@@ -322,7 +323,9 @@ typedef struct HmeResults {
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
+#if !REMOVE_ME_SUBPEL_CODE
     uint32_t                  interpolated_stride;
+#endif
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     MotionEstimationTierZero *me_candidate;
     // Intermediate SB-sized buffer to retain the input samples

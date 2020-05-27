@@ -565,12 +565,13 @@ void* set_me_hme_params_oq(
             min_me_search_height[sc_content_detected][input_resolution][hmeMeLevel] ;
     }
 #endif
-
+#if !REMOVE_ME_SUBPEL_CODE
     assert(me_context_ptr->search_area_width  <= MAX_SEARCH_AREA_WIDTH  && "increase MAX_SEARCH_AREA_WIDTH" );
     assert(me_context_ptr->search_area_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
 #if ME_MEM_OPT2
     assert(me_context_ptr->max_me_search_width <= MAX_SEARCH_AREA_WIDTH && "increase MAX_SEARCH_AREA_WIDTH");
     assert(me_context_ptr->max_me_search_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
+#endif
 #endif
     me_context_ptr->update_hme_search_center_flag = 1;
 
@@ -1110,12 +1111,13 @@ void* tf_set_me_hme_params_oq(
     me_context_ptr->search_area_height =
         min_metf_search_height[sc_content_detected][input_resolution][hmeMeLevel];
 #endif
-
+#if !REMOVE_ME_SUBPEL_CODE
     assert(me_context_ptr->search_area_width <= MAX_SEARCH_AREA_WIDTH && "increase MAX_SEARCH_AREA_WIDTH");
     assert(me_context_ptr->search_area_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
 #if ME_MEM_OPT2
     assert(me_context_ptr->max_me_search_width <= MAX_SEARCH_AREA_WIDTH && "increase MAX_SEARCH_AREA_WIDTH");
     assert(me_context_ptr->max_me_search_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
+#endif
 #endif
     me_context_ptr->update_hme_search_center_flag = 1;
 
