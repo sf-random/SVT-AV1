@@ -397,11 +397,12 @@ typedef struct MeContext {
     EB_ALIGN(16) uint32_t p_sad32x32[4];
     EB_ALIGN(64) uint32_t p_sad16x16[16];
     EB_ALIGN(64) uint32_t p_sad8x8[64];
-
+#if !REMOVE_ME_SUBPEL_CODE
     uint8_t psub_pel_direction64x64;
     uint8_t psub_pel_direction32x32[4];
     uint8_t psub_pel_direction16x16[16];
     uint8_t psub_pel_direction8x8[64];
+#endif
 #if !NSQ_ME_CONTEXT_CLEAN_UP
     uint8_t psub_pel_direction64x32[2];
     uint8_t psub_pel_direction32x16[8];
@@ -417,8 +418,10 @@ typedef struct MeContext {
 #if NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
     uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+#if !REMOVE_ME_SUBPEL_CODE
     uint32_t  p_sb_bipred_sad[SQUARE_PU_COUNT]; //needs to be upgraded to 209 pus
     uint32_t  p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
+#endif
 #else
     uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
     uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
@@ -462,10 +465,8 @@ typedef struct MeContext {
     uint32_t *p_best_ssd8x32;
     uint32_t *p_best_ssd64x16;
     uint32_t *p_best_ssd16x64;
-#endif
     uint8_t * p_best_nsq8x8;
     uint8_t * p_best_nsq16x16;
-#if !NSQ_ME_CONTEXT_CLEAN_UP
     uint8_t * p_best_nsq32x32;
     uint8_t * p_best_nsq64x64;
 #endif
