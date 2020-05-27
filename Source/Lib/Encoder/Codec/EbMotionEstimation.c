@@ -12394,7 +12394,7 @@ EbErrorType motion_estimate_sb(
 #endif
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
-
+#if !SIMULATE_SHUT_SUB_PEL
 #if SHUT_SUB_PEL_TF
     if (context_ptr->me_alt_ref == EB_FALSE) {
 #endif
@@ -12873,6 +12873,7 @@ EbErrorType motion_estimate_sb(
     }
 #if SHUT_SUB_PEL_ME || SHUT_SUB_PEL_TF
     }
+#endif
 #endif
     if (context_ptr->me_alt_ref == EB_FALSE) {
         // Bi-Prediction motion estimation loop
