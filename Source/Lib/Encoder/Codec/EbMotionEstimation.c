@@ -12395,6 +12395,9 @@ EbErrorType motion_estimate_sb(
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
 
+#if SHUT_SUB_PEL_TF
+    if (context_ptr->me_alt_ref == EB_FALSE) {
+#endif
 #if SHUT_SUB_PEL_ME
     if (context_ptr->me_alt_ref == EB_TRUE) {
 #endif
@@ -12868,7 +12871,7 @@ EbErrorType motion_estimate_sb(
             }
         }
     }
-#if SHUT_SUB_PEL_ME
+#if SHUT_SUB_PEL_ME || SHUT_SUB_PEL_TF
     }
 #endif
     if (context_ptr->me_alt_ref == EB_FALSE) {
