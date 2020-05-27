@@ -2,7 +2,9 @@
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
-
+#if REMOVE_ME_SUBPEL_CODE
+// To remove this file
+#else
 #include "stdint.h"
 #include "emmintrin.h"
 #include "EbComputeSAD_SSE2.h"
@@ -33,3 +35,4 @@ uint32_t combined_averaging_4xm_sad_sse2_intrin(uint8_t *src, uint32_t src_strid
     }
     return _mm_cvtsi128_si32(_mm_add_epi32(sad0, sad1));
 }
+#endif

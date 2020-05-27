@@ -26,9 +26,11 @@ static void me_context_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
 #if REMOVE_ME_BIPRED_SEARCH
+#if !REMOVE_ME_SUBPEL_CODE
     EB_FREE_ARRAY(obj->pos_b_buffer);
     EB_FREE_ARRAY(obj->pos_h_buffer);
     EB_FREE_ARRAY(obj->pos_j_buffer);
+#endif
 #else
     for (list_index = 0; list_index < MAX_NUM_OF_REF_PIC_LIST; list_index++) {
         for (ref_pic_index = 0; ref_pic_index < MAX_REF_IDX; ref_pic_index++) {
@@ -130,9 +132,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
     //   I   I
     // O   O   O
 #if REMOVE_ME_BIPRED_SEARCH
+#if !REMOVE_ME_SUBPEL_CODE
     EB_MALLOC_ARRAY(object_ptr->pos_b_buffer, object_ptr->interpolated_stride * max_search_area_height);
     EB_MALLOC_ARRAY(object_ptr->pos_h_buffer, object_ptr->interpolated_stride * max_search_area_height);
     EB_MALLOC_ARRAY(object_ptr->pos_j_buffer, object_ptr->interpolated_stride * max_search_area_height);
+#endif
 #else
     for (list_index = 0; list_index < MAX_NUM_OF_REF_PIC_LIST; list_index++) {
         for (ref_pic_index = 0; ref_pic_index < MAX_REF_IDX; ref_pic_index++) {

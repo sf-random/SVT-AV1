@@ -337,9 +337,11 @@ typedef struct MeContext {
     uint32_t  sixteenth_sb_buffer_stride;
     uint8_t * integer_buffer_ptr[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
 #if REMOVE_ME_BIPRED_SEARCH
+#if !REMOVE_ME_SUBPEL_CODE
     uint8_t *pos_b_buffer;
     uint8_t *pos_h_buffer;
     uint8_t *pos_j_buffer;
+#endif
 #else
     uint8_t * pos_b_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint8_t * pos_h_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];

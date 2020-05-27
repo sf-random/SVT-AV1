@@ -3874,6 +3874,7 @@ static void full_pel_search_sb(MeContext *context_ptr, uint32_t list_index, uint
         }
     }
 }
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * half_pel_refinement_block
  *   performs Half Pel refinement for one PU
@@ -4724,7 +4725,7 @@ static void open_loop_me_half_pel_search_sblock(
         generate_nsq_mv(context_ptr);
 #endif
 }
-
+#endif
 /*******************************************
  * open_loop_me_fullpel_search_sblock
  *******************************************/
@@ -4879,6 +4880,7 @@ static void AvcStyleInterpolation(uint8_t *srcOne, // input parameter, input sam
     return;
 }
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * InterpolateSearchRegion AVC
  *   interpolates the search area
@@ -7681,6 +7683,7 @@ static void quarter_pel_search_sb(
 #endif
     return;
 }
+#endif
 void hme_one_quadrant_level_0(
     PictureParentControlSet *pcs_ptr,
     MeContext *              context_ptr, // input/output parameter, ME context Ptr, used to

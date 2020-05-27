@@ -447,6 +447,7 @@ extern "C" {
 #define SKIP_4x4_SUBPEL_SEARCH 0
 
 #define SIMULATE_SHUT_SUB_PEL 1
+#define REMOVE_ME_SUBPEL_CODE 1
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
