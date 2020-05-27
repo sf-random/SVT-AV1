@@ -4666,17 +4666,15 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         blk_origin_index, list_idx, ref_idx,me_results, &me_mv_x, &me_mv_y);
                 } 
 #if PERFORM_SUB_PEL_MD
-#if SKIP_4x4_SUBPEL_SEARCH
-                if ((context_ptr->blk_geom->bwidth != 4 || context_ptr->blk_geom->bheight != 4) && context_ptr->md_subpel_search_ctrls.enabled)
-#else
                 if (context_ptr->md_subpel_search_ctrls.enabled)
-#endif
                 {
-
-                    int16_t  best_search_mvx = (int16_t)~0;
-                    int16_t  best_search_mvy = (int16_t)~0;
-                    uint32_t best_search_distortion = (int32_t)~0;
-                    uint8_t  search_pattern = 0;
+#if SKIP_4x4_SUBPEL_SEARCH
+                    if (context_ptr->blk_geom->bsize != BLOCK_4X4) {
+#endif
+                        int16_t  best_search_mvx = (int16_t)~0;
+                        int16_t  best_search_mvy = (int16_t)~0;
+                        uint32_t best_search_distortion = (int32_t)~0;
+                        uint8_t  search_pattern = 0;
 
                         md_sub_pel_search(pcs_ptr,
                             context_ptr,
@@ -4722,25 +4720,24 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
                         me_mv_x = best_search_mvx;
                         me_mv_y = best_search_mvy;
-                }
-
 #if SKIP_4x4_SUBPEL_SEARCH
-
-                if (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4) {
-                
-                    // Get parent_depth_idx_mds
-                    uint16_t parent_depth_idx_mds = 0;
-                    if (context_ptr->blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
-                        //Set parent to be considered
-                        parent_depth_idx_mds =
-                        (context_ptr->blk_geom->sqi_mds -
-                        (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
-                        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
-
+                    }
+                    else {
+                        // Get parent_depth_idx_mds
+                        uint16_t parent_depth_idx_mds = 0;
+                        if (context_ptr->blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
+                            //Set parent to be considered
+                            parent_depth_idx_mds =
+                            (context_ptr->blk_geom->sqi_mds -
+                            (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
+                            parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
 
 
-                }
+                        me_mv_x = context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][0];
+                        me_mv_y = context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][1];
+                    }
 #endif
+                }
 #endif
 #endif
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
