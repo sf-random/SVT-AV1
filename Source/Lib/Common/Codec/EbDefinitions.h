@@ -440,6 +440,7 @@ extern "C" {
 #if MOVE_SUB_PEL_ME_TO_MD
 
 #define SHUT_SUB_PEL_TF 1
+#define PERFORM_SUB_PEL_TF 1 
 
 #define SHUT_SUB_PEL_ME 0
 #define PERFORM_SUB_PEL_MD 0 

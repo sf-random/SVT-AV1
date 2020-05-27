@@ -1815,9 +1815,13 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
             signed short best_mv_y = 0;
             signed short mv_x      = (_MVXT(context_ptr->p_best_mv16x16[mv_index])) << 1;
             signed short mv_y      = (_MVYT(context_ptr->p_best_mv16x16[mv_index])) << 1;
-
+#if PERFORM_SUB_PEL_TF
+            for (signed short i = -15; i <= 15; i++) {
+                for (signed short j = -15; j <= 15; j++) {
+#else
             for (signed short i = -1; i <= 1; i++) {
                 for (signed short j = -1; j <= 1; j++) {
+#endif
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
@@ -2033,9 +2037,13 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         signed short best_mv_y = 0;
         signed short mv_x      = (_MVXT(context_ptr->p_best_mv32x32[mv_index])) << 1;
         signed short mv_y      = (_MVYT(context_ptr->p_best_mv32x32[mv_index])) << 1;
-
+#if PERFORM_SUB_PEL_TF
+        for (signed short i = -15; i <= 15; i++) {
+            for (signed short j = -15; j <= 15; j++) {
+#else
         for (signed short i = -1; i <= 1; i++) {
             for (signed short j = -1; j <= 1; j++) {
+#endif
                 mv_unit.mv->x = mv_x + i;
                 mv_unit.mv->y = mv_y + j;
 
