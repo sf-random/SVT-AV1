@@ -268,21 +268,21 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t use_ssd;                             // 0: search using SAD; 1: search using SSD 
                                                  
     uint8_t half_pel_search_enabled;             // 0: OFF; 1: ON
-    uint8_t half_pel_search_scan;                // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t half_pel_search_scan;                // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t half_pel_search_width;               // 1/2 Pel search area width
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
     uint8_t half_pel_search_central_position;    // 0: if distortion of the MVC is available; 1: otherwise
 
     uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
-    uint8_t quarter_pel_search_scan;             // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t quarter_pel_search_scan;             // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t quarter_pel_search_width;            // 1/4 Pel search area width
     uint8_t quarter_pel_search_height;           // 1/4 Pel search area height
     uint8_t quarter_pel_interpolation;           // 1/4 Pel interpolation method
     uint8_t quarter_pel_search_central_position; // 0: if distortion of the MVC is available; 1: otherwise (e.g. if 1/2 Pel search is bypassed)
 
     uint8_t eight_pel_search_enabled;            // 0: OFF; 1: ON
-    uint8_t eight_pel_search_scan;               // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t eight_pel_search_scan;               // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t eight_pel_search_width;              // 1/8 Pel search area width
     uint8_t eight_pel_search_height;             // 1/8 Pel search area height
     uint8_t eight_pel_interpolation;             // 1/8 Pel interpolation method
