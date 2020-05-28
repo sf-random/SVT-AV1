@@ -557,6 +557,9 @@ int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
                                 uint32_t txb_index, uint32_t intraLumaDir,
                                 int32_t *coeff_buffer_ptr, const uint16_t coeff_stride,
                                 COMPONENT_TYPE component_type, int16_t txb_skip_ctx,
+#if ENC_STATS
+                                EntropyCodingContext *context_ptr,
+#endif
                                 int16_t dc_sign_ctx, int16_t eob) {
     (void)pu_index;
     (void)coeff_stride;
@@ -595,6 +598,64 @@ int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
     if (component_type == COMPONENT_LUMA) {
         av1_write_tx_type(
             parent_pcs_ptr, frame_context, ec_writer, blk_ptr, intraLumaDir, tx_type, tx_size);
+#if ENC_STATS
+             
+            int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc);
+
+            uint32_t total_samples = (width*height);
+            uint32_t count_non_zero_coeffs   = blk_ptr->txb_array[txb_index].nz_coef_count[0];
+            uint8_t band_idx = 0;
+            /*if (count_non_zero_coeffs >= ((total_samples * 18) / 20)) {
+                band_idx = 9;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 16) / 20)) {
+                band_idx = 8;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 14) / 20)) {
+                band_idx = 7;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 12) / 20)) {
+                band_idx = 6;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 10) / 20)) {
+                band_idx = 5;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 8) / 20)) {
+                band_idx = 4;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 6) / 20)) {
+                band_idx = 3;
+            }
+            else if (count_non_zero_coeffs >= ((total_samples * 4) / 20)) {
+                band_idx = 2;
+            }
+            else*/ if (count_non_zero_coeffs >= ((total_samples * 2) / 20)) {
+                band_idx = 1;
+            }
+            else {
+                band_idx = 0;
+            }
+
+            //uint64_t    txt_stats[2/*inter-intra*/][10/*coef*/][TX_SIZES_ALL][TX_TYPES];
+            context_ptr->txt_stats[is_inter][band_idx][tx_size][tx_type]++;
+
+            // by size
+            context_ptr->tx_type_size[tx_size][tx_type]++;
+            ///////////
+
+
+            // by coef
+
+            context_ptr->tx_type_coef[band_idx][tx_type]++;
+            ///////////
+
+            // by type
+       
+            context_ptr->tx_type_ii_type[is_inter][tx_type]++;
+            ///////////
+
+
+#endif
     }
 
     int16_t       eob_extra;
@@ -775,6 +836,9 @@ static EbErrorType av1_encode_tx_coef_y(
                                                   coeff_ptr->stride_y,
                                                   COMPONENT_LUMA,
                                                   txb_skip_ctx,
+#if ENC_STATS
+                                                  context_ptr,
+#endif
                                                   dc_sign_ctx,
                                                   blk_ptr->txb_array[txb_itr].nz_coef_count[0]);
         }
@@ -872,6 +936,9 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *   pcs_ptr,
                                             coeff_ptr->stride_cb,
                                             COMPONENT_CHROMA,
                                             txb_skip_ctx,
+#if ENC_STATS
+                                            context_ptr,
+#endif
                                             dc_sign_ctx,
                                             blk_ptr->txb_array[txb_itr].nz_coef_count[1]);
             }
@@ -909,6 +976,9 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *   pcs_ptr,
                                             coeff_ptr->stride_cr,
                                             COMPONENT_CHROMA,
                                             txb_skip_ctx,
+#if ENC_STATS
+                                            context_ptr,
+#endif
                                             dc_sign_ctx,
                                             blk_ptr->txb_array[txb_itr].nz_coef_count[2]);
             }
@@ -1045,6 +1115,9 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *   pcs_ptr,
                                                       coeff_ptr->stride_y,
                                                       COMPONENT_LUMA,
                                                       txb_skip_ctx,
+#if ENC_STATS
+                                                      context_ptr,
+#endif
                                                       dc_sign_ctx,
                                                       blk_ptr->txb_array[txb_itr].nz_coef_count[0]);
             }
@@ -1086,6 +1159,9 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *   pcs_ptr,
                                                 coeff_ptr->stride_cb,
                                                 COMPONENT_CHROMA,
                                                 txb_skip_ctx,
+#if ENC_STATS
+                                                context_ptr,
+#endif
                                                 dc_sign_ctx,
                                                 blk_ptr->txb_array[txb_itr].nz_coef_count[1]);
                 }
@@ -1126,6 +1202,9 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *   pcs_ptr,
                                                 coeff_ptr->stride_cr,
                                                 COMPONENT_CHROMA,
                                                 txb_skip_ctx,
+#if ENC_STATS
+                                                context_ptr,
+#endif
                                                 dc_sign_ctx,
                                                 blk_ptr->txb_array[txb_itr].nz_coef_count[2]);
                 }
@@ -5620,6 +5699,12 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                    pcs_ptr->parent_pcs_ptr->av1_cm->mi_cols);
 #endif
 
+#if ENC_STATS
+        if (blk_geom->sq_size < 128)
+            context_ptr->use_below_128 = 1;
+        if (blk_geom->sq_size < 64)
+            context_ptr->use_below_64 = 1;
+#endif
     if (pcs_ptr->slice_type == I_SLICE) {
         //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w)
 
@@ -6271,6 +6356,15 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
 
     SbGeom *sb_geom = &pcs_ptr->parent_pcs_ptr->sb_geom[tb_ptr->index]; // .block_is_inside_md_scan[blk_index])
 
+#if ENC_STATS
+    memset(context_ptr->txt_stats,0,sizeof(uint64_t)*TX_SIZES_ALL*TX_TYPES*2*2);
+    memset(context_ptr->tx_type_size,0,sizeof(uint64_t) * TX_SIZES_ALL*TX_TYPES);
+    memset(context_ptr->tx_type_coef,0,sizeof(uint64_t) * 10*TX_TYPES);
+    memset(scs_ptr->tx_type_ii_type,0,sizeof(uint64_t)*2 * TX_TYPES);
+
+    context_ptr->use_below_128 = 0;
+    context_ptr->use_below_64 = 0;
+#endif
     if (!(sb_geom->is_complete_sb)) check_blk_out_of_bound = EB_TRUE;
     do {
         EbBool code_blk_cond = EB_TRUE; // Code cu only if it is inside the picture
@@ -6490,5 +6584,45 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
         } else
             ++blk_index;
     } while (blk_index < scs_ptr->max_block_cnt);
+#if ENC_STATS
+
+    eb_block_on_mutex(scs_ptr->stat_mutex);
+
+    if (context_ptr->use_below_128 == 0)
+        scs_ptr->is_sb_128++;
+    else  if (context_ptr->use_below_64 == 0)
+        scs_ptr->is_sb_64++;
+
+        // by size
+    for (TxSize txs = 0 ; txs < TX_SIZES_ALL ; ++txs)
+        for (TxType txt = 0 ; txt < TX_TYPES ; ++txt)
+            scs_ptr->tx_type_size[txs][txt] += context_ptr->tx_type_size[txs][txt];
+
+
+        // by coef
+    for (int band = 0 ; band < 10 ; ++band)
+        for (TxType txt = 0 ; txt < TX_TYPES ; ++txt)
+            scs_ptr->tx_type_coef[band][txt] += context_ptr->tx_type_coef[band][txt];
+
+
+        // by ii type
+    for (int ii_type = 0 ; ii_type < 2 ; ++ii_type)
+        for (TxType txt = 0 ; txt < TX_TYPES ; ++txt)
+            scs_ptr->tx_type_ii_type[ii_type][txt] += context_ptr->tx_type_ii_type[ii_type][txt];
+
+    for (int type = 0 ; type < 2 ; ++ type)
+        for (int band = 0 ; band < 2 ; ++ band)
+            for (int txsize = 0 ; txsize < TX_SIZES_ALL ; ++ txsize)
+                for (TxType txtype = 0 ; txtype < TX_TYPES ; ++txtype)
+                    scs_ptr->txt_stats[type][band][txsize][txtype] +=
+                context_ptr->txt_stats[type][band][txsize][txtype];
+
+    ////uint64_t    txt_stats[2/*inter-intra*/][10/*coef*/][TX_SIZES_ALL][TX_TYPES];
+    //        context_ptr->txt_stats[is_inter][band_idx][tx_size][tx_type]++;
+
+
+    eb_release_mutex(scs_ptr->stat_mutex);
+
+#endif
     return return_error;
 }

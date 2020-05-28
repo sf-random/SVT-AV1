@@ -1766,7 +1766,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->tx_search_level = TX_SEARCH_ENC_DEC;
 #endif
-
+#if TURN_OFF_TXT
+        context_ptr->tx_search_level = TX_SEARCH_OFF;
+#endif
 #if TXT_CONTROL
     // Set MD tx_level
     // md_txt_search_level                            Settings
@@ -3568,7 +3570,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->sq_weight = 100 - (10 * context_ptr->coeffcients_area_based_cycles_allocation_level);
     }
 #endif
-
+#if REMOVE_SQ_WEIGHT
+        context_ptr->sq_weight = (uint32_t)~0;
+#endif
     // nsq_hv_level  needs sq_weight to be ON
     // 0: OFF
     // 1: ON 10% + skip HA/HB/H4  or skip VA/VB/V4

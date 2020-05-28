@@ -38,6 +38,29 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
+#define REMOVE_SCALING                  1  // remove nic scaling
+    // CLASS PRUNE
+#define CLASS_PRUNE                     1 // new class prune
+#define DISABLE_CLASS_PRUNE             1 // disable old class prune
+
+    // CAND PRUNE
+#define CAND_PRUN_OPT                   0
+#define CAND_PRUN_OPT_TXT               0
+#define DISABLE_CAND_PRUNE              1
+#define REMOVE_CAND_PRUN_SHORTCUT       0
+    // TXT
+#define TURN_OFF_TXT                    0
+#define REMOVE_TXT_SHORTCUT             0
+#define NEW_TXT_LEVELS                  0
+#define TXT_FULL                        1
+#define TXT_NEWTABLE                    0
+    // TXS
+#define REMOVE_TXS_SHORTCUT             1
+    // NSQ
+#define REMOVE_SQ_WEIGHT                0
+
+    // STATS
+#define ENC_STATS                       1
 
 #define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
 

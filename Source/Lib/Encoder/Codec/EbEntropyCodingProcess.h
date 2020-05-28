@@ -62,6 +62,15 @@ typedef struct EntropyCodingContext {
     int32_t     coded_area_sb;
     int32_t     coded_area_sb_uv;
     TOKENEXTRA *tok;
+#if ENC_STATS
+    uint32_t   use_below_128;
+    uint32_t   use_below_64;
+    uint64_t    tx_type_size[TX_SIZES_ALL][TX_TYPES];
+    uint64_t    tx_type_coef[10][TX_TYPES];
+    uint64_t    tx_type_ii_type[2][TX_TYPES];
+
+    uint64_t    txt_stats[2][2/*coef*/][TX_SIZES_ALL][TX_TYPES];
+#endif
 } EntropyCodingContext;
 
 /**************************************
