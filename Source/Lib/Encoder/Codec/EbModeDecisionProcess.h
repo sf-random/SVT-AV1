@@ -472,7 +472,9 @@ typedef struct ModeDecisionContext {
     uint8_t              full_loop_escape;
 #endif
     uint8_t              global_mv_injection;
+#if !MERGE_SUBPEL
     uint8_t              perform_me_mv_1_8_pel_ref;
+#endif
     uint8_t              new_nearest_injection;
     uint8_t              new_nearest_near_comb_injection;
     uint8_t              warped_motion_injection;

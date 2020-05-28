@@ -4847,7 +4847,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->skip_depth =
         pcs_ptr->parent_pcs_ptr->sc_content_detected ? 1 : 0;
 #endif
-
+#if !MERGE_SUBPEL
     // Set perform_me_mv_1_8_pel_ref
     if (pd_pass == PD_PASS_0)
         context_ptr->perform_me_mv_1_8_pel_ref = EB_FALSE;
@@ -4857,7 +4857,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->perform_me_mv_1_8_pel_ref =
         (pcs_ptr->parent_pcs_ptr->frm_hdr
             .allow_high_precision_mv);
-
+#endif
     return return_error;
 }
 #else

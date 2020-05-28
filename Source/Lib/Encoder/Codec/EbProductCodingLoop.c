@@ -4734,6 +4734,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             0,
                             search_pattern);
 #if MERGE_SUBPEL
+                        if(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
                         md_sub_pel_search(pcs_ptr,
                             context_ptr,
                             input_picture_ptr,
