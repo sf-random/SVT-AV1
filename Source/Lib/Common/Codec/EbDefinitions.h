@@ -449,7 +449,9 @@ extern "C" {
 #define SIMULATE_SHUT_SUB_PEL 1
 #define REMOVE_ME_SUBPEL_CODE 1
 #define MERGE_SUBPEL_0 1
-#define MERGE_SUBPEL_1 0
+
+#define PD0_SUB_PEL 1
+
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

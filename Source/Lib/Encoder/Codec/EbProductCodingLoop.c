@@ -4674,20 +4674,29 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 //printf("%d\t%d\t%d\t\%d\n", context_ptr->me_sb_addr, context_ptr->blk_geom->blkidx_mds, me_mv_x, me_mv_y);
 
 #if ADD_MD_NSQ_SEARCH
-                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_nsq_mv_search_ctrls.enabled) {
-                    md_nsq_search(pcs_ptr, context_ptr,
-                        input_picture_ptr, input_origin_index,
-                        blk_origin_index, list_idx, ref_idx,me_results, &me_mv_x, &me_mv_y);
-                } 
+                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) &&
+                    context_ptr->md_nsq_mv_search_ctrls.enabled) {
+                    md_nsq_search(pcs_ptr,
+                                  context_ptr,
+                                  input_picture_ptr,
+                                  input_origin_index,
+                                  blk_origin_index,
+                                  list_idx,
+                                  ref_idx,
+                                  me_results,
+                                  &me_mv_x,
+                                  &me_mv_y);
+                }
 #if PERFORM_SUB_PEL_MD
-                if (context_ptr->md_subpel_search_ctrls.enabled)
-                {
-                        int16_t  best_search_mvx = (int16_t)~0;
-                        int16_t  best_search_mvy = (int16_t)~0;
-                        uint32_t best_search_distortion = (int32_t)~0;
-                        uint8_t  search_pattern = 0;
+                if (context_ptr->md_subpel_search_ctrls.enabled) {
+                    int16_t  best_search_mvx        = (int16_t)~0;
+                    int16_t  best_search_mvy        = (int16_t)~0;
+                    uint32_t best_search_distortion = (int32_t)~0;
+                    uint8_t  search_pattern         = 0;
 
-                        md_sub_pel_search(pcs_ptr,
+                    if (context_ptr->md_subpel_search_ctrls.perform_half_pel_search)
+                        md_sub_pel_search(
+                            pcs_ptr,
                             context_ptr,
                             input_picture_ptr,
                             input_origin_index,
@@ -4711,7 +4720,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             1,
                             search_pattern);
 
-                        md_sub_pel_search(pcs_ptr,
+                    if (context_ptr->md_subpel_search_ctrls.perform_quarter_pel_search)
+                        md_sub_pel_search(
+                            pcs_ptr,
                             context_ptr,
                             input_picture_ptr,
                             input_origin_index,
@@ -4735,33 +4746,35 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             0,
                             search_pattern);
 #if MERGE_SUBPEL_0
-                        if(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
-                        md_sub_pel_search(pcs_ptr,
-                            context_ptr,
-                            input_picture_ptr,
-                            input_origin_index,
-                            blk_origin_index,
-                            context_ptr->md_subpel_search_ctrls.use_ssd,
-                            list_idx,
-                            ref_idx,
-                            best_search_mvx,
-                            best_search_mvy,
-                            -(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
-                            +(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
-                            -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
-                            +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
-                            1,
-                            &best_search_mvx,
-                            &best_search_mvy,
-                            &best_search_distortion,
+                    if (context_ptr->md_subpel_search_ctrls.perform_eight_pel_search)
+                        if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
+                            md_sub_pel_search(
+                                pcs_ptr,
+                                context_ptr,
+                                input_picture_ptr,
+                                input_origin_index,
+                                blk_origin_index,
+                                context_ptr->md_subpel_search_ctrls.use_ssd,
+                                list_idx,
+                                ref_idx,
+                                best_search_mvx,
+                                best_search_mvy,
+                                -(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
+                                +(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
+                                -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
+                                +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
+                                1,
+                                &best_search_mvx,
+                                &best_search_mvy,
+                                &best_search_distortion,
 #if USE_HALF_PEL_BILINEAR
-                            0,
+                                0,
 #endif
-                            0,
-                            search_pattern);
+                                0,
+                                search_pattern);
 #endif
-                        me_mv_x = best_search_mvx;
-                        me_mv_y = best_search_mvy;
+                    me_mv_x = best_search_mvx;
+                    me_mv_y = best_search_mvy;
                 }
 #endif
 #endif

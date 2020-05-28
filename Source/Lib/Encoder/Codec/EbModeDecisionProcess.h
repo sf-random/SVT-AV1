@@ -266,12 +266,19 @@ typedef struct MdNsqMvSearchCtrls {
 typedef struct MdSubPelSearchCtrls {
     uint8_t enabled;
     uint8_t use_ssd;
+
+    uint8_t perform_half_pel_search;
     uint8_t half_pel_search_width;
     uint8_t half_pel_search_height;
+
+    uint8_t perform_quarter_pel_search;
     uint8_t quarter_pel_search_width;
     uint8_t quarter_pel_search_height;
+
+    uint8_t perform_eight_pel_search;
     uint8_t eight_pel_search_width;
     uint8_t eight_pel_search_height;
+
 }MdSubPelSearchCtrls;
 #endif
 #if TXT_CONTROL
