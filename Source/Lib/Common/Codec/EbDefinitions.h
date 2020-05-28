@@ -439,14 +439,15 @@ extern "C" {
 #define MOVE_SUB_PEL_ME_TO_MD 1
 #if MOVE_SUB_PEL_ME_TO_MD
 
-#define SHUT_SUB_PEL_TF 1
+#define SHUT_SUB_PEL_TF 0
 #define PERFORM_SUB_PEL_TF 1 
 
 #define SHUT_SUB_PEL_ME 0
-#define PERFORM_SUB_PEL_MD 0
+#define PERFORM_SUB_PEL_MD 1
 #define USE_HALF_PEL_BILINEAR 0 
-#define SIMULATE_SHUT_SUB_PEL 0
-#define REMOVE_ME_SUBPEL_CODE 0
+
+#define SIMULATE_SHUT_SUB_PEL 1
+#define REMOVE_ME_SUBPEL_CODE 1
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
