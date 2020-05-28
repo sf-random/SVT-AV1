@@ -1681,65 +1681,65 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
 }
 #endif
 #if ADD_MD_NSQ_SEARCH
-void md_nsq_mv_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
+void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
 
-    MdNsqMvSearchCtrls *md_nsq_mv_search_ctrls = &mdctxt->md_nsq_mv_search_ctrls;
+    MdNsqMotionSearchCtrls *md_nsq_motion_search_ctrls = &mdctxt->md_nsq_motion_search_ctrls;
 
     switch (md_nsq_mv_search_level)
     {
     case 0:
-        md_nsq_mv_search_ctrls->enabled = 0;
+        md_nsq_motion_search_ctrls->enabled = 0;
         break;
     case 1:
-        md_nsq_mv_search_ctrls->enabled = 1;
-        md_nsq_mv_search_ctrls->use_ssd = 0;
-        md_nsq_mv_search_ctrls->full_pel_search_width = 7;
-        md_nsq_mv_search_ctrls->full_pel_search_height = 7;
+        md_nsq_motion_search_ctrls->enabled = 1;
+        md_nsq_motion_search_ctrls->use_ssd = 0;
+        md_nsq_motion_search_ctrls->full_pel_search_width = 7;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 7;
 #if !PERFORM_SUB_PEL_MD 
-        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
-        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->perform_sub_pel = 1;
+        md_nsq_motion_search_ctrls->half_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->half_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_height = 3;
 #endif
         break;
     case 2:
-        md_nsq_mv_search_ctrls->enabled = 1;
-        md_nsq_mv_search_ctrls->use_ssd = 0;
-        md_nsq_mv_search_ctrls->full_pel_search_width = 11;
-        md_nsq_mv_search_ctrls->full_pel_search_height = 11;
+        md_nsq_motion_search_ctrls->enabled = 1;
+        md_nsq_motion_search_ctrls->use_ssd = 0;
+        md_nsq_motion_search_ctrls->full_pel_search_width = 11;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 11;
 #if !PERFORM_SUB_PEL_MD 
-        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
-        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->perform_sub_pel = 1;
+        md_nsq_motion_search_ctrls->half_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->half_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_height = 3;
 #endif
         break;
     case 3:
-        md_nsq_mv_search_ctrls->enabled = 1;
-        md_nsq_mv_search_ctrls->use_ssd = 0;
-        md_nsq_mv_search_ctrls->full_pel_search_width = 15;
-        md_nsq_mv_search_ctrls->full_pel_search_height = 15;
+        md_nsq_motion_search_ctrls->enabled = 1;
+        md_nsq_motion_search_ctrls->use_ssd = 0;
+        md_nsq_motion_search_ctrls->full_pel_search_width = 15;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 15;
 #if !PERFORM_SUB_PEL_MD 
-        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
-        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->perform_sub_pel = 1;
+        md_nsq_motion_search_ctrls->half_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->half_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_height = 3;
 #endif
         break;
     case 4:
-        md_nsq_mv_search_ctrls->enabled = 1;
-        md_nsq_mv_search_ctrls->use_ssd = 0;
-        md_nsq_mv_search_ctrls->full_pel_search_width = 31;
-        md_nsq_mv_search_ctrls->full_pel_search_height = 31;
+        md_nsq_motion_search_ctrls->enabled = 1;
+        md_nsq_motion_search_ctrls->use_ssd = 0;
+        md_nsq_motion_search_ctrls->full_pel_search_width = 31;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 31;
 #if !PERFORM_SUB_PEL_MD 
-        md_nsq_mv_search_ctrls->perform_sub_pel = 1;
-        md_nsq_mv_search_ctrls->half_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->half_pel_search_height = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_width = 3;
-        md_nsq_mv_search_ctrls->quarter_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->perform_sub_pel = 1;
+        md_nsq_motion_search_ctrls->half_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->half_pel_search_height = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_width = 3;
+        md_nsq_motion_search_ctrls->quarter_pel_search_height = 3;
 #endif
         break;
     default:
@@ -4750,7 +4750,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_nsq_mv_search_level = 1;
 
-    md_nsq_mv_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
+    md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
