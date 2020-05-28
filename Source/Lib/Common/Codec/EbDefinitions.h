@@ -423,33 +423,26 @@ extern "C" {
 
 #define MOVE_NSQ_MON_UNIPRED_ME_TO_MD 1 // Move non-sq/non-unipred ME to MD
 #if MOVE_NSQ_MON_UNIPRED_ME_TO_MD
-#define SHUT_ME_CAND_SORTING       1 //
-#define PRUNING_PER_INTER_TYPE     1 //
-#define PD0_INTER_CAND             1 //
-#define SHUT_ME_NSQ_SEARCH         1 //
-#define FIX_SHUT_ME_NSQ_SEARCH     1 //
-#define ADD_MD_NSQ_SEARCH          1 //
-#define NSQ_REMOVAL_CODE_CLEAN_UP  1 //
-#define NSQ_ME_CONTEXT_CLEAN_UP    1 //
-#define REMOVE_ME_BIPRED_SEARCH    1 //
-#define REMOVE_MRP_MODE            1 //
-#define USE_SUB_BLOCK_MVC          1 //
+#define SHUT_ME_CAND_SORTING       1 // Bypass ME bipred search and shut ME cands sorting
+#define PRUNING_PER_INTER_TYPE     1 // Added the ability to signal best_refs per INTER type
+#define PD0_INTER_CAND             1 // Enable all PA_ME cands @ PD0
+#define SHUT_ME_NSQ_SEARCH         1 // Disable NSQ search @ ME, and use sub-block MV(s)/distortion(s) to derive MVs for NSQ blocks  
+#define FIX_SHUT_ME_NSQ_SEARCH     1 // Use the parent SQ MV as NSQ MV
+#define ADD_MD_NSQ_SEARCH          1 // Perform NSQ motion search @ MD
+#define NSQ_REMOVAL_CODE_CLEAN_UP  1 // Remove NSQ circuitry from ME
+#define NSQ_ME_CONTEXT_CLEAN_UP    1 // Remove NSQ variable(s) from ME context
+#define REMOVE_ME_BIPRED_SEARCH    1 // Remove ME bipred search circuitry
+#define REMOVE_MRP_MODE            1 // Remove mrp_mode
+#define USE_SUB_BLOCK_MVC          1 // Use up to 4 additional MVC (sub-block MV(s)) @ MD NSQ motion search
 #endif
 
-#define MOVE_SUB_PEL_ME_TO_MD 1
+#define MOVE_SUB_PEL_ME_TO_MD         1 // Move subpel ME to MD/TF
 #if MOVE_SUB_PEL_ME_TO_MD
-
-#define SHUT_SUB_PEL_TF 0
-#define PERFORM_SUB_PEL_TF 1 
-
-#define SHUT_SUB_PEL_ME 0
-#define PERFORM_SUB_PEL_MD 1
-#define USE_HALF_PEL_BILINEAR 1 
-#define FIX_IFS_OFF_CASE 1
-#define SIMULATE_SHUT_SUB_PEL 1
-#define REMOVE_ME_SUBPEL_CODE 1
-
-#define PD0_SUB_PEL 1
+#define REMOVE_ME_SUBPEL_CODE      1 // Shut subpel ME
+#define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
+#define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
+#define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0) 
+#define PD0_SUB_PEL                1 // Perform subpel @ PD0
 
 #endif
 #endif

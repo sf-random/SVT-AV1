@@ -4168,7 +4168,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                        int16_t search_position_end_x, int16_t search_position_start_y,
                        int16_t search_position_end_y, int16_t search_step, int16_t *best_mvx,
                        int16_t *best_mvy, uint32_t *best_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                        uint32_t interp_filters,
 #endif
                        uint8_t search_central_position, uint8_t search_pattern) {
@@ -4234,7 +4234,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                 list_idx == 1 ? mvy + (refinement_pos_y * search_step) : 0;
             candidate_ptr->ref_frame_index_l0 = list_idx == 0 ? ref_idx : -1;
             candidate_ptr->ref_frame_index_l1 = list_idx == 1 ? ref_idx : -1;
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
             candidate_ptr->interp_filters = interp_filters;
 #else
             candidate_ptr->interp_filters     = 0;
@@ -4482,7 +4482,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             &search_center_mvx,
             &search_center_mvy,
             &search_center_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
             0,
 #endif
             1,
@@ -4799,7 +4799,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &best_search_mvx,
                         &best_search_mvy,
                         &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                         0,
 #endif
                         1,
@@ -5665,7 +5665,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                                           0,
 #endif
                                           0,
@@ -5696,7 +5696,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                                                   0,
 #endif
                                                   0,
@@ -5724,7 +5724,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                                           0,
 #endif
                                           0,
@@ -5755,7 +5755,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                                                   0,
 #endif
                                                   0,
@@ -5784,7 +5784,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
+#if PERFORM_SUB_PEL_MD
                                           0,
 #endif
                                           0,

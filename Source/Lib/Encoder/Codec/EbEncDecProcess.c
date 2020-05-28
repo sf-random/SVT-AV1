@@ -1794,21 +1794,21 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->half_pel_search_scan = 0;
         md_subpel_search_ctrls->half_pel_search_width = 3;
         md_subpel_search_ctrls->half_pel_search_height = 3;
-        md_subpel_search_ctrls->half_pel_interpolation = av1_make_interp_filters(BILINEAR, BILINEAR);
+        md_subpel_search_ctrls->half_pel_interpolation = 0;// av1_make_interp_filters(BILINEAR, BILINEAR);
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 
         md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
         md_subpel_search_ctrls->quarter_pel_search_scan = 0;
         md_subpel_search_ctrls->quarter_pel_search_width = 3;
         md_subpel_search_ctrls->quarter_pel_search_height = 3;
-        md_subpel_search_ctrls->quarter_pel_interpolation = av1_make_interp_filters(BILINEAR, BILINEAR);
+        md_subpel_search_ctrls->quarter_pel_interpolation = 0;// av1_make_interp_filters(BILINEAR, BILINEAR);
         md_subpel_search_ctrls->quarter_pel_search_central_position = 0;
 
         md_subpel_search_ctrls->eight_pel_search_enabled = 1;
         md_subpel_search_ctrls->eight_pel_search_scan = 0;
         md_subpel_search_ctrls->eight_pel_search_width = 3;
         md_subpel_search_ctrls->eight_pel_search_height = 3;
-        md_subpel_search_ctrls->eight_pel_interpolation = av1_make_interp_filters(BILINEAR, BILINEAR);
+        md_subpel_search_ctrls->eight_pel_interpolation = 0;// av1_make_interp_filters(BILINEAR, BILINEAR);
         md_subpel_search_ctrls->eight_pel_search_central_position = 0;
              
         break;
