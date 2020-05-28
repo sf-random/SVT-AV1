@@ -1445,120 +1445,120 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
     switch (inter_inter_distortion_based_reference_pruning_mode) {
     case 0: ref_pruning_ctrls->inter_to_inter_pruning_enabled = 0; break;
     case 1:
-        ref_pruning_ctrls->inter_to_inter_pruning_enabled      = 1;
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 7;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 7;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 7;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 7;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 7;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 7;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 7;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 7;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 7;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 7;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
 
         break;
     case 2:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 6;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 6;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 6;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 6;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 6;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 6;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 6;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 6;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 6;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 6;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
         break;
     case 3:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 5;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 5;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 5;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 5;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 5;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 5;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 5;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 5;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 5;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 5;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
         break;
     case 4:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 4;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 4;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 4;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 4;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 4;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 4;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 4;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 4;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 4;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 4;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
         break;
     case 5:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 3;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 3;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 3;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 3;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 3;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 3;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 3;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 3;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 3;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 3;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
 
         break;
     case 6:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
 
-        ref_pruning_ctrls->max_ref_to_tag[PA_ME_GROUP]         = 2;
-        ref_pruning_ctrls->max_ref_to_tag[UNI_3x3_GROUP]       = 2;
-        ref_pruning_ctrls->max_ref_to_tag[BI_3x3_GROUP]        = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEW_NEAR_GROUP] = 2;
-        ref_pruning_ctrls->max_ref_to_tag[WARP_GROUP]          = 2;
-        ref_pruning_ctrls->max_ref_to_tag[NRST_NEAR_GROUP]     = 2;
-        ref_pruning_ctrls->max_ref_to_tag[PRED_ME_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 2;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 2;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]          = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 2;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 2;
 
-        ref_pruning_ctrls->test_d1_cand[PA_ME_GROUP]         = 0;
-        ref_pruning_ctrls->test_d1_cand[UNI_3x3_GROUP]       = 0;
-        ref_pruning_ctrls->test_d1_cand[BI_3x3_GROUP]        = 1;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEW_NEAR_GROUP] = 0;
-        ref_pruning_ctrls->test_d1_cand[WARP_GROUP]          = 0;
-        ref_pruning_ctrls->test_d1_cand[NRST_NEAR_GROUP]     = 1;
-        ref_pruning_ctrls->test_d1_cand[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
 
         break;
     default: assert(0); break;
@@ -1573,29 +1573,29 @@ void set_inter_inter_distortion_based_reference_pruning_controls(ModeDecisionCon
     {
     case 0:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 0;
-        ref_pruning_ctrls->max_ref_to_tag = 7;
+        ref_pruning_ctrls->best_refs = 7;
         break;
     case 1:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag = 6;
+        ref_pruning_ctrls->best_refs = 6;
         break;
     case 2:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag = 5;
+        ref_pruning_ctrls->best_refs = 5;
         break;
     case 3:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag = 4;
+        ref_pruning_ctrls->best_refs = 4;
 
         break;
     case 4:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag = 3;
+        ref_pruning_ctrls->best_refs = 3;
 
         break;
     case 5:
         ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
-        ref_pruning_ctrls->max_ref_to_tag = 2;
+        ref_pruning_ctrls->best_refs = 2;
 
         break;
     default:
@@ -1810,7 +1810,9 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->half_pel_search_width = 3;
         md_subpel_search_ctrls->half_pel_search_height = 3;
 
-        md_subpel_search_ctrls->perform_quarter_pel_search = 0;
+        md_subpel_search_ctrls->perform_quarter_pel_search = 1;
+        md_subpel_search_ctrls->quarter_pel_search_width = 3;
+        md_subpel_search_ctrls->quarter_pel_search_height = 3;
 
         md_subpel_search_ctrls->perform_eight_pel_search = 0;
         break;

@@ -5243,7 +5243,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
         // Tag ref: do_ref or not
 // tag to_do the best ?
         uint8_t min_ref_to_tag = MIN_REF_TO_TAG;
-        uint8_t max_ref_to_tag = context_ptr->ref_pruning_ctrls.max_ref_to_tag[gi];
+        uint8_t best_refs = context_ptr->ref_pruning_ctrls.best_refs[gi];
         uint8_t total_tagged_ref = 0;
 
         // inter-to-inter distortion based ref masking
@@ -5253,7 +5253,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
                     if (context_ptr->ref_filtering_res[gi][li][ri].valid_ref) {
                         context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
-                        if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[max_ref_to_tag - 1] && total_tagged_ref < max_ref_to_tag) {
+                        if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[best_refs - 1] && total_tagged_ref < best_refs) {
                             context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
                             total_tagged_ref++;
                         }
@@ -5297,7 +5297,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
     // Tag ref: do_ref or not
     // tag to_do the best ?
     uint8_t min_ref_to_tag = MIN_REF_TO_TAG;
-    uint8_t max_ref_to_tag = context_ptr->ref_pruning_ctrls.max_ref_to_tag;
+    uint8_t best_refs = context_ptr->ref_pruning_ctrls.best_refs;
     uint8_t total_tagged_ref = 0;
 
     // inter-to-inter distortion based ref masking
@@ -5307,7 +5307,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
                 if (context_ptr->ref_filtering_res[li][ri].valid_ref) {
                     context_ptr->ref_filtering_res[li][ri].do_ref = 0;
-                    if (context_ptr->ref_filtering_res[li][ri].dist <= early_inter_distortion_array[max_ref_to_tag - 1] && total_tagged_ref < max_ref_to_tag) {
+                    if (context_ptr->ref_filtering_res[li][ri].dist <= early_inter_distortion_array[best_refs - 1] && total_tagged_ref < best_refs) {
                         context_ptr->ref_filtering_res[li][ri].do_ref = 1;
                         total_tagged_ref++;
                     }
@@ -5404,7 +5404,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.test_d1_cand[PRED_ME_GROUP])) continue;
+            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[PRED_ME_GROUP])) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
 #endif

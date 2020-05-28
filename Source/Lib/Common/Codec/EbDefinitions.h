@@ -423,19 +423,19 @@ extern "C" {
 
 #define MOVE_NSQ_MON_UNIPRED_ME_TO_MD 1 // Move non-sq/non-unipred ME to MD
 #if MOVE_NSQ_MON_UNIPRED_ME_TO_MD
-#define SHUT_ME_CAND_SORTING 1 
-#define PRUNING_PER_INTER_TYPE 1
-#define PD0_INTER_CAND 1
-
-#define SHUT_ME_NSQ_SEARCH 1 
-#define FIX_SHUT_ME_NSQ_SEARCH 1 
-#define ADD_MD_NSQ_SEARCH 1
-#define NSQ_REMOVAL_CODE_CLEAN_UP 1 // should be lossless
-#define NSQ_ME_CONTEXT_CLEAN_UP 1
-#define REMOVE_ME_BIPRED_SEARCH 1
-#define REMOVE_MRP_MODE 1 
-#define USE_SUB_BLOCK_MVC 1
+#define SHUT_ME_CAND_SORTING       1 //
+#define PRUNING_PER_INTER_TYPE     1 //
+#define PD0_INTER_CAND             1 //
+#define SHUT_ME_NSQ_SEARCH         1 //
+#define FIX_SHUT_ME_NSQ_SEARCH     1 //
+#define ADD_MD_NSQ_SEARCH          1 //
+#define NSQ_REMOVAL_CODE_CLEAN_UP  1 //
+#define NSQ_ME_CONTEXT_CLEAN_UP    1 //
+#define REMOVE_ME_BIPRED_SEARCH    1 //
+#define REMOVE_MRP_MODE            1 //
+#define USE_SUB_BLOCK_MVC          1 //
 #endif
+
 #define MOVE_SUB_PEL_ME_TO_MD 1
 #if MOVE_SUB_PEL_ME_TO_MD
 
