@@ -1822,8 +1822,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 #endif
 #if PERFORM_SUB_PEL_TF
             // Perform 1/2 Pel MV Refinement
-            for (signed short i = -4; i <= 4; i = i + 4) {
-                for (signed short j = -4; j <= 4; j = j + 4) {
+            for (signed short i = -8; i <= 8; i = i + 8) {
+                for (signed short j = -8; j <= 8; j = j + 8) {
 
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
@@ -2193,8 +2193,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 #endif
 #if PERFORM_SUB_PEL_TF
         // Perform 1/2 Pel MV Refinement
-        for (signed short i = -4; i <= 4; i = i + 4) {
-            for (signed short j = -4; j <= 4; j = j + 4) {
+        for (signed short i = -8; i <= 8; i = i + 8) {
+            for (signed short j = -8; j <= 8; j = j + 8) {
 
                 mv_unit.mv->x = mv_x + i;
                 mv_unit.mv->y = mv_y + j;
