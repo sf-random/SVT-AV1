@@ -40,7 +40,7 @@ extern "C" {
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
-#if !MERGE_SUBPEL
+#if !MERGE_SUBPEL_0
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
 #endif
 /**************************************
@@ -472,7 +472,7 @@ typedef struct ModeDecisionContext {
     uint8_t              full_loop_escape;
 #endif
     uint8_t              global_mv_injection;
-#if !MERGE_SUBPEL
+#if !MERGE_SUBPEL_0
     uint8_t              perform_me_mv_1_8_pel_ref;
 #endif
     uint8_t              new_nearest_injection;

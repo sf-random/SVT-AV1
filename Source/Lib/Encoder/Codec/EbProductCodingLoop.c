@@ -4734,7 +4734,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
                             0,
                             search_pattern);
-#if MERGE_SUBPEL
+#if MERGE_SUBPEL_0
                         if(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
                         md_sub_pel_search(pcs_ptr,
                             context_ptr,
@@ -4765,7 +4765,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #endif
 #endif
-#if !MERGE_SUBPEL
+#if !MERGE_SUBPEL_0
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
                     int16_t  best_search_mvx = (int16_t)~0;
                     int16_t  best_search_mvy = (int16_t)~0;
