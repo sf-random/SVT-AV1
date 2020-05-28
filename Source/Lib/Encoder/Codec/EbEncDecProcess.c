@@ -1772,9 +1772,9 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         break;
     case 3:
         md_subpel_search_ctrls->enabled                   = 1;
-        md_subpel_search_ctrls->use_ssd                   = 0;
-        md_subpel_search_ctrls->half_pel_search_width     = 15;
-        md_subpel_search_ctrls->half_pel_search_height    = 15;
+        md_subpel_search_ctrls->use_ssd                   = 1;
+        md_subpel_search_ctrls->half_pel_search_width     = 7;
+        md_subpel_search_ctrls->half_pel_search_height    = 7;
         md_subpel_search_ctrls->quarter_pel_search_width  = 3;
         md_subpel_search_ctrls->quarter_pel_search_height = 3;
         break;
