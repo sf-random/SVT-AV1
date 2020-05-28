@@ -522,12 +522,12 @@ EbErrorType load_default_buffer_configuration_settings(
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
-#if DECOUPLE_ME_RES
-    scs_ptr->me_pool_init_count = 200;  
-#endif
 
 
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
+#if DECOUPLE_ME_RES
+    uint32_t min_me;
+#endif
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
@@ -559,6 +559,10 @@ EbErrorType load_default_buffer_configuration_settings(
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
 
+#if DECOUPLE_ME_RES
+        min_me = scs_ptr->static_config.look_ahead_distance==0 ? 1 : min_parent;
+#endif
+
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
         min_paref = 25 +  scs_ptr->scd_delay + eos_delay;
         if (scs_ptr->static_config.enable_overlays)
@@ -578,6 +582,10 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+
+#if DECOUPLE_ME_RES
+        scs_ptr->me_pool_init_count = min_me;
+#endif
     }
     else {
         scs_ptr->input_buffer_fifo_init_count              = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
@@ -586,6 +594,11 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->reference_picture_buffer_init_count       = MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
         scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
         scs_ptr->overlay_input_picture_buffer_init_count   = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
+
+#if DECOUPLE_ME_RES
+        scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
+#endif
+
     }
 
     //#====================== Inter process Fifos ======================

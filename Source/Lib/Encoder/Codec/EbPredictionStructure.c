@@ -1994,7 +1994,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 #if M8_MRP && !UPGRADE_M6_M7_M8
     uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : 1;
 #else
-    uint8_t ref_count_used = MAX_REF_IDX;
+    uint8_t ref_count_used = 4;// MAX_REF_IDX;//
 #endif
 #else
     uint8_t ref_count_used;

@@ -1424,9 +1424,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
             ? ME_RES_CAND_MRP_MODE_0
             : // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
             ME_RES_CAND_MRP_MODE_1; // [BiDir = 1] + [UniDir = 2 = 1 + 1]
-
-    EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
 #if ! DECOUPLE_ME_RES
+    EB_ALLOC_PTR_ARRAY(object_ptr->me_results, object_ptr->sb_total_count);
+
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_NEW(object_ptr->me_results[sb_index],
                me_sb_results_ctor,
@@ -1538,6 +1538,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 }
 
 #if DECOUPLE_ME_RES
+static void me_dctor(EbPtr p) {
+    MotionEstimationData *obj = (MotionEstimationData *)p;   
+
+    EB_DELETE_PTR_ARRAY(obj->me_results, obj->sb_total_count_unscaled);
+}
 EbErrorType me_ctor(MotionEstimationData *object_ptr,
     EbPtr                    object_init_data_ptr) {
 
@@ -1549,14 +1554,9 @@ EbErrorType me_ctor(MotionEstimationData *object_ptr,
         (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
    
     uint16_t       sb_index;
-    
-    //TODO//---
-    //object_ptr->dctor = picture_parent_control_set_dctor;  
-
-    
-
+    object_ptr->dctor = me_dctor;
     uint32_t sb_total_count = picture_sb_width * picture_sb_height;
-   
+    object_ptr->sb_total_count_unscaled = sb_total_count;
 
     uint32_t max_number_of_candidates_per_block =
         (init_data_ptr->mrp_mode == 0)

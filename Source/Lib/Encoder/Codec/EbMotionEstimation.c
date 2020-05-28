@@ -10248,7 +10248,16 @@ void prune_references_fp(
 #if DECOUPLE_ME_RES
             if (context_ptr->me_alt_ref == EB_FALSE)
             {
-#endif
+                if (counter < NUMBER_REF_INTER_COMP)
+                    pcs_ptr->pa_me_data->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
+                else
+                    pcs_ptr->pa_me_data->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
+                counter++;
+
+            }
+#else
                 if (counter < NUMBER_REF_INTER_COMP)
                     pcs_ptr->me_results[sb_index]->
                     do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
@@ -10256,9 +10265,11 @@ void prune_references_fp(
                     pcs_ptr->me_results[sb_index]->
                     do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
                 counter++;
-#if DECOUPLE_ME_RES
-            }
+            
 #endif
+
+
+
 #endif
 #if ME_HME_PRUNING_CLEANUP
             // Prune references based on ME sad
@@ -11973,8 +11984,10 @@ EbErrorType motion_estimate_sb(
 #if INTER_COMP_REDESIGN
 #if DECOUPLE_ME_RES
             if(context_ptr->me_alt_ref == EB_FALSE)
-#endif
+                pcs_ptr->pa_me_data->me_results[sb_index]->do_comp[li][ri] = 1;
+#else
             pcs_ptr->me_results[sb_index]->do_comp[li][ri] = 1;
+#endif
 #endif
             context_ptr->hme_results[li][ri].list_i = li;
             context_ptr->hme_results[li][ri].ref_i = ri;
@@ -12622,7 +12635,11 @@ EbErrorType motion_estimate_sb(
                 }
             }
 
+#if DECOUPLE_ME_RES
+            MeSbResults *me_pu_result = pcs_ptr->pa_me_data->me_results[sb_index];
+#else
             MeSbResults *me_pu_result                        = pcs_ptr->me_results[sb_index];
+#endif
             me_pu_result->total_me_candidate_index[pu_index] = total_me_candidate_index;
 
             me_pu_result->total_me_candidate_index[pu_index] =
@@ -12636,6 +12653,18 @@ EbErrorType motion_estimate_sb(
 #endif
 #if  ME_MEM_OPT
                 uint32_t me_cand_off = pu_index * pcs_ptr->max_number_of_candidates_per_block + cand_index;
+#if DECOUPLE_ME_RES               
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].direction =
+                    me_candidate->prediction_direction;
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l0 =
+                    me_candidate->ref_index[0];
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l1 =
+                    me_candidate->ref_index[1];
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref0_list =
+                    me_candidate->ref0_list;
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref1_list =
+                    me_candidate->ref1_list;
+#else
                 pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].direction =
                     me_candidate->prediction_direction;
                 pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l0 =
@@ -12646,6 +12675,7 @@ EbErrorType motion_estimate_sb(
                     me_candidate->ref0_list;
                 pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref1_list =
                     me_candidate->ref1_list;
+#endif
 #else
 
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].direction =
@@ -12680,12 +12710,22 @@ EbErrorType motion_estimate_sb(
                 for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
 #if  ME_MEM_OPT
+#if DECOUPLE_ME_RES
+                    uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
+                    pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0) ? 4 : list_index ? 2 : 0) + ref_pic_index].x_mv =
+                        _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+
+                    pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0) ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
+                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#else
+
                      uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
                      pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0)? 4: list_index ? 2 : 0) + ref_pic_index].x_mv =
                          _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 
                       pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0) ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
                           _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#endif
 #else
                     pcs_ptr->me_results[sb_index]
                         ->me_mv_array[pu_index][((list_index && scs_ptr->mrp_mode == 0)

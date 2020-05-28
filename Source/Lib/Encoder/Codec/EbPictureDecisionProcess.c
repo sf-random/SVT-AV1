@@ -96,6 +96,12 @@ typedef struct PictureDecisionContext
 #if DECOUPLE_ME_RES
     PictureParentControlSet* mg_pictures_array[32];//change 32
 #endif
+#if DEP_CNT     
+    DepCntPicInfo updated_links_arr[BROKEN_LINKS_MAX_SIZE];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
+                                                      //this array will store all others pictures needing a dep-cnt clean up.
+    uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#endif
+
 } PictureDecisionContext;
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
@@ -620,6 +626,45 @@ EbErrorType handle_incomplete_picture_window_map(
 
     return return_error;
 }
+#if DEP_CNT                 
+/*
+   This function searches if the target input picture
+   is still in the pre-assign buffer, if yes it returns
+   its ppcs, else it returns Null
+*/
+PictureParentControlSet * is_pic_still_in_pre_assign_buffer(
+    EncodeContext                 *encode_context_ptr,
+    PictureDecisionContext        *context_ptr,
+    uint32_t                       mini_gop_index,
+    uint64_t                       target_pic)
+{
+    for (uint32_t pic_i = context_ptr->mini_gop_start_index[mini_gop_index]; pic_i <= context_ptr->mini_gop_end_index[mini_gop_index]; ++pic_i) {
+        PictureParentControlSet*pcs_i = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i]->object_ptr;
+        if (pcs_i->picture_number == target_pic)
+            return pcs_i;
+    }
+    return NULL;
+}
+/*
+   This function tells if a picture is part of a short 
+   mg in RA configuration
+*/
+uint8_t is_pic_cutting_short_ra_mg(PictureDecisionContext   *context_ptr, PictureParentControlSet *pcs_ptr, uint32_t mg_idx)
+{
+    //if the size < complete MG or if there is usage of closed GOP
+    if ((context_ptr->mini_gop_length[mg_idx] < pcs_ptr->pred_struct_ptr->pred_struct_period || context_ptr->mini_gop_idr_count[mg_idx] > 0) &&
+        pcs_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS &&
+        pcs_ptr->idr_flag == EB_FALSE &&
+        pcs_ptr->cra_flag == EB_FALSE) {
+
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+#endif
+
 /***************************************************************************************************
 * If a switch happens, then update the RPS of the base layer frame separating the 2 different prediction structures
 * Clean up the reference queue dependant counts of the base layer frame separating the 2 different prediction structures
@@ -653,6 +698,17 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     // Get the 1st PCS mini GOP
     pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[MinigopIndex]]->object_ptr;
 
+#if DEP_CNT
+    PictureParentControlSet  *trig_pcs; //trigegrting dep-cnt clean up picture should be the first in dec order that goes to PicMgr 
+    if ( is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, MinigopIndex)) {
+        trig_pcs = pcs_ptr;//this an LDP minigop so the first picture in minigop is the first in dec order
+    }
+    else {
+        //this an RA minigop so the last picture in minigop is the first in dec order
+        uint32_t  last_pic_in_mg = context_ptr->mini_gop_end_index[MinigopIndex];
+        trig_pcs = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[last_pic_in_mg]->object_ptr;
+    }
+#endif
     // Derive the temporal layer difference between the current mini GOP and the previous mini GOP
     pcs_ptr->hierarchical_layers_diff = (uint8_t)(encode_context_ptr->previous_mini_gop_hierarchical_levels - pcs_ptr->hierarchical_levels);
 
@@ -663,11 +719,17 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
     // If the current mini GOP is different than the previous mini GOP update then update the positive dependant counts of the reference entry separating the 2 mini GOPs
     if (pcs_ptr->hierarchical_layers_diff != 0) {
+#if 1//POUT
+        printf("POC:%i  ===HierLayerDiff %iL ==> %iL \n", pcs_ptr->picture_number, encode_context_ptr->previous_mini_gop_hierarchical_levels + 1, pcs_ptr->hierarchical_levels + 1);
+#endif
         input_queue_index = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
 
         while (input_queue_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
             input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
 
+#if DEP_CNT
+            int32_t diff_n = 0;
+#endif
             // Find the reference entry separating the 2 mini GOPs  (pcs_ptr->picture_number is the POC of the first isput in the mini GOP)
             if (input_entry_ptr->picture_number == (pcs_ptr->picture_number - 1)) {
                 // Update the positive dependant counts
@@ -707,13 +769,39 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                         input_entry_ptr->list1.list[input_entry_ptr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
                 }
 
+#if DEP_CNT
+                diff_n =
+                    (input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count) - //depCnt after clean up
+                    (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count); //depCnt from org prediction struct
+                   
+
+                //these refs are defintely not in the pre-ass buffer
+                if (diff_n) {
+                    //TODO: change triggereing picture from the firt pic to the last pic in the MG for RA ( first in dec-order = base layer)
+                    trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt].pic_num = input_entry_ptr->picture_number;
+                    trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt++].dep_cnt_diff = diff_n;
+                }
+#endif
                 // 3rd step: update the dependant count
                 dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
                 input_entry_ptr->dep_list0_count = (input_entry_ptr->is_alt_ref) ? input_entry_ptr->list0.list_count + 1 : input_entry_ptr->list0.list_count;
                 input_entry_ptr->dep_list1_count = input_entry_ptr->list1.list_count;
+               
+                uint32_t org_depcnt = input_entry_ptr->dependent_count;
+                
                 input_entry_ptr->dependent_count = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - dependant_list_removed_entries;
+#if DEP_CNT
+                if (org_depcnt != input_entry_ptr->dependent_count)
+                    printf("POC: %I64i  ------Pic-Dec-Dep-Cnt-reduce(MG CHNGE):   other %I64i  %i --> %i\n", trig_pcs->picture_number, input_entry_ptr->picture_number, org_depcnt, input_entry_ptr->dependent_count);
+#endif
+
+            
+            
             }
             else {
+
+                uint32_t org_depcnt = input_entry_ptr->dependent_count;
+
                 // Modify Dependent List0
                 dep_list_count = input_entry_ptr->list0.list_count;
                 for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
@@ -730,6 +818,9 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                         // Decrement the Reference's reference_count
                         --input_entry_ptr->dependent_count;
+#if DEP_CNT
+                        diff_n--;
+#endif
                         CHECK_REPORT_ERROR(
                             (input_entry_ptr->dependent_count != ~0u),
                             encode_context_ptr->app_callback_ptr,
@@ -751,13 +842,30 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                         input_entry_ptr->list1.list[dep_idx] = 0;
                         // Decrement the Reference's reference_count
                         --input_entry_ptr->dependent_count;
-
+#if DEP_CNT
+                        diff_n--;
+#endif
                         CHECK_REPORT_ERROR(
                             (input_entry_ptr->dependent_count != ~0u),
                             encode_context_ptr->app_callback_ptr,
                             EB_ENC_PD_ERROR3);
                     }
+                }               
+
+#if DEP_CNT
+                //these refs are defintely not in the pre-ass buffer 
+                if (diff_n) {
+                    trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt].pic_num = input_entry_ptr->picture_number;
+                    trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt++].dep_cnt_diff = diff_n;
                 }
+
+               
+#if 1//POUT
+                    if (org_depcnt != input_entry_ptr->dependent_count)
+                        printf("POC: %I64i  ------Pic-Dec-Dep-Cnt-reduce(MG CHNGE): other %I64i  %i --> %i\n", trig_pcs->picture_number, input_entry_ptr->picture_number, org_depcnt, input_entry_ptr->dependent_count);
+#endif
+#endif
+
             }
             // Increment the input_queue_index Iterator
             input_queue_index = (input_queue_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : input_queue_index + 1;
@@ -5317,6 +5425,10 @@ void* picture_decision_kernel(void *input_ptr)
 
                 pcs_ptr->target_bit_rate = scs_ptr->static_config.target_bit_rate;
 
+#if DEP_CNT
+                pcs_ptr->self_updated_links = 0;
+                pcs_ptr->other_updated_links_cnt = 0;
+#endif
                 release_prev_picture_from_reorder_queue(
                     encode_context_ptr);
 
@@ -5365,6 +5477,20 @@ void* picture_decision_kernel(void *input_ptr)
                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_P) ||
                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_B))
                 {
+
+
+#if 1//POUT
+                    if ((encode_context_ptr->pre_assignment_buffer_count == (uint32_t)(1 << scs_ptr->static_config.hierarchical_levels)))
+                        printf(" \n\n   PRE-Assign complete MG :%i pictures \n", encode_context_ptr->pre_assignment_buffer_count);
+                    if(encode_context_ptr->pre_assignment_buffer_intra_count > 0)
+                        printf(" \n\n   PRE-Assign Intra is here :%i pictures \n", encode_context_ptr->pre_assignment_buffer_count);
+                    if (encode_context_ptr->pre_assignment_buffer_eos_flag == EB_TRUE)
+                        printf(" \n\n   PRE-Assign EOS here :%i pictures \n", encode_context_ptr->pre_assignment_buffer_count);
+                    if (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_P || pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_B)
+                        printf(" \n\n   PRE-Assign LD :%i pictures \n", encode_context_ptr->pre_assignment_buffer_count);
+#endif
+
+
                     // Initialize Picture Block Params
                     context_ptr->mini_gop_start_index[0] = 0;
                     context_ptr->mini_gop_end_index[0] = encode_context_ptr->pre_assignment_buffer_count - 1;
@@ -5443,10 +5569,14 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->pre_assignment_buffer_count = context_ptr->mini_gop_length[mini_gop_index];
 
                             // Update the Pred Structure if cutting short a Random Access period
+#if DEP_CNT
+                            if (is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, mini_gop_index)) 
+#else
                             if ((context_ptr->mini_gop_length[mini_gop_index] < pcs_ptr->pred_struct_ptr->pred_struct_period || context_ptr->mini_gop_idr_count[mini_gop_index] > 0) &&
                                 pcs_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS &&
                                 pcs_ptr->idr_flag == EB_FALSE &&
                                 pcs_ptr->cra_flag == EB_FALSE)
+#endif
                             {
                                 // Correct the Pred Index before switching structures
                                 if (pre_assignment_buffer_first_pass_flag == EB_TRUE)
@@ -5755,6 +5885,11 @@ void* picture_decision_kernel(void *input_ptr)
                                     while (input_queue_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
                                         input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
 
+
+                                        uint32_t org_depcnt = input_entry_ptr->dependent_count;
+#if DEP_CNT
+                                        int32_t diff_n = 0;
+#endif
                                         // Modify Dependent List0
                                         dep_list_count = input_entry_ptr->list0.list_count;
                                         for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
@@ -5772,7 +5907,9 @@ void* picture_decision_kernel(void *input_ptr)
 
                                                 // Decrement the Reference's referenceCount
                                                 --input_entry_ptr->dependent_count;
-
+#if DEP_CNT
+                                                diff_n--;
+#endif
                                                 CHECK_REPORT_ERROR(
                                                     (input_entry_ptr->dependent_count != ~0u),
                                                     encode_context_ptr->app_callback_ptr,
@@ -5797,13 +5934,47 @@ void* picture_decision_kernel(void *input_ptr)
 
                                                 // Decrement the Reference's referenceCount
                                                 --input_entry_ptr->dependent_count;
-
+#if DEP_CNT
+                                                diff_n--;
+#endif
                                                 CHECK_REPORT_ERROR(
                                                     (input_entry_ptr->dependent_count != ~0u),
                                                     encode_context_ptr->app_callback_ptr,
                                                     EB_ENC_PD_ERROR3);
                                             }
                                         }
+
+#if DEP_CNT   
+                                        if (diff_n) {
+
+                                            PictureParentControlSet * pcs_of_this_entry =
+                                                is_pic_still_in_pre_assign_buffer(
+                                                    encode_context_ptr,
+                                                    context_ptr,
+                                                    mini_gop_index,
+                                                    input_entry_ptr->picture_number);
+
+                                            if (pcs_of_this_entry != NULL) {
+                                               //The reference picture that needs a cut link is still in PD, it can do self clean-up later in picMgr.
+                                               //the dec order of this entry is usually > current pcs; so  if curr goes first to picMgr,
+                                               //then it will not find this entry in picMgr ref Q to clear it; so the ref has to do a self cleaning
+                                                pcs_of_this_entry->self_updated_links = diff_n;
+
+                                                if (org_depcnt != input_entry_ptr->dependent_count)
+                                                    printf("POC: %I64i  iiiiiiiiiiii I frame Pic-Dec-Dep-Cnt-reduce:   self:%I64i   %i --> %i\n", pcs_ptr->picture_number, input_entry_ptr->picture_number, org_depcnt, input_entry_ptr->dependent_count);
+
+                                            }
+                                            else {
+                                               //picture has left PD, so pcs_ptr has to do the cleanup later in PicMgr (and should find it in picMgr ref Q)
+                                                //TODO: better to use first pic in MG as triggering picture
+                                               pcs_ptr->updated_links_arr[pcs_ptr->other_updated_links_cnt].pic_num = input_entry_ptr->picture_number;
+                                               pcs_ptr->updated_links_arr[pcs_ptr->other_updated_links_cnt++].dep_cnt_diff = diff_n;
+                                               if (org_depcnt != input_entry_ptr->dependent_count)
+                                                   printf("POC: %I64i  iiiiiiiiiiii I frame Pic-Dec-Dep-Cnt-reduce:   other:%I64i   %i --> %i\n", pcs_ptr->picture_number, input_entry_ptr->picture_number, org_depcnt, input_entry_ptr->dependent_count);
+
+                                            }
+                                        }                                        
+#endif
 
                                         // Increment the input_queue_index Iterator
                                         input_queue_index = (input_queue_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : input_queue_index + 1;
@@ -6179,7 +6350,7 @@ void* picture_decision_kernel(void *input_ptr)
                             uint32_t pic_it = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
                             context_ptr->mg_pictures_array[pic_it] = pcs_ptr;
 #else
-#if POUT
+#if 1//POUT
                             printf("PicDec OUT ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
 #endif
                             // Post the results to the ME processes
@@ -6242,20 +6413,21 @@ void* picture_decision_kernel(void *input_ptr)
                         for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i){
                             
                             pcs_ptr = context_ptr->mg_pictures_array[pic_i];                           
-#if POUT
-                            printf("PicDec OUT ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
-#endif
 
 #if DECOUPLE_ME_RES   
                             //get a new ME data buffer
                             eb_get_empty_object(context_ptr->me_fifo_ptr,
                                 &me_wrapper_ptr);
                             pcs_ptr->me_data_wrapper_ptr = me_wrapper_ptr;
+#if 1//POUT
                             printf("PicDec got new ME: %I64i  decOrder:%I64i\n", pcs_ptr->picture_number, pcs_ptr->decode_order);
+#endif
 
-                            MotionEstimationData * me_data = (MotionEstimationData *)me_wrapper_ptr->object_ptr;
-                            for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index)
-                                pcs_ptr->me_results[sb_index] = me_data->me_results[sb_index];
+                            pcs_ptr->pa_me_data = (MotionEstimationData *)me_wrapper_ptr->object_ptr;
+                            //fix this----------------------
+                            //MotionEstimationData * me_data = (MotionEstimationData *)me_wrapper_ptr->object_ptr;
+                            //for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index)
+                            //    pcs_ptr->me_results[sb_index] = me_data->me_results[sb_index];
 
 #endif
 

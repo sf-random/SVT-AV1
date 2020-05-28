@@ -4128,8 +4128,14 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
 
             // Get the ME MV
+#if DECOUPLE_ME_RES
+            const MeSbResults *me_results =
+                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
+
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx))
             {
                 int16_t me_mv_x;
@@ -4456,8 +4462,13 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             }
 
             // Evaluate the PA_ME MVs (if available)
+#if DECOUPLE_ME_RES
+            const MeSbResults *me_results =
+                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
             uint32_t pa_me_distortion = (uint32_t)~0;//any non zero value
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
                 int16_t me_mv_x;
@@ -4663,8 +4674,13 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             if (ref_idx > 1 && context_ptr->predictive_me_level <= 5) continue;
             if (ref_idx > context_ptr->md_max_ref_count - 1) continue;
             // Get the ME MV
+#if DECOUPLE_ME_RES
+            const MeSbResults *me_results =
+                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
             uint32_t pa_me_distortion = ~0;//any non zero value
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
                 int16_t me_mv_x;

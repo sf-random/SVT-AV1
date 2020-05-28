@@ -381,8 +381,14 @@ extern "C" {
 #endif
 #define ME_MEM_OPT2                 1 // Memory reduction for ME Context
 
-#define POUT                  1
-#define DECOUPLE_ME_RES       1
+#define POUT                  0
+#define DECOUPLE_ME_RES       0
+#define REM_REF_ENTRY_IDX     0
+#define DEP_CNT               0
+
+#if DEP_CNT
+#define BROKEN_LINKS_MAX_SIZE 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process.
+#endif
 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
