@@ -40,7 +40,7 @@ extern "C" {
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
-#if !MERGE_SUBPEL_0
+#if !PERFORM_SUB_PEL_MD
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
 #endif
 /**************************************
@@ -264,26 +264,29 @@ typedef struct MdNsqMvSearchCtrls {
 #endif
 #if PERFORM_SUB_PEL_MD
 typedef struct MdSubPelSearchCtrls {
-    uint8_t enabled;                    // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD 
-                                        
-    uint8_t half_pel_search_enabled;    // 0: OFF; 1: ON
-    uint8_t half_pel_search_scan;       // 0: H, V, D;  2: H, V, 3: H, 4: V
-    uint8_t half_pel_search_width;      // 1/2 Pel search area width
-    uint8_t half_pel_search_height;     // 1/2 Pel search area height
-    uint8_t half_pel_interpolation;     // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
-                                        
-    uint8_t quarter_pel_search_enabled; // 0: OFF; 1: ON
-    uint8_t quarter_pel_search_scan;    // 0: H, V, D;  2: H, V, 3: H, 4: V
-    uint8_t quarter_pel_search_width;   // 1/4 Pel search area width
-    uint8_t quarter_pel_search_height;  // 1/4 Pel search area height
-    uint8_t quarter_pel_interpolation;  // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
-                                        
-    uint8_t eight_pel_search_enabled;   // 0: OFF; 1: ON
-    uint8_t eight_pel_search_scan;      // 0: H, V, D;  2: H, V, 3: H, 4: V
-    uint8_t eight_pel_search_width;     // 1/8 Pel search area width
-    uint8_t eight_pel_search_height;    // 1/8 Pel search area height
-    uint8_t eight_pel_interpolation;    // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
+    uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
+    uint8_t use_ssd;                             // 0: search using SAD; 1: search using SSD 
+                                                 
+    uint8_t half_pel_search_enabled;             // 0: OFF; 1: ON
+    uint8_t half_pel_search_scan;                // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t half_pel_search_width;               // 1/2 Pel search area width
+    uint8_t half_pel_search_height;              // 1/2 Pel search area height
+    uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
+    uint8_t half_pel_search_central_position;    // 0: if distortion of the MVC is available; 1: otherwise
+
+    uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
+    uint8_t quarter_pel_search_scan;             // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t quarter_pel_search_width;            // 1/4 Pel search area width
+    uint8_t quarter_pel_search_height;           // 1/4 Pel search area height
+    uint8_t quarter_pel_interpolation;           // 1/4 Pel interpolation method
+    uint8_t quarter_pel_search_central_position; // 0: if distortion of the MVC is available; 1: otherwise (e.g. if 1/2 Pel search is bypassed)
+
+    uint8_t eight_pel_search_enabled;            // 0: OFF; 1: ON
+    uint8_t eight_pel_search_scan;               // 0: H, V, D; 2: H, V, 3: H, 4: V
+    uint8_t eight_pel_search_width;              // 1/8 Pel search area width
+    uint8_t eight_pel_search_height;             // 1/8 Pel search area height
+    uint8_t eight_pel_interpolation;             // 1/8 Pel interpolation method
+    uint8_t eight_pel_search_central_position;   // 0: if distortion of the MVC is available; 1: otherwise  (e.g. if both 1/2 and 1/4 Pel search(s) are bypassed)
 
 }MdSubPelSearchCtrls;
 #endif
@@ -485,7 +488,7 @@ typedef struct ModeDecisionContext {
     uint8_t              full_loop_escape;
 #endif
     uint8_t              global_mv_injection;
-#if !MERGE_SUBPEL_0
+#if !PERFORM_SUB_PEL_MD
     uint8_t              perform_me_mv_1_8_pel_ref;
 #endif
     uint8_t              new_nearest_injection;

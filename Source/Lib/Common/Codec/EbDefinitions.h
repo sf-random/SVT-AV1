@@ -444,11 +444,10 @@ extern "C" {
 
 #define SHUT_SUB_PEL_ME 0
 #define PERFORM_SUB_PEL_MD 1
-#define USE_HALF_PEL_BILINEAR 0 
+#define USE_HALF_PEL_BILINEAR 1 
 
 #define SIMULATE_SHUT_SUB_PEL 1
 #define REMOVE_ME_SUBPEL_CODE 1
-#define MERGE_SUBPEL_0 1
 
 #define PD0_SUB_PEL 1
 

@@ -4692,7 +4692,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     int16_t  best_search_mvx        = (int16_t)~0;
                     int16_t  best_search_mvy        = (int16_t)~0;
                     uint32_t best_search_distortion = (int32_t)~0;
-                    uint8_t  search_pattern         = 0;
 
                     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled)
                         md_sub_pel_search(
@@ -4714,10 +4713,8 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             &best_search_mvx,
                             &best_search_mvy,
                             &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
-                            av1_make_interp_filters(BILINEAR, BILINEAR),
-#endif
-                            1,
+                            context_ptr->md_subpel_search_ctrls.half_pel_interpolation,
+                            context_ptr->md_subpel_search_ctrls.half_pel_search_central_position,
                             context_ptr->md_subpel_search_ctrls.half_pel_search_scan);
 
                     if (context_ptr->md_subpel_search_ctrls.quarter_pel_search_enabled)
@@ -4740,12 +4737,10 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             &best_search_mvx,
                             &best_search_mvy,
                             &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
-                            0,
-#endif
-                            0,
+                            context_ptr->md_subpel_search_ctrls.quarter_pel_interpolation,
+                            context_ptr->md_subpel_search_ctrls.quarter_pel_search_central_position,
                             context_ptr->md_subpel_search_ctrls.quarter_pel_search_scan);
-#if MERGE_SUBPEL_0
+
                     if (context_ptr->md_subpel_search_ctrls.eight_pel_search_enabled)
                         if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
                             md_sub_pel_search(
@@ -4767,18 +4762,16 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                 &best_search_mvx,
                                 &best_search_mvy,
                                 &best_search_distortion,
-#if USE_HALF_PEL_BILINEAR
-                                0,
-#endif
-                                0,
+                                context_ptr->md_subpel_search_ctrls.eight_pel_interpolation,
+                                context_ptr->md_subpel_search_ctrls.eight_pel_search_central_position,
                                 context_ptr->md_subpel_search_ctrls.eight_pel_search_scan);
-#endif
+
                     me_mv_x = best_search_mvx;
                     me_mv_y = best_search_mvy;
                 }
 #endif
 #endif
-#if !MERGE_SUBPEL_0
+#if !PERFORM_SUB_PEL_MD
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
                     int16_t  best_search_mvx = (int16_t)~0;
                     int16_t  best_search_mvy = (int16_t)~0;
