@@ -4168,6 +4168,9 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                        int16_t search_position_end_x, int16_t search_position_start_y,
                        int16_t search_position_end_y, int16_t search_step, int16_t *best_mvx,
                        int16_t *best_mvy, uint32_t *best_distortion,
+#if USE_HALF_PEL_BILINEAR
+                       uint32_t interp_filters,
+#endif
                        uint8_t search_central_position, uint8_t search_pattern) {
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                     ? EB_8_BIT_MD
@@ -4471,6 +4474,9 @@ void md_nsq_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
             &search_center_mvx,
             &search_center_mvy,
             &search_center_distortion,
+#if USE_HALF_PEL_BILINEAR
+            0,
+#endif
             1,
             search_pattern);
     }
@@ -4691,6 +4697,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             &best_search_mvx,
                             &best_search_mvy,
                             &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                            av1_make_interp_filters(BILINEAR, BILINEAR),
+#endif
                             1,
                             search_pattern);
 
@@ -4712,6 +4721,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             &best_search_mvx,
                             &best_search_mvy,
                             &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                            0,
+#endif
                             0,
                             search_pattern);
 
@@ -4747,6 +4759,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &best_search_mvx,
                         &best_search_mvy,
                         &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                        0,
+#endif
                         1,
                         search_pattern);
 
@@ -5609,6 +5624,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                                          0,
+#endif
                                           0,
                                           search_pattern);
 
@@ -5637,6 +5655,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                                                  0,
+#endif
                                                   0,
                                                   search_pattern);
                             }
@@ -5662,6 +5683,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                                          0,
+#endif
                                           0,
                                           search_pattern);
 
@@ -5690,6 +5714,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                                                  0,
+#endif
                                                   0,
                                                   search_pattern);
                             }
@@ -5716,6 +5743,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                                          0,
+#endif
                                           0,
                                           search_pattern);
                     }
