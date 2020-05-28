@@ -4194,6 +4194,10 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 
             if (search_pattern == 3 && refinement_pos_x != 0) continue;
 
+#if PERFORM_SUB_PEL_MD
+            // Skip full pel position(s) when performing sub-pel search (unless central position)
+            if ((refinement_pos_x * search_step) % 8 == 0 && (refinement_pos_y * search_step) % 8 == 0 && !search_central_position) continue;
+#endif
             ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
             EbPictureBufferDesc *  prediction_ptr = candidate_buffer->prediction_ptr;
 
