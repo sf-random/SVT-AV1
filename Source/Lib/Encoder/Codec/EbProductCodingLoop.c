@@ -4229,8 +4229,11 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                 list_idx == 1 ? mvy + (refinement_pos_y * search_step) : 0;
             candidate_ptr->ref_frame_index_l0 = list_idx == 0 ? ref_idx : -1;
             candidate_ptr->ref_frame_index_l1 = list_idx == 1 ? ref_idx : -1;
+#if USE_HALF_PEL_BILINEAR
+            candidate_ptr->interp_filters = interp_filters;
+#else
             candidate_ptr->interp_filters     = 0;
-
+#endif
             // Prediction
             context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
