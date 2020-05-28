@@ -1758,63 +1758,89 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->perform_half_pel_search = 1;
-        md_subpel_search_ctrls->half_pel_search_width   = 3;
-        md_subpel_search_ctrls->half_pel_search_height  = 3;
+        md_subpel_search_ctrls->half_pel_search_enabled = 1;
+        md_subpel_search_ctrls->half_pel_search_scan = 0;
+        md_subpel_search_ctrls->half_pel_search_width = 3;
+        md_subpel_search_ctrls->half_pel_search_height = 3;
+        md_subpel_search_ctrls->half_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_quarter_pel_search = 1;
-        md_subpel_search_ctrls->quarter_pel_search_width   = 3;
-        md_subpel_search_ctrls->quarter_pel_search_height  = 3;
+        md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
+        md_subpel_search_ctrls->quarter_pel_search_scan = 0;
+        md_subpel_search_ctrls->quarter_pel_search_width = 3;
+        md_subpel_search_ctrls->quarter_pel_search_height = 3;
+        md_subpel_search_ctrls->quarter_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_eight_pel_search = 1;
-        md_subpel_search_ctrls->eight_pel_search_width   = 3;
-        md_subpel_search_ctrls->eight_pel_search_height  = 3;
+        md_subpel_search_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_search_ctrls->eight_pel_search_scan = 0;
+        md_subpel_search_ctrls->eight_pel_search_width = 3;
+        md_subpel_search_ctrls->eight_pel_search_height = 3;
+        md_subpel_search_ctrls->eight_pel_interpolation = 0;
         break;
     case 2:
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->perform_half_pel_search = 1;
+        md_subpel_search_ctrls->half_pel_search_enabled = 1;
+        md_subpel_search_ctrls->half_pel_search_scan = 0;
         md_subpel_search_ctrls->half_pel_search_width = 3;
         md_subpel_search_ctrls->half_pel_search_height = 3;
+        md_subpel_search_ctrls->half_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_quarter_pel_search = 1;
+        md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
+        md_subpel_search_ctrls->quarter_pel_search_scan = 0;
         md_subpel_search_ctrls->quarter_pel_search_width = 3;
         md_subpel_search_ctrls->quarter_pel_search_height = 3;
+        md_subpel_search_ctrls->quarter_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_eight_pel_search = 1;
+        md_subpel_search_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_search_ctrls->eight_pel_search_scan = 0;
         md_subpel_search_ctrls->eight_pel_search_width = 3;
         md_subpel_search_ctrls->eight_pel_search_height = 3;
+        md_subpel_search_ctrls->eight_pel_interpolation = 0;
         break;
     case 3:
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->perform_half_pel_search = 1;
+        md_subpel_search_ctrls->half_pel_search_enabled = 1;
+        md_subpel_search_ctrls->half_pel_search_scan = 0;
         md_subpel_search_ctrls->half_pel_search_width = 3;
         md_subpel_search_ctrls->half_pel_search_height = 3;
+        md_subpel_search_ctrls->half_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_quarter_pel_search = 1;
+        md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
+        md_subpel_search_ctrls->quarter_pel_search_scan = 0;
         md_subpel_search_ctrls->quarter_pel_search_width = 3;
         md_subpel_search_ctrls->quarter_pel_search_height = 3;
+        md_subpel_search_ctrls->quarter_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_eight_pel_search = 1;
+        md_subpel_search_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_search_ctrls->eight_pel_search_scan = 0;
         md_subpel_search_ctrls->eight_pel_search_width = 3;
         md_subpel_search_ctrls->eight_pel_search_height = 3;
+        md_subpel_search_ctrls->eight_pel_interpolation = 0;
         break;
     case 4:
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->perform_half_pel_search = 1;
+        md_subpel_search_ctrls->half_pel_search_enabled = 1;
+        md_subpel_search_ctrls->half_pel_search_scan = 1;
         md_subpel_search_ctrls->half_pel_search_width = 3;
         md_subpel_search_ctrls->half_pel_search_height = 3;
+        md_subpel_search_ctrls->half_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_quarter_pel_search = 1;
+        md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
+        md_subpel_search_ctrls->quarter_pel_search_scan = 1;
         md_subpel_search_ctrls->quarter_pel_search_width = 3;
         md_subpel_search_ctrls->quarter_pel_search_height = 3;
+        md_subpel_search_ctrls->quarter_pel_interpolation = 0;
 
-        md_subpel_search_ctrls->perform_eight_pel_search = 0;
+        md_subpel_search_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_search_ctrls->eight_pel_search_scan = 1;
+        md_subpel_search_ctrls->eight_pel_search_width = 3;
+        md_subpel_search_ctrls->eight_pel_search_height = 3;
+        md_subpel_search_ctrls->eight_pel_interpolation = 0;
         break;
 
     default: assert(0); break;

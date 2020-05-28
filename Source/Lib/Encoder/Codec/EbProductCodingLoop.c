@@ -4694,7 +4694,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     uint32_t best_search_distortion = (int32_t)~0;
                     uint8_t  search_pattern         = 0;
 
-                    if (context_ptr->md_subpel_search_ctrls.perform_half_pel_search)
+                    if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled)
                         md_sub_pel_search(
                             pcs_ptr,
                             context_ptr,
@@ -4718,9 +4718,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             av1_make_interp_filters(BILINEAR, BILINEAR),
 #endif
                             1,
-                            search_pattern);
+                            context_ptr->md_subpel_search_ctrls.half_pel_search_scan);
 
-                    if (context_ptr->md_subpel_search_ctrls.perform_quarter_pel_search)
+                    if (context_ptr->md_subpel_search_ctrls.quarter_pel_search_enabled)
                         md_sub_pel_search(
                             pcs_ptr,
                             context_ptr,
@@ -4744,9 +4744,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             0,
 #endif
                             0,
-                            search_pattern);
+                            context_ptr->md_subpel_search_ctrls.quarter_pel_search_scan);
 #if MERGE_SUBPEL_0
-                    if (context_ptr->md_subpel_search_ctrls.perform_eight_pel_search)
+                    if (context_ptr->md_subpel_search_ctrls.eight_pel_search_enabled)
                         if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
                             md_sub_pel_search(
                                 pcs_ptr,
@@ -4771,7 +4771,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                 0,
 #endif
                                 0,
-                                search_pattern);
+                                context_ptr->md_subpel_search_ctrls.eight_pel_search_scan);
 #endif
                     me_mv_x = best_search_mvx;
                     me_mv_y = best_search_mvy;

@@ -217,11 +217,11 @@ typedef struct  InterCompoundControls {
 #endif
 #if MD_REFERENCE_MASKING
 typedef struct RefPruningControls {
-    uint8_t intra_to_inter_pruning_enabled;
-    uint8_t inter_to_inter_pruning_enabled;
-#if PRUNING_PER_INTER_TYPE
-    uint8_t best_refs[TOT_INTER_GROUP];
-    uint8_t closest_refs[TOT_INTER_GROUP];
+    uint8_t intra_to_inter_pruning_enabled; // 0: OFF; 1: use intra to inter distortion deviation to derive best_refs
+    uint8_t inter_to_inter_pruning_enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
+#if PRUNING_PER_INTER_TYPE 
+    uint8_t best_refs[TOT_INTER_GROUP];     // 0: OFF; 1: limit the injection to the best references based on distortion
+    uint8_t closest_refs[TOT_INTER_GROUP];  // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD) 
 #else
     uint8_t best_refs;
 #endif
@@ -264,20 +264,26 @@ typedef struct MdNsqMvSearchCtrls {
 #endif
 #if PERFORM_SUB_PEL_MD
 typedef struct MdSubPelSearchCtrls {
-    uint8_t enabled;
-    uint8_t use_ssd;
-
-    uint8_t perform_half_pel_search;
-    uint8_t half_pel_search_width;
-    uint8_t half_pel_search_height;
-
-    uint8_t perform_quarter_pel_search;
-    uint8_t quarter_pel_search_width;
-    uint8_t quarter_pel_search_height;
-
-    uint8_t perform_eight_pel_search;
-    uint8_t eight_pel_search_width;
-    uint8_t eight_pel_search_height;
+    uint8_t enabled;                    // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD 
+                                        
+    uint8_t half_pel_search_enabled;    // 0: OFF; 1: ON
+    uint8_t half_pel_search_scan;       // 0: H, V, D;  2: H, V, 3: H, 4: V
+    uint8_t half_pel_search_width;      // 1/2 Pel search area width
+    uint8_t half_pel_search_height;     // 1/2 Pel search area height
+    uint8_t half_pel_interpolation;     // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
+                                        
+    uint8_t quarter_pel_search_enabled; // 0: OFF; 1: ON
+    uint8_t quarter_pel_search_scan;    // 0: H, V, D;  2: H, V, 3: H, 4: V
+    uint8_t quarter_pel_search_width;   // 1/4 Pel search area width
+    uint8_t quarter_pel_search_height;  // 1/4 Pel search area height
+    uint8_t quarter_pel_interpolation;  // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
+                                        
+    uint8_t eight_pel_search_enabled;   // 0: OFF; 1: ON
+    uint8_t eight_pel_search_scan;      // 0: H, V, D;  2: H, V, 3: H, 4: V
+    uint8_t eight_pel_search_width;     // 1/8 Pel search area width
+    uint8_t eight_pel_search_height;    // 1/8 Pel search area height
+    uint8_t eight_pel_interpolation;    // 0: regular filter for 1/2 Pel, 1: bilinear filter for 1/2 Pel
 
 }MdSubPelSearchCtrls;
 #endif
