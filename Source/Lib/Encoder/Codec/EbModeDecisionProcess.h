@@ -40,8 +40,9 @@ extern "C" {
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
+#if !MERGE_SUBPEL
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
-
+#endif
 /**************************************
       * Macros
 **************************************/
@@ -269,6 +270,8 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_height;
     uint8_t quarter_pel_search_width;
     uint8_t quarter_pel_search_height;
+    uint8_t eight_pel_search_width;
+    uint8_t eight_pel_search_height;
 }MdSubPelSearchCtrls;
 #endif
 #if TXT_CONTROL

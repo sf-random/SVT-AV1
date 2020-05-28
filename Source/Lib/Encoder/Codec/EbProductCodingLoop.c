@@ -4733,12 +4733,37 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
                             0,
                             search_pattern);
-
+#if MERGE_SUBPEL
+                        md_sub_pel_search(pcs_ptr,
+                            context_ptr,
+                            input_picture_ptr,
+                            input_origin_index,
+                            blk_origin_index,
+                            context_ptr->md_subpel_search_ctrls.use_ssd,
+                            list_idx,
+                            ref_idx,
+                            best_search_mvx,
+                            best_search_mvy,
+                            -(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
+                            -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
+                            +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
+                            1,
+                            &best_search_mvx,
+                            &best_search_mvy,
+                            &best_search_distortion,
+#if USE_HALF_PEL_BILINEAR
+                            0,
+#endif
+                            0,
+                            search_pattern);
+#endif
                         me_mv_x = best_search_mvx;
                         me_mv_y = best_search_mvy;
                 }
 #endif
 #endif
+#if !MERGE_SUBPEL
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
                     int16_t  best_search_mvx = (int16_t)~0;
                     int16_t  best_search_mvy = (int16_t)~0;
@@ -4775,6 +4800,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     me_mv_x = best_search_mvx;
                     me_mv_y = best_search_mvy;
                 }
+#endif
 
                 context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
                     me_mv_x;
