@@ -13113,10 +13113,10 @@ EbErrorType motion_estimate_sb(
 
 #if  ME_MEM_OPT
 #if REMOVE_MRP_MODE
-                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].x_mv =
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].x_mv =
                         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 
-                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].y_mv =
                         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 #else
                      uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;

@@ -4157,6 +4157,18 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
 }
 
+#if ADD_MD_NSQ_SEARCH
+// HPs are the 8 performed positions when search area is 3x3, search_step is 4 (1/2 Pel search), search_pattern is 0 (H,V,D), search_central_position is 0
+// XX.......HP.......HP.......HP.......XX
+// ......................................
+// ......................................
+// ......................................
+// FP.......HP.......FP.......HP.......FP
+// ......................................
+// ......................................
+// ......................................
+// XX.......HP.......HP.......HP.......XX
+#endif
 void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                        EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
 #if INT_RECON_OFFSET_FIX
@@ -4429,7 +4441,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                    const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
     uint8_t  search_pattern = 0;
 #if USE_SUB_BLOCK_MVC
-    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s): 2 NxN if 2NxN or Nx2N, and 4 NxN if 4NxN or Nx4N 
+    // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s) (e.g. if 16x8 then 2 8x8, if 32x8 then 4 8x8)
     int16_t mvc_x_array[MAX_MD_NSQ_SARCH_MVC_CNT];
     int16_t mvc_y_array[MAX_MD_NSQ_SARCH_MVC_CNT];
     int8_t  mvc_count = 0;
