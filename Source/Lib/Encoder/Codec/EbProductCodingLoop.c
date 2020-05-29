@@ -4775,6 +4775,13 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     int16_t  best_search_mvy        = (int16_t)~0;
                     uint32_t best_search_distortion = (int32_t)~0;
 
+#if QUICK_TEST
+                    int searc_area;
+                    if (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight)
+                        searc_area = 3;
+                    else
+                        searc_area = 7;
+#endif
                     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled)
                         md_sub_pel_search(
                             pcs_ptr,
@@ -4787,10 +4794,17 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             ref_idx,
                             me_mv_x,
                             me_mv_y,
+#if QUICK_TEST
+                            - (searc_area >> 1),
+                            +(searc_area>> 1),
+                            -(searc_area >> 1),
+                            +(searc_area >> 1),
+#else
                             -(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
                             +(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
                             -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                             +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
+#endif
                             4,
                             &best_search_mvx,
                             &best_search_mvy,
