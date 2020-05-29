@@ -1786,8 +1786,8 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 
         md_subpel_search_ctrls->half_pel_search_enabled          = 1;
         md_subpel_search_ctrls->half_pel_search_scan             = 0;
-        md_subpel_search_ctrls->half_pel_search_width            = 7;
-        md_subpel_search_ctrls->half_pel_search_height           = 7;
+        md_subpel_search_ctrls->half_pel_search_width            = 3;
+        md_subpel_search_ctrls->half_pel_search_height           = 3;
         md_subpel_search_ctrls->half_pel_interpolation           = 0;
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 
