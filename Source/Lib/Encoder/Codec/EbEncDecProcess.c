@@ -4773,16 +4773,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
 #if PD0_SUB_PEL
-        context_ptr->md_subpel_search_level = 3;
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+            context_ptr->md_subpel_search_level = 0;
+        else
+            context_ptr->md_subpel_search_level = 3;
+
 #else
         context_ptr->md_subpel_search_level = 0;
 #endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_search_level = 0;
     else
-        if (enc_mode <= ENC_M0)
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+            context_ptr->md_subpel_search_level = 0;
+        else if (enc_mode <= ENC_M0)
             context_ptr->md_subpel_search_level = 1;
-        else 
+        else
             context_ptr->md_subpel_search_level = 2;
 
     md_subpel_search_controls(context_ptr, context_ptr->md_subpel_search_level);
