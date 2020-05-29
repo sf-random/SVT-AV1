@@ -4441,7 +4441,9 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
                    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx,
                    const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
+#if !PERFORM_SUB_PEL_MD
     uint8_t  search_pattern = 0;
+#endif
 #if USE_SUB_BLOCK_MVC
     // Step 0: derive the MVC list for the NSQ search; 1 SQ MV (default MV for NSQ) and up to 4 sub-block MV(s) (e.g. if 16x8 then 2 8x8, if 32x8 then 4 8x8)
     int16_t mvc_x_array[MAX_MD_NSQ_SARCH_MVC_CNT];
@@ -4500,7 +4502,11 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             0,
 #endif
             1,
+#if PERFORM_SUB_PEL_MD
+            0);
+#else
             search_pattern);
+#endif
     }
 #else
     // Search Center
@@ -4604,6 +4610,40 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
 }
 #endif
+
+#if SQ_QUICK_SEARCH
+void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx,
+    const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
+
+    int16_t  best_search_mvx = (int16_t)~0;
+    int16_t  best_search_mvy = (int16_t)~0;
+    uint32_t best_search_distortion = (uint32_t)~0;
+
+
+    md_full_pel_search(pcs_ptr,
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        context_ptr->md_nsq_motion_search_ctrls.use_ssd,
+        list_idx,
+        ref_idx,
+        *me_mv_x,
+        *me_mv_y,
+        -(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_width >> 1),
+        +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_width >> 1),
+        -(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
+        +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
+        8,
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_distortion);
+
+    *me_mv_x = best_search_mvx;
+    *me_mv_y = best_search_mvy;
+}
+#endif
 // Copy ME_MVs (generated @ PA) from input buffer (pcs_ptr-> .. ->me_results) to local
 // MD buffers (context_ptr->sb_me_mv)
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -4704,6 +4744,21 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                   &me_mv_x,
                                   &me_mv_y);
                 }
+
+#if SQ_QUICK_SEARCH
+                else if (context_ptr->md_sq_motion_search_ctrls.enabled) {
+                    md_sq_motion_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        list_idx,
+                        ref_idx,
+                        me_results,
+                        &me_mv_x,
+                        &me_mv_y);
+                }
+#endif
 #if PERFORM_SUB_PEL_MD
 #if SHUT_NX4_4XN
                 if (context_ptr->md_subpel_search_ctrls.enabled && (context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4)) {

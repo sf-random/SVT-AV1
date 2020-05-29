@@ -1749,6 +1749,28 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     }
 }
 #endif
+#if SQ_QUICK_SEARCH
+void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
+
+    MdSqMotionSearchCtrls *md_sq_motion_search_ctrls = &mdctxt->md_sq_motion_search_ctrls;
+
+    switch (md_sq_mv_search_level)
+    {
+    case 0:
+        md_sq_motion_search_ctrls->enabled = 0;
+        break;
+    case 1:
+        md_sq_motion_search_ctrls->enabled = 1;
+        md_sq_motion_search_ctrls->use_ssd = 0;
+        md_sq_motion_search_ctrls->full_pel_search_width = 3;
+        md_sq_motion_search_ctrls->full_pel_search_height = 3;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_search_level) {
     MdSubPelSearchCtrls *md_subpel_search_ctrls = &mdctxt->md_subpel_search_ctrls;
@@ -1764,8 +1786,8 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 
         md_subpel_search_ctrls->half_pel_search_enabled          = 1;
         md_subpel_search_ctrls->half_pel_search_scan             = 0;
-        md_subpel_search_ctrls->half_pel_search_width            = 7;
-        md_subpel_search_ctrls->half_pel_search_height           = 7;
+        md_subpel_search_ctrls->half_pel_search_width            = 3;
+        md_subpel_search_ctrls->half_pel_search_height           = 3;
         md_subpel_search_ctrls->half_pel_interpolation           = 0;
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 
@@ -4852,6 +4874,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_nsq_mv_search_level = 4;
 
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
+#endif
+#if SQ_QUICK_SEARCH
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_sq_mv_search_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_sq_mv_search_level = 0;
+    else
+        context_ptr->md_sq_mv_search_level = 1;
+
+    md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)

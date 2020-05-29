@@ -262,6 +262,16 @@ typedef struct MdNsqMotionSearchCtrls {
 #endif
 }MdNsqMotionSearchCtrls;
 #endif
+
+#if SQ_QUICK_SEARCH
+typedef struct MdSqMotionSearchCtrls {
+    uint8_t enabled;                    // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD 
+    uint8_t full_pel_search_width;      // Full Pel search area width
+    uint8_t full_pel_search_height;     // Full Pel search area height
+}MdSqMotionSearchCtrls;
+#endif
+
 #if PERFORM_SUB_PEL_MD
 typedef struct MdSubPelSearchCtrls {
     uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
@@ -643,6 +653,10 @@ typedef struct ModeDecisionContext {
 #if ADD_MD_NSQ_SEARCH
     uint8_t md_nsq_mv_search_level ;
     MdNsqMotionSearchCtrls md_nsq_motion_search_ctrls;
+#endif
+#if SQ_QUICK_SEARCH
+    uint8_t md_sq_mv_search_level;
+    MdSqMotionSearchCtrls md_sq_motion_search_ctrls;
 #endif
 #if PERFORM_SUB_PEL_MD
     uint8_t md_subpel_search_level;
