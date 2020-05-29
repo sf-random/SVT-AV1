@@ -4778,9 +4778,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if QUICK_TEST
                     int searc_area;
                     if (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight)
-                        searc_area = 3;
-                    else
                         searc_area = 7;
+                    else
+                        searc_area = 3;
 #endif
                     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled)
                         md_sub_pel_search(
