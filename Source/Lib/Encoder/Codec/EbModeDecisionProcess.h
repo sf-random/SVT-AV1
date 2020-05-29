@@ -267,6 +267,8 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
     uint8_t use_ssd;                             // 0: search using SAD; 1: search using SSD 
                                                  
+    uint8_t do_4x4;                              // 0: do not perform search for 4x4 and inherit Parent MV; 1: perform search for SQ
+    uint8_t do_nsq;                              // 0: do not perform search for NSQ and inherit SQ MV if NSQ Full Pel search not performed; 1: perform search for NSQ
     uint8_t half_pel_search_enabled;             // 0: OFF; 1: ON
     uint8_t half_pel_search_scan;                // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t half_pel_search_width;               // 1/2 Pel search area width
