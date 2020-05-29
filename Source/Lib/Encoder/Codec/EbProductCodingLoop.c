@@ -4708,6 +4708,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if SHUT_NX4_4XN
                 if (context_ptr->md_subpel_search_ctrls.enabled && (context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4)) {
 #else
+#if SQ_PD0_NSQ_PD2
+                if (!(context_ptr->pd_pass == PD_PASS_2 && (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight)))
+#endif
                 if (context_ptr->md_subpel_search_ctrls.enabled && (
                    (context_ptr->md_subpel_search_ctrls.do_4x4  && (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4)) || // 4x4 and do_4x4 == 1
                    (context_ptr->md_subpel_search_ctrls.do_nsq  && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)) ||  // NSQ and do_nsq == 1
@@ -4902,10 +4905,15 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     }
                     // else copy the generated MV (i.e. subpel performed)
                     else {
-                        context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
-                            me_mv_x;
-                        context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
-                            me_mv_y;
+#if SQ_PD0_NSQ_PD2
+                        if (!(context_ptr->pd_pass == PD_PASS_2 && (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight)))
+#endif
+                        {
+                            context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
+                                me_mv_x;
+                            context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
+                                me_mv_y;
+                        }
                     }
                 }
                 else {
