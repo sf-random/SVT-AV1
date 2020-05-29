@@ -444,6 +444,10 @@ extern "C" {
 #define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0) 
 #define PD0_SUB_PEL                1 // Perform subpel @ PD0
 #define SQ_PD0_NSQ_PD2 1
+#if SQ_PD0_NSQ_PD2
+#define UPGRADE_0  1 // faster PD0
+#endif
+
 #define SHUT_NX4_4XN 0
 #endif
 #endif
