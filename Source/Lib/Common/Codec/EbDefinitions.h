@@ -38,6 +38,19 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define POUT                  0
+#define DECOUPLE_ME_RES       1
+#define REM_REF_ENTRY_IDX     1
+#define DEP_CNT               1
+#define REMOVE_REORDER_Q      1
+
+#if DEP_CNT
+#define UPDATED_LINKS 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process.
+#endif
+
+
+
+
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
 #define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
 
