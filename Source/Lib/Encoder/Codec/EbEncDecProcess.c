@@ -1916,7 +1916,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 
 
         md_subpel_search_ctrls->do_4x4 = 1;
-        md_subpel_search_ctrls->do_nsq = 0;
+        md_subpel_search_ctrls->do_nsq = 1;
 
         md_subpel_search_ctrls->half_pel_search_enabled = 1;
         md_subpel_search_ctrls->half_pel_search_scan    = 1;
