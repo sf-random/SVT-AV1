@@ -891,6 +891,40 @@ EbBool mrp_is_already_injected_mv_bipred(ModeDecisionContext *context_ptr, int16
     return (EB_FALSE);
 }
 
+#if PRUNING_PER_INTER_TYPE
+EbBool is_valid_unipred_ref(
+    struct ModeDecisionContext *context_ptr,
+    uint8_t inter_cand_group,
+    uint8_t list_idx, uint8_t ref_idx) {
+    if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])) {
+        return EB_FALSE;
+    }
+    else {
+        return EB_TRUE;
+    }
+}
+
+EbBool is_valid_bipred_ref(
+    struct ModeDecisionContext *context_ptr,
+    uint8_t inter_cand_group,
+    uint8_t list_idx_0, uint8_t ref_idx_0,
+    uint8_t list_idx_1, uint8_t ref_idx_1) {
+
+    // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
+    if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx_0][ref_idx_0].do_ref ||
+        !context_ptr->ref_filtering_res[inter_cand_group][list_idx_1][ref_idx_1].do_ref )
+    {
+        // Check whether we should check the closest, if no then there no need to move forward and return false
+        if (!context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])
+            return EB_FALSE;
+
+        // Else check if ref are LAST and BWD, if not then return false
+        if (ref_idx_0 || ref_idx_1)
+            return EB_FALSE;
+    }
+    return EB_TRUE;
+}
+#endif
 #define BIPRED_3x3_REFINMENT_POSITIONS 8
 
 int8_t allow_refinement_flag[BIPRED_3x3_REFINMENT_POSITIONS] = {1, 0, 1, 0, 1, 0, 1, 0};
@@ -934,7 +968,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
 #if UNIPRED_3x3_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_0][list0_ref_index].do_ref && (list0_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[UNI_3x3_GROUP])) continue;
+        if (!is_valid_unipred_ref(context_ptr, UNI_3x3_GROUP, REF_LIST_0, list0_ref_index)) continue;
 #else
         if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
 #endif
@@ -1111,7 +1145,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if UNIPRED_3x3_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-        if (!context_ptr->ref_filtering_res[UNI_3x3_GROUP][REF_LIST_1][list1_ref_index].do_ref && (list1_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[UNI_3x3_GROUP])) continue;
+        if (!is_valid_unipred_ref(context_ptr, UNI_3x3_GROUP, REF_LIST_1, list1_ref_index)) continue;
 #else
         if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
 #endif
@@ -1342,9 +1376,8 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 #if BIPRED_3x3_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ bipred_3x3
-            if ((!context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || 
-                !context_ptr->ref_filtering_res[BI_3x3_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref) && (list0_ref_index || list1_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[BI_3x3_GROUP])) continue;
+           if (!is_valid_bipred_ref(
+                context_ptr, BI_3x3_GROUP, me_block_results_ptr->ref0_list, list0_ref_index, me_block_results_ptr->ref1_list, list1_ref_index)) continue;
 #else
             if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
 #endif
@@ -1822,7 +1855,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
 #if NEAREST_NEAR_REF_MASKING
         // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
 #if PRUNING_PER_INTER_TYPE
-        if (!context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[NRST_NEAR_GROUP])) return;
+        if (!is_valid_unipred_ref(context_ptr, NRST_NEAR_GROUP, list_idx, ref_idx)) return;
 #else
         if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
 #endif
@@ -2089,8 +2122,9 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         uint8_t list_idx_1 = get_list_idx(rf[1]);
         // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
 #if PRUNING_PER_INTER_TYPE
-        if ((!context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[NRST_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1 || !context_ptr->ref_pruning_ctrls.closest_refs[NRST_NEAR_GROUP])) return;
-#else
+        if (!is_valid_bipred_ref(
+            context_ptr, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1)) return;
+ #else
         if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
 #endif
 #if 0
@@ -2432,13 +2466,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         uint8_t list_idx_1 = get_list_idx(rf[1]);
         if (list_idx_0 != INVALID_REF)
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[NRST_NEW_NEAR_GROUP][list_idx_0][ref_idx_0].do_ref && (ref_idx_0 || !context_ptr->ref_pruning_ctrls.closest_refs[NRST_NEW_NEAR_GROUP])) return;
+            if (!is_valid_unipred_ref(context_ptr, NRST_NEW_NEAR_GROUP, list_idx_0, ref_idx_0)) return;
 #else
             if (!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref) return;
 #endif
         if (list_idx_1 != INVALID_REF)
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[NRST_NEW_NEAR_GROUP][list_idx_1][ref_idx_1].do_ref && (ref_idx_1 || !context_ptr->ref_pruning_ctrls.closest_refs[NRST_NEW_NEAR_GROUP])) return;
+            if (!is_valid_unipred_ref(context_ptr, NRST_NEW_NEAR_GROUP, list_idx_1, ref_idx_1)) return;
 #else
             if (!context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) return;
 #endif
@@ -3051,7 +3085,7 @@ void inject_warped_motion_candidates(
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 #if WARP_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[WARP_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[WARP_GROUP])) continue;
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, list_idx, ref_idx)) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
 #endif
@@ -3221,7 +3255,7 @@ void inject_warped_motion_candidates(
         if (inter_direction == 0) {
 #if WARP_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_0][list0_ref_index].do_ref && (list0_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[WARP_GROUP])) continue;
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, REF_LIST_0, list0_ref_index)) continue;
 #else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
 #endif
@@ -3324,7 +3358,7 @@ void inject_warped_motion_candidates(
         if (inter_direction == 1) {
 #if WARP_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[WARP_GROUP][REF_LIST_1][list1_ref_index].do_ref && (list1_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[WARP_GROUP])) continue;
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, REF_LIST_1, list1_ref_index)) continue;
 #else
             if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
 #endif
@@ -3716,7 +3750,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         if (inter_direction == 0) {
 #if NEW_MV_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_0][list0_ref_index].do_ref && (list0_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[PA_ME_GROUP]))
+            if (!is_valid_unipred_ref(context_ptr, PA_ME_GROUP, REF_LIST_0, list0_ref_index))
 #else
             if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref)
 #endif
@@ -3878,7 +3912,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
             if (inter_direction == 1) {
 #if NEW_MV_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][REF_LIST_1][list1_ref_index].do_ref && (list1_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[PA_ME_GROUP]))
+                if (!is_valid_unipred_ref(context_ptr, PA_ME_GROUP, REF_LIST_1, list1_ref_index))
 #else
                 if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref)
 #endif
@@ -4032,7 +4066,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
             if (allow_bipred) {
 #if NEW_MV_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-                if (!context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[PA_ME_GROUP][me_block_results_ptr->ref1_list][list1_ref_index].do_ref && (list0_ref_index || list1_ref_index || !context_ptr->ref_pruning_ctrls.closest_refs[PA_ME_GROUP]))
+                if (!is_valid_bipred_ref(context_ptr, PA_ME_GROUP, me_block_results_ptr->ref0_list, list0_ref_index, me_block_results_ptr->ref1_list, list1_ref_index))
 #else
                 if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
 #endif

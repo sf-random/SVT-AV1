@@ -5449,6 +5449,9 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
 }
 #endif
 
+#if PRUNING_PER_INTER_TYPE
+EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t inter_cand_group, uint8_t list_idx, uint8_t ref_idx);
+#endif
 void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                              EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
                              uint32_t blk_origin_index) {
@@ -5503,7 +5506,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!context_ptr->ref_filtering_res[PRED_ME_GROUP][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[PRED_ME_GROUP])) continue;
+            if (!is_valid_unipred_ref(context_ptr, PRED_ME_GROUP, list_idx, ref_idx)) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
 #endif
