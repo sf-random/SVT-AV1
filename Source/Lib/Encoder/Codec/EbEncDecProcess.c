@@ -1759,8 +1759,8 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->do_4x4 = 0;
-        md_subpel_search_ctrls->do_nsq = 0;
+        md_subpel_search_ctrls->do_4x4 = 1;
+        md_subpel_search_ctrls->do_nsq = 1;
 
         md_subpel_search_ctrls->half_pel_search_enabled          = 1;
         md_subpel_search_ctrls->half_pel_search_scan             = 0;
@@ -1788,8 +1788,8 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
-        md_subpel_search_ctrls->do_4x4 = 0;
-        md_subpel_search_ctrls->do_nsq = 0;
+        md_subpel_search_ctrls->do_4x4 = 1;
+        md_subpel_search_ctrls->do_nsq = 1;
 
         md_subpel_search_ctrls->half_pel_search_enabled          = 1;
         md_subpel_search_ctrls->half_pel_search_scan             = 0;
@@ -1818,21 +1818,21 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->use_ssd = 0;
 
 
-        md_subpel_search_ctrls->do_4x4 = 0;
-        md_subpel_search_ctrls->do_nsq = 0;
+        md_subpel_search_ctrls->do_4x4 = 1;
+        md_subpel_search_ctrls->do_nsq = 1;
 
         md_subpel_search_ctrls->half_pel_search_enabled = 1;
         md_subpel_search_ctrls->half_pel_search_scan    = 1;
         md_subpel_search_ctrls->half_pel_search_width   = 3;
         md_subpel_search_ctrls->half_pel_search_height  = 3;
-        md_subpel_search_ctrls->half_pel_interpolation = 0;// av1_make_interp_filters(BILINEAR, BILINEAR);
+        md_subpel_search_ctrls->half_pel_interpolation = av1_make_interp_filters(BILINEAR, BILINEAR);
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 
         md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
         md_subpel_search_ctrls->quarter_pel_search_scan    = 1;
         md_subpel_search_ctrls->quarter_pel_search_width   = 3;
         md_subpel_search_ctrls->quarter_pel_search_height  = 3;
-        md_subpel_search_ctrls->quarter_pel_interpolation = 0;// av1_make_interp_filters(BILINEAR, BILINEAR);
+        md_subpel_search_ctrls->quarter_pel_interpolation = av1_make_interp_filters(BILINEAR, BILINEAR);
         md_subpel_search_ctrls->quarter_pel_search_central_position = 0;
 
         md_subpel_search_ctrls->eight_pel_search_enabled = 0;
@@ -4793,7 +4793,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_subpel_search_level = 0;
     else
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-            context_ptr->md_subpel_search_level = 0;
+            context_ptr->md_subpel_search_level = 2;
         else if (enc_mode <= ENC_M0)
             context_ptr->md_subpel_search_level = 1;
         else
