@@ -4686,7 +4686,7 @@ void md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_p
 #if SEARCH_TOP_N
     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled) {
 
-        if (context_ptr->tot_fp_results == 0) { // Full-Pel searched not performed @ MD (e.g. for SQ or if context_ptr->md_subpel_search_ctrls.enable == 0)
+        if (context_ptr->tot_fp_results == 0) { // Full-Pel search not performed @ MD (if SQ or if NSQ search @ MD skipped)
             context_ptr->md_fp_res_array[context_ptr->tot_fp_results].mvx = *me_mv_x;
             context_ptr->md_fp_res_array[context_ptr->tot_fp_results].mvy = *me_mv_y;
             context_ptr->md_fp_res_array[context_ptr->tot_fp_results].dist = (int32_t)~0;
