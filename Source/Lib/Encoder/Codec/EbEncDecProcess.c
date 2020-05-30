@@ -1794,7 +1794,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->half_pel_interpolation           = 0;
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 #if SEARCH_TOP_N
-        md_subpel_search_ctrls->half_pel_fp_pos_cnt = 3;
+        md_subpel_search_ctrls->half_pel_fp_pos_cnt = 5;
 #endif
         md_subpel_search_ctrls->quarter_pel_search_enabled          = 1;
         md_subpel_search_ctrls->quarter_pel_search_scan             = 0;
@@ -1825,7 +1825,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->half_pel_interpolation           = 0;
         md_subpel_search_ctrls->half_pel_search_central_position = 1;
 #if SEARCH_TOP_N
-        md_subpel_search_ctrls->half_pel_fp_pos_cnt = 3;
+        md_subpel_search_ctrls->half_pel_fp_pos_cnt = 5;
 #endif
 
         md_subpel_search_ctrls->quarter_pel_search_enabled          = 1;
