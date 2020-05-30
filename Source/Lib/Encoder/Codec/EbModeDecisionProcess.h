@@ -301,6 +301,13 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t eight_pel_search_central_position;   // 0: if distortion of the MVC is available; 1: otherwise  (e.g. if both 1/2 and 1/4 Pel search(s) are bypassed)
 
 }MdSubPelSearchCtrls;
+#if SEARCH_TOP_N
+typedef struct MdFullPelResults {
+    uint32_t dist; // distortion
+    int16_t mvx;  // MVx
+    int16_t mvy;  // MVy
+} MdFullPelResults;
+#endif
 #endif
 #if TXT_CONTROL
 typedef struct TxTSearchCtrls {
@@ -661,6 +668,10 @@ typedef struct ModeDecisionContext {
 #if PERFORM_SUB_PEL_MD
     uint8_t md_subpel_search_level;
     MdSubPelSearchCtrls md_subpel_search_ctrls;
+#if SEARCH_TOP_N
+    MdFullPelResults md_fp_res_array[4096];
+    uint16_t tot_fp_results;
+#endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
 #if ADD_BEST_CAND_COUNT_SIGNAL
