@@ -43,6 +43,9 @@ extern "C" {
 #if !PERFORM_SUB_PEL_MD
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
 #endif
+#if SEARCH_TOP_N
+#define MD_MAX_BEST_FP_POS 4
+#endif
 /**************************************
       * Macros
 **************************************/
@@ -284,9 +287,9 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_width;               // 1/2 Pel search area width
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
-    uint8_t half_pel_search_central_position;    // 0: if distortion of the MVC is available; 1: otherwise
+    uint8_t half_pel_search_central_pos;         // 0: if distortion of the MVC is available; 1: otherwise
 #if SEARCH_TOP_N
-    uint8_t half_pel_fp_pos_cnt;                 // total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_fp_pos_cnt full-pel candidates) 
+    uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_search_pos_cnt full-pel candidates) 
 #endif
     uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
     uint8_t quarter_pel_search_scan;             // 0: H, V, D; 1: H, V, 2: H, 3: V
@@ -671,8 +674,7 @@ typedef struct ModeDecisionContext {
     uint8_t md_subpel_search_level;
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
-    MdFullPelResults md_fp_res_array[4096];
-    uint16_t tot_fp_results;
+    MdFullPelResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
