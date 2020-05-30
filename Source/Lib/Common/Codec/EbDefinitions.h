@@ -453,7 +453,6 @@ extern "C" {
 #define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
 #define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
 #define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0) 
-#define NSQ_FIX_0                  1
 #define SEARCH_TOP_N               0
 #define SQ_QUICK_SEARCH            0
 #endif

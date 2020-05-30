@@ -4483,6 +4483,35 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     int16_t  search_center_mvy = mvc_y_array[0];
     uint32_t search_center_distortion = (uint32_t)~0;
 
+#if PERFORM_SUB_PEL_MD
+    for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
+
+        // Round-up the search center to the closest integer
+        mvc_x_array[mvc_index] = (mvc_x_array[mvc_index] + 4) & ~0x07;
+        mvc_y_array[mvc_index] = (mvc_y_array[mvc_index] + 4) & ~0x07;
+
+        md_full_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            context_ptr->md_nsq_motion_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            mvc_x_array[mvc_index],
+            mvc_y_array[mvc_index],
+            0,
+            0,
+            0,
+            0,
+            8,
+            &search_center_mvx,
+            &search_center_mvy,
+            &search_center_distortion);
+    }
+
+    *me_mv_x = search_center_mvx;
+    *me_mv_y = search_center_mvy;
+#else
     for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
 
         md_sub_pel_search(pcs_ptr,
@@ -4503,16 +4532,10 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             &search_center_mvx,
             &search_center_mvy,
             &search_center_distortion,
-#if PERFORM_SUB_PEL_MD
-            0,
-#endif
             1,
-#if PERFORM_SUB_PEL_MD
             0);
-#else
-            search_pattern);
-#endif
     }
+#endif
 #else
     // Search Center
     int16_t  search_center_mvx = me_mv_x;
@@ -4540,20 +4563,14 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         search_pattern);
 #endif
 
-
-#if NSQ_FIX_0
-    *me_mv_x = search_center_mvx;
-    *me_mv_y = search_center_mvy;
-#endif
-
     int16_t  best_search_mvx = (int16_t)~0;
     int16_t  best_search_mvy = (int16_t)~0;
     uint32_t best_search_distortion = (uint32_t)~0;
-
+#if !PERFORM_SUB_PEL_MD
     // Round-up the search center to the closest integer
     search_center_mvx = (search_center_mvx + 4) & ~0x07;
     search_center_mvy = (search_center_mvy + 4) & ~0x07;
-
+#endif
     md_full_pel_search(pcs_ptr,
         context_ptr,
         input_picture_ptr,
