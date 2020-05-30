@@ -3834,7 +3834,7 @@ static void get_eight_horizontal_search_point_results_all_85_pus(
     get_eight_horizontal_search_point_results_32x32_64x64_pu(
         p_sad16x16, p_best_sad_32x32, p_best_sad_64x64, p_best_mv32x32, p_best_mv64x64, curr_mv);
 }
-
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * full_pel_search_sb
  *******************************************/
@@ -3874,7 +3874,7 @@ static void full_pel_search_sb(MeContext *context_ptr, uint32_t list_index, uint
         }
     }
 }
-#if !REMOVE_ME_SUBPEL_CODE
+
 /*******************************************
  * half_pel_refinement_block
  *   performs Half Pel refinement for one PU
@@ -8557,7 +8557,7 @@ static void select_buffer_luma(uint32_t  pu_index, //[IN]
 
     return;
 }
-#endif
+
 static void quarder_pel_compensation(uint32_t pu_index, //[IN]
                                      uint8_t  fracPosition, //[IN]
                                      uint32_t pu_width, //[IN] Refrence picture list index
@@ -8655,6 +8655,7 @@ static void quarder_pel_compensation(uint32_t pu_index, //[IN]
 
     return;
 }
+#endif
 #if !REMOVE_ME_BIPRED_SEARCH
 /*******************************************************************************
  * Requirement: pu_width      = 8, 16, 24, 32, 48 or 64
@@ -11135,12 +11136,12 @@ void set_final_seach_centre_sb(
 
     // Search Center SADs
     uint64_t hmeMvSad = 0;
-
+#if !REMOVE_ME_BIPRED_SEARCH
     //uint32_t pu_index;
 
     uint32_t max_number_of_pus_per_sb =
         pcs_ptr->max_number_of_pus_per_sb;
-
+#endif
     uint32_t num_of_list_to_search;
     uint32_t list_index;
     uint8_t ref_pic_index;
@@ -12286,9 +12287,10 @@ EbErrorType motion_estimate_sb(
 #endif
     uint8_t  ref_pic_index;
     uint8_t  num_of_ref_pic_to_search;
+#if !SHUT_ME_CAND_SORTING
     uint8_t  candidate_index      = 0;
     uint32_t next_candidate_index = 0;
-
+#endif
     MePredUnit *         me_candidate;
 #if !REMOVE_ME_SUBPEL_CODE
     EbPictureBufferDesc *ref_pic_ptr;
