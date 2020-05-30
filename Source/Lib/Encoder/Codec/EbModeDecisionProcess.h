@@ -285,7 +285,9 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
     uint8_t half_pel_search_central_position;    // 0: if distortion of the MVC is available; 1: otherwise
-
+#if SEARCH_TOP_N
+    uint8_t half_pel_fp_pos_cnt;                 // total number of full-pel to search (up to half_pel_fp_pos_cnt) 
+#endif
     uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
     uint8_t quarter_pel_search_scan;             // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t quarter_pel_search_width;            // 1/4 Pel search area width

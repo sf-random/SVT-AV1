@@ -4820,9 +4820,8 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                     }
                                 }
                             }
-                       
 
-                        for (int cnt = 0; cnt < MIN(1, context_ptr->tot_fp_results); cnt++) {
+                        for (uint8_t fp_idx = 0; fp_idx < MIN(context_ptr->md_subpel_search_ctrls.half_pel_fp_pos_cnt, context_ptr->tot_fp_results); fp_idx++) {
                             md_sub_pel_search(
                                 pcs_ptr,
                                 context_ptr,
@@ -4832,8 +4831,8 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                 context_ptr->md_subpel_search_ctrls.use_ssd,
                                 list_idx,
                                 ref_idx,
-                                context_ptr->md_fp_res_array[cnt].mvx,
-                                context_ptr->md_fp_res_array[cnt].mvy,
+                                context_ptr->md_fp_res_array[fp_idx].mvx,
+                                context_ptr->md_fp_res_array[fp_idx].mvy,
                                 -(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
                                 +(context_ptr->md_subpel_search_ctrls.half_pel_search_width >> 1),
                                 -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
