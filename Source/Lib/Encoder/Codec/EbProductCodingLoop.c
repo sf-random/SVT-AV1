@@ -4697,8 +4697,9 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 
 #if PERFORM_SUB_PEL_MD
-void md_pa_me_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
+void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
 
     int16_t  best_search_mvx = (int16_t)~0;
     int16_t  best_search_mvy = (int16_t)~0;
@@ -4960,10 +4961,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                    (context_ptr->md_subpel_search_ctrls.do_nsq  && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)) ||  // NSQ and do_nsq == 1
                    (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight))) { // SQ 
 
-                    md_pa_me_subpel_search(pcs_ptr,
+                    md_subpel_search_pa_me_cand(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
+                        blk_origin_index,
                         list_idx,
                         ref_idx,
                         &me_mv_x,
