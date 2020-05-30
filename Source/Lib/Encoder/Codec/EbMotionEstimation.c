@@ -3874,6 +3874,7 @@ static void full_pel_search_sb(MeContext *context_ptr, uint32_t list_index, uint
         }
     }
 }
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * half_pel_refinement_block
  *   performs Half Pel refinement for one PU
@@ -4724,7 +4725,7 @@ static void open_loop_me_half_pel_search_sblock(
         generate_nsq_mv(context_ptr);
 #endif
 }
-
+#endif
 /*******************************************
  * open_loop_me_fullpel_search_sblock
  *******************************************/
@@ -4879,6 +4880,7 @@ static void AvcStyleInterpolation(uint8_t *srcOne, // input parameter, input sam
     return;
 }
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * InterpolateSearchRegion AVC
  *   interpolates the search area
@@ -7681,6 +7683,7 @@ static void quarter_pel_search_sb(
 #endif
     return;
 }
+#endif
 void hme_one_quadrant_level_0(
     PictureParentControlSet *pcs_ptr,
     MeContext *              context_ptr, // input/output parameter, ME context Ptr, used to
@@ -10133,8 +10136,10 @@ void integer_search_sb(
                                    picture_height))
                         : search_area_height;
             }
+#if !REMOVE_ME_SUBPEL_CODE
             context_ptr->x_search_area_origin[list_index][ref_pic_index] = x_search_area_origin;
             context_ptr->y_search_area_origin[list_index][ref_pic_index] = y_search_area_origin;
+#endif
             context_ptr->adj_search_area_width  = search_area_width;
             context_ptr->adj_search_area_height = search_area_height;
             x_top_left_search_region = (int16_t)(ref_pic_ptr->origin_x + sb_origin_x) -
@@ -10369,10 +10374,12 @@ void integer_search_sb(
                                            search_area_height);
             }
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
             context_ptr->x_search_area_origin[list_index][ref_pic_index] = x_search_area_origin;
             context_ptr->y_search_area_origin[list_index][ref_pic_index] = y_search_area_origin;
             context_ptr->sa_width[list_index][ref_pic_index] = search_area_width;
             context_ptr->sa_height[list_index][ref_pic_index] = search_area_height;
+#endif
         }
     }
 }
@@ -10382,7 +10389,11 @@ void integer_search_sb(
   frame. keep only the references that are close to the best reference.
 */
 #if ME_HME_PRUNING_CLEANUP
+#if REMOVE_ME_SUBPEL_CODE
+void me_prune_ref(
+#else
 void me_prune_ref_and_adjust_subpel_refinement(
+#endif
 #else
 void prune_references_fp(
 #endif
@@ -10497,9 +10508,11 @@ void prune_references_fp(
 #endif
                 context_ptr->hme_results[li][ri].do_ref = 0;
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
             if (context_ptr->half_pel_mode == SWITCHABLE_HP_MODE)
                 if (context_ptr->hme_results[li][ri].hme_sad > sorted[0][1].hme_sad)
                     context_ptr->local_hp_mode[li][ri] = REFINEMENT_HP_MODE;
+#endif
         }
     }
 }
@@ -12276,20 +12289,25 @@ EbErrorType motion_estimate_sb(
     uint32_t             list_index;
     uint8_t              cand_index               = 0;
     uint8_t              total_me_candidate_index = 0;
+#if !REMOVE_ME_SUBPEL_CODE
     EbPaReferenceObject *reference_object; // input parameter, reference Object Ptr
-
+#endif
     uint8_t  ref_pic_index;
     uint8_t  num_of_ref_pic_to_search;
     uint8_t  candidate_index      = 0;
     uint32_t next_candidate_index = 0;
 
     MePredUnit *         me_candidate;
+#if !REMOVE_ME_SUBPEL_CODE
     EbPictureBufferDesc *ref_pic_ptr;
+#endif
     uint64_t i;
+#if !REMOVE_ME_SUBPEL_CODE
     EbBool enable_half_pel_32x32 = EB_FALSE;
     EbBool enable_half_pel_16x16 = EB_FALSE;
     EbBool enable_half_pel_8x8   = EB_FALSE;
     EbBool enable_quarter_pel    = EB_FALSE;
+#endif
     EbBool one_quadrant_hme      = EB_FALSE;
 
     one_quadrant_hme = scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE ? 0 : one_quadrant_hme;
@@ -12316,9 +12334,11 @@ EbErrorType motion_estimate_sb(
 #else
             context_ptr->reduce_me_sr_flag[li][ri] = 0;
 #endif
+#if !REMOVE_ME_SUBPEL_CODE
             context_ptr->local_hp_mode[li][ri] =
                 context_ptr->half_pel_mode == SWITCHABLE_HP_MODE ? EX_HP_MODE :
                 context_ptr->half_pel_mode;
+#endif
 #if OVERLAY_R2R_FIX
             // R2R FIX: no winner integer MV is set in special case like initial p_sb_best_mv for overlay case,
             // then it sends dirty p_sb_best_mv to MD, initializing it is necessary
@@ -12370,6 +12390,18 @@ EbErrorType motion_estimate_sb(
         context_ptr,
         input_ptr);
 #if ME_HME_PRUNING_CLEANUP
+#if REMOVE_ME_SUBPEL_CODE
+    // prune the refrence frames 
+    if (prune_ref && context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning)
+    {
+        me_prune_ref(
+            pcs_ptr,
+#if INTER_COMP_REDESIGN
+            sb_index,
+#endif
+            context_ptr);
+    }
+#else
     // prune the refrence frames and adjust half-pel refinement based on the Full pel outputs.
     if (prune_ref &&
         (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning ||
@@ -12382,6 +12414,7 @@ EbErrorType motion_estimate_sb(
 #endif
             context_ptr);
     }
+#endif
 #else
     // prune the refrence frames based on the Full pel outputs.
     if (pcs_ptr->prune_ref_based_me && prune_ref)
@@ -12394,7 +12427,7 @@ EbErrorType motion_estimate_sb(
 #endif
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
-
+#if !REMOVE_ME_SUBPEL_CODE
     // Uni-Prediction motion estimation loop
     // List Loop
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
@@ -12865,7 +12898,7 @@ EbErrorType motion_estimate_sb(
             }
         }
     }
-
+#endif
     if (context_ptr->me_alt_ref == EB_FALSE) {
         // Bi-Prediction motion estimation loop
         for (pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
@@ -13080,10 +13113,10 @@ EbErrorType motion_estimate_sb(
 
 #if  ME_MEM_OPT
 #if REMOVE_MRP_MODE
-                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].x_mv =
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].x_mv =
                         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 
-                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].y_mv =
                         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
 #else
                      uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
