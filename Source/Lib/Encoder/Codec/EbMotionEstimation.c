@@ -10536,8 +10536,6 @@ void hme_level0_sb(
                              : BLOCK_SIZE_64;
     int16_t origin_x = (int16_t)sb_origin_x;
     int16_t origin_y = (int16_t)sb_origin_y;
-    int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     // HME
     uint32_t search_region_number_in_width = 0;
     uint32_t search_region_number_in_height = 0;
@@ -10747,8 +10745,6 @@ void hme_level1_sb(
                              : BLOCK_SIZE_64;
     int16_t origin_x = (int16_t)sb_origin_x;
     int16_t origin_y = (int16_t)sb_origin_y;
-    int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     // HME
     uint32_t search_region_number_in_width = 0;
     uint32_t search_region_number_in_height = 0;
@@ -10940,8 +10936,6 @@ void hme_level2_sb(
                              : BLOCK_SIZE_64;
     int16_t origin_x = (int16_t)sb_origin_x;
     int16_t origin_y = (int16_t)sb_origin_y;
-    int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     // HME
     uint32_t search_region_number_in_width = 0;
     uint32_t search_region_number_in_height = 0;
@@ -11127,8 +11121,6 @@ void set_final_seach_centre_sb(
                              : BLOCK_SIZE_64;
     int16_t origin_x = (int16_t)sb_origin_x;
     int16_t origin_y = (int16_t)sb_origin_y;
-    int16_t padWidth = (int16_t)BLOCK_SIZE_64 - 1;
-    int16_t padHeight = (int16_t)BLOCK_SIZE_64 - 1;
     // HME
     uint32_t search_region_number_in_width = 0;
     uint32_t search_region_number_in_height = 0;

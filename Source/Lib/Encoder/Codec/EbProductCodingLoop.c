@@ -4675,7 +4675,7 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 
 #if PERFORM_SUB_PEL_MD
-void md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+void md_pa_me_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
     uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx,
     const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
@@ -4932,7 +4932,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                    (context_ptr->md_subpel_search_ctrls.do_nsq  && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)) ||  // NSQ and do_nsq == 1
                    (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight))) { // SQ 
 
-                    md_subpel_search(pcs_ptr,
+                    md_pa_me_subpel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
@@ -5254,8 +5254,6 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 }
             }
             // Step 1: derive the best MVP in term of distortion
-            int16_t best_mvp_x = 0;
-            int16_t best_mvp_y = 0;
 
             for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
                 // MVP Distortion
@@ -5327,8 +5325,6 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
 
                 if (mvp_distortion < best_mvp_distortion) {
                     best_mvp_distortion = mvp_distortion;
-                    best_mvp_x          = mvp_x_array[mvp_index];
-                    best_mvp_y          = mvp_y_array[mvp_index];
                 }
             }
 
@@ -11919,8 +11915,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
  *
  * Returns TRUE if the blocks should be skipped; FALSE otherwise.
  */
-uint8_t update_skip_nsq_shapes(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                               ModeDecisionContext *context_ptr) {
+uint8_t update_skip_nsq_shapes(ModeDecisionContext *context_ptr) {
     uint8_t skip_nsq = 0;
     uint32_t sq_weight = context_ptr->sq_weight;
 
@@ -13001,7 +12996,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             if (blk_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
                 skip_next_sq = 0;
 
-            uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(scs_ptr, pcs_ptr, context_ptr);
+            uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
 #if !CLEAN_UP_SB_DATA_6
             skip_next_depth = context_ptr->blk_ptr->do_not_process_block;
 #endif

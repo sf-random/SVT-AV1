@@ -595,8 +595,7 @@ typedef struct MeContext {
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,
                                           uint32_t ref_stride, uint32_t width, uint32_t height);
 #if REMOVE_MRP_MODE
-extern EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
-                                   uint16_t max_input_luma_height);
+extern EbErrorType me_context_ctor(MeContext *object_ptr);
 #elif NSQ_REMOVAL_CODE_CLEAN_UP
 extern EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
                                    uint16_t max_input_luma_height, uint8_t mrp_mode);
