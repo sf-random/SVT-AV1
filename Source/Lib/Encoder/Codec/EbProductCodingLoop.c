@@ -4810,8 +4810,8 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                             }
                             else {  // Sort md_fp_res_array
                                 MdFullPelResults *md_fp_res_p = &(context_ptr->md_fp_res_array[0]);
-                                for (uint32_t i = 0; i < context_ptr->tot_fp_results - 1; ++i) {
-                                    for (uint32_t j = i + 1; j < context_ptr->tot_fp_results; ++j) {
+                                for (uint16_t i = 0; i < context_ptr->tot_fp_results - 1; ++i) {
+                                    for (uint16_t j = i + 1; j < context_ptr->tot_fp_results; ++j) {
                                         if (context_ptr->md_fp_res_array[j].dist < context_ptr->md_fp_res_array[i].dist) {
                                             MdFullPelResults temp = md_fp_res_p[i];
                                             md_fp_res_p[i] = md_fp_res_p[j];
