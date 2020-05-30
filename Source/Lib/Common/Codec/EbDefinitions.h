@@ -447,14 +447,12 @@ extern "C" {
 #endif
 #define COEFF_BASED_BYPASS_OFF_480P 1 // Turn off coeff-based NSQ bypass for <= 480p
 
-
-#define MOVE_SUB_PEL_ME_TO_MD         0 // Move subpel ME to MD/TF
+#define MOVE_SUB_PEL_ME_TO_MD         1 // Move subpel ME to MD/TF
 #if MOVE_SUB_PEL_ME_TO_MD
 #define REMOVE_ME_SUBPEL_CODE      1 // Shut subpel ME
 #define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
 #define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
 #define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0) 
-#define PD0_SUB_PEL                1 // Perform subpel @ PD0
 #define NSQ_FIX_0                  0
 #define SEARCH_TOP_N               0
 #define SQ_QUICK_SEARCH            0
