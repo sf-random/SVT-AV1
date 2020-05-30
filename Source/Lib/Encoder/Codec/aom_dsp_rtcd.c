@@ -743,16 +743,19 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(nxm_sad_kernel, nxm_sad_kernel_helper_c, nxm_sad_kernel_helper_avx2);
 #if !REMOVE_ME_SUBPEL_CODE
     SET_AVX2(nxm_sad_avg_kernel, nxm_sad_avg_kernel_helper_c, nxm_sad_avg_kernel_helper_avx2);
-#endif
+
     SET_SSE2_AVX2(
         compute_mean_8x8, compute_mean_c, compute_mean8x8_sse2_intrin, compute_mean8x8_avx2_intrin);
+#endif
     SET_SSE2(compute_mean_square_values_8x8,
              compute_mean_squared_values_c,
              compute_mean_of_squared_values8x8_sse2_intrin);
+#if !REMOVE_ME_SUBPEL_CODE
     SET_SSE2_AVX2(compute_interm_var_four8x8,
                   compute_interm_var_four8x8_c,
                   compute_interm_var_four8x8_helper_sse2,
                   compute_interm_var_four8x8_avx2_intrin);
+#endif
     SET_AVX2(sad_16b_kernel, sad_16b_kernel_c, sad_16bit_kernel_avx2);
     SET_AVX2(av1_compute_cross_correlation,
              av1_compute_cross_correlation_c,

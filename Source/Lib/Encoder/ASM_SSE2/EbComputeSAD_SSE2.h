@@ -2,13 +2,15 @@
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
-#if REMOVE_ME_SUBPEL_CODE
-// To remove this file
-#else
+
 #ifndef EbComputeSAD_SSE2_h
 #define EbComputeSAD_SSE2_h
 
 #include "EbDefinitions.h"
+
+#if REMOVE_ME_SUBPEL_CODE
+// To remove this file
+#else
 #ifdef __cplusplus
 extern "C" {
 #endif

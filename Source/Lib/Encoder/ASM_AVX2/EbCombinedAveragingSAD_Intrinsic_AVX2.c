@@ -2,16 +2,16 @@
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
-#if REMOVE_ME_SUBPEL_CODE
-// To remove this file
-#else
+
 #include "immintrin.h"
 #include "EbCombinedAveragingSAD_Inline_AVX2.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
 #include "EbComputeSAD_SSE2.h"
-
+#if REMOVE_ME_SUBPEL_CODE
+// To remove this file
+#else
 uint32_t combined_averaging_8xm_sad_avx2_intrin(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
                                                 uint32_t ref1_stride, uint8_t *ref2,
                                                 uint32_t ref2_stride, uint32_t height,
