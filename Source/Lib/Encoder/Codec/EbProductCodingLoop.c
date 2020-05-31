@@ -4753,12 +4753,12 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 &best_search_mvy,
                 &best_search_distortion,
                 context_ptr->md_subpel_search_ctrls.half_pel_interpolation,
-                context_ptr->md_subpel_search_ctrls.half_pel_search_central_pos,
+                1,
                 context_ptr->md_subpel_search_ctrls.half_pel_search_scan);
         }
     }
 #else
-    if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled)
+    if (context_ptr->md_subpel_search_ctrls .half_pel_search_enabled)
         md_sub_pel_search(
             pcs_ptr,
             context_ptr,
@@ -4803,7 +4803,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             &best_search_mvy,
             &best_search_distortion,
             context_ptr->md_subpel_search_ctrls.quarter_pel_interpolation,
-            context_ptr->md_subpel_search_ctrls.quarter_pel_search_central_position,
+            0,
             context_ptr->md_subpel_search_ctrls.quarter_pel_search_scan);
 
     if (context_ptr->md_subpel_search_ctrls.eight_pel_search_enabled)
@@ -4828,7 +4828,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 &best_search_mvy,
                 &best_search_distortion,
                 context_ptr->md_subpel_search_ctrls.eight_pel_interpolation,
-                context_ptr->md_subpel_search_ctrls.eight_pel_search_central_position,
+                0,
                 context_ptr->md_subpel_search_ctrls.eight_pel_search_scan);
 
     *me_mv_x = best_search_mvx;

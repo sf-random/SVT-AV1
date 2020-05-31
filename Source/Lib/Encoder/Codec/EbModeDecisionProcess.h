@@ -287,7 +287,6 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_width;               // 1/2 Pel search area width
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
-    uint8_t half_pel_search_central_pos;         // 0: if distortion of the MVC is available; 1: otherwise
 #if SEARCH_TOP_N
     uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_search_pos_cnt full-pel candidates) 
 #endif
@@ -296,14 +295,12 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t quarter_pel_search_width;            // 1/4 Pel search area width
     uint8_t quarter_pel_search_height;           // 1/4 Pel search area height
     uint8_t quarter_pel_interpolation;           // 1/4 Pel interpolation method
-    uint8_t quarter_pel_search_central_position; // 0: if distortion of the MVC is available; 1: otherwise (e.g. if 1/2 Pel search is bypassed)
 
     uint8_t eight_pel_search_enabled;            // 0: OFF; 1: ON
     uint8_t eight_pel_search_scan;               // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t eight_pel_search_width;              // 1/8 Pel search area width
     uint8_t eight_pel_search_height;             // 1/8 Pel search area height
     uint8_t eight_pel_interpolation;             // 1/8 Pel interpolation method
-    uint8_t eight_pel_search_central_position;   // 0: if distortion of the MVC is available; 1: otherwise  (e.g. if both 1/2 and 1/4 Pel search(s) are bypassed)
 
 }MdSubPelSearchCtrls;
 #if SEARCH_TOP_N
