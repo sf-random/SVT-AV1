@@ -44,7 +44,7 @@ extern "C" {
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
 #endif
 #if SEARCH_TOP_N
-#define MD_MAX_BEST_FP_POS 8
+#define MD_MAX_BEST_FP_POS 5
 #define MD_MAX_HP_POS 225
 #endif
 /**************************************

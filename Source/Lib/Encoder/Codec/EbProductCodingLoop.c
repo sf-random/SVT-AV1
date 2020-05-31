@@ -4593,7 +4593,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             0,
             8,
 #if SEARCH_TOP_N
-            1,
+            context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
 #endif
             &search_center_mvx,
             &search_center_mvy,
@@ -4825,7 +4825,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 4,
 #if SEARCH_TOP_N
-                1,
+                context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1, // only if more than 1 fp pos to search, otherwise no risk of overlapping
 #endif
                 &best_search_mvx,
                 &best_search_mvy,
