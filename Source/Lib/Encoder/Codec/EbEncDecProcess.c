@@ -1841,7 +1841,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 
         break;
     case 4:
-        md_subpel_search_ctrls->enabled = 0;
+        md_subpel_search_ctrls->enabled = 1;
         md_subpel_search_ctrls->use_ssd = 0;
 
         md_subpel_search_ctrls->do_4x4 = 0;
