@@ -4653,10 +4653,15 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         1,
         search_pattern);
 #endif
-
+#if PERFORM_SUB_PEL_MD //  context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
+    int16_t  best_search_mvx = *me_mv_x;// (int16_t)~0;
+    int16_t  best_search_mvy = *me_mv_y;// (int16_t)~0;
+    uint32_t best_search_distortion = search_center_distortion;// (uint32_t)~0;
+#else
     int16_t  best_search_mvx = (int16_t)~0;
     int16_t  best_search_mvy = (int16_t)~0;
     uint32_t best_search_distortion = (uint32_t)~0;
+#endif
 #if !PERFORM_SUB_PEL_MD
     // Round-up the search center to the closest integer
     search_center_mvx = (search_center_mvx + 4) & ~0x07;
@@ -4677,7 +4682,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
         8,
 #if SEARCH_TOP_N
-        1,
+        context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
 #endif
         &best_search_mvx,
         &best_search_mvy,
