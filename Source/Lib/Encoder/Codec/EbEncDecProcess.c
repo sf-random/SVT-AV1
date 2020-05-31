@@ -1841,7 +1841,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 
         break;
     case 4:
-        md_subpel_search_ctrls->enabled = 1;
+        md_subpel_search_ctrls->enabled = 0;
         md_subpel_search_ctrls->use_ssd = 0;
 
         md_subpel_search_ctrls->do_4x4 = 0;
@@ -1852,7 +1852,7 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 #if SEARCH_TOP_N
         md_subpel_search_ctrls->half_pel_search_pos_cnt = 1;
 #endif
-        md_subpel_search_ctrls->quarter_pel_search_enabled = 0;
+        md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
         md_subpel_search_ctrls->quarter_pel_search_scan    = 1;
 
         md_subpel_search_ctrls->eight_pel_search_enabled = 0;
