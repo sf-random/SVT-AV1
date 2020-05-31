@@ -5040,10 +5040,10 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #endif
 #if PERFORM_SUB_PEL_MD
-                if (context_ptr->md_subpel_search_ctrls.enabled && (
-                   (context_ptr->md_subpel_search_ctrls.do_4x4  && (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4)) || // 4x4 and do_4x4 == 1
-                   (context_ptr->md_subpel_search_ctrls.do_nsq  && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)) ||  // NSQ and do_nsq == 1
-                   (context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight))) { // SQ 
+
+                if (context_ptr->md_subpel_search_ctrls.enabled && 
+                   ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && (context_ptr->blk_geom->bsize != BLOCK_4X4 || context_ptr->md_subpel_search_ctrls.do_4x4)) || // SQ no 4x4 or do_4x4
+                   ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_subpel_search_ctrls.do_nsq)) { // NSQ and do_nsq == 1
 
                     md_subpel_search_pa_me_cand(pcs_ptr,
                         context_ptr,
@@ -5098,29 +5098,29 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if PERFORM_SUB_PEL_MD
 
                 if (context_ptr->md_subpel_search_ctrls.enabled) {
-                    // If 4x4 but do_4x4 == 0 then inherit Parent MV (already refined)
-                    if (!context_ptr->md_subpel_search_ctrls.do_4x4 && (context_ptr->blk_geom->bwidth == 4 && context_ptr->blk_geom->bheight == 4)) {
-                        
-                        // Get parent_depth_idx_mds
-                        uint16_t parent_depth_idx_mds = 0;
-                        if (context_ptr->blk_geom->sq_size <
-                            ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
-                            //Set parent to be considered
-                            parent_depth_idx_mds =
-                            (context_ptr->blk_geom->sqi_mds -
-                            (context_ptr->blk_geom->quadi - 3) *
-                                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                                [context_ptr->blk_geom->depth]) -
-                            parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                            [context_ptr->blk_geom->depth];
 
+                    // Get parent_depth_idx_mds
+                    uint16_t parent_depth_idx_mds = 0;
+                    if (context_ptr->blk_geom->sq_size <
+                        ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
+                        parent_depth_idx_mds =
+                        (context_ptr->blk_geom->sqi_mds -
+                        (context_ptr->blk_geom->quadi - 3) *
+                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                            [context_ptr->blk_geom->depth]) -
+                        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                        [context_ptr->blk_geom->depth];
+
+                    // If 4x4 but do_4x4 == 0 then inherit Parent MV (already refined)
+                    if (!context_ptr->md_subpel_search_ctrls.do_4x4 && (context_ptr->blk_geom->bsize == BLOCK_4X4) && context_ptr->md_local_blk_unit[parent_depth_idx_mds].avail_blk_flag) {
+    
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
                             context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][0];
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
                             context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][1];
                     }
                     // else if NSQ but do_nsq == 0 then inherit SQ MV (already refined)
-                    else if (!context_ptr->md_subpel_search_ctrls.do_nsq && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)) {
+                    else if (!context_ptr->md_subpel_search_ctrls.do_nsq && (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag) {
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
                             context_ptr->sb_me_mv[context_ptr->blk_geom->sqi_mds][list_idx][ref_idx][0];
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
