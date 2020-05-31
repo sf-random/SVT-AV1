@@ -45,6 +45,7 @@ extern "C" {
 #endif
 #if SEARCH_TOP_N
 #define MD_MAX_BEST_FP_POS 8
+#define MD_MAX_HP_POS 225
 #endif
 /**************************************
       * Macros
@@ -304,11 +305,16 @@ typedef struct MdSubPelSearchCtrls {
 
 }MdSubPelSearchCtrls;
 #if SEARCH_TOP_N
-typedef struct MdFullPelResults {
+typedef struct MdFpResults {
     uint32_t dist; // distortion
     int16_t mvx;  // MVx
     int16_t mvy;  // MVy
-} MdFullPelResults;
+} MdFpResults;
+typedef struct MdHpResults {
+    int16_t mvx;  // MVx
+    int16_t mvy;  // MVy
+    MvReferenceFrame ref_frame_type; // frame_type
+} MdHpResults;
 #endif
 #endif
 #if TXT_CONTROL
@@ -671,7 +677,9 @@ typedef struct ModeDecisionContext {
     uint8_t md_subpel_search_level;
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
-    MdFullPelResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
+    MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
+    MdHpResults md_hp_pos[MD_MAX_HP_POS];
+    uint8_t tot_hp_pos;
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
