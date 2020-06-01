@@ -427,7 +427,7 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t mv,
         uint32_t p_sad32x32[4][8]);
-
+#if !REMOVE_ME_SUBPEL_CODE
     // Nader - to be replaced by loock-up table
     /*******************************************
     * get_me_info_index
@@ -462,7 +462,7 @@ extern "C" {
         uint8_t list_index,
         uint8_t ref_pic_index,
         uint32_t integer_mv);         // input parameter, integer MV
-
+#endif
 #ifdef __cplusplus
 }
 #endif
