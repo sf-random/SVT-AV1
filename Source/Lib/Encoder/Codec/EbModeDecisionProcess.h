@@ -47,9 +47,9 @@ extern "C" {
 #define MD_MAX_BEST_FP_POS 8
 #define MD_MAX_HP_POS 225
 #endif
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
 // Max that could be tracked 
-#define MD_MAX_MV_RES 2048
+#define MD_MAX_MV_RES 64
 #endif
 /**************************************
       * Macros
@@ -315,7 +315,7 @@ typedef struct MdFpResults {
     int16_t mvy;  // MVy
 } MdFpResults;
 #endif
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
 typedef struct MdMvResults {
     int16_t mvx;  // MVx
     int16_t mvy;  // MVy
@@ -686,7 +686,7 @@ typedef struct ModeDecisionContext {
 #if SEARCH_TOP_N
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
 #endif
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
     MdMvResults md_mv_res[2][BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];
     uint16_t tot_mv_res[2][BLOCK_MAX_COUNT_SB_128];
 #endif

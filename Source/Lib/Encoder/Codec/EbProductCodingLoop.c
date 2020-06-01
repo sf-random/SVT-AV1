@@ -4105,7 +4105,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
 
 
-#if TRACK_DIST_PER_MV_REF // full 0
+#if TRACK_DIST_PER_MV_REF_1
             int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
             MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
@@ -4123,7 +4123,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             }
 #endif
 
-#if TRACK_DIST_PER_MV_REF //sub 1
+#if TRACK_DIST_PER_MV_REF_1
             if (!distortion_found) {
 #endif
 #if INT_RECON_OFFSET_FIX
@@ -4170,7 +4170,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                    context_ptr->blk_geom->bwidth);
                 }
             }
-#if TRACK_DIST_PER_MV_REF //sub 2
+#if TRACK_DIST_PER_MV_REF_1
             if (context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds] < MD_MAX_MV_RES) {
                 md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
                 md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
@@ -4244,7 +4244,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             // Skip full pel position(s) when performing sub-pel search (unless central position)
             if ((refinement_pos_x * search_step) % 8 == 0 && (refinement_pos_y * search_step) % 8 == 0 && (refinement_pos_x || refinement_pos_y))
                 continue;
-#if TRACK_DIST_PER_MV_REF // sub 0
+#if TRACK_DIST_PER_MV_REF_0
             int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
             MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
@@ -4262,7 +4262,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             }
 #endif
 
-#if TRACK_DIST_PER_MV_REF //sub 1
+#if TRACK_DIST_PER_MV_REF_0
             if(!distortion_found) {
 #endif
             // Only distortion derivation if fp position (no need to perform compensation)
@@ -4401,7 +4401,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #if PERFORM_SUB_PEL_MD
             }
 #endif
-#if TRACK_DIST_PER_MV_REF //sub 2
+#if TRACK_DIST_PER_MV_REF_0
             if (context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds] < MD_MAX_MV_RES) {
                 md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
                 md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
