@@ -8078,6 +8078,11 @@ void *enc_dec_kernel(void *input_ptr) {
 #endif
 
                     }
+
+#if TRACK_DIST_PER_MV_REF
+                    memset(context_ptr->md_context->tot_mv_res, 0 , BLOCK_MAX_COUNT_SB_128 * sizeof(uint16_t));
+#endif
+
                     // Configure the SB
                     mode_decision_configure_sb(
 #if QP2QINDEX

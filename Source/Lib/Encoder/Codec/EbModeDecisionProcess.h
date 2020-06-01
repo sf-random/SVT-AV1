@@ -47,6 +47,9 @@ extern "C" {
 #define MD_MAX_BEST_FP_POS 8
 #define MD_MAX_HP_POS 225
 #endif
+#if TRACK_DIST_PER_MV_REF
+#define MD_MAX_MV_RES 1024
+#endif
 /**************************************
       * Macros
 **************************************/
@@ -315,6 +318,14 @@ typedef struct MdHpResults {
     int16_t mvy;  // MVy
     MvReferenceFrame ref_frame_type; // frame_type
 } MdHpResults;
+#endif
+#if TRACK_DIST_PER_MV_REF
+typedef struct MdMvResults {
+    int16_t mvx;  // MVx
+    int16_t mvy;  // MVy
+    uint32_t dist; // distortion
+    MvReferenceFrame ref_frame_type; // frame_type
+} MdMvResults;
 #endif
 #endif
 #if TXT_CONTROL
@@ -680,6 +691,10 @@ typedef struct ModeDecisionContext {
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
     MdHpResults md_hp_pos[MD_MAX_HP_POS];
     uint8_t tot_hp_pos;
+#endif
+#if TRACK_DIST_PER_MV_REF
+    MdMvResults md_mv_res[BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];
+    uint16_t tot_mv_res[BLOCK_MAX_COUNT_SB_128];
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
