@@ -697,8 +697,8 @@ typedef struct ModeDecisionContext {
 #endif
 #endif
 #if TRACK_DIST_PER_MV_REF
-    MdMvResults md_mv_res[BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];
-    uint16_t tot_mv_res[BLOCK_MAX_COUNT_SB_128];
+    MdMvResults md_mv_res[2][BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];
+    uint16_t tot_mv_res[2][BLOCK_MAX_COUNT_SB_128];
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
