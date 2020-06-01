@@ -4249,17 +4249,28 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
             MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
             uint8_t distortion_found = 0;
-            MdMvResults *md_mv_res = &(context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][0]);
+            //MdMvResults *md_mv_res = &(context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][0]);
 
-            for (uint16_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
-                if ((md_mv_res[mv_idx].mvx == mvx_res) &&
-                    (md_mv_res[mv_idx].mvy == mvy_res) &&
-                    (md_mv_res[mv_idx].ref_frame_type == ref_frame_type)) {
-                    distortion = md_mv_res[mv_idx].dist;
+            //for (uint16_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
+            //    if ((md_mv_res[mv_idx].mvx == mvx_res) &&
+            //        (md_mv_res[mv_idx].mvy == mvy_res) &&
+            //        (md_mv_res[mv_idx].ref_frame_type == ref_frame_type)) {
+            //        distortion = md_mv_res[mv_idx].dist;
+            //        distortion_found = 1;
+            //        break;
+            //    }
+            //}
+
+           for (uint16_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
+                if ((context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][mv_idx].mvx == mvx_res) &&
+                    (context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][mv_idx].mvy == mvy_res) &&
+                    (context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][mv_idx].ref_frame_type == ref_frame_type)) {
+                    distortion = context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][mv_idx].dist;
                     distortion_found = 1;
                     break;
                 }
             }
+
 #endif
 
 #if TRACK_DIST_PER_MV_REF_0
@@ -4403,10 +4414,17 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #endif
 #if TRACK_DIST_PER_MV_REF_0
             if (context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds] < MD_MAX_MV_RES) {
-                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
-                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
-                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
-                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+                //md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
+                //md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
+                //md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
+                //md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+
+         
+               context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
+               context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
+               context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
+               context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+
                 context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]++;
             }
             }
