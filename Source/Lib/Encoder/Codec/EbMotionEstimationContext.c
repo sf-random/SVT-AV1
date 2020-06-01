@@ -51,8 +51,11 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
 }
-#if REMOVE_MRP_MODE
+#if REMOVE_ME_SUBPEL_CODE
 EbErrorType me_context_ctor(MeContext *object_ptr) {
+#elif REMOVE_MRP_MODE
+EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
+    uint16_t max_input_luma_height) {
 #elif NSQ_REMOVAL_CODE_CLEAN_UP
 EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
                             uint16_t max_input_luma_height, uint8_t mrp_mode) {
