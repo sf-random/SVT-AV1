@@ -47,10 +47,6 @@ extern "C" {
 #define MD_MAX_BEST_FP_POS 8
 #define MD_MAX_HP_POS 225
 #endif
-#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
-// Max that could be tracked 
-#define MD_MAX_MV_RES 64
-#endif
 /**************************************
       * Macros
 **************************************/
@@ -270,16 +266,6 @@ typedef struct MdNsqMotionSearchCtrls {
 #endif
 }MdNsqMotionSearchCtrls;
 #endif
-
-#if SQ_QUICK_SEARCH
-typedef struct MdSqMotionSearchCtrls {
-    uint8_t enabled;                    // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD 
-    uint8_t full_pel_search_width;      // Full Pel search area width
-    uint8_t full_pel_search_height;     // Full Pel search area height
-}MdSqMotionSearchCtrls;
-#endif
-
 #if PERFORM_SUB_PEL_MD
 typedef struct MdSubPelSearchCtrls {
     uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
@@ -314,14 +300,6 @@ typedef struct MdFpResults {
     int16_t mvx;  // MVx
     int16_t mvy;  // MVy
 } MdFpResults;
-#endif
-#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
-typedef struct MdMvResults {
-    int16_t mvx;  // MVx
-    int16_t mvy;  // MVy
-    uint32_t dist; // distortion
-    MvReferenceFrame ref_frame_type; // frame_type
-} MdMvResults;
 #endif
 #endif
 #if TXT_CONTROL
@@ -676,19 +654,11 @@ typedef struct ModeDecisionContext {
     uint8_t md_nsq_mv_search_level ;
     MdNsqMotionSearchCtrls md_nsq_motion_search_ctrls;
 #endif
-#if SQ_QUICK_SEARCH
-    uint8_t md_sq_mv_search_level;
-    MdSqMotionSearchCtrls md_sq_motion_search_ctrls;
-#endif
 #if PERFORM_SUB_PEL_MD
     uint8_t md_subpel_search_level;
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
-#endif
-#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
-    MdMvResults md_mv_res[2][BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];
-    uint16_t tot_mv_res[2][BLOCK_MAX_COUNT_SB_128];
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE

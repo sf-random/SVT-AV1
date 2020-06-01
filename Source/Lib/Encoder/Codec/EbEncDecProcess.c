@@ -1752,28 +1752,6 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     }
 }
 #endif
-#if SQ_QUICK_SEARCH
-void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
-
-    MdSqMotionSearchCtrls *md_sq_motion_search_ctrls = &mdctxt->md_sq_motion_search_ctrls;
-
-    switch (md_sq_mv_search_level)
-    {
-    case 0:
-        md_sq_motion_search_ctrls->enabled = 0;
-        break;
-    case 1:
-        md_sq_motion_search_ctrls->enabled = 1;
-        md_sq_motion_search_ctrls->use_ssd = 0;
-        md_sq_motion_search_ctrls->full_pel_search_width = 3;
-        md_sq_motion_search_ctrls->full_pel_search_height = 3;
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
-#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_search_level) {
     MdSubPelSearchCtrls *md_subpel_search_ctrls = &mdctxt->md_subpel_search_ctrls;
@@ -4820,16 +4798,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
-#if SQ_QUICK_SEARCH
-    if (pd_pass == PD_PASS_0)
-        context_ptr->md_sq_mv_search_level = 1;
-    else if (pd_pass == PD_PASS_1)
-        context_ptr->md_sq_mv_search_level = 0;
-    else
-        context_ptr->md_sq_mv_search_level = 0;
-
-    md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
-#endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_search_level = 4;
@@ -4848,7 +4816,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_max_ref_count = 4; 
+        context_ptr->md_max_ref_count = 4;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_max_ref_count = 1;
 #if M8_CAP_NUMBER_OF_REF_IN_MD
@@ -4918,7 +4886,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
     else
         context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
-#if !PD0_INTER_CAND 
+#if !PD0_INTER_CAND
     // Set best_me_cand_only_flag
     if (pd_pass == PD_PASS_0)
         context_ptr->best_me_cand_only_flag = EB_TRUE;
@@ -8079,10 +8047,6 @@ void *enc_dec_kernel(void *input_ptr) {
 
                     }
 
-#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
-                    memset(context_ptr->md_context->tot_mv_res, 0 , 2 * BLOCK_MAX_COUNT_SB_128 * sizeof(uint16_t));
-#endif
-
                     // Configure the SB
                     mode_decision_configure_sb(
 #if QP2QINDEX
@@ -8360,6 +8324,10 @@ void *enc_dec_kernel(void *input_ptr) {
 #endif
 #else
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
+#endif
+#if DECOUPLE_ME_RES
+            eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
 #endif
         }
 

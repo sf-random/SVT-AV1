@@ -938,7 +938,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t           bipred_index;
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if DECOUPLE_ME_RES
+    MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results     = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
 #if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
@@ -1033,7 +1037,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
 #endif
 #if INTRA_COMPOUND_OPT
                     if (context_ptr->md_enable_inter_intra > 2)
+#if DECOUPLE_ME_RES
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
+#else
                         if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 )
+#endif
                             is_ii_allowed = 0;
 #endif
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
@@ -1212,7 +1220,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
 #endif
 #if INTRA_COMPOUND_OPT
                     if (context_ptr->md_enable_inter_intra > 2)
+#if DECOUPLE_ME_RES
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+#else
                         if  ( pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+#endif
                                 is_ii_allowed = 0;
 #endif
                         uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
@@ -1319,7 +1331,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     uint32_t           bipred_index;
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if DECOUPLE_ME_RES
+    const MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results     = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
 #if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
@@ -1463,9 +1479,15 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
 #endif
 #if INTER_COMP_REDESIGN
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+#if DECOUPLE_ME_RES
+                            if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
+                                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                                tot_comp_types = MD_COMP_AVG;
+#else
                             if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                  pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                     tot_comp_types = MD_COMP_AVG;
+#endif
 #endif
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
 #if !INTER_COMP_REDESIGN
@@ -1651,10 +1673,17 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                         context_ptr->variance_ready = 0;
 #endif
 #if INTER_COMP_REDESIGN
+#if DECOUPLE_ME_RES
+                        if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+                            if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
+                                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                                tot_comp_types = MD_COMP_AVG;
+#else
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                             if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                  pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                     tot_comp_types = MD_COMP_AVG;
+#endif
 #endif
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
 #if !INTER_COMP_REDESIGN
@@ -2484,9 +2513,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         if (rf[1] != NONE_FRAME) {
             {
                 //NEAREST_NEWMV
+#if DECOUPLE_ME_RES
+                const MeSbResults *me_results =
+                    pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                 const MeSbResults *me_results =
                     pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-
+#endif
                 int16_t to_inject_mv_x_l0 =
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
@@ -2632,8 +2665,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
             {
                 //NEW_NEARESTMV
+#if DECOUPLE_ME_RES
+                const MeSbResults *me_results =
+                    pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                 const MeSbResults *me_results =
                     pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
                 int16_t to_inject_mv_x_l0 =
                     context_ptr
                     ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
@@ -2792,9 +2830,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                         ref_mv);
 
                     //NEW_NEARMV
+#if DECOUPLE_ME_RES
+                    const MeSbResults *me_results =
+                        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                     const MeSbResults *me_results =
                         pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-
+#endif
                     int16_t to_inject_mv_x_l0 =
                         context_ptr
                         ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
@@ -2927,9 +2969,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                         ref_mv);
 
                     //NEAR_NEWMV
+#if DECOUPLE_ME_RES
+                    const MeSbResults *me_results =
+                        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                     const MeSbResults *me_results =
                         pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-
+#endif
                     int16_t to_inject_mv_x_l0 = nearmv[0].as_mv.col;
                     int16_t to_inject_mv_y_l0 = nearmv[0].as_mv.row;
                     int16_t to_inject_mv_x_l1 =
@@ -3702,7 +3748,12 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
 
+#if DECOUPLE_ME_RES
+    const MeSbResults *me_results =
+        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results       = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
 #if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
@@ -3790,9 +3841,15 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 uint8_t is_ii_allowed =
                     svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEWMV, rf);
 #if INTRA_COMPOUND_OPT
+#if DECOUPLE_ME_RES
+                if (context_ptr->md_enable_inter_intra > 2)
+                    if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
+                        is_ii_allowed = 0;
+#else
                 if (context_ptr->md_enable_inter_intra > 2)
                     if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 )
                         is_ii_allowed = 0;
+#endif
 #endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 uint8_t is_obmc_allowed =
@@ -3950,9 +4007,15 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     uint8_t is_ii_allowed = svt_is_interintra_allowed(
                         context_ptr->md_enable_inter_intra, bsize, NEWMV, rf);
 #if INTRA_COMPOUND_OPT
+#if DECOUPLE_ME_RES
+                    if (context_ptr->md_enable_inter_intra > 2)
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                            is_ii_allowed = 0;
+#else
                     if (context_ptr->md_enable_inter_intra > 2)
                         if  ( pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                 is_ii_allowed = 0;
+#endif
 #endif
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                     uint8_t is_obmc_allowed =
@@ -4125,10 +4188,17 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         context_ptr->variance_ready = 0;
 #endif
 #if INTER_COMP_REDESIGN
+#if DECOUPLE_ME_RES
+                        if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+                            if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
+                                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                                tot_comp_types = MD_COMP_AVG;
+#else
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                             if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                     pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                     tot_comp_types = MD_COMP_AVG;
+#endif
 
 #endif
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
@@ -4701,7 +4771,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
     int          inside_tile = 1;
     MacroBlockD *xd          = context_ptr->blk_ptr->av1xd;
     int          umv0tile    = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+#if DECOUPLE_ME_RES
+    MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
     MeSbResults *me_results  = pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
     EbBool       allow_bipred =
         (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE
                                                                                     : EB_TRUE;
