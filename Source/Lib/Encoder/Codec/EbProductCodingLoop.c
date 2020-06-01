@@ -4490,7 +4490,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
 #define MAX_MD_NSQ_SARCH_MVC_CNT 5
 void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
-                   uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx,
+                   uint8_t list_idx, uint8_t ref_idx,
                    const MeSbResults *me_results, int16_t *me_mv_x, int16_t *me_mv_y) {
 #if !PERFORM_SUB_PEL_MD
     uint8_t  search_pattern = 0;
@@ -4926,7 +4926,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                   context_ptr,
                                   input_picture_ptr,
                                   input_origin_index,
-                                  blk_origin_index,
                                   list_idx,
                                   ref_idx,
                                   me_results,
