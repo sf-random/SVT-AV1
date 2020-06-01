@@ -5118,6 +5118,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                    ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && (context_ptr->blk_geom->bsize != BLOCK_4X4 || context_ptr->md_subpel_search_ctrls.do_4x4)) || // SQ no 4x4 or do_4x4
                    ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_subpel_search_ctrls.do_nsq)) { // NSQ and do_nsq == 1
 
+#if BLOCK_SIZE_CHECK
+                    if(context_ptr->pd_pass == 0 && context_ptr->blk_geom->sq_size <= 8)
+#endif
                     md_subpel_search_pa_me_cand(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,

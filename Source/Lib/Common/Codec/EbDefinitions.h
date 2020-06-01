@@ -458,7 +458,8 @@ extern "C" {
 #define CHECK_REDUNDANT_TOP_N_SEARCH 0
 #define TRACK_DIST_PER_MV_REF      1
 
-#define SQ_QUICK_SEARCH            1
+#define SQ_QUICK_SEARCH            0
+#define BLOCK_SIZE_CHECK           1
 
 #endif
 
