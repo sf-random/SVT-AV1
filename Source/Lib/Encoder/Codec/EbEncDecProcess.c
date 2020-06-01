@@ -4822,17 +4822,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if SQ_QUICK_SEARCH
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_sq_mv_search_level = 0;
+        context_ptr->md_sq_mv_search_level = 1;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_sq_mv_search_level = 0;
     else
-        context_ptr->md_sq_mv_search_level = 1;
+        context_ptr->md_sq_mv_search_level = 0;
 
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
+#if SQ_QUICK_SEARCH
+        context_ptr->md_subpel_search_level = 0;
+#else
         context_ptr->md_subpel_search_level = 4;
+#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_search_level = 0;
     else
