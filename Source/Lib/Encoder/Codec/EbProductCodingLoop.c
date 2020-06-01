@@ -4259,7 +4259,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                     }
                 }
             } else {
-#endif 
+#endif
             ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
             EbPictureBufferDesc *  prediction_ptr = candidate_buffer->prediction_ptr;
 
@@ -4696,7 +4696,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
 #if SEARCH_TOP_N
     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled) {
 
-        // Derive valid_fp_pos_cnt 
+        // Derive valid_fp_pos_cnt
         uint8_t fp_pos_idx = 0;
         while (fp_pos_idx < MD_MAX_BEST_FP_POS && context_ptr->md_best_fp_pos[fp_pos_idx].dist != (uint32_t)~0) {
             fp_pos_idx++;
@@ -4935,7 +4935,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #if PERFORM_SUB_PEL_MD
 
-                if (context_ptr->md_subpel_search_ctrls.enabled && 
+                if (context_ptr->md_subpel_search_ctrls.enabled &&
                   (((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && ((context_ptr->blk_geom->bsize != BLOCK_4X4) || (context_ptr->md_subpel_search_ctrls.do_4x4))) || // SQ no 4x4 or do_4x4
                    ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_subpel_search_ctrls.do_nsq))) { // NSQ and do_nsq == 1
 
@@ -5007,7 +5007,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
                     // If 4x4 but do_4x4 == 0 then inherit Parent MV (already refined)
                     if (!context_ptr->md_subpel_search_ctrls.do_4x4 && (context_ptr->blk_geom->bsize == BLOCK_4X4) && context_ptr->md_local_blk_unit[parent_depth_idx_mds].avail_blk_flag) {
-    
+
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
                             context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][0];
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
