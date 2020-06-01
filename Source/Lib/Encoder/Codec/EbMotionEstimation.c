@@ -3547,7 +3547,7 @@ static void get_search_point_results(
     sad_calculation_32x32_64x64(
         p_sad16x16, p_best_sad_32x32, p_best_sad_64x64, p_best_mv32x32, p_best_mv64x64, curr_mv);
 }
-
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
  * GetEightHorizontalSearchPointResultsAll85CUs
  *******************************************/
@@ -3834,7 +3834,7 @@ static void get_eight_horizontal_search_point_results_all_85_pus(
     get_eight_horizontal_search_point_results_32x32_64x64_pu(
         p_sad16x16, p_best_sad_32x32, p_best_sad_64x64, p_best_mv32x32, p_best_mv64x64, curr_mv);
 }
-#if !REMOVE_ME_SUBPEL_CODE
+
 /*******************************************
  * full_pel_search_sb
  *******************************************/
