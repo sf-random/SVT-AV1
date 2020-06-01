@@ -427,7 +427,7 @@ extern "C" {
         uint32_t *p_best_mv64x64,
         uint32_t mv,
         uint32_t p_sad32x32[4][8]);
-#if !REMOVE_ME_SUBPEL_CODE
+
     // Nader - to be replaced by loock-up table
     /*******************************************
     * get_me_info_index
@@ -440,6 +440,7 @@ extern "C" {
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
+#if !REMOVE_ME_SUBPEL_CODE
     void half_pel_refinement_sb(
         PictureParentControlSet *pcs_ptr,
         MeContext *context_ptr,  // input/output parameter, ME context Ptr, used
