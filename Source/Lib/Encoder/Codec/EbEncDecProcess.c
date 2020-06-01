@@ -4832,11 +4832,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
-#if SQ_QUICK_SEARCH
-        context_ptr->md_subpel_search_level = 0;
-#else
         context_ptr->md_subpel_search_level = 4;
-#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_search_level = 0;
     else
@@ -8084,7 +8080,7 @@ void *enc_dec_kernel(void *input_ptr) {
                     }
 
 #if TRACK_DIST_PER_MV_REF // init
-                    memset(context_ptr->md_context->tot_mv_res, 0 , BLOCK_MAX_COUNT_SB_128 * sizeof(uint16_t));
+                    memset(context_ptr->md_context->tot_mv_res, 0 , 2 * BLOCK_MAX_COUNT_SB_128 * sizeof(uint16_t));
 #endif
 
                     // Configure the SB

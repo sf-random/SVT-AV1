@@ -3919,9 +3919,6 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         int16_t search_position_start_x, int16_t search_position_end_x,
                         int16_t search_position_start_y, int16_t search_position_end_y,
                         int16_t search_step,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                        uint8_t track_best_fp_pos,
-#endif
                         int16_t *best_mvx, int16_t *best_mvy, uint32_t *best_distortion) {
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                     ? EB_8_BIT_MD
@@ -4115,7 +4112,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             uint8_t distortion_found = 0;
             MdMvResults *md_mv_res = &(context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][0]);
 
-            for (uint8_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
+            for (uint16_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
                 if ((md_mv_res[mv_idx].mvx == mvx_res) &&
                     (md_mv_res[mv_idx].mvy == mvy_res) &&
                     (md_mv_res[mv_idx].ref_frame_type == ref_frame_type)) {
@@ -4173,34 +4170,14 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                    context_ptr->blk_geom->bwidth);
                 }
             }
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-            if (track_best_fp_pos) {
-                // Find the pos that holds the max dist
-                uint32_t max_dist = 0;
-                uint8_t max_dist_fp_pos_idx = 0;
-                for (uint8_t fp_pos_idx = 0; fp_pos_idx < MD_MAX_BEST_FP_POS; fp_pos_idx++) {
-                    if (context_ptr->md_best_fp_pos[fp_pos_idx].dist > max_dist) {                     
-                        max_dist = context_ptr->md_best_fp_pos[fp_pos_idx].dist;
-                        max_dist_fp_pos_idx = fp_pos_idx;
-                    }
-                }
-                // Update max_dist_fp_pos_idx spot if better distortion
-                if (distortion < max_dist) {
-                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].mvx = mvx + (refinement_pos_x * search_step);
-                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].mvy = mvy + (refinement_pos_y * search_step);
-                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].dist = distortion;
-                }
-            }
-#endif
 #if TRACK_DIST_PER_MV_REF //sub 2
-
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
-            context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]++;
-
-
+            if (context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds] < MD_MAX_MV_RES) {
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+                context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]++;
+            }
             }
 #endif
             if (distortion < *best_distortion) {
@@ -4235,9 +4212,6 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                        int16_t mvx, int16_t mvy, int16_t search_position_start_x,
                        int16_t search_position_end_x, int16_t search_position_start_y,
                        int16_t search_position_end_y, int16_t search_step,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                       uint8_t check_redundant_pos,
-#endif
                        int16_t *best_mvx,
                        int16_t *best_mvy, uint32_t *best_distortion,
 #if PERFORM_SUB_PEL_MD
@@ -4270,28 +4244,6 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             // Skip full pel position(s) when performing sub-pel search (unless central position)
             if ((refinement_pos_x * search_step) % 8 == 0 && (refinement_pos_y * search_step) % 8 == 0 && (refinement_pos_x || refinement_pos_y))
                 continue;
-
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-            // If 1/2 position already performed then move to the next
-            // This check is not performed for 1/4 and 1/8 pos where no chance yet to evaluate the same position multiple times
-            if (check_redundant_pos)
-            {
-                for (uint8_t hp_pos_idx = 0; hp_pos_idx < context_ptr->tot_hp_pos; hp_pos_idx++) {
-                    if ((context_ptr->md_hp_pos[hp_pos_idx].mvx == (mvx + (refinement_pos_x * search_step))) &&
-                        (context_ptr->md_hp_pos[hp_pos_idx].mvy == (mvy + (refinement_pos_y * search_step))) &&
-                        (context_ptr->md_hp_pos[hp_pos_idx].ref_frame_type == svt_get_ref_frame_type(list_idx, ref_idx))) {
-                        continue;
-                    }
-                }
-
-                context_ptr->md_hp_pos[context_ptr->tot_hp_pos].mvx = mvx + (refinement_pos_x * search_step);
-                context_ptr->md_hp_pos[context_ptr->tot_hp_pos].mvy = mvy + (refinement_pos_y * search_step);
-                context_ptr->md_hp_pos[context_ptr->tot_hp_pos].ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx);
-                context_ptr->tot_hp_pos++;
-            }
-#endif 
-
-
 #if TRACK_DIST_PER_MV_REF // sub 0
             int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
@@ -4299,7 +4251,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             uint8_t distortion_found = 0;
             MdMvResults *md_mv_res = &(context_ptr->md_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds][0]);
 
-            for (uint8_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
+            for (uint16_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
                 if ((md_mv_res[mv_idx].mvx == mvx_res) &&
                     (md_mv_res[mv_idx].mvy == mvy_res) &&
                     (md_mv_res[mv_idx].ref_frame_type == ref_frame_type)) {
@@ -4450,11 +4402,13 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
             }
 #endif
 #if TRACK_DIST_PER_MV_REF //sub 2
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
-            md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
-            context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]++;
+            if (context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds] < MD_MAX_MV_RES) {
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
+                md_mv_res[context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+                context_ptr->tot_mv_res[use_ssd][context_ptr->blk_geom->blkidx_mds]++;
+            }
             }
 #endif
 
@@ -4662,9 +4616,6 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             0,
             0,
             8,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-            1,//context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
-#endif
             &search_center_mvx,
             &search_center_mvy,
             &search_center_distortion);
@@ -4723,15 +4674,9 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         1,
         search_pattern);
 #endif
-#if CHECK_REDUNDANT_TOP_N_SEARCH //  context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,    
-    int16_t  best_search_mvx = *me_mv_x;// (int16_t)~0;
-    int16_t  best_search_mvy = *me_mv_y;// (int16_t)~0;
-    uint32_t best_search_distortion = search_center_distortion;// (uint32_t)~0;
-#else
     int16_t  best_search_mvx = (int16_t)~0;
     int16_t  best_search_mvy = (int16_t)~0;
     uint32_t best_search_distortion = (uint32_t)~0;
-#endif
 #if !PERFORM_SUB_PEL_MD
     // Round-up the search center to the closest integer
     search_center_mvx = (search_center_mvx + 4) & ~0x07;
@@ -4751,9 +4696,6 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         -(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
         8,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-        1,//context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
-#endif
         &best_search_mvx,
         &best_search_mvy,
         &best_search_distortion);
@@ -4877,10 +4819,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 }
             }
         }
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-        // Reset hp pos count
-        context_ptr->tot_hp_pos = 0;
-#endif
+
         for (uint8_t fp_pos_idx = 0; fp_pos_idx < MIN(context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt, valid_fp_pos_cnt); fp_pos_idx++) {
             md_sub_pel_search(
                 pcs_ptr,
@@ -4898,9 +4837,6 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 4,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                1,//context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1, // only if more than 1 fp pos to search, otherwise no risk of overlapping
-#endif
                 &best_search_mvx,
                 &best_search_mvy,
                 &best_search_distortion,
@@ -4951,9 +4887,6 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             -(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             +(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             2,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-            0,
-#endif
             &best_search_mvx,
             &best_search_mvy,
             &best_search_distortion,
@@ -4979,9 +4912,6 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 1,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                0,
-#endif
                 &best_search_mvx,
                 &best_search_mvy,
                 &best_search_distortion,
@@ -5118,9 +5048,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                    ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && (context_ptr->blk_geom->bsize != BLOCK_4X4 || context_ptr->md_subpel_search_ctrls.do_4x4)) || // SQ no 4x4 or do_4x4
                    ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_subpel_search_ctrls.do_nsq)) { // NSQ and do_nsq == 1
 
-#if BLOCK_SIZE_CHECK
-                    if(context_ptr->pd_pass == PD_PASS_2 || context_ptr->blk_geom->sq_size <= 8)
-#endif
                     md_subpel_search_pa_me_cand(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
@@ -6027,9 +5954,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                    -(context_ptr->pred_me_full_pel_search_height >> 1),
                                    +(context_ptr->pred_me_full_pel_search_height >> 1),
                                    8,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                   0,
-#endif
                                    &best_search_mvx,
                                    &best_search_mvy,
                                    &best_search_distortion);
@@ -6075,9 +5999,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           4,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                          0,
-#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
@@ -6109,9 +6030,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   4,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                                  0,
-#endif
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
@@ -6140,9 +6058,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           2,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                          0,
-#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
@@ -6174,9 +6089,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   2,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                                  0,
-#endif
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
@@ -6206,9 +6118,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           1,
-#if CHECK_REDUNDANT_TOP_N_SEARCH
-                                          0,
-#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
