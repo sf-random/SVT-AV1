@@ -623,6 +623,9 @@ typedef struct PictureParentControlSet {
     OisSbResults **ois_sb_results;
     OisCandidate **ois_candicate;
 #if TPL_LA
+#if LAD_MEM_RED
+    void         *pcs_ptr_last_la;
+#endif
     OisMbResults **ois_mb_results;
     TplStats     **tpl_stats;
     int32_t      is_720p_or_larger;

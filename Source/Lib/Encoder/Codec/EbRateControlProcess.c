@@ -5098,9 +5098,14 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         int frames_to_key = (int)MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
         int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
         const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, is_smaller_360p);
+        SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, new_kf_boost,
+            rc->kf_boost);
 
+#if TPL_IMP_2PASS
+        if(rc->kf_boost != kf_low)
+#endif
         rc->kf_boost = combine_prior_with_tpl_boost(rc->kf_boost, new_kf_boost, frames_to_key);
-
+        SVT_LOG("newBoost:%d\n", rc->kf_boost);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
 #if QPS_UPDATE
@@ -5133,9 +5138,22 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         int frames_to_key = (int)MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
                            - (pcs_ptr->parent_pcs_ptr->picture_number % (scs_ptr->intra_period_length + 1)) + 15;
         const int new_gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
+        if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
+            SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, new_gfu_boost,
+               rc->gfu_boost);
         rc->arf_boost_factor = 1;
+#if TPL_IMP_2PASS
+        rc->arf_boost_factor =
+            (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
+             (int)referenced_area_avg - (int)pcs_ptr->ref_pic_referenced_area_avg_array[0][0] >=
+                 16 &&
+             referenced_area_avg > 24 && pcs_ptr->ref_pic_referenced_area_avg_array[0][0] <= 16)
+                ? (float_t)1.3
+                : (float_t)1;
+#endif
         rc->gfu_boost = combine_prior_with_tpl_boost(rc->gfu_boost, new_gfu_boost, frames_to_key);
-
+        if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
+            SVT_LOG("newBoost:%d\n", rc->gfu_boost);
         q = active_worst_quality;
 
         // non ref frame or repeated frames with re-encode
