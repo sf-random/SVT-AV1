@@ -4108,7 +4108,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
 
 
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF // full 0
             int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
             MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
@@ -4121,13 +4121,16 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         (context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].ref_frame_type == ref_frame_type)) {
                         distortion = context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].dist;
                         distortion_found = 1;
-                        printf("----> found\n");
+                        
                         break;
                     }
                 }
             }
 #endif
 
+#if TRACK_DIST_PER_MV_REF //sub 1
+            if (!distortion_found) {
+#endif
 #if INT_RECON_OFFSET_FIX
             // Never negative here
             int32_t ref_origin_index =
@@ -4189,6 +4192,18 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].mvy = mvy + (refinement_pos_y * search_step);
                     context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].dist = distortion;
                 }
+            }
+#endif
+#if TRACK_DIST_PER_MV_REF //sub 2
+            if (use_ssd == 0) {
+
+                context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
+                context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].mvy = mvy_res;
+                context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].ref_frame_type = ref_frame_type;
+                context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].dist = distortion;
+                context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]++;
+            }
+
             }
 #endif
             if (distortion < *best_distortion) {
@@ -4280,7 +4295,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #endif 
 
 
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF // sub 0
             int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
             int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
             MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
@@ -4293,14 +4308,14 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                         (context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].ref_frame_type == ref_frame_type)) {
                         distortion = context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].dist;
                         distortion_found = 1;
-                        printf("----> found\n");
+                       
                         break;
                     }
                 }
             }
 #endif
 
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF //sub 1
             if(!distortion_found) {
 #endif
             // Only distortion derivation if fp position (no need to perform compensation)
@@ -4439,7 +4454,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #if PERFORM_SUB_PEL_MD
             }
 #endif
-#if TRACK_DIST_PER_MV_REF
+#if TRACK_DIST_PER_MV_REF //sub 2
             if (use_ssd == 0) {
 
                 context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].mvx = mvx_res;
@@ -4448,8 +4463,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                 context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]].dist = distortion;
                 context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]++;
             }
-#endif
-#if TRACK_DIST_PER_MV_REF
+
             }
 #endif
 
@@ -4874,9 +4888,10 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 }
             }
         }
-
+#if CHECK_REDUNDANT_TOP_N_SEARCH
         // Reset hp pos count
         context_ptr->tot_hp_pos = 0;
+#endif
         for (uint8_t fp_pos_idx = 0; fp_pos_idx < MIN(context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt, valid_fp_pos_cnt); fp_pos_idx++) {
             md_sub_pel_search(
                 pcs_ptr,

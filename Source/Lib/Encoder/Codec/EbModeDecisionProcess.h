@@ -313,11 +313,13 @@ typedef struct MdFpResults {
     int16_t mvx;  // MVx
     int16_t mvy;  // MVy
 } MdFpResults;
+#if CHECK_REDUNDANT_TOP_N_SEARCH
 typedef struct MdHpResults {
     int16_t mvx;  // MVx
     int16_t mvy;  // MVy
     MvReferenceFrame ref_frame_type; // frame_type
 } MdHpResults;
+#endif
 #endif
 #if TRACK_DIST_PER_MV_REF
 typedef struct MdMvResults {
@@ -689,8 +691,10 @@ typedef struct ModeDecisionContext {
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
+#if CHECK_REDUNDANT_TOP_N_SEARCH
     MdHpResults md_hp_pos[MD_MAX_HP_POS];
     uint8_t tot_hp_pos;
+#endif
 #endif
 #if TRACK_DIST_PER_MV_REF
     MdMvResults md_mv_res[BLOCK_MAX_COUNT_SB_128][MD_MAX_MV_RES];

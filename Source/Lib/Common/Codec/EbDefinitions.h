@@ -456,7 +456,7 @@ extern "C" {
 #define SEARCH_TOP_N               1
 #define SQ_QUICK_SEARCH            0
 #define CHECK_REDUNDANT_TOP_N_SEARCH 0
-#define TRACK_DIST_PER_MV_REF      0
+#define TRACK_DIST_PER_MV_REF      1
 #endif
 
 #endif
