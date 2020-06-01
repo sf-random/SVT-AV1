@@ -4105,6 +4105,29 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
              refinement_pos_y <= search_position_end_y;
              ++refinement_pos_y) {
 #endif
+
+
+
+#if TRACK_DIST_PER_MV_REF
+            int16_t mvx_res = (mvx + (refinement_pos_x * search_step));
+            int16_t mvy_res = (mvy + (refinement_pos_y * search_step));
+            MvReferenceFrame ref_frame_type = svt_get_ref_frame_type(list_idx, ref_idx); // frame_type
+            uint8_t distortion_found = 0;
+
+            if (use_ssd == 0) {
+                for (uint8_t mv_idx = 0; mv_idx < context_ptr->tot_mv_res[context_ptr->blk_geom->blkidx_mds]; mv_idx++) {
+                    if ((context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].mvx == mvx_res) &&
+                        (context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].mvy == mvy_res) &&
+                        (context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].ref_frame_type == ref_frame_type)) {
+                        distortion = context_ptr->md_mv_res[context_ptr->blk_geom->blkidx_mds][mv_idx].dist;
+                        distortion_found = 1;
+                        printf("----> found\n");
+                        break;
+                    }
+                }
+            }
+#endif
+
 #if INT_RECON_OFFSET_FIX
             // Never negative here
             int32_t ref_origin_index =
@@ -4114,6 +4137,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 ref_pic->origin_x + (context_ptr->blk_origin_x + (mvx >> 3) + refinement_pos_x) +
                 (context_ptr->blk_origin_y + (mvy >> 3) + ref_pic->origin_y + refinement_pos_y) *
                     ref_pic->stride_y;
+
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun =
                     hbd_mode_decision ? full_distortion_kernel16_bits
@@ -4694,7 +4718,8 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         1,
         search_pattern);
 #endif
-#if PERFORM_SUB_PEL_MD //  context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,    int16_t  best_search_mvx = *me_mv_x;// (int16_t)~0;
+#if CHECK_REDUNDANT_TOP_N_SEARCH //  context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,    
+    int16_t  best_search_mvx = *me_mv_x;// (int16_t)~0;
     int16_t  best_search_mvy = *me_mv_y;// (int16_t)~0;
     uint32_t best_search_distortion = search_center_distortion;// (uint32_t)~0;
 #else
