@@ -1847,7 +1847,6 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
             if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
                 // save frame_idx1 picture buffer for next LA
-                pcs_array[frame_idx]->pcs_ptr_last_la = pcs_array[frame_idx];
                 memcpy(encode_context_ptr->mc_flow_rec_picture_buffer_saved, encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
             }
         }
