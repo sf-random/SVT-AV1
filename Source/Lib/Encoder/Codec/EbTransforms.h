@@ -136,21 +136,15 @@ extern EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t res
 
 extern int32_t av1_quantize_inv_quantize(
         PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, int32_t *coeff,
-#if QP2QINDEX
         const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
-#else
-        const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qp,
-#endif
         int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
         uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
         TxType tx_type, ModeDecisionCandidateBuffer *candidate_buffer, int16_t txb_skip_context,
         int16_t dc_sign_context, PredictionMode pred_mode, EbBool is_intra_bc, uint32_t lambda,EbBool is_encode_pass);
 
-#if TPL_LA
 void wht_fwd_txfm(int16_t *src_diff, int bw,
                   int32_t *coeff, TxSize tx_size,
                   int bit_depth, int is_hbd);
-#endif
 
 #ifdef __cplusplus
 }

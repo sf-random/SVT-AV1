@@ -162,11 +162,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
         scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
 
     if (scs_ptr->static_config.pic_based_rate_est == DEFAULT)
-#if PIC_BASED_RE_OFF
         scs_ptr->seq_header.pic_based_rate_est = 0;
-#else
-        scs_ptr->seq_header.pic_based_rate_est = 1;
-#endif
     else
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
@@ -280,10 +276,8 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     write_count += sizeof(int32_t);
     dst->picture_control_set_pool_init_count = src->picture_control_set_pool_init_count;
     write_count += sizeof(int32_t);
-#if DECOUPLE_ME_RES
     dst->me_pool_init_count = src->me_pool_init_count;
     write_count += sizeof(int32_t);
-#endif
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
     write_count += sizeof(int32_t);
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count;
@@ -362,12 +356,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 
     dst->rest_segment_column_count      = src->rest_segment_column_count;
     dst->rest_segment_row_count         = src->rest_segment_row_count;
-#if !REMOVE_MRP_MODE
-    dst->mrp_mode                       = src->mrp_mode;
-#endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-    dst->nsq_present                    = src->nsq_present;
-#endif
     dst->cdf_mode                       = src->cdf_mode;
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
     dst->tf_segment_column_count        = src->tf_segment_column_count;
@@ -383,7 +371,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, uint32_t inputSize) {
     EbErrorType return_error = EB_ErrorNone;
 
-#if NEW_RESOLUTION_RANGES
     if (inputSize < INPUT_SIZE_240p_TH)
         *input_resolution = INPUT_SIZE_240p_RANGE;
     else if (inputSize < INPUT_SIZE_360p_TH)
@@ -398,16 +385,6 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
         *input_resolution = INPUT_SIZE_4K_RANGE;
     else
         *input_resolution = INPUT_SIZE_8K_RANGE;
-#else
-    if(inputSize < INPUT_SIZE_1080i_TH)
-        *input_resolution = INPUT_SIZE_576p_RANGE_OR_LOWER;
-    else if(inputSize < INPUT_SIZE_1080p_TH)
-        *input_resolution = INPUT_SIZE_1080i_RANGE;
-    else if(inputSize < INPUT_SIZE_4K_TH)
-        *input_resolution = INPUT_SIZE_1080p_RANGE;
-    else
-        *input_resolution = INPUT_SIZE_4K_RANGE;
-#endif
 
     return return_error;
 }
@@ -561,16 +538,6 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
                       scs_ptr->seq_header.max_frame_height))
                         ? EB_TRUE
                         : EB_FALSE;
-#if !INCOMPLETE_SB_FIX
-                // Temporary if the cropped width is not 4, 8, 16, 32, 64 and 128, the block is not allowed. To be removed after intrinsic functions for NxM spatial_full_distortion_kernel_func_ptr_array are added
-                int32_t cropped_width =
-                    MIN(blk_geom->bwidth,
-                        scs_ptr->seq_header.max_frame_width -
-                            (scs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x));
-                if (cropped_width != 4 && cropped_width != 8 && cropped_width != 16 &&
-                    cropped_width != 32 && cropped_width != 64 && cropped_width != 128)
-                    scs_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = EB_FALSE;
-#endif
                 if (blk_geom->shape != PART_N) blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
                 scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((scs_ptr->sb_geom[sb_index].origin_x >= scs_ptr->seq_header.max_frame_width) ||

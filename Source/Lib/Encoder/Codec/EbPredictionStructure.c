@@ -1990,31 +1990,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
-#if MAR12_M8_ADOPTIONS
-#if M8_MRP && !UPGRADE_M6_M7_M8
-    uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : 1;
-#else
     uint8_t ref_count_used = MAX_REF_IDX;
-#endif
-#else
-    uint8_t ref_count_used;
-    if (config->screen_content_mode == 1)
-#if MAR11_ADOPTIONS
-        ref_count_used = MR_MODE ? MAX_REF_IDX : enc_mode <= ENC_M4 ? 2 : 1;
-#else
-        ref_count_used = MR_MODE ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
-#endif
-    else
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
-        ref_count_used = enc_mode <= ENC_M3 ? MAX_REF_IDX : enc_mode <= ENC_M4 ? 2 : 1;
-#else
-        ref_count_used = enc_mode <= ENC_M3 ? MAX_REF_IDX : 1;
-#endif
-#else
-        ref_count_used = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
-#endif
-#endif
 
     // Insert manual prediction structure into array
     if (config->enable_manual_pred_struct) {

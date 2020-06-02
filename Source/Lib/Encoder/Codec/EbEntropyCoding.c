@@ -507,11 +507,7 @@ void av1_write_tx_type(PictureParentControlSet *pcs_ptr, FRAME_CONTEXT *frame_co
                        TxSize tx_size) {
     FrameHeader * frm_hdr = &pcs_ptr->frm_hdr;
     const int32_t is_inter =
-#if SB_MEM_OPT
     blk_ptr->use_intrabc || (blk_ptr->prediction_mode_flag == INTER_MODE);
-#else
-    blk_ptr->av1xd->use_intrabc || (blk_ptr->prediction_mode_flag == INTER_MODE);
-#endif
 
     if (get_ext_tx_types(tx_size, is_inter, frm_hdr->reduced_tx_set) > 1 &&
         (frm_hdr->quantization_params.base_q_idx > 0)) {
@@ -723,11 +719,7 @@ static EbErrorType av1_encode_tx_coef_y(
     uint32_t intraLumaDir, BlockSize plane_bsize, EbPictureBufferDesc *coeff_ptr,
     NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
-#if SB_MEM_OPT
     int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
-#else
-    int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->av1xd->use_intrabc)
-#endif
                            ? EB_TRUE
                            : EB_FALSE;
     const BlockGeom *blk_geom    = get_blk_geom_mds(blk_ptr->mds_idx);
@@ -808,11 +800,7 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *   pcs_ptr,
                                          NeighborArrayUnit *  cr_dc_sign_level_coeff_neighbor_array,
                                          NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
-#if SB_MEM_OPT
     int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
-#else
-    int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->av1xd->use_intrabc)
-#endif
                            ? EB_TRUE
                            : EB_FALSE;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
@@ -969,11 +957,7 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet *   pcs_ptr,
                                        NeighborArrayUnit *cr_dc_sign_level_coeff_neighbor_array,
                                        NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
-#if SB_MEM_OPT
     int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
-#else
-    int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->av1xd->use_intrabc)
-#endif
                            ? EB_TRUE
                            : EB_FALSE;
     if (blk_ptr->tx_depth) {
@@ -1693,52 +1677,23 @@ EbErrorType bitstream_ctor(Bitstream *bitstream_ptr, uint32_t buffer_size) {
 
 static void entropy_coder_dctor(EbPtr p) {
     EntropyCoder *       obj               = (EntropyCoder *)p;
-#if !EC_MEM_OPT
-    CabacEncodeContext * cabac_enc_ctx_ptr = (CabacEncodeContext *)obj->cabac_encode_context_ptr;
-    OutputBitstreamUnit *output_bitstream_ptr =
-        (OutputBitstreamUnit *)cabac_enc_ctx_ptr->bac_enc_context.m_pc_t_com_bit_if;
-
-    EB_DELETE(output_bitstream_ptr);
-    output_bitstream_ptr = (OutputBitstreamUnit *)obj->ec_output_bitstream_ptr;
-#else
     OutputBitstreamUnit *output_bitstream_ptr =
         (OutputBitstreamUnit *)obj->ec_output_bitstream_ptr;
-#endif
     EB_DELETE(output_bitstream_ptr);
 
     EB_FREE(obj->fc);
-#if !EC_MEM_OPT
-    EB_FREE(obj->cabac_encode_context_ptr);
-#endif
 }
 EbErrorType entropy_coder_ctor(EntropyCoder *entropy_coder_ptr, uint32_t buffer_size) {
     OutputBitstreamUnit *output_bitstream_ptr;
 
     entropy_coder_ptr->dctor = entropy_coder_dctor;
-#if !EC_MEM_OPT
-    EB_CALLOC(entropy_coder_ptr->cabac_encode_context_ptr, 1, sizeof(CabacEncodeContext));
-#endif
     EB_MALLOC(entropy_coder_ptr->fc, sizeof(FRAME_CONTEXT));
 
     EB_NEW(output_bitstream_ptr, output_bitstream_unit_ctor, buffer_size);
 
     entropy_coder_ptr->ec_output_bitstream_ptr = output_bitstream_ptr;
-#if !EC_MEM_OPT
-    EB_NEW(output_bitstream_ptr, output_bitstream_unit_ctor, buffer_size);
-    ((CabacEncodeContext *)entropy_coder_ptr->cabac_encode_context_ptr)
-        ->bac_enc_context.m_pc_t_com_bit_if = output_bitstream_ptr;
-#endif
     return EB_ErrorNone;
 }
-#if !EC_MEM_OPT
-EbPtr entropy_coder_get_bitstream_ptr(EntropyCoder *entropy_coder_ptr) {
-    CabacEncodeContext *cabac_enc_ctx_ptr =
-        (CabacEncodeContext *)entropy_coder_ptr->cabac_encode_context_ptr;
-    EbPtr bitstream_ptr = cabac_enc_ctx_ptr->bac_enc_context.m_pc_t_com_bit_if;
-
-    return bitstream_ptr;
-}
-#endif
 //*******************************************************************************************//
 //*******************************************************************************************//
 //*******************************************************************************************//
@@ -1828,7 +1783,6 @@ static void write_inter_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
     }
 }
 //extern INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
-#if SB_MEM_OPT
 void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct *blk_ptr) {
     MacroBlockD *xd = blk_ptr->av1xd;
     const int32_t new_mv = blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV;
@@ -1863,47 +1817,6 @@ void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct
         return;
     }
 }
-#else
-extern uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
-void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct *blk_ptr) {
-    //uint8_t ref_frame_type = av1_ref_frame_type(mbmi->ref_frame);
-    uint8_t      ref_frame_type = blk_ptr->prediction_unit_array[0].ref_frame_type;
-    MacroBlockD *xd             = blk_ptr->av1xd;
-    //assert(mbmi->ref_mv_idx < 3);
-
-    //xd->ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-
-    const int32_t new_mv = blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV;
-    if (new_mv) {
-        int32_t idx;
-        for (idx = 0; idx < 2; ++idx) {
-            if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-                uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
-                aom_write_symbol(
-                    ec_writer, blk_ptr->drl_index != idx, frame_context->drl_cdf[drl_ctx], 2);
-
-                if (blk_ptr->drl_index == idx) return;
-            }
-        }
-        return;
-    }
-
-    if (have_nearmv_in_inter_mode(blk_ptr->pred_mode)) {
-        int32_t idx;
-        // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
-        for (idx = 1; idx < 3; ++idx) {
-            if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-                uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
-                aom_write_symbol(
-                    ec_writer, blk_ptr->drl_index != (idx - 1), frame_context->drl_cdf[drl_ctx], 2);
-
-                if (blk_ptr->drl_index == (idx - 1)) return;
-            }
-        }
-        return;
-    }
-}
-#endif
 extern MvJointType av1_get_mv_joint(int32_t diff[2]);
 static void        encode_mv_component(AomWriter *w, int32_t comp, NmvComponent *mvcomp,
                                        MvSubpelPrecision precision) {
@@ -5044,11 +4957,7 @@ int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type) {
 }
 
 static void write_intrabc_info(FRAME_CONTEXT *ec_ctx, BlkStruct *blk_ptr, AomWriter *w) {
-#if SB_MEM_OPT
     int use_intrabc = blk_ptr->use_intrabc;
-#else
-    int use_intrabc = blk_ptr->av1xd->use_intrabc;
-#endif
     aom_write_symbol(w, use_intrabc, ec_ctx->intrabc_cdf, 2);
     if (use_intrabc) {
         //assert(mbmi->mode == DC_PRED);
@@ -5612,7 +5521,6 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
         blk_ptr->av1xd->left_mbmi = NULL;
     blk_ptr->av1xd->tile_ctx = frame_context;
 
-#if SB_MEM_OPT
     const int32_t bw   = mi_size_wide[bsize];
     const int32_t bh   = mi_size_high[bsize];
     set_mi_row_col(pcs_ptr,
@@ -5625,7 +5533,6 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                    mi_stride,
                    pcs_ptr->parent_pcs_ptr->av1_cm->mi_rows,
                    pcs_ptr->parent_pcs_ptr->av1_cm->mi_cols);
-#endif
 
     if (pcs_ptr->slice_type == I_SLICE) {
         //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w)
@@ -5668,11 +5575,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                    blk_origin_x >> MI_SIZE_LOG2,
                    blk_origin_y >> MI_SIZE_LOG2);
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
-#if QP2QINDEX
             int32_t current_q_index = blk_ptr->qindex;
-#else
-            int32_t current_q_index = quantizer_to_qindex[blk_ptr->qp];
-#endif
             int32_t super_block_upper_left =
                 (((blk_origin_y >> 2) & (scs_ptr->seq_header.sb_mi_size - 1)) == 0) &&
                 (((blk_origin_x >> 2) & (scs_ptr->seq_header.sb_mi_size - 1)) == 0);
@@ -5703,11 +5606,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
             if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr,
                     pcs_ptr->parent_pcs_ptr->slice_type))
                 write_intrabc_info(frame_context, blk_ptr, ec_writer);
-#if SB_MEM_OPT
             if (blk_ptr->use_intrabc == 0)
-#else
-            if (blk_ptr->av1xd->use_intrabc == 0)
-#endif
                 encode_intra_luma_mode_av1(frame_context,
                                            ec_writer,
                                            blk_ptr,
@@ -5725,11 +5624,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                                            blk_geom->bwidth,
                                            blk_geom->bheight,
                                            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-#if SB_MEM_OPT
             if (blk_ptr->use_intrabc == 0)
-#else
-            if (blk_ptr->av1xd->use_intrabc == 0)
-#endif
                 if (blk_geom->has_uv)
                     encode_intra_chroma_mode_av1(frame_context,
                                                  ec_writer,
@@ -5738,11 +5633,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                                                  intra_luma_mode,
                                                  intra_chroma_mode,
                                                  blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
-#if SB_MEM_OPT
             if (blk_ptr->use_intrabc == 0 &&
-#else
-            if (blk_ptr->av1xd->use_intrabc == 0 &&
-#endif
                 av1_allow_palette(frm_hdr->allow_screen_content_tools, blk_geom->bsize))
                 write_palette_mode_info(
 
@@ -5753,11 +5644,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                     blk_origin_y >> MI_SIZE_LOG2,
                     blk_origin_x >> MI_SIZE_LOG2,
                     ec_writer);
-#if SB_MEM_OPT
             if (blk_ptr->use_intrabc == 0 &&
-#else
-            if (blk_ptr->av1xd->use_intrabc == 0 &&
-#endif
                 av1_filter_intra_allowed(scs_ptr->seq_header.enable_filter_intra,
                                          bsize,
                                          blk_ptr->palette_info.pmi.palette_size[0],
@@ -5773,11 +5660,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                                      FILTER_INTRA_MODES);
                 }
             }
-#if SB_MEM_OPT
             if (blk_ptr->use_intrabc == 0) {
-#else
-            if (blk_ptr->av1xd->use_intrabc == 0) {
-#endif
                 assert(blk_ptr->palette_info.pmi.palette_size[1] == 0);
                 TOKENEXTRA *tok = context_ptr->tok;
                 for (int plane = 0; plane < 2; ++plane) {
@@ -5794,11 +5677,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                             mbmi->tx_size,
                             PALETTE_MAP,
                             0); //NO CDF update in entropy, the update will take place in arithmetic encode
-#if SB_MEM_OPT
                         assert(blk_ptr->use_intrabc == 0);
-#else
-                        assert(blk_ptr->av1xd->use_intrabc == 0);
-#endif
                         assert(av1_allow_palette(
                             pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                             blk_geom->bsize));
@@ -5882,11 +5761,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                    blk_origin_x >> MI_SIZE_LOG2,
                    blk_origin_y >> MI_SIZE_LOG2);
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
-#if QP2QINDEX
             int32_t current_q_index = blk_ptr->qindex;
-#else
-            int32_t current_q_index = quantizer_to_qindex[blk_ptr->qp];
-#endif
             int32_t super_block_upper_left =
                 (((blk_origin_y >> 2) & (scs_ptr->seq_header.sb_mi_size - 1)) == 0) &&
                 (((blk_origin_x >> 2) & (scs_ptr->seq_header.sb_mi_size - 1)) == 0);
@@ -6191,11 +6066,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                             mbmi->tx_size,
                             PALETTE_MAP,
                             0); //NO CDF update in entropy, the update will take place in arithmetic encode
-#if SB_MEM_OPT
                         assert(blk_ptr->use_intrabc == 0);
-#else
-                        assert(blk_ptr->av1xd->use_intrabc == 0);
-#endif
                         assert(av1_allow_palette(
                             pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                             blk_geom->bsize));

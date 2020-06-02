@@ -105,10 +105,8 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.tile_columns           = config->tile_columns;
     callback_data->eb_enc_parameters.scene_change_detection = config->scene_change_detection;
     callback_data->eb_enc_parameters.look_ahead_distance    = config->look_ahead_distance;
-#if TPL_LA
     callback_data->eb_enc_parameters.enable_tpl_la          = config->enable_tpl_la;
     callback_data->eb_enc_parameters.frames_to_be_encoded   = config->frames_to_be_encoded;
-#endif
     callback_data->eb_enc_parameters.rate_control_mode      = config->rate_control_mode;
     callback_data->eb_enc_parameters.target_bit_rate        = config->target_bit_rate;
     callback_data->eb_enc_parameters.max_qp_allowed         = config->max_qp_allowed;
@@ -128,9 +126,6 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.enable_restoration_filtering = config->enable_restoration_filtering;
     callback_data->eb_enc_parameters.sg_filter_mode           = config->sg_filter_mode;
     callback_data->eb_enc_parameters.wn_filter_mode           = config->wn_filter_mode;
-#if !REMOVE_COMBINE_CLASS12
-    callback_data->eb_enc_parameters.combine_class_12         = config->combine_class_12;
-#endif
     callback_data->eb_enc_parameters.edge_skp_angle_intra     = config->edge_skp_angle_intra;
     callback_data->eb_enc_parameters.intra_angle_delta        = config->intra_angle_delta;
     callback_data->eb_enc_parameters.inter_intra_compound     = config->inter_intra_compound;
@@ -139,10 +134,8 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.enable_mfmv              = config->enable_mfmv;
     callback_data->eb_enc_parameters.enable_redundant_blk     = config->enable_redundant_blk;
     callback_data->eb_enc_parameters.spatial_sse_fl           = config->spatial_sse_fl;
-    callback_data->eb_enc_parameters.enable_subpel            = config->enable_subpel;
     callback_data->eb_enc_parameters.over_bndry_blk           = config->over_bndry_blk;
     callback_data->eb_enc_parameters.new_nearest_comb_inject  = config->new_nearest_comb_inject;
-    callback_data->eb_enc_parameters.prune_unipred_me         = config->prune_unipred_me;
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;

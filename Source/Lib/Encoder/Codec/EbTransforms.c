@@ -3397,7 +3397,6 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
     return return_error;
 }
 
-#if TPL_LA
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff,
                                   int diff_stride, TxfmParam *txfm_param) {
   assert(txfm_param->tx_type == DCT_DCT);
@@ -3628,7 +3627,6 @@ void wht_fwd_txfm(int16_t *src_diff, int bw,
   txfm_param.is_hbd = is_hbd;
   av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
-#endif
 
 /*********************************************************************
  * Map Chroma QP

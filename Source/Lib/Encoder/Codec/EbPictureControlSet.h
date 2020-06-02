@@ -36,11 +36,6 @@
 extern "C" {
 #endif
 
-#if !OUTPUT_MEM_OPT
-#define SEGMENT_ENTROPY_BUFFER_SIZE 40000000 // Entropy Bitstream Buffer Size
-#define PACKETIZATION_PROCESS_BUFFER_SIZE SEGMENT_ENTROPY_BUFFER_SIZE
-#define PACKETIZATION_PROCESS_SPS_BUFFER_SIZE 2000
-#endif
 #define HISTOGRAM_NUMBER_OF_BINS 256
 #define MAX_NUMBER_OF_REGIONS_IN_WIDTH 4
 #define MAX_NUMBER_OF_REGIONS_IN_HEIGHT 4
@@ -53,12 +48,10 @@ extern "C" {
 #define NEIGHBOR_ARRAY_TOTAL_COUNT 5
 #define AOM_QM_BITS 5
 
-#if DECOUPLE_ME_RES
 typedef struct DepCntPicInfo {
     uint64_t      pic_num;
     int32_t      dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
 } DepCntPicInfo;
-#endif
 typedef struct MacroblockPlane {
     // Quantizer setings
     // These are used/accessed only in the quantization process
@@ -153,22 +146,12 @@ struct PredictionUnit;
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
     uint32_t tot_d1_blocks; //how many d1 bloks every parent square would have
-#if !OPT_BLOCK_INDICES_GEN_0
-    uint8_t  leaf_index;
-#endif
     EbBool   split_flag;
     uint8_t  consider_block;
     uint8_t  refined_split_flag;
 } EbMdcLeafData;
 
 typedef struct MdcSbData {
-#if !DEPTH_PART_CLEAN_UP
-    // Rate Control
-    uint8_t qp;
-
-    // ME Results
-    uint64_t      treeblock_variance;
-#endif
     uint32_t      leaf_count;
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
 } MdcSbData;
@@ -227,9 +210,6 @@ typedef struct PictureControlSet {
     EbPictureBufferDesc *film_grain_picture_ptr;
     EbPictureBufferDesc *recon_picture16bit_ptr;
     EbPictureBufferDesc *film_grain_picture16bit_ptr;
-#if !PCS_MEM_OPT
-    EbPictureBufferDesc *recon_picture32bit_ptr;
-#endif
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
@@ -259,10 +239,8 @@ typedef struct PictureControlSet {
     uint8_t           tile_size_bytes_minus_1;
     EbHandle intra_mutex;
     uint32_t intra_coded_area;
-#if REDUCE_COMPLEX_CLIP_CYCLES
     uint32_t coef_coded_area;
     uint32_t below32_coded_area;
-#endif
     uint32_t tot_seg_searched_cdef;
     EbHandle cdef_search_mutex;
 
@@ -280,10 +258,6 @@ typedef struct PictureControlSet {
     uint16_t rest_segments_total_count;
     uint8_t  rest_segments_column_count;
     uint8_t  rest_segments_row_count;
-#if !DEPTH_PART_CLEAN_UP
-    // Mode Decision Config
-    MdcSbData *mdc_sb_array;
-#endif
     // Slice Type
     EB_SLICE slice_type;
 
@@ -294,10 +268,6 @@ typedef struct PictureControlSet {
     // SB Array
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
-#if !MD_FRAME_CONTEXT_MEM_OPT
-    // EncDec Entropy Coder (for rate estimation)
-    EntropyCoder *coeff_est_entropy_coder_ptr;
-#endif
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_intra_chroma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -389,12 +359,7 @@ typedef struct PictureControlSet {
     CRC_CALCULATOR   crc_calculator2;
 
     FRAME_CONTEXT *                 ec_ctx_array;
-#if MD_FRAME_CONTEXT_MEM_OPT
     FRAME_CONTEXT                   md_frame_context;
-#endif
-#if !REU_MEM_OPT
-    struct MdRateEstimationContext *rate_est_array;
-#endif
     uint8_t                         update_cdf;
     FRAME_CONTEXT                   ref_frame_context[REF_FRAMES];
     EbWarpedMotionParams            ref_global_motion[TOTAL_REFS_PER_FRAME];
@@ -408,10 +373,8 @@ typedef struct PictureControlSet {
     uint16_t tile_column_count;
     uint16_t sb_total_count_pix;
     uint16_t sb_total_count_unscaled;//omran??
-#if REST_MEM_OPT
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *                       rst_tmpbuf;
-#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -457,13 +420,11 @@ typedef struct TileGroupInfo {
     uint16_t tile_group_tile_end_x;
     uint16_t tile_group_tile_end_y;
 } TileGroupInfo;
-#if DECOUPLE_ME_RES
 typedef struct MotionEstimationData {
     EbDctor              dctor;
     MeSbResults **me_results;
     uint16_t sb_total_count_unscaled;
 } MotionEstimationData;
-#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -508,9 +469,6 @@ typedef struct PictureParentControlSet {
     EbBool           end_of_sequence_flag;
     uint8_t          picture_qp;
     uint64_t         picture_number;
-#if !INTER_COMP_REDESIGN
-    uint8_t          wedge_mode;
-#endif
     uint32_t         cur_order_hint;
     uint32_t         ref_order_hint[7];
     EbPicnoiseClass  pic_noise_class;
@@ -521,10 +479,8 @@ typedef struct PictureParentControlSet {
     EbBool           is_used_as_reference_flag;
     uint8_t          ref_list0_count;
     uint8_t          ref_list1_count;
-#if MRP_CTRL
     uint8_t          ref_list0_count_try;  //the number of references to try (in ME/MD) in list0. should be <= ref_list0_count
     uint8_t          ref_list1_count_try;  //the number of references to try (in ME/MD) in list1. should be <= ref_list1_count
-#endif
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;
     // Rate Control
@@ -596,12 +552,6 @@ typedef struct PictureParentControlSet {
 
     // Motion Estimation Results
     uint8_t       max_number_of_pus_per_sb;
-#if !REMOVE_MRP_MODE
-    uint8_t       max_number_of_candidates_per_block;
-#endif
-#if !DECOUPLE_ME_RES
-    MeSbResults **me_results;
-#endif
     uint32_t *    rc_me_distortion;
 
     // Global motion estimation results
@@ -618,26 +568,21 @@ typedef struct PictureParentControlSet {
     // Open loop Intra candidate Search Results
     OisSbResults **ois_sb_results;
     OisCandidate **ois_candicate;
-#if TPL_LA
     OisMbResults **ois_mb_results;
     TplStats     **tpl_stats;
     int32_t      is_720p_or_larger;
     int32_t      base_rdmult;
     double       r0;
     double       *tpl_beta;
-#if TPL_LA_LAMBDA_SCALING
     double       *tpl_rdmult_scaling_factors;
     double       *tpl_sb_rdmult_scaling_factors;
     EbBool       blk_lambda_tuning;
-#endif
-#endif
     // Dynamic GOP
     EbPred   pred_structure;
     uint8_t  hierarchical_levels;
     uint16_t full_sb_count;
     EbBool   init_pred_struct_position_flag;
     int8_t   hierarchical_layers_diff;
-#if DECOUPLE_ME_RES
     //Dep-Cnt Clean up is done using 2 mechanism
     //1: a triggering picture that will clean up all previous pictures;
     //2: a picture does a self clean up
@@ -646,7 +591,6 @@ typedef struct PictureParentControlSet {
     DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
                                                       //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
-#endif
 
     // HME Flags
     EbBool enable_hme_flag;
@@ -666,40 +610,25 @@ typedef struct PictureParentControlSet {
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
 
     // Multi-modes signal(s)
-#if DEPTH_PART_CLEAN_UP
     MultiPassPdLevel multi_pass_pd_level;
     EbBool sb_64x64_simulated;
-#if !M8_4x4
-    EbBool disallow_4x4;
-#endif
     EbBool disallow_nsq;
     EbBool disallow_all_nsq_blocks_below_8x8;
     EbBool disallow_all_nsq_blocks_below_16x16;
     EbBool disallow_all_non_hv_nsq_blocks_below_16x16;
     EbBool disallow_all_h4_v4_blocks_below_16x16;
-#else
-    EbPictureDepthMode pic_depth_mode;
-#endif
 
-#if NO_NSQ_B32
     EbBool disallow_all_nsq_blocks_below_64x64;  //disallow nsq in 64x64 and below
     EbBool disallow_all_nsq_blocks_below_32x32;  //disallow nsq in 32x32 and below
-#endif
-#if NO_NSQ_ABOVE
     EbBool disallow_all_nsq_blocks_above_64x64;  //disallow nsq in 64x64 and above
     EbBool disallow_all_nsq_blocks_above_32x32;  //disallow nsq in 32x32 and above
     EbBool disallow_all_nsq_blocks_above_16x16;  //disallow nsq in 16x16 and above
-#endif
-#if NO_AB_HV4
     EbBool disallow_HV4;          //disallow             H4/V4
     EbBool disallow_HVA_HVB_HV4;  //disallow HA/HB/VA/VB H4/V4
-#endif
     uint8_t            loop_filter_mode;
     uint8_t            intra_pred_mode;
     uint8_t            tx_size_search_mode;
-#if APR22_ADOPTIONS
     uint8_t            txs_in_inter_classes;
-#endif
     uint8_t            frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;
@@ -784,13 +713,7 @@ typedef struct PictureParentControlSet {
     int32_t             cdef_frame_strength;
     int32_t             cdf_ref_frame_strength;
     int32_t             use_ref_frame_cdef_strength;
-#if !DEPTH_PART_CLEAN_UP
-    uint8_t             nsq_search_level;
-#endif
     uint8_t             palette_mode;
-#if !DEPTH_PART_CLEAN_UP
-    uint8_t             nsq_max_shapes_md; // max number of shapes to be tested in MD
-#endif
     uint8_t             sc_content_detected;
     uint8_t             ibc_mode;
     SkipModeInfo        skip_mode_info;
@@ -824,9 +747,6 @@ typedef struct PictureParentControlSet {
     uint64_t          filtered_sse_uv;
     FrameHeader       frm_hdr;
     uint8_t           compound_mode;
-#if !SHUT_ME_CAND_SORTING
-    uint8_t           prune_unipred_at_me;
-#endif
     uint16_t *        altref_buffer_highbd[3];
     uint8_t           enable_inter_intra;
     uint8_t           pic_obmc_mode;
@@ -855,13 +775,8 @@ typedef struct PictureParentControlSet {
     uint16_t frame_height;
 
     EbBool frame_superres_enabled;
-#if !ME_HME_PRUNING_CLEANUP
-    uint8_t prune_ref_based_me;
-#endif
-#if DECOUPLE_ME_RES
     EbObjectWrapper *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
-#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
@@ -875,9 +790,6 @@ typedef struct PictureControlSetInitData {
     EbColorFormat  color_format;
     uint32_t       sb_sz;
     uint8_t        cfg_palette;
-#if RATE_MEM_OPT
-    uint8_t         serial_rate_est;
-#endif
     uint32_t
         sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
@@ -892,13 +804,7 @@ typedef struct PictureControlSetInitData {
     uint8_t   hbd_mode_decision;
     uint16_t  film_grain_noise_level;
     EbBool    ext_block_flag;
-#if !REMOVE_MRP_MODE
-    uint8_t   mrp_mode;
-#endif
     uint8_t   cdf_mode;
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-    uint8_t   nsq_present;
-#endif
     uint8_t   over_boundary_block_mode;
     uint8_t   mfmv;
     //init value for child pcs
@@ -917,9 +823,7 @@ typedef struct PictureControlSetInitData {
     uint16_t  non_m8_pad_h;
 #endif
 
-#if TPL_LA
     uint8_t enable_tpl_la;
-#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
@@ -933,20 +837,9 @@ extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
-#if DECOUPLE_ME_RES
 extern EbErrorType me_creator(EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr);
-#endif
-#if NSQ_REMOVAL_CODE_CLEAN_UP
-#if REMOVE_MRP_MODE
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr);
-#else
-extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
-#endif
-#else
-extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
-                                      uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
-#endif
 #ifdef __cplusplus
 }
 #endif

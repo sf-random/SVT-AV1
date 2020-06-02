@@ -950,16 +950,8 @@ EbErrorType eb_av1_intra_prediction_cl(
         uint8_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-#if REFACTOR_SIGNALS
         int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-#else
-        int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
-#endif
-#if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 && !md_context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
-#else
-        int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
-#endif
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
@@ -1032,16 +1024,8 @@ EbErrorType eb_av1_intra_prediction_cl(
         uint16_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-#if REFACTOR_SIGNALS
         int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-#else
-        int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
-#endif
-#if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 && !md_context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
-#else
-        int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
-#endif
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
@@ -1302,7 +1286,6 @@ EbErrorType update_neighbor_samples_array_open_loop(
     return return_error;
 }
 
-#if TPL_LA
 #define USE_PADDING_FIX 1
 EbErrorType update_neighbor_samples_array_open_loop_mb(
         uint8_t                            *above_ref,
@@ -1399,7 +1382,6 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
 
     return return_error;
 }
-#endif
 
 /** intra_prediction_open_loop()
         performs Open-loop Intra candidate Search for a CU

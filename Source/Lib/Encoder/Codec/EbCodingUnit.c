@@ -30,9 +30,6 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
                                      PictureControlSet *picture_control_set)
 
 {
-#if !CLEAN_UP_SB_DATA_7
-    uint32_t                    txb_index;
-#endif
     EbPictureBufferDescInitData coeff_init_data;
 
     larget_coding_unit_ptr->dctor = largest_coding_unit_dctor;
@@ -51,30 +48,9 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     uint32_t cu_i;
     uint32_t tot_blk_num                    = sb_size_pix == 128 ? 1024 : 256;
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->final_blk_arr, tot_blk_num);
-#if SB_MEM_OPT
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, 1);
-#else
-    EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, tot_blk_num);
-#endif
     for (cu_i = 0; cu_i < tot_blk_num; ++cu_i) {
-#if !CLEAN_UP_SB_DATA_7
-        for (txb_index = 0; txb_index < TRANSFORM_UNIT_MAX_COUNT; ++txb_index)
-            larget_coding_unit_ptr->final_blk_arr[cu_i].txb_array[txb_index].txb_index = txb_index;
-#endif
-#if !CLEAN_UP_SB_DATA_9
-        larget_coding_unit_ptr->final_blk_arr[cu_i].leaf_index = cu_i;
-#endif
-#if SB_MEM_OPT
-#if !SB_BLK_MEM_OPT
-        // Do NOT initialize the it, most of the final_blk_arr are not used.
-        // Malloc maximum but only initialize it only when actually used.
-        // This will help to same actually memory usage
-        larget_coding_unit_ptr->final_blk_arr[cu_i].av1xd = larget_coding_unit_ptr->av1xd ;
-#endif
 
-#else
-        larget_coding_unit_ptr->final_blk_arr[cu_i].av1xd = larget_coding_unit_ptr->av1xd + cu_i;
-#endif
     }
 
     uint32_t max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
@@ -82,13 +58,8 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_count);
 
     coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-#if SB64_MEM_OPT
     coeff_init_data.max_width          = sb_size_pix;
     coeff_init_data.max_height         = sb_size_pix;
-#else
-    coeff_init_data.max_width          = SB_STRIDE_Y;
-    coeff_init_data.max_height         = SB_STRIDE_Y;
-#endif
     coeff_init_data.bit_depth          = EB_32BIT;
     coeff_init_data.color_format       = picture_control_set->color_format;
     coeff_init_data.left_padding       = 0;

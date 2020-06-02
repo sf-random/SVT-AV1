@@ -243,12 +243,6 @@ typedef struct EbConfig {
     int sg_filter_mode;
     int wn_filter_mode;
 
-#if !REMOVE_COMBINE_CLASS12
-    /****************************************
-     * class12
-    ****************************************/
-    int combine_class_12;
-#endif
     /****************************************
      * edge based skip angle intra
     ****************************************/
@@ -281,12 +275,6 @@ typedef struct EbConfig {
       * spatial sse in full loop
      ****************************************/
     int spatial_sse_fl;
-#if !REMOVE_ME_SUBPEL_CODE
-    /****************************************
-      * subpel
-     ****************************************/
-    int enable_subpel;
-#endif
     /****************************************
       * over boundry block
      ****************************************/
@@ -417,9 +405,7 @@ typedef struct EbConfig {
     uint32_t scene_change_detection;
     uint32_t rate_control_mode;
     uint32_t look_ahead_distance;
-#if TPL_LA
     uint32_t enable_tpl_la;
-#endif
     uint32_t target_bit_rate;
     uint32_t max_qp_allowed;
     uint32_t min_qp_allowed;

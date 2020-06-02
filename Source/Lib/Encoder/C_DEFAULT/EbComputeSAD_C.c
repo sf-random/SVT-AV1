@@ -5,31 +5,6 @@
 
 #include "EbComputeSAD_C.h"
 #include "EbUtility.h"
-#if !REMOVE_ME_SUBPEL_CODE
-/*******************************************
-* combined_averaging_sad
-*
-*******************************************/
-uint32_t combined_averaging_sad(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
-                                uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
-                                uint32_t height, uint32_t width) {
-    uint32_t x, y;
-    uint32_t sad = 0;
-    uint8_t  avgpel;
-
-    for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
-            avgpel = (ref1[x] + ref2[x] + 1) >> 1;
-            sad += EB_ABS_DIFF(src[x], avgpel);
-        }
-        src += src_stride;
-        ref1 += ref1_stride;
-        ref2 += ref2_stride;
-    }
-
-    return sad;
-}
-#endif
 /*******************************************
 *   returns NxM Sum of Absolute Differences
 Note: moved from picture operators.
@@ -333,28 +308,3 @@ uint32_t nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const 
 
     return nxm_sad;
 };
-#if !REMOVE_ME_SUBPEL_CODE
-uint32_t nxm_sad_avg_kernel_helper_c(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
-                                     uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
-                                     uint32_t height, uint32_t width) {
-    uint32_t nxm_sad_avg = 0;
-
-    switch (width) {
-    case 4:
-    case 8:
-    case 16:
-    case 24:
-    case 32:
-    case 48:
-    case 64:
-        nxm_sad_avg = combined_averaging_sad(
-            src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width);
-        break;
-    case 40:
-    case 56: break; //void_func();
-    default: assert(0);
-    }
-
-    return nxm_sad_avg;
-}
-#endif

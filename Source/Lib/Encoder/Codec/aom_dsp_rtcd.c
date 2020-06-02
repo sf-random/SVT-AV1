@@ -34,7 +34,6 @@
 #include "EbMeSadCalculation.h"
 #include "EbAvcStyleMcp.h"
 
-#if TPL_LA
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
 int aom_satd_c(const TranLow *coeff, int length) {
@@ -60,7 +59,6 @@ int64_t av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
   *ssz = sqcoeff;
   return error;
 }
-#endif
 
 /**************************************
  * Instruction Set Support
@@ -284,12 +282,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_AVX2) eb_aom_sad128x64 = eb_aom_sad128x64_avx2;
     if (flags & HAS_AVX2) eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx2;
     if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
-#if TPL_LA
     aom_satd = aom_satd_c;
     if (flags & HAS_AVX2) aom_satd = aom_satd_avx2;
     av1_block_error = av1_block_error_c;
     if (flags & HAS_AVX2) av1_block_error = av1_block_error_avx2;
-#endif
 
 #ifndef NON_AVX512_SUPPORT
     if (flags & HAS_AVX512F) {
@@ -591,10 +587,8 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x16 = eb_av1_fwd_txfm2d_64x16_avx2;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x16 = eb_av1_fwd_txfm2d_32x16_avx2;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x32 = eb_av1_fwd_txfm2d_16x32_avx2;
-#if TPL_LA
     eb_av1_lowbd_fwd_txfm   = av1_lowbd_fwd_txfm_c;
     //if (flags & HAS_AVX2) eb_av1_lowbd_fwd_txfm = av1_lowbd_fwd_txfm_avx2;
-#endif
 
 #ifndef NON_AVX512_SUPPORT
     if (flags & HAS_AVX512F) {
@@ -678,28 +672,12 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
              noise_extract_chroma_weak_avx2_intrin);
     SET_SSE41(
         svt_av1_apply_filtering, svt_av1_apply_filtering_c, svt_av1_apply_temporal_filter_sse4_1);
-#if TF_X86_KERNEL_FIX
     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
              svt_av1_apply_temporal_filter_planewise_c,
              svt_av1_apply_temporal_filter_planewise_avx2);
-#else
-//MSVC fails because avx2 kernel does not exist, temporal fix by assigning C kernel instread of AVX2
-    //SET_AVX2(svt_av1_apply_temporal_filter_planewise,
-    //         svt_av1_apply_temporal_filter_planewise_c,
-    //         svt_av1_apply_temporal_filter_planewise_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise,
-             svt_av1_apply_temporal_filter_planewise_c,
-             svt_av1_apply_temporal_filter_planewise_c);
-#endif
     SET_SSE41(svt_av1_apply_filtering_highbd,
               svt_av1_apply_filtering_highbd_c,
               svt_av1_highbd_apply_temporal_filter_sse4_1);
-#if !REMOVE_ME_SUBPEL_CODE
-    SET_AVX2_AVX512(combined_averaging_ssd,
-                    combined_averaging_ssd_c,
-                    combined_averaging_ssd_avx2,
-                    combined_averaging_ssd_avx512);
-#endif
     SET_AVX2(ext_sad_calculation_8x8_16x16,
              ext_sad_calculation_8x8_16x16_c,
              ext_sad_calculation_8x8_16x16_avx2_intrin);
@@ -715,11 +693,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(ext_all_sad_calculation_8x8_16x16,
              ext_all_sad_calculation_8x8_16x16_c,
              ext_all_sad_calculation_8x8_16x16_avx2);
-#if !SHUT_ME_NSQ_SEARCH
-    SET_AVX2(ext_eigth_sad_calculation_nsq,
-             ext_eigth_sad_calculation_nsq_c,
-             ext_eigth_sad_calculation_nsq_avx2);
-#endif
     SET_AVX2(ext_eight_sad_calculation_32x32_64x64,
              ext_eight_sad_calculation_32x32_64x64_c,
              ext_eight_sad_calculation_32x32_64x64_avx2);
@@ -741,12 +714,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
              nxm_sad_kernel_helper_c,
              nxm_sad_kernel_sub_sampled_helper_avx2);
     SET_AVX2(nxm_sad_kernel, nxm_sad_kernel_helper_c, nxm_sad_kernel_helper_avx2);
-#if !REMOVE_ME_SUBPEL_CODE
-    SET_AVX2(nxm_sad_avg_kernel, nxm_sad_avg_kernel_helper_c, nxm_sad_avg_kernel_helper_avx2);
-
-    SET_SSE2_AVX2(
-        compute_mean_8x8, compute_mean_c, compute_mean8x8_sse2_intrin, compute_mean8x8_avx2_intrin);
-#endif
     SET_SSE2(compute_mean_square_values_8x8,
              compute_mean_squared_values_c,
              compute_mean_of_squared_values8x8_sse2_intrin);

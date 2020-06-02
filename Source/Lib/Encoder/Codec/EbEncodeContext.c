@@ -18,12 +18,6 @@ static void encode_context_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->shared_reference_mutex);
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
     EB_DELETE(obj->prediction_structure_group_ptr);
-#if !DECOUPLE_ME_RES
-    EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
-                        PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
-    EB_DELETE_PTR_ARRAY(obj->picture_manager_reorder_queue,
-                        PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
-#endif
     EB_FREE(obj->pre_assignment_buffer);
     EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
@@ -57,17 +51,6 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
                picture_decision_reorder_entry_ctor,
                picture_index);
     }
-#if !DECOUPLE_ME_RES
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_manager_reorder_queue,
-                       PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
-
-    for (picture_index = 0; picture_index < PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH;
-         ++picture_index) {
-        EB_NEW(encode_context_ptr->picture_manager_reorder_queue[picture_index],
-               picture_manager_reorder_entry_ctor,
-               picture_index);
-    }
-#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pre_assignment_buffer, PRE_ASSIGNMENT_MAX_DEPTH);
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);

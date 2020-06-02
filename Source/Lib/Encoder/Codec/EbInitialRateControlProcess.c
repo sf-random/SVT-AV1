@@ -12,14 +12,12 @@
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
 #include "EbResize.h"
-#if TPL_LA
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
-#endif
 /**************************************
  * Context
  **************************************/
@@ -38,27 +36,14 @@ static void eb_get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32
             int32_t *y_current_mv) {
     uint32_t me_candidate_index;
 
-#if DECOUPLE_ME_RES
     MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
-#else
-    const MeSbResults *me_results       = pcs_ptr->me_results[sb_index];
-#endif
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[0];
 
-#if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[0];
-#else
-    const MeCandidate *me_block_results = me_results->me_candidate[0];
-#endif
     for (me_candidate_index = 0; me_candidate_index < total_me_cnt; me_candidate_index++) {
         if (me_block_results->direction == UNI_PRED_LIST_0) {
-#if ME_MEM_OPT
             *x_current_mv = me_results->me_mv_array[0].x_mv;
             *y_current_mv = me_results->me_mv_array[0].y_mv;
-#else
-            *x_current_mv = me_results->me_mv_array[0][0].x_mv;
-            *y_current_mv = me_results->me_mv_array[0][0].y_mv;
-#endif
             break;
         }
     }
@@ -600,16 +585,12 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
             scs_ptr->static_config.look_ahead_distance);
     uint64_t me_dist           = 0;
     uint8_t  me_dist_pic_count = 0;
-#if QPS_UPDATE
     uint32_t complete_sb_count = 0;
-#endif
     // SB Loop
     for (sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
-#if QPS_UPDATE
         SbParams *sb_params = &pcs_ptr->sb_params_array[sb_idx];
         complete_sb_count++;
-#endif
         // Walk the first N entries in the sliding window starting picture + 1
         input_queue_index =
             (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
@@ -627,12 +608,7 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
 
             if (temp_pcs_ptr->slice_type == I_SLICE || temp_pcs_ptr->end_of_sequence_flag) break;
             // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
-#if QPS_UPDATE
             if (sb_params->is_complete_sb && temp_pcs_ptr->temporal_layer_index <
-#else
-            if (temp_pcs_ptr->temporal_layer_index <
-
-#endif
                 MAX((int8_t)pcs_ptr->hierarchical_levels - 1, 2)) {
                 if (sb_idx == 0) me_dist_pic_count++;
                 me_dist += (temp_pcs_ptr->slice_type == I_SLICE)
@@ -662,11 +638,7 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
     pcs_ptr->non_moving_index_average = (uint16_t)non_moving_index_sum / pcs_ptr->sb_total_count;
     me_dist_pic_count                 = MAX(me_dist_pic_count, 1);
     pcs_ptr->qp_scaling_average_complexity =
-#if QPS_UPDATE
         (uint16_t)((uint64_t)me_dist / complete_sb_count / 256 / me_dist_pic_count);
-#else
-        (uint16_t)((uint64_t)me_dist / pcs_ptr->sb_total_count / 256 / me_dist_pic_count);
-#endif
     return;
 }
 
@@ -832,8 +804,6 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
-#if TPL_LA
-#if TPL_LA_LAMBDA_SCALING
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
@@ -876,7 +846,6 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     return;
 }
 
-#endif
 static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
                                           const TranLow *coeff, TranLow *qcoeff,
                                           TranLow *dqcoeff, TxSize tx_size,
@@ -1160,11 +1129,7 @@ void tpl_mc_flow_dispenser(
                     int32_t best_rf_idx = -1;
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
-#if REMOVE_MRP_MODE
                     uint32_t max_inter_ref = MAX_PA_ME_MV;
-#else
-                    uint32_t max_inter_ref = ((scs_ptr->mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
-#endif
                     OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
                     int64_t best_intra_cost = ois_mb_results_ptr->intra_cost;
                     uint8_t best_mode = DC_PRED;
@@ -1175,15 +1140,8 @@ void tpl_mc_flow_dispenser(
                     blk_geom.origin_y = blk_stats_ptr->origin_y;
                     me_mb_offset = get_me_info_index(pcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
                     for(uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
-#if REMOVE_MRP_MODE
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
-#else
-                        uint32_t list_index = (scs_ptr->mrp_mode == 0) ? (rf_idx < 4 ? 0 : 1)
-                                                                       : (rf_idx < 2 ? 0 : 1);
-                        uint32_t ref_pic_index = (scs_ptr->mrp_mode == 0) ? (rf_idx >= 4 ? (rf_idx - 4) : rf_idx)
-                                                                          : (rf_idx >= 2 ? (rf_idx - 2) : rf_idx);
-#endif
                         if(!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
                         uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
@@ -1203,24 +1161,9 @@ void tpl_mc_flow_dispenser(
                         struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
                                                   ref_pic_ptr->width, ref_pic_ptr->height,
                                                   ref_pic_ptr->stride_y };
-#if DECOUPLE_ME_RES
                         const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
-#else
-                        const MeSbResults *me_results = pcs_ptr->me_results[sb_index];
-#endif
-#if ME_MEM_OPT
-#if REMOVE_MRP_MODE
                         x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
                         y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
-#else
-                        uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
-                        x_curr_mv = me_results->me_mv_array[me_mb_offset * pu_stride + (list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
-                        y_curr_mv = me_results->me_mv_array[me_mb_offset * pu_stride + (list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
-#endif
-#else
-                        x_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
-                        y_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
-#endif
                         InterPredParams inter_pred_params;
                         av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                                 mb_origin_x, 0, 0, 8, 0, 0,
@@ -1565,9 +1508,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     }
 
     //SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
-#if TPL_LA_LAMBDA_SCALING
     generate_lambda_scaling_factor(pcs_ptr);
-#endif
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
     const uint32_t picture_sb_width  = (uint32_t)((scs_ptr->seq_header.max_frame_width  + sb_sz - 1) / sb_sz);
@@ -1754,7 +1695,6 @@ EbErrorType tpl_mc_flow(
 
     return EB_ErrorNone;
 }
-#endif
 
 /* Initial Rate Control Kernel */
 
@@ -1831,15 +1771,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
             // Mark picture when global motion is detected using ME results
             //reset intra_coded_estimation_sb
             me_based_global_motion_detection(pcs_ptr);
-#if TPL_LA
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
             }
-#else
-            // Release Pa Ref pictures when not needed
-            release_pa_reference_objects(scs_ptr, pcs_ptr);
-#endif
 
             //****************************************************
             // Picture resizing for super-res tool
@@ -1851,7 +1786,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     pcs_ptr);
             }
 
-#if DECOUPLE_ME_RES
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             if (scs_ptr->static_config.look_ahead_distance == 0) {
@@ -1895,7 +1829,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
             }
             else {
-#endif
             //****************************************************
             // Input Motion Analysis Results into Reordering Queue
             //****************************************************
@@ -2088,7 +2021,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 : &pcs_ptr->stat_struct;
                         if (scs_ptr->use_output_stat_file)
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
-#if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
                             pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
@@ -2096,7 +2028,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             pcs_ptr->temporal_layer_index == 0) {
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
-#endif
 
                         // Get Empty Results Object
                         eb_get_empty_object(
@@ -2111,14 +2042,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         else
                             out_results_ptr->pcs_wrapper_ptr =
                                 queue_entry_ptr->parent_pcs_wrapper_ptr;
-#if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_tpl_la
                             && ((has_overlay == 0 && loop_index == 0) || (has_overlay == 1 && loop_index == 1))) {
                             // Release Pa Ref pictures when not needed
                             release_pa_reference_objects(scs_ptr, pcs_ptr);
                                 //loop_index ? pcs_ptr : queueEntryPtr);
                         }
-#endif
                         // Post the Full Results Object
                         eb_post_full_object(out_results_wrapper_ptr);
                     }
@@ -2138,9 +2067,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                 }
             }
-#if DECOUPLE_ME_RES
             }
-#endif
         }
 
         // Release the Input Results

@@ -129,30 +129,19 @@ static AOM_FORCE_INLINE int32_t xx_mask_and_hadd(__m256i vsum, int i) {
 }
 
 static void apply_temporal_filter_planewise(
-#if TF_IMP
     struct MeContext *context_ptr, const uint8_t *frame1, const unsigned int stride,
     const uint8_t *frame2, const unsigned int stride2, const int block_width,
     const int block_height, const double sigma, const int decay_control, unsigned int *accumulator,
     uint16_t *count, uint16_t *luma_sq_error, uint16_t *chroma_sq_error, int plane, int ss_x_shift,
     int ss_y_shift) {
-#else
-    const uint8_t *frame1, const unsigned int stride, const uint8_t *frame2,
-    const unsigned int stride2, const int block_width, const int block_height, const double sigma,
-    const int decay_control, unsigned int *accumulator, uint16_t *count, uint16_t *luma_sq_error,
-    uint16_t *chroma_sq_error, int plane, int ss_x_shift, int ss_y_shift) {
-#endif
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH == 5);
     assert(((block_width == 32) && (block_height == 32)) ||
         ((block_width == 16) && (block_height == 16)));
     if (plane > PLANE_TYPE_Y) assert(chroma_sq_error != NULL);
 
     uint32_t acc_5x5_sse[BH][BW];
-#if TF_IMP
     // Larger noise -> larger filtering weight.
     const double n_decay = (double)decay_control * (0.7 + log(sigma + 1.0));
-#else
-    const double h = decay_control * (0.7 + log(sigma + 1.0));
-#endif
     uint16_t *frame_sse =
         (plane == PLANE_TYPE_Y) ? luma_sq_error : chroma_sq_error;
 
@@ -232,7 +221,6 @@ static void apply_temporal_filter_planewise(
                     }
                 }
             }
-#if TF_IMP
             // Combine window error and block error, and normalize it.
             double window_error = (double)diff_sse / num_ref_pixels;
             const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
@@ -278,12 +266,6 @@ static void apply_temporal_filter_planewise(
             double scaled_diff =
                 AOMMIN(combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
             int    adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
-#else
-            const double scaled_diff =
-                AOMMAX(-(double)(diff_sse / num_ref_pixels) / (2 * h * h), -15.0);
-            const int adjusted_weight =
-                (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
-#endif
             // updated the index
             count[i * stride2 + j] += adjusted_weight;
             accumulator[i * stride2 + j] += adjusted_weight * pixel_value;
@@ -291,20 +273,12 @@ static void apply_temporal_filter_planewise(
     }
 }
 void svt_av1_apply_temporal_filter_planewise_avx2(
-#if TF_IMP
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
-#else
-    const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
-    const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
-    const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
-    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
-#endif
     // Loop variables
     assert(block_width <= BW && "block width too large");
     assert(block_height <= BH && "block height too large");
@@ -331,15 +305,8 @@ void svt_av1_apply_temporal_filter_planewise_avx2(
         uint16_t *count = plane == 0 ? y_count : plane == 1 ? u_count : v_count;
 
         apply_temporal_filter_planewise(
-#if TF_IMP
             context_ptr, ref, src_stride, pred, pre_stride, plane_w, plane_h,
             noise_levels[plane], decay_control, accum, count, luma_sq_error,
             chroma_sq_error, plane, ss_x_shift, ss_y_shift);
-#else
-            ref, src_stride, pred, pre_stride, plane_w, plane_h,
-            noise_levels[plane], decay_control, accum,
-            count, luma_sq_error, chroma_sq_error, plane,
-            ss_x_shift, ss_y_shift);
-#endif
     }
 }

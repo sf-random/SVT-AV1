@@ -42,13 +42,6 @@ void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_strid
                      uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
                      uint32_t residual_offset, uint32_t residual_stride, EbBool hbd,
                      uint32_t area_width, uint32_t area_height);
-#if COEFF_BASED_BYPASS_NSQ
-#if MERGED_COEFF_BAND
-#if SPEED_WEIGHT
-static const uint64_t speed_weight[9] = {100,100,100,50,50,50,50,70,70};
-static const uint64_t speed_weight2[9] = {100,100,100,60,60,60,60,80,80};
-#endif
-#if SSE_BASED_SPLITTING
 static const uint64_t sse_grad_weight[5][9][3] = {
 {
 { 0,0,0},
@@ -106,7 +99,6 @@ static const uint64_t sse_grad_weight[5][9][3] = {
 { 0,0,0}
 }
 };
-#endif
 static const uint64_t allowed_part_weight[5][9][3] = {
 {
 { 75,43,17},
@@ -164,7 +156,6 @@ static const uint64_t allowed_part_weight[5][9][3] = {
 { 0,0,0}
 }
 };
-#endif
 static const uint64_t allowed_part_weight_1080p[5][9][10] = {
 {
 { 80, 38, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -393,7 +384,6 @@ static const uint64_t allowed_part_weight_240pF[5][9][10] = {
 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 }
 };
-#endif
 #ifdef __cplusplus
 }
 #endif

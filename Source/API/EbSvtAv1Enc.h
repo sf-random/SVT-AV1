@@ -281,13 +281,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int enable_smooth;
 
-#if !REMOVE_COMBINE_CLASS12
-    /* combine class 12
-    *
-    * Default is -1. */
-    int combine_class_12;
-#endif
-
     /* motion field motion vector
     *
     *  Default is -1. */
@@ -300,12 +293,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int spatial_sse_fl;
-#if !REMOVE_ME_SUBPEL_CODE
-    /* subpel
-    *
-    * Default is -1. */
-    int enable_subpel;
-#endif
     /* over boundry block
     *
     * Default is -1. */
@@ -314,12 +301,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int new_nearest_comb_inject;
-#if !SHUT_ME_CAND_SORTING
-    /* prune unipred at me
-    *
-    * Default is -1. */
-    int prune_unipred_me;
-#endif
     /* prune ref frame for rec partitions
     *
     * Default is -1. */

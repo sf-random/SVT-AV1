@@ -26,9 +26,7 @@
 #include "EbObject.h"
 #include "EbUtility.h"
 #include "EbLog.h"
-#if NOISE_BASED_TF_FRAMES
 #include "EbMalloc.h"
-#endif
 /************************************************
  * Defines
  ************************************************/
@@ -43,12 +41,10 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
-#if TF_LEVELS
 typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;
 }TfControls;
-#endif
 /**************************************
  * Context
  **************************************/
@@ -57,9 +53,7 @@ typedef struct PictureDecisionContext
     EbDctor      dctor;
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
-#if DECOUPLE_ME_RES
     EbFifo       *me_fifo_ptr;
-#endif
     uint64_t      last_solid_color_frame_poc;
 
     EbBool        reset_running_avg;
@@ -91,16 +85,12 @@ typedef struct PictureDecisionContext
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
-#if TF_LEVELS
     uint8_t tf_level;
     TfControls tf_ctrls;
-#endif
-#if DECOUPLE_ME_RES
     PictureParentControlSet* mg_pictures_array[1<<MAX_TEMPORAL_LAYERS];
     DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
                                                       //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
-#endif
 } PictureDecisionContext;
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
@@ -264,11 +254,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define POC_CIRCULAR_ADD(base, offset/*, bits*/)             (/*(((int32_t) (base)) + ((int32_t) (offset)) > ((int32_t) (1 << (bits))))   ? ((base) + (offset) - (1 << (bits))) : \
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
-#if NOISE_BASED_TF_FRAMES
 #define FUTURE_WINDOW_WIDTH                 12
-#else
-#define FUTURE_WINDOW_WIDTH                 6
-#endif
 #define FLASH_TH                            5
 #define FADE_TH                             3
 #define SCENE_TH                            3000
@@ -324,10 +310,8 @@ EbErrorType picture_decision_context_ctor(
     }
 
     context_ptr->reset_running_avg = EB_TRUE;
-#if DECOUPLE_ME_RES
     context_ptr->me_fifo_ptr = eb_system_resource_get_producer_fifo(
             enc_handle_ptr->me_pool_ptr_array[0], 0);
-#endif
 
     return EB_ErrorNone;
 }
@@ -626,7 +610,6 @@ EbErrorType handle_incomplete_picture_window_map(
 
     return return_error;
 }
-#if DECOUPLE_ME_RES
 /*
    This function searches if the target input picture
    is still in the pre-assign buffer, if yes it returns
@@ -663,7 +646,6 @@ uint8_t is_pic_cutting_short_ra_mg(PictureDecisionContext   *context_ptr, Pictur
         return 0;
     }
 }
-#endif
 /***************************************************************************************************
 * If a switch happens, then update the RPS of the base layer frame separating the 2 different prediction structures
 * Clean up the reference queue dependant counts of the base layer frame separating the 2 different prediction structures
@@ -697,7 +679,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     // Get the 1st PCS mini GOP
     pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[MinigopIndex]]->object_ptr;
 
-#if DECOUPLE_ME_RES
     PictureParentControlSet  *trig_pcs; //triggering dep-cnt clean up picture, should be the first in dec order that goes to PicMgr
     if ( is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, MinigopIndex)) {
         trig_pcs = pcs_ptr;//this an LDP minigop so the first picture in minigop is the first in dec order
@@ -707,7 +688,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
         uint32_t  last_pic_in_mg = context_ptr->mini_gop_end_index[MinigopIndex];
         trig_pcs = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[last_pic_in_mg]->object_ptr;
     }
-#endif
     // Derive the temporal layer difference between the current mini GOP and the previous mini GOP
     pcs_ptr->hierarchical_layers_diff = (uint8_t)(encode_context_ptr->previous_mini_gop_hierarchical_levels - pcs_ptr->hierarchical_levels);
 
@@ -723,9 +703,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
         while (input_queue_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
             input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
 
-#if DECOUPLE_ME_RES
             int32_t diff_n = 0;
-#endif
             // Find the reference entry separating the 2 mini GOPs  (pcs_ptr->picture_number is the POC of the first isput in the mini GOP)
             if (input_entry_ptr->picture_number == (pcs_ptr->picture_number - 1)) {
                 // Update the positive dependant counts
@@ -765,7 +743,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                         input_entry_ptr->list1.list[input_entry_ptr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
                 }
 
-#if DECOUPLE_ME_RES
                 diff_n =
                     (input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count) - //depCnt after clean up
                     (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count); //depCnt from org prediction struct
@@ -777,7 +754,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                     trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt].pic_num = input_entry_ptr->picture_number;
                     trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt++].dep_cnt_diff = diff_n;
                 }
-#endif
                 // 3rd step: update the dependant count
                 dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
                 input_entry_ptr->dep_list0_count = (input_entry_ptr->is_alt_ref) ? input_entry_ptr->list0.list_count + 1 : input_entry_ptr->list0.list_count;
@@ -785,9 +761,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 input_entry_ptr->dependent_count = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - dependant_list_removed_entries;
             }
             else {
-#if DECOUPLE_ME_RES
                 uint32_t org_depcnt = input_entry_ptr->dependent_count;
-#endif
                 // Modify Dependent List0
                 dep_list_count = input_entry_ptr->list0.list_count;
                 for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
@@ -804,9 +778,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                         // Decrement the Reference's reference_count
                         --input_entry_ptr->dependent_count;
-#if DECOUPLE_ME_RES
                         diff_n--;
-#endif
                         CHECK_REPORT_ERROR(
                             (input_entry_ptr->dependent_count != ~0u),
                             encode_context_ptr->app_callback_ptr,
@@ -828,9 +800,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                         input_entry_ptr->list1.list[dep_idx] = 0;
                         // Decrement the Reference's reference_count
                         --input_entry_ptr->dependent_count;
-#if DECOUPLE_ME_RES
                         diff_n--;
-#endif
 
                         CHECK_REPORT_ERROR(
                             (input_entry_ptr->dependent_count != ~0u),
@@ -839,13 +809,11 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                     }
                 }
 
-#if DECOUPLE_ME_RES
                 //these refs are defintely not in the pre-ass buffer
                 if (diff_n) {
                     trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt].pic_num = input_entry_ptr->picture_number;
                     trig_pcs->updated_links_arr[trig_pcs->other_updated_links_cnt++].dep_cnt_diff = diff_n;
                 }
-#endif
             }
             // Increment the input_queue_index Iterator
             input_queue_index = (input_queue_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : input_queue_index + 1;
@@ -888,7 +856,6 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
-#if TF_LEVELS
 void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
 
     TfControls *tf_ctrls = &context_ptr->tf_ctrls;
@@ -916,22 +883,15 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         break;
     }
 }
-#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
-#if TF_LEVELS
 EbErrorType signal_derivation_multi_processes_oq(
     SequenceControlSet *scs_ptr,
     PictureParentControlSet *pcs_ptr,
     PictureDecisionContext *context_ptr) {
-#else
-EbErrorType signal_derivation_multi_processes_oq(
-    SequenceControlSet        *scs_ptr,
-    PictureParentControlSet   *pcs_ptr) {
-#endif
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
@@ -941,62 +901,17 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t enc_mode_hme = scs_ptr->use_output_stat_file
         ? pcs_ptr->snd_pass_enc_mode
         : pcs_ptr->enc_mode;
-#if REFACTOR_ME_HME
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
     // to ensure that resources are allocated for the downsampled pictures used in HME
     pcs_ptr->enable_hme_flag        = 1;
     pcs_ptr->enable_hme_level0_flag = 1;
 
-#if ALLOW_HME_L1L2_REFINEMENT
     pcs_ptr->enable_hme_level1_flag = 1;
     pcs_ptr->enable_hme_level2_flag = 1;
-#else
-    if (sc_content_detected)
-#if APR23_ADOPTIONS_2
-        // HME refinement was turned on everywhere before the branch was used for M8 testing;
-        // this restores the previous settings
-        if (pcs_ptr->enc_mode <= ENC_M5) {
-#else
-#if PRESETS_SHIFT
-        if (pcs_ptr->enc_mode <= ENC_M2) {
-#else
-        if (pcs_ptr->enc_mode <= ENC_M3) {
-#endif
-#endif
-            pcs_ptr->enable_hme_level1_flag = 1;
-            pcs_ptr->enable_hme_level2_flag = 1;
-        }
-        else {
-#if 0//APR23_ADOPTIONS
-            pcs_ptr->enable_hme_level1_flag = 1;
-            pcs_ptr->enable_hme_level2_flag = 1;
-#else
-            pcs_ptr->enable_hme_level1_flag = 0;
-            pcs_ptr->enable_hme_level2_flag = 0;
-#endif
-        }
-    else {
-#if UPGRADE_M6_M7_M8
-        if (pcs_ptr->enc_mode <= ENC_M7) {
-            pcs_ptr->enable_hme_level1_flag = 1;
-            pcs_ptr->enable_hme_level2_flag = 1;
-        }
-        else {
-            pcs_ptr->enable_hme_level1_flag = 1;
-            pcs_ptr->enable_hme_level2_flag = 0;
-        }
-#else
-        pcs_ptr->enable_hme_level1_flag = 1;
-        pcs_ptr->enable_hme_level2_flag = 1;
-#endif
-    }
-#endif
 
     pcs_ptr->tf_enable_hme_flag = 1;
     pcs_ptr->tf_enable_hme_level0_flag = 1;
-#if PRESETS_SHIFT
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
-#if UPGRADE_M6_M7_M8
     if (pcs_ptr->enc_mode <= ENC_M7) {
         pcs_ptr->tf_enable_hme_level1_flag = 1;
         pcs_ptr->tf_enable_hme_level2_flag = 1;
@@ -1005,298 +920,50 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tf_enable_hme_level1_flag = 1;
         pcs_ptr->tf_enable_hme_level2_flag = 0;
     }
-#else
-    pcs_ptr->tf_enable_hme_level1_flag = 1;
-    pcs_ptr->tf_enable_hme_level2_flag = 1;
-#endif
-#else
-    if (sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M3) {
-            pcs_ptr->tf_enable_hme_level1_flag = 1;
-            pcs_ptr->tf_enable_hme_level2_flag = 1;
-        }
-        else {
-            pcs_ptr->tf_enable_hme_level1_flag = 0;
-            pcs_ptr->tf_enable_hme_level2_flag = 0;
-        }
-    else {
-        pcs_ptr->tf_enable_hme_level1_flag = 1;
-        pcs_ptr->tf_enable_hme_level2_flag = 1;
-    }
-#endif
-#else
-    pcs_ptr->enable_hme_flag =
-        enable_hme_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution][enc_mode_hme];
 
-    pcs_ptr->enable_hme_level0_flag =
-        enable_hme_level0_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-    pcs_ptr->enable_hme_level1_flag =
-        enable_hme_level1_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-    pcs_ptr->enable_hme_level2_flag =
-        enable_hme_level2_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-
-    pcs_ptr->tf_enable_hme_flag =
-        tf_enable_hme_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-    pcs_ptr->tf_enable_hme_level0_flag =
-        tf_enable_hme_level0_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-    pcs_ptr->tf_enable_hme_level1_flag =
-        tf_enable_hme_level1_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-    pcs_ptr->tf_enable_hme_level2_flag =
-        tf_enable_hme_level2_flag[pcs_ptr->sc_content_detected]
-        [scs_ptr->input_resolution]
-    [enc_mode_hme];
-#endif
-
-#if DEPTH_PART_CLEAN_UP
     // Set the Multi-Pass PD level
-#if ADD_NEW_MPPD_LEVEL
-#if ADOPT_SKIPPING_PD1
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_0;
-#else
-#if MAR23_ADOPTIONS
-    if (sc_content_detected)
-#if MAR30_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M3)
-            pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_1;
-        else
-            pcs_ptr->multi_pass_pd_level =
-            (pcs_ptr->slice_type == I_SLICE)
-            ? MULTI_PASS_PD_LEVEL_1
-            : MULTI_PASS_PD_LEVEL_2;
-    else if (pcs_ptr->enc_mode <= ENC_M0)
-#else
-        pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_1;
-    else if (pcs_ptr->enc_mode <= ENC_M1)
-#endif
-        pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_1;
-    else
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_LEVEL_1
-        : MULTI_PASS_PD_LEVEL_2;
-#else
-    if (sc_content_detected)
-#if MAR19_ADOPTIONS
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : MULTI_PASS_PD_LEVEL_1;
-#else
-        pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
-#endif
-    else if (pcs_ptr->enc_mode <= ENC_M1)
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : pcs_ptr->hierarchical_levels < 3
-        ? MULTI_PASS_PD_LEVEL_0
-        : MULTI_PASS_PD_LEVEL_1;
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : pcs_ptr->hierarchical_levels < 3
-        ? MULTI_PASS_PD_LEVEL_0
-        : MULTI_PASS_PD_LEVEL_2;
-    else
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : MULTI_PASS_PD_LEVEL_3;
-#endif
-#endif
-#else
-    if (sc_content_detected)
-#if MAR17_ADOPTIONS
-        pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
-#else
-        if (pcs_ptr->enc_mode <= ENC_M4)
-            pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
-        else
-            // Use a single-stage PD if I_SLICE
-            pcs_ptr->multi_pass_pd_level =
-            (pcs_ptr->slice_type == I_SLICE)
-            ? MULTI_PASS_PD_OFF
-            : MULTI_PASS_PD_LEVEL_2;
-#endif
-    else if (MR_MODE)
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : MULTI_PASS_PD_LEVEL_0;
-#if MAR17_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : pcs_ptr->hierarchical_levels < 3
-        ? MULTI_PASS_PD_LEVEL_0
-        : MULTI_PASS_PD_LEVEL_1;
-    else
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->multi_pass_pd_level =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? MULTI_PASS_PD_OFF
-        : MULTI_PASS_PD_LEVEL_2;
-    // If ADP then set multi_pass_pd_level to INVALID
-    if(pcs_ptr->adp_level != ADP_OFF)
-        pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_INVALID;
-#endif
 
 
     // Set disallow_nsq
-#if APR25_12AM_ADOPTIONS
-#if APR25_1PM_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M5 || (pcs_ptr->enc_mode <= ENC_M6 && sc_content_detected)) {
-#else
-    if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
         pcs_ptr->disallow_nsq = EB_FALSE;
     }
-#if APR25_3AM_ADOPTIONS
     else if (pcs_ptr->enc_mode <= ENC_M6 && !sc_content_detected) {
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M6) {
-#endif
         pcs_ptr->disallow_nsq = pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
     }
     else if (pcs_ptr->enc_mode <= ENC_M7) {
-#if APR25_7PM_ADOPTIONS
         if (sc_content_detected)
             pcs_ptr->disallow_nsq = EB_FALSE;
         else
             pcs_ptr->disallow_nsq = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
-#else
-        pcs_ptr->disallow_nsq = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
-#endif
     }
     else {
-#if APR25_7PM_ADOPTIONS
         if (sc_content_detected)
             pcs_ptr->disallow_nsq = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
         else
             pcs_ptr->disallow_nsq = EB_TRUE;
-#else
-        pcs_ptr->disallow_nsq = EB_TRUE;
-#endif
     }
-#else
-#if M8_NSQ
-#if M5_I_NSQ
-#if ALLOW_NSQ_M6
-    if (pcs_ptr->enc_mode <= ENC_M6) {
-#else
-    if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
-        pcs_ptr->disallow_nsq = EB_FALSE;
-    }
-#if UPGRADE_M6_M7_M8
-#if ALLOW_NSQ_M6
-    else if (pcs_ptr->enc_mode <= ENC_M7) {
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M6) {
-#endif
-        if (pcs_ptr->sc_content_detected)
-            pcs_ptr->disallow_nsq = pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
-        else
-            pcs_ptr->disallow_nsq = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
-    }
-#endif
-    else {
-        pcs_ptr->disallow_nsq = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
-    }
-#else
-    pcs_ptr->disallow_nsq = pcs_ptr->enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
-#endif
-#else
-    pcs_ptr->disallow_nsq = EB_FALSE;
-#endif
-#endif
-#if NSQ_REMOVAL_CODE_CLEAN_UP
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
-#else
-    if (!pcs_ptr->disallow_nsq)
-        assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
-
-    pcs_ptr->max_number_of_pus_per_sb =
-        pcs_ptr->disallow_nsq
-        ? SQUARE_PU_COUNT
-        : MAX_ME_PU_COUNT;
-#endif
     // Set sb_64x64_simulated - only allow when SB size is not already 64x64
-#if MAR23_ADOPTIONS
     if (scs_ptr->static_config.super_block_size != 64) {
         if (sc_content_detected)
-#if APR08_ADOPTIONS
             pcs_ptr->sb_64x64_simulated = EB_FALSE;
-#else
-            pcs_ptr->sb_64x64_simulated = EB_TRUE;
-#endif
         else
             pcs_ptr->sb_64x64_simulated = EB_FALSE;
     }
     else
         pcs_ptr->sb_64x64_simulated = EB_FALSE;
-#else
-    if (sc_content_detected) {
-        pcs_ptr->sb_64x64_simulated = EB_TRUE;
-    }
-    else {
-        pcs_ptr->sb_64x64_simulated = EB_FALSE;
-    }
-#endif
-#if !M8_4x4
-    // Set disallow_4x4
-    pcs_ptr->disallow_4x4 = EB_FALSE;
-#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
     if (sc_content_detected) {
         pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
     }
     else {
-#if MAY16_7PM_ADOPTIONS
         if (pcs_ptr->enc_mode <= ENC_M0 ||
             (pcs_ptr->enc_mode <= ENC_M4 && pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE))
             pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
         else if (pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->disallow_all_nsq_blocks_below_8x8 = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
-#else
-#if PRESETS_SHIFT
-#if M2_COMBO_3
-        if (pcs_ptr->enc_mode <= ENC_M1)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-#if MAR19_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#endif
-            pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
-#endif
         else
             pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_TRUE;
     }
@@ -1304,13 +971,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
     pcs_ptr->disallow_all_nsq_blocks_below_16x16 = EB_FALSE;
 
-#if NO_NSQ_B32
     pcs_ptr->disallow_all_nsq_blocks_below_64x64 = EB_FALSE;
     pcs_ptr->disallow_all_nsq_blocks_below_32x32 = EB_FALSE;
-#endif
-#if NO_NSQ_ABOVE
     pcs_ptr->disallow_all_nsq_blocks_above_64x64= EB_FALSE;
-#if APR25_7PM_ADOPTIONS
     // disallow_all_nsq_blocks_above_32x32
     if (!sc_content_detected || pcs_ptr->enc_mode <= ENC_M5)
         pcs_ptr->disallow_all_nsq_blocks_above_32x32 = EB_FALSE;
@@ -1324,182 +987,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
     else
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
-#else
-    pcs_ptr->disallow_all_nsq_blocks_above_32x32= EB_FALSE;
-    pcs_ptr->disallow_all_nsq_blocks_above_16x16= EB_FALSE;
-#endif
-#endif
 
-#if NO_AB_HV4
     pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
     pcs_ptr->disallow_HV4 = EB_FALSE;
-#endif
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = EB_FALSE;
 
     // Set disallow_all_h4_v4_blocks_below_16x16
     pcs_ptr->disallow_all_h4_v4_blocks_below_16x16 = EB_FALSE;
-#else
-    // Set pic_depth_mode
-    if (sc_content_detected)
-#if MAR10_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-            pcs_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
-#if DEPTH_PART_CLEAN_UP
-        else
-            // Use a single-stage PD if I_SLICE
-            pcs_ptr->pic_depth_mode =
-            (pcs_ptr->slice_type == I_SLICE)
-            ? PIC_ALL_DEPTH_MODE
-            : PIC_MULTI_PASS_PD_MODE_2;
-#else
-#if MAR10_ADOPTIONS
-        else if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-            if (pcs_ptr->slice_type == I_SLICE)
-                pcs_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
-            else
-                pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-        else
-            pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-#endif
-    else if (MR_MODE)
-        pcs_ptr->pic_depth_mode =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? PIC_ALL_DEPTH_MODE
-        : PIC_MULTI_PASS_PD_MODE_0;
-#if MAR4_M6_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->pic_depth_mode =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? PIC_ALL_DEPTH_MODE
-        : pcs_ptr->hierarchical_levels < 3
-        ? PIC_MULTI_PASS_PD_MODE_0
-        : PIC_MULTI_PASS_PD_MODE_1;
-#if DEPTH_PART_CLEAN_UP
-    else
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->pic_depth_mode =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? PIC_ALL_DEPTH_MODE
-        : PIC_MULTI_PASS_PD_MODE_2;
-#else
-#if MAR2_M7_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-        // Use a single-stage PD if I_SLICE
-        pcs_ptr->pic_depth_mode =
-        (pcs_ptr->slice_type == I_SLICE)
-        ? PIC_ALL_DEPTH_MODE
-        : PIC_MULTI_PASS_PD_MODE_2;
-#if SHUT_ME_DISTORTION
-    else
-        pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-#else
-    else if (pcs_ptr->slice_type == I_SLICE)
-        pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-    else
-        pcs_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
-#endif
-#endif
-    if (pcs_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
-        assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
-
-    pcs_ptr->max_number_of_pus_per_sb =
-        (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)
-        ? MAX_ME_PU_COUNT
-        : SQUARE_PU_COUNT;
-#endif
-#if !DEPTH_PART_CLEAN_UP
-    // NSQ search Level                               Settings
-    // NSQ_SEARCH_OFF                                 OFF
-    // NSQ_SEARCH_LEVEL1                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 1 NSQ SHAPE
-    // NSQ_SEARCH_LEVEL2                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 2 NSQ SHAPE
-    // NSQ_SEARCH_LEVEL3                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 3 NSQ SHAPE
-    // NSQ_SEARCH_LEVEL4                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 4 NSQ SHAPE
-    // NSQ_SEARCH_LEVEL5                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 5 NSQ SHAPE
-    // NSQ_SEARCH_LEVEL6                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 6 NSQ SHAPE
-    // NSQ_SEARCH_FULL                                Allow NSQ Intra-FULL and Inter-FULL
-    if (pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_0 ||
-        pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_1 ||
-        pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_2 ||
-        pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_3) {
-
-        pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
-    }
-    else if (pcs_ptr->enc_mode <= ENC_M1)
-        pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
-
-    else if (pcs_ptr->enc_mode <= ENC_M2)
-
-        pcs_ptr->nsq_search_level =
-        (pcs_ptr->is_used_as_reference_flag)
-        ? NSQ_SEARCH_LEVEL6
-        : NSQ_SEARCH_LEVEL3;
-#if MAR10_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-
-        if (pcs_ptr->is_used_as_reference_flag)
-            pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL3;
-        else
-            pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL1;
-    else
-        pcs_ptr->nsq_search_level = NSQ_SEARCH_OFF;
-
-    if (pcs_ptr->nsq_search_level > NSQ_SEARCH_OFF)
-        assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
-
-    switch (pcs_ptr->nsq_search_level) {
-    case NSQ_SEARCH_OFF:
-        pcs_ptr->nsq_max_shapes_md = 0;
-        break;
-    case NSQ_SEARCH_LEVEL1:
-        pcs_ptr->nsq_max_shapes_md = 1;
-        break;
-    case NSQ_SEARCH_LEVEL2:
-        pcs_ptr->nsq_max_shapes_md = 2;
-        break;
-    case NSQ_SEARCH_LEVEL3:
-        pcs_ptr->nsq_max_shapes_md = 3;
-        break;
-    case NSQ_SEARCH_LEVEL4:
-        pcs_ptr->nsq_max_shapes_md = 4;
-        break;
-    case NSQ_SEARCH_LEVEL5:
-        pcs_ptr->nsq_max_shapes_md = 5;
-        break;
-    case NSQ_SEARCH_LEVEL6:
-        pcs_ptr->nsq_max_shapes_md = 6;
-        break;
-    case NSQ_SEARCH_FULL:
-        pcs_ptr->nsq_max_shapes_md = 6;
-        break;
-    default:
-        printf("nsq_search_level is not supported\n");
-        break;
-    }
-
-    if (pcs_ptr->nsq_search_level == NSQ_SEARCH_OFF)
-        if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)
-            pcs_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
-    if (pcs_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE)
-        assert(pcs_ptr->nsq_search_level == NSQ_SEARCH_OFF);
-#endif
     // Loop filter Level                            Settings
     // 0                                            OFF
     // 1                                            CU-BASED
@@ -1512,37 +1008,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools =
             pcs_ptr->sc_content_detected;
-#if MAR3_M6_ADOPTIONS
-#if MAR4_M8_ADOPTIONS
         if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
             frm_hdr->allow_intrabc = pcs_ptr->sc_content_detected;
         else
             frm_hdr->allow_intrabc = 0;
 
         // IBC Modes:   0:Slow   1:Fast   2:Faster
-#if MAR4_M8_ADOPTIONS
-#if M8_IBC
-#if UPGRADE_M6_M7_M8
-#if M5_I_IBC
         if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M8)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
             pcs_ptr->ibc_mode = 0;
         else
             pcs_ptr->ibc_mode = 1;
@@ -1574,46 +1046,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                     EB_8BIT &&
                     scs_ptr->static_config.enable_hbd_mode_decision ==
                     0)) &&
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
-#if M8_PALETTE
-#if UPGRADE_M6_M7_M8
-#if M1_SC_ADOPTION
-#if REVERT_WHITE // palette_mode
-#if MAY19_ADOPTIONS
-           (MR_MODE || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M6) ||
-            (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
-#else
-#if MAY16_7PM_ADOPTIONS
-           ((pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M6) ||
-            (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
-#else
-#if APR25_3AM_ADOPTIONS
-           (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M6) ||
-            (pcs_ptr->slice_type == I_SLICE && pcs_ptr->enc_mode <= ENC_M7))
-#else
-           (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M7))
-#endif
-#endif
-#endif
-#else
            (pcs_ptr->enc_mode <= ENC_M0 || pcs_ptr->is_used_as_reference_flag)
-#endif
-#else
-           (pcs_ptr->enc_mode <= ENC_M5 || pcs_ptr->is_used_as_reference_flag)
-#endif
-#else
-            pcs_ptr->enc_mode <= ENC_M5
-#endif
-#else
-            pcs_ptr->enc_mode <= ENC_M8
-#endif
-#else
-            pcs_ptr->enc_mode <= ENC_M3
-#endif
-#else
-            pcs_ptr->enc_mode <= ENC_M2
-#endif
             ? 6
             : 0;
         else
@@ -1627,28 +1060,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (!pcs_ptr->scs_ptr->static_config
         .disable_dlf_flag &&
         frm_hdr->allow_intrabc == 0) {
-#if MAR2_M8_ADOPTIONS
-#if M8_LOOP_FILTER && !UPGRADE_M8 || REVERT_WHITE
-#if REVERT_WHITE //  loop_filter_mode
-        if (pcs_ptr->enc_mode <= ENC_M7 || pcs_ptr->sc_content_detected)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-            pcs_ptr->loop_filter_mode = 3;
-        else
-            pcs_ptr->loop_filter_mode =
-            pcs_ptr->is_used_as_reference_flag ? 1 : 0;
-#else
         pcs_ptr->loop_filter_mode = 3;
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->loop_filter_mode = 3;
-
-        else
-            pcs_ptr->loop_filter_mode =
-            pcs_ptr->is_used_as_reference_flag ? 1 : 0;
-#endif
     }
     else
         pcs_ptr->loop_filter_mode = 0;
@@ -1661,48 +1073,16 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
     // 5                                            64 step refinement
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
-#if MAR17_ADOPTIONS
-#if M8_CDEF
         if (pcs_ptr->sc_content_detected)
-#if UPGRADE_M6_M7_M8
             if (pcs_ptr->enc_mode <= ENC_M7)
                 pcs_ptr->cdef_filter_mode = 5;
             else
-#if M5_I_CDEF
                 pcs_ptr->cdef_filter_mode = pcs_ptr->slice_type == I_SLICE ? 5 : 2;
-#else
-                pcs_ptr->cdef_filter_mode = 2;
-#endif
-#else
-            pcs_ptr->cdef_filter_mode = 5;
-#endif
         else
-#if UPGRADE_M6_M7_M8
             if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
                 pcs_ptr->cdef_filter_mode = 5;
             else
-#if M5_I_CDEF
                 pcs_ptr->cdef_filter_mode = pcs_ptr->slice_type == I_SLICE ? 5 : 2;
-#else
-                pcs_ptr->cdef_filter_mode = 2;
-#endif
-#else
-        pcs_ptr->cdef_filter_mode = 5;
-#endif
-#else
-#if MAR10_ADOPTIONS
-        if (pcs_ptr->sc_content_detected)
-            pcs_ptr->cdef_filter_mode = 5;
-        else
-#endif
-        if (pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->cdef_filter_mode = 5;
-        else
-            pcs_ptr->cdef_filter_mode = 2;
-#endif
     }
     else
         pcs_ptr->cdef_filter_mode = 0;
@@ -1715,126 +1095,26 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
     Av1Common *cm = pcs_ptr->av1_cm;
     if (sc_content_detected)
-#if MAR12_M8_ADOPTIONS
-#if M8_SG
-#if UPGRADE_M6_M7_M8
         if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
             cm->sg_filter_mode = 4;
         else
-#if M5_I_SG
             cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
-#else
-            cm->sg_filter_mode = 1;
-#endif
-#else
-        cm->sg_filter_mode = 4;
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-            cm->sg_filter_mode = 4;
-        else
-            cm->sg_filter_mode = 0;
-#endif
-#if MAY19_ADOPTIONS
     else if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-#if PRESETS_SHIFT
-    else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR17_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-#if MAR10_ADOPTIONS
-#if MAR11_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
-#endif
         cm->sg_filter_mode = 4;
-#if MAY19_ADOPTIONS
     else
         cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
-#else
-#if MAR12_M8_ADOPTIONS
-#if M8_SG
-#if UPGRADE_M6_M7_M8
-#if APR25_3AM_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-        cm->sg_filter_mode = 3;
-    else
-#if M5_I_SG
-        cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 3 : 1;
-#else
-        cm->sg_filter_mode = 1;
-#endif
-#else
-    else
-        cm->sg_filter_mode = 3;
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-        cm->sg_filter_mode = 3;
-    else
-        cm->sg_filter_mode = 1;
-#endif
-#endif
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
     // 2                                            5-Tap luma/ 5-Tap chroma
     // 3                                            7-Tap luma/ 5-Tap chroma
     if (sc_content_detected)
-#if MAR12_M8_ADOPTIONS
         cm->wn_filter_mode = 3;
-#else
-#if MAR3_M6_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-            cm->wn_filter_mode = 3;
-        else
-            cm->wn_filter_mode = 0;
-#endif
     else
-#if MAY19_ADOPTIONS
         if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-#if PRESETS_SHIFT
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR17_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#endif
-#endif
             cm->wn_filter_mode = 3;
-#if MAR12_M8_ADOPTIONS
         else
             cm->wn_filter_mode = 2;
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M7)
-            cm->wn_filter_mode = 2;
-        else
-            cm->wn_filter_mode = 0;
-#endif
 
     // Intra prediction modes                       Settings
     // 0                                            FULL
@@ -1844,241 +1124,58 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            OIS based Intra
     // 5                                            Light OIS based Intra
     if (pcs_ptr->slice_type == I_SLICE)
-#if MAR2_M8_ADOPTIONS
         pcs_ptr->intra_pred_mode = 0;
-#else
-        if (sc_content_detected)
-            if (pcs_ptr->enc_mode <= ENC_M6)
-                pcs_ptr->intra_pred_mode = 0;
-            else
-                pcs_ptr->intra_pred_mode = 4;
-        else if (pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->intra_pred_mode = 0;
-        else
-            pcs_ptr->intra_pred_mode = 4;
-#endif
     else {
         if (sc_content_detected)
-#if APR24_M3_ADOPTIONS
             if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if APR23_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-#if PRESETS_SHIFT
-            if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if MAR12_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M3)
-#else
-#if MAR10_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
-#endif
-#endif
                 pcs_ptr->intra_pred_mode = 0;
-#if !MAR12_ADOPTIONS
-            else if (pcs_ptr->enc_mode <= ENC_M2)
-                if (pcs_ptr->temporal_layer_index == 0)
-                    pcs_ptr->intra_pred_mode = 1;
-                else
-                    pcs_ptr->intra_pred_mode = 2;
-#endif
-#if MAR17_ADOPTIONS
             else
                 if (pcs_ptr->temporal_layer_index == 0)
                     pcs_ptr->intra_pred_mode = 2;
                 else
                     pcs_ptr->intra_pred_mode = 3;
-#else
-            else if (pcs_ptr->enc_mode <= ENC_M6)
-                if (pcs_ptr->temporal_layer_index == 0)
-                    pcs_ptr->intra_pred_mode = 2;
-                else
-                    pcs_ptr->intra_pred_mode = 3;
-            else
-                pcs_ptr->intra_pred_mode = 4;
-#endif
-#if APR23_ADOPTIONS_2
         else if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if PRESETS_SHIFT
-        else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR20_ADOPTIONS
-        else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-#if MAR10_ADOPTIONS
-        else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
-#endif
             pcs_ptr->intra_pred_mode = 0;
-#if MAR2_M8_ADOPTIONS
-#if M8_INTRA_MODE && !UPGRADE_M8
-        else if (pcs_ptr->enc_mode <= ENC_M5)
-            if (pcs_ptr->temporal_layer_index == 0)
-                pcs_ptr->intra_pred_mode = 1;
-            else
-                pcs_ptr->intra_pred_mode = 3;
-        else
-            pcs_ptr->intra_pred_mode = 3;
-#else
         else
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
-#endif
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M7)
-
-            if (pcs_ptr->temporal_layer_index == 0)
-                pcs_ptr->intra_pred_mode = 1;
-            else
-                pcs_ptr->intra_pred_mode = 3;
-        else
-            pcs_ptr->intra_pred_mode = 4;
-#endif
     }
 
     // Set Tx Search     Settings
     // 0                 OFF
     // 1                 ON
-#if MAR4_M6_ADOPTIONS
     if (pcs_ptr->sc_content_detected)
-#if MAR10_ADOPTIONS
         if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
             pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
         else
             pcs_ptr->tx_size_search_mode = 0;
-#if PRESETS_SHIFT
     else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR17_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-#if MAR10_ADOPTIONS
-#if MAR11_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
         pcs_ptr->tx_size_search_mode = 1;
-#else
-    if (pcs_ptr->enc_mode <= ENC_M3)
-        pcs_ptr->tx_size_search_mode =
-        (pcs_ptr->sc_content_detected &&
-            pcs_ptr->slice_type != I_SLICE)
-        ? 0
-        : 1;
-#endif
     else
         pcs_ptr->tx_size_search_mode = 0;
 
-#if APR22_ADOPTIONS
     // Assign whether to use TXS in inter classes (if TXS is ON)
     // 0 OFF - TXS in intra classes only
     // 1 ON - TXS in all classes
-#if MAY16_7PM_ADOPTIONS
     pcs_ptr->txs_in_inter_classes = 0;
-#else
-    if (pcs_ptr->sc_content_detected)
-        pcs_ptr->txs_in_inter_classes = 0;
-    else if (pcs_ptr->enc_mode <= ENC_M0)
-        pcs_ptr->txs_in_inter_classes = (pcs_ptr->is_used_as_reference_flag && pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 1 : 0;
-    else
-        pcs_ptr->txs_in_inter_classes = 0;
-#endif
-#endif
 
-#if !INTER_COMP_REDESIGN
-    // Set Wedge mode      Settings
-    // 0                 FULL: Full search
-    // 1                 Fast: If two predictors are very similar, skip wedge compound mode search
-    // 2                 Fast: estimate Wedge sign
-    // 3                 Fast: Mode 1 & Mode 2
-#if MAR11_ADOPTIONS
-    if (pcs_ptr->sc_content_detected)
-#if MAR12_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M3)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M1)
-#endif
-            pcs_ptr->wedge_mode = 0;
-        else
-            pcs_ptr->wedge_mode = 1;
-#if MAR17_ADOPTIONS
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-        pcs_ptr->wedge_mode = 0;
-    else
-        pcs_ptr->wedge_mode = 1;
-
-#if M8_NEW_REF
-    pcs_ptr->wedge_mode = 0;
-#endif
-#endif
     // inter intra pred                      Settings
     // 0                                     OFF
     // 1                                     FULL
     // 2                                     FAST 1 : Do not inject for non basic inter
     // 3                                     FAST 2 : 1 + MRP pruning/ similar based disable + NIC tuning
-#if  CLEANUP_INTER_INTRA
     //picture level switch,  has to follow the sequence level.
     if (pcs_ptr->slice_type != I_SLICE && scs_ptr->seq_header.enable_interintra_compound) {
-#if INTRA_COMPOUND_OPT
-#if PRESETS_SHIFT
-#if ENABLE_SC_DETECTOR
         if (pcs_ptr->sc_content_detected)
             pcs_ptr->enable_inter_intra = 0;
         else
-#endif
         pcs_ptr->enable_inter_intra = pcs_ptr->enc_mode <= ENC_M2 ? 2 : 3;
-#else
-#if MAR30_ADOPTIONS
-        pcs_ptr->enable_inter_intra = pcs_ptr->enc_mode <= ENC_M3 ? 2 : 3;
-#else
-        pcs_ptr->enable_inter_intra= pcs_ptr->enc_mode <= ENC_M2 ? 2 : 3;
-#endif
-#endif
-#else
-        pcs_ptr->enable_inter_intra = 1;//shut for sc , if needed.
-#endif
     }
     else {
         pcs_ptr->enable_inter_intra = 0;
     }
-#else
-    if (scs_ptr->static_config.inter_intra_compound == DEFAULT)
-        pcs_ptr->enable_inter_intra =
-        pcs_ptr->slice_type != I_SLICE
-        ? scs_ptr->seq_header.enable_interintra_compound
-        : 0;
-    else
-        pcs_ptr->enable_inter_intra =
-        scs_ptr->static_config.inter_intra_compound;
-#endif
     // Set compound mode      Settings
     // 0                      OFF: No compond mode search : AVG only
     // 1                      ON: Full
@@ -2087,44 +1184,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     if (scs_ptr->static_config.compound_level == DEFAULT) {
         if (scs_ptr->compound_mode)
-#if MAR17_ADOPTIONS
-#if INTER_COMP_REDESIGN
-#if PRESETS_SHIFT
-#if APR23_ADOPTIONS
             if (pcs_ptr->sc_content_detected)
-#if SHIFT_M5_SC_TO_M3
                 pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M2 ? 2 : 0;
-#else
-                pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M4 ? 2 : 0;
-#endif
             else
-#endif
-#if M2_COMBO_1 || M1_COMBO_2 || NEW_M1_CAND
                 pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M0 ? 1 :
                 pcs_ptr->enc_mode <= ENC_M4 ? 2 : 0;
-#else
-            pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M3 ? 1 :
-                                     pcs_ptr->enc_mode <= ENC_M4 ? 2 : 0;
-#endif
-#else
-            pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M4 ? 1 :
-                                     pcs_ptr->enc_mode <= ENC_M7 ? 2 : 0;
-#endif
-#else
-            pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M7 ? 2 : 1;
-#endif
-#else
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
-            pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M4 ? 2 : 1;
-#else
-            pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M3 ? 2 : 1;
-#endif
-#else
-            pcs_ptr->compound_mode =
-            pcs_ptr->enc_mode <= ENC_M2 ? 2 : 1;
-#endif
-#endif
         else
             pcs_ptr->compound_mode = 0;
     }
@@ -2140,35 +1204,12 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->frame_end_cdf_update_mode =
         scs_ptr->static_config.frame_end_cdf_update;
-#if !SHUT_ME_CAND_SORTING
-    if (scs_ptr->static_config.prune_unipred_me == DEFAULT)
-#if MAR4_M6_ADOPTIONS
-#if MAR10_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-            pcs_ptr->prune_unipred_at_me = 1;
-        else
-            pcs_ptr->prune_unipred_at_me = 0;
-#else
-        if (pcs_ptr->enc_mode >= ENC_M4)
-            pcs_ptr->prune_unipred_at_me = 0;
-        else
-            pcs_ptr->prune_unipred_at_me = 1;
-#endif
-    else
-        pcs_ptr->prune_unipred_at_me =
-        scs_ptr->static_config.prune_unipred_me;
-#endif
     // CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop
     // preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check
     // RPS construction for more info.
-#if ENABLE_SC_DETECTOR
     if (pcs_ptr->sc_content_detected)
         pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
     else
-#endif
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
     else
@@ -2180,102 +1221,23 @@ EbErrorType signal_derivation_multi_processes_oq(
     // GM_DOWN                                    Downsampled resolution with a
     // downsampling factor of 2 in each dimension GM_TRAN_ONLY Translation only
     // using ME MV.
-#if MAR17_ADOPTIONS
-#if MAR20_M4_ADOPTIONS
-#if MAR30_ADOPTIONS
-#if APR08_ADOPTIONS
-#if PRESETS_SHIFT
-#if APR22_ADOPTIONS
-#if SHIFT_M5_SC_TO_M3
     if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-    if (pcs_ptr->enc_mode <= ENC_M2 || (pcs_ptr->enc_mode <= ENC_M4 && pcs_ptr->sc_content_detected))
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->enc_mode <= ENC_M4 && pcs_ptr->sc_content_detected))
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->enc_mode <= ENC_M7 && pcs_ptr->sc_content_detected))
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M3 || (pcs_ptr->enc_mode <= ENC_M7 && pcs_ptr->sc_content_detected))
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#else
-#if MAR18_ADOPTIONS
-    if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-    if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#endif
         pcs_ptr->gm_level = GM_FULL;
     else
         pcs_ptr->gm_level = GM_DOWN;
-#else
-#if MAR12_ADOPTIONS
-    if (pcs_ptr->sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M3)
-            pcs_ptr->gm_level = GM_FULL;
-        else
-            pcs_ptr->gm_level = GM_DOWN;
-    else
-#endif
-#if MAR10_ADOPTIONS
-    if (pcs_ptr->enc_mode <= ENC_M1)
-#else
-    if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->enc_mode <= ENC_M1 && pcs_ptr->sc_content_detected))
-#endif
-        pcs_ptr->gm_level = GM_FULL;
-    else
-        pcs_ptr->gm_level = GM_DOWN;
-#endif
 
     // Exit TX size search when all coefficients are zero
     // 0: OFF
     // 1: ON
     pcs_ptr->tx_size_early_exit = 1;
 
-#if !ME_HME_PRUNING_CLEANUP
-    // Prune reference and reduce ME SR based on HME/ME distortion
-    // 0: OFF
-    // 1: ON
-#if MAR30_ADOPTIONS
-    if (MR_MODE || pcs_ptr->sc_content_detected)
-        pcs_ptr->prune_ref_based_me = 0;
-    else
-        pcs_ptr->prune_ref_based_me = 1;
-#else
-#if MAR20_ADOPTIONS
-    if (MR_MODE)
-        pcs_ptr->prune_ref_based_me = 0;
-    else
-        pcs_ptr->prune_ref_based_me = 1;
-#else
-    if (pcs_ptr->sc_content_detected)
-        pcs_ptr->prune_ref_based_me = 0;
-    else
-        pcs_ptr->prune_ref_based_me = 1;
-#endif
-#endif
-#endif
-#if TF_LEVELS
-#if UPGRADE_M6_M7_M8
     uint8_t perform_filtering =
         (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && pcs_ptr->sc_content_detected == 0 && scs_ptr->static_config.hierarchical_levels >= 1)
         ? 1 : 0;
-#else
-    uint8_t perform_filtering =
-        (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && pcs_ptr->sc_content_detected == 0 && scs_ptr->static_config.hierarchical_levels >= 1) &&
-        (pcs_ptr->temporal_layer_index == 0 ||(pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
-        ? 1 : 0;
-#endif
 
 
 
     if (perform_filtering) {
-#if UPGRADE_M6_M7_M8
         if (pcs_ptr->enc_mode <= ENC_M7) {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 0;
@@ -2284,31 +1246,14 @@ EbErrorType signal_derivation_multi_processes_oq(
         }
         else {
             if (pcs_ptr->temporal_layer_index == 0)
-#if REVERT_YELLOW // tf_level
-                context_ptr->tf_level = 2;
-#else
                 context_ptr->tf_level = 0;
-#endif
             else
                 context_ptr->tf_level = 3;
         }
-#else
-#if UPGRADE_M8
-        if (pcs_ptr->enc_mode <= ENC_M8) {
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
-            context_ptr->tf_level = 0;
-        }
-        else {
-            context_ptr->tf_level = 2;
-        }
-#endif
     }
     else
         context_ptr->tf_level = 3;
     set_tf_controls(context_ptr, context_ptr->tf_level);
-#endif
     return return_error;
 }
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
@@ -2319,7 +1264,6 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
     *tot_ref_frames = 0;
 
     //SVT_LOG("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
-#if MRP_CTRL
      //single ref - List0
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count_try; ++ref_idx0) {
         rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
@@ -2340,11 +1284,7 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
         }
     }
-#if  REMOVE_MRP_MODE
     if (parent_pcs_ptr->slice_type == B_SLICE)
-#else
-    if (scs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
-#endif
     {
 
         //compound Uni-Dir
@@ -2368,52 +1308,6 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
         }
     }
 
-#else
-    //single ref - List0
-    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {
-        rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
-        ref_frame_arr[(*tot_ref_frames)++] = rf[0];
-    }
-
-    //single ref - List1
-    for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count; ++ref_idx1) {
-        rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
-        ref_frame_arr[(*tot_ref_frames)++] = rf[1];
-    }
-
-    //compound Bi-Dir
-    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {
-        for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count; ++ref_idx1) {
-            rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
-            rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
-            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-        }
-    }
-
-    if (scs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
-    {
-
-        //compound Uni-Dir
-        if (parent_pcs_ptr->ref_list0_count > 1) {
-            rf[0] = LAST_FRAME;
-            rf[1] = LAST2_FRAME;
-            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-            if (parent_pcs_ptr->ref_list0_count > 2) {
-                rf[1] = LAST3_FRAME;
-                ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-                if (parent_pcs_ptr->ref_list0_count > 3) {
-                    rf[1] = GOLDEN_FRAME;
-                    ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-                }
-            }
-        }
-        if (parent_pcs_ptr->ref_list1_count > 2) {
-            rf[0] = BWDREF_FRAME;
-            rf[1] = ALTREF_FRAME;
-            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-        }
-    }
-#endif
 }
 
 static void prune_refs(PredictionStructureEntry *pred_position_ptr, Av1RpsNode *av1_rps)
@@ -4939,7 +3833,6 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     else
         pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
 
-#if OVERLAY_R2R_FIX
     // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
     {
         uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
@@ -4949,7 +3842,6 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
             EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
     }
-#endif
 
     // Pad input picture to complete border SBs
     pad_picture_to_multiple_of_sb_dimensions(
@@ -5028,7 +3920,6 @@ static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
     }
     return ahd;
 }
-#if NOISE_BASED_TF_FRAMES
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
     uint16_t stride_y);
 
@@ -5039,19 +3930,13 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
     uint32_t ss_y, EbBool include_padding);
 
 EbErrorType derive_tf_window_params(
-#else
-void derive_tf_window_params(
-#endif
     SequenceControlSet *scs_ptr,
     EncodeContext *encode_context_ptr,
     PictureParentControlSet *pcs_ptr,
-#if TF_LEVELS
     PictureDecisionContext *context_ptr,
-#endif
     uint32_t out_stride_diff64) {
 
 
-#if NOISE_BASED_TF_FRAMES
     PictureParentControlSet * picture_control_set_ptr_central = pcs_ptr;
     EbPictureBufferDesc * central_picture_ptr = picture_control_set_ptr_central->enhanced_picture_ptr;
     uint32_t encoder_bit_depth = picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
@@ -5170,16 +4055,7 @@ void derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
-#endif
-#if TF_LEVELS
-#if NOISE_BASED_TF_FRAMES
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
-#else
-    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size);
-#endif
-#else
-    int altref_nframes = scs_ptr->static_config.altref_nframes;
-#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -5187,11 +4063,7 @@ void derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-#if TF_LEVELS
         uint32_t num_future_pics = altref_nframes - 1;
-#else
-        uint32_t num_future_pics = 6;
-#endif
         uint32_t num_past_pics = 0;
         uint32_t pic_i;
         //search reord-queue to get the future pictures
@@ -5307,12 +4179,9 @@ void derive_tf_window_params(
             }
         }
     }
-#if NOISE_BASED_TF_FRAMES
     return EB_ErrorNone;
-#endif
 }
 
-#if DECOUPLE_ME_RES
 PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
     EncodeContext *encode_context_ptr,
     uint64_t ref_poc)
@@ -5336,7 +4205,6 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 
     return ref_entry_ptr;
 }
-#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -5447,9 +4315,7 @@ void* picture_decision_kernel(void *input_ptr)
 
     EncodeContext                 *encode_context_ptr;
     SequenceControlSet            *scs_ptr;
-#if DECOUPLE_ME_RES
     EbObjectWrapper               *me_wrapper_ptr;
-#endif
 
     EbObjectWrapper               *in_results_wrapper_ptr;
     PictureAnalysisResults        *in_results_ptr;
@@ -5538,13 +4404,9 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
-#if NOISE_BASED_TF_FRAMES
             parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
             parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
             parent_pcs_window[12] = parent_pcs_window[13] = NULL;
-#else
-            parent_pcs_window[0] = parent_pcs_window[1] = parent_pcs_window[2] = parent_pcs_window[3] = parent_pcs_window[4] = parent_pcs_window[5] = NULL;
-#endif
             //for poc 0, ignore previous frame check
             if (queue_entry_ptr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr == NULL)
                 window_avail = EB_FALSE;
@@ -5614,10 +4476,8 @@ void* picture_decision_kernel(void *input_ptr)
 
                 pcs_ptr->target_bit_rate = scs_ptr->static_config.target_bit_rate;
 
-#if DECOUPLE_ME_RES
                 pcs_ptr->self_updated_links = 0;
                 pcs_ptr->other_updated_links_cnt = 0;
-#endif
                 release_prev_picture_from_reorder_queue(
                     encode_context_ptr);
 
@@ -5744,14 +4604,7 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->pre_assignment_buffer_count = context_ptr->mini_gop_length[mini_gop_index];
 
                             // Update the Pred Structure if cutting short a Random Access period
-#if DECOUPLE_ME_RES
                             if (is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, mini_gop_index))
-#else
-                            if ((context_ptr->mini_gop_length[mini_gop_index] < pcs_ptr->pred_struct_ptr->pred_struct_period || context_ptr->mini_gop_idr_count[mini_gop_index] > 0) &&
-                                pcs_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS &&
-                                pcs_ptr->idr_flag == EB_FALSE &&
-                                pcs_ptr->cra_flag == EB_FALSE)
-#endif
                             {
                                 // Correct the Pred Index before switching structures
                                 if (pre_assignment_buffer_first_pass_flag == EB_TRUE)
@@ -6036,16 +4889,10 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
-#if TF_LEVELS
                                 signal_derivation_multi_processes_oq(
                                     scs_ptr,
                                     pcs_ptr,
                                     context_ptr);
-#else
-                                signal_derivation_multi_processes_oq(
-                                scs_ptr,
-                                    pcs_ptr);
-#endif
                             // Set tx_mode
                             frm_hdr->tx_mode = (pcs_ptr->tx_size_search_mode) ?
                                 TX_MODE_SELECT :
@@ -6060,9 +4907,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     while (input_queue_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
                                         input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
 
-#if DECOUPLE_ME_RES
                                         int32_t diff_n = 0;
-#endif
                                         // Modify Dependent List0
                                         dep_list_count = input_entry_ptr->list0.list_count;
                                         for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
@@ -6081,9 +4926,7 @@ void* picture_decision_kernel(void *input_ptr)
                                                 // Decrement the Reference's referenceCount
                                                 --input_entry_ptr->dependent_count;
 
-#if DECOUPLE_ME_RES
                                                 diff_n--;
-#endif
                                                 CHECK_REPORT_ERROR(
                                                     (input_entry_ptr->dependent_count != ~0u),
                                                     encode_context_ptr->app_callback_ptr,
@@ -6109,9 +4952,7 @@ void* picture_decision_kernel(void *input_ptr)
                                                 // Decrement the Reference's referenceCount
                                                 --input_entry_ptr->dependent_count;
 
-#if DECOUPLE_ME_RES
                                                 diff_n--;
-#endif
                                                 CHECK_REPORT_ERROR(
                                                     (input_entry_ptr->dependent_count != ~0u),
                                                     encode_context_ptr->app_callback_ptr,
@@ -6119,7 +4960,6 @@ void* picture_decision_kernel(void *input_ptr)
                                             }
                                         }
 
-#if DECOUPLE_ME_RES
                                         if (diff_n) {
 
                                             PictureParentControlSet * pcs_of_this_entry =
@@ -6144,7 +4984,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                                             }
                                         }
-#endif
                                         // Increment the input_queue_index Iterator
                                         input_queue_index = (input_queue_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : input_queue_index + 1;
                                     }
@@ -6161,9 +5000,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_tail_index];
                                     input_entry_ptr->input_object_ptr = pcs_ptr->pa_reference_picture_wrapper_ptr;
                                     input_entry_ptr->picture_number = pcs_ptr->picture_number;
-#if !DECOUPLE_ME_RES
-                                    input_entry_ptr->reference_entry_index = encode_context_ptr->picture_decision_pa_reference_queue_tail_index;
-#endif
                                     input_entry_ptr->is_alt_ref = pcs_ptr->is_alt_ref;
                                     encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
                                         (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
@@ -6181,100 +5017,37 @@ void* picture_decision_kernel(void *input_ptr)
                                                                             (pcs_ptr->is_overlay) ? 1 : (uint8_t)pred_position_ptr->ref_list0.reference_list_count;
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
-#if MRP_CTRL
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
-#if UPGRADE_M6_M7_M8
                                 if (pcs_ptr->sc_content_detected) {
-#if MAY12_ADOPTIONS
                                     if (pcs_ptr->enc_mode <= ENC_M2) {
-#else
-#if SHIFT_M6_SC_TO_M5
-                                    if (pcs_ptr->enc_mode <= ENC_M4) {
-#else
-#if APR25_3AM_ADOPTIONS
-                                    if (pcs_ptr->enc_mode <= ENC_M5) {
-#else
-#if MRP_ADOPTIONS
-                                    if (pcs_ptr->enc_mode <= ENC_M6) {
-#else
-                                    if (pcs_ptr->enc_mode <= ENC_M7) {
-#endif
-#endif
-#endif
-#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }
-#if APR25_12AM_ADOPTIONS
-#if MAY19_ADOPTIONS
                                     else if (pcs_ptr->enc_mode <= ENC_M4) {
-#else
-#if APR25_3AM_ADOPTIONS
-#if APR23_4AM_M6_ADOPTIONS
-                                    else if (pcs_ptr->enc_mode <= ENC_M5) {
-#else
-                                    else if (pcs_ptr->enc_mode <= ENC_M6) {
-#endif
-#else
-                                    else if (pcs_ptr->enc_mode <= ENC_M7) {
-#endif
-#endif
-#if APR25_10AM_ADOPTIONS
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
-#else
-                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
-                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
-#endif
                                     }
-#endif
                                     else {
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
                                     }
                                 }
                                 else {
-#if MRP_ADOPTIONS
                                     if (pcs_ptr->enc_mode <= ENC_M6) {
-#else
-                                    if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }
-#if APR25_12AM_ADOPTIONS
                                     else if (pcs_ptr->enc_mode <= ENC_M7) {
-#if MAY19_ADOPTIONS
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
-#else
-                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
-                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
-#endif
                                     }
-#endif
                                     else {
-#if APR25_7PM_ADOPTIONS
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
-#else
-                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
-                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
-#endif
                                     }
                                 }
-#else
-                                if (pcs_ptr->sc_content_detected){
-                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
-                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
-                                }else{
-                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
-                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
-                                }
-#endif
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
-#endif
                                 if (!pcs_ptr->is_overlay) {
                                     input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
                                     input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;
@@ -6313,27 +5086,12 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
-#if TF_LEVELS
                             if(context_ptr->tf_ctrls.enabled) {
-#else
-                            uint8_t perform_filtering =
-                                (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
-                                 pcs_ptr->sc_content_detected == 0 &&
-                                 scs_ptr->static_config.hierarchical_levels >= 1) &&
-                                ( pcs_ptr->slice_type == I_SLICE ||
-                                  (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)||
-                                  (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
-                                ? 1 : 0;
-
-                            if (perform_filtering){
-#endif
                                 derive_tf_window_params(
                                     scs_ptr,
                                     encode_context_ptr,
                                     pcs_ptr,
-#if TF_LEVELS
                                     context_ptr,
-#endif
                                     out_stride_diff64);
                                 pcs_ptr->temp_filt_prep_done = 0;
 
@@ -6439,7 +5197,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < pcs_ptr->ref_list0_count; ++ref_pic_index) {
                                     if (pcs_ptr->ref_list0_count) {
-#if DECOUPLE_ME_RES
                                         if (pcs_ptr->is_overlay)
                                         // hardcode the reference for the overlay frame
                                             ref_poc = pcs_ptr->picture_number;
@@ -6453,34 +5210,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         CHECK_REPORT_ERROR((pa_reference_entry_ptr),
                                             encode_context_ptr->app_callback_ptr,
                                             EB_ENC_PM_ERROR10);
-#else
-                                        // hardcode the reference for the overlay frame
-                                        if(pcs_ptr->is_overlay){
-                                            pa_reference_queue_index = (uint32_t)CIRCULAR_ADD(
-                                                (int32_t)input_entry_ptr->reference_entry_index,
-                                                PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                            pa_reference_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[pa_reference_queue_index];
-
-                                            // Calculate the Ref POC
-                                            ref_poc = POC_CIRCULAR_ADD(
-                                                pcs_ptr->picture_number,
-                                                0);
-                                        }
-                                        else {
-                                            pa_reference_queue_index = (uint32_t)CIRCULAR_ADD(
-                                                ((int32_t)input_entry_ptr->reference_entry_index) - input_entry_ptr->list0_ptr->reference_list[ref_pic_index],
-                                                PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                            pa_reference_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[pa_reference_queue_index];
-
-                                            // Calculate the Ref POC
-                                            ref_poc = POC_CIRCULAR_ADD(
-                                                pcs_ptr->picture_number,
-                                                -input_entry_ptr->list0_ptr->reference_list[ref_pic_index] /*
-                                                scs_ptr->bits_for_picture_order_count*/);
-                                        }
-#endif
                                             // Set the Reference Object
                                         pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->input_object_ptr;
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
@@ -6498,7 +5227,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < pcs_ptr->ref_list1_count; ++ref_pic_index) {
                                     if (pcs_ptr->ref_list1_count) {
-#if DECOUPLE_ME_RES
                                         ref_poc = POC_CIRCULAR_ADD(
                                             pcs_ptr->picture_number,
                                             -input_entry_ptr->list1_ptr->reference_list[ref_pic_index]);
@@ -6509,19 +5237,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         CHECK_REPORT_ERROR((pa_reference_entry_ptr),
                                             encode_context_ptr->app_callback_ptr,
                                             EB_ENC_PM_ERROR10);
-#else
-                                        pa_reference_queue_index = (uint32_t)CIRCULAR_ADD(
-                                            ((int32_t)input_entry_ptr->reference_entry_index) - input_entry_ptr->list1_ptr->reference_list[ref_pic_index],
-                                            PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
-
-                                        pa_reference_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[pa_reference_queue_index];
-
-                                        // Calculate the Ref POC
-                                        ref_poc = POC_CIRCULAR_ADD(
-                                            pcs_ptr->picture_number,
-                                            -input_entry_ptr->list1_ptr->reference_list[ref_pic_index]/*,
-                                            scs_ptr->bits_for_picture_order_count*/);
-#endif
                                         // Set the Reference Object
                                         pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index] = pa_reference_entry_ptr->input_object_ptr;
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = ref_poc;
@@ -6555,33 +5270,8 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
                             pcs_ptr->me_segments_completion_mask = 0;
-#if DECOUPLE_ME_RES
                             uint32_t pic_it = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
                             context_ptr->mg_pictures_array[pic_it] = pcs_ptr;
-#else
-                            // Post the results to the ME processes
-                            {
-                                uint32_t segment_index;
-
-                                for (segment_index = 0; segment_index < pcs_ptr->me_segments_total_count; ++segment_index) {
-                                    // Get Empty Results Object
-                                    eb_get_empty_object(
-                                            context_ptr->picture_decision_results_output_fifo_ptr,
-                                            &out_results_wrapper_ptr);
-
-                                    out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
-                                    if (pcs_ptr->is_overlay)
-                                        out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
-                                    else
-                                        out_results_ptr->pcs_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[out_stride_diff64];
-
-                                    out_results_ptr->segment_index = segment_index;
-                                    out_results_ptr->task_type = 0;
-                                    // Post the Full Results Object
-                                    eb_post_full_object(out_results_wrapper_ptr);
-                                }
-                            }
-#endif
                             if (out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
                                 // Increment the Decode Base Number
                                 encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index] + has_overlay;
@@ -6596,7 +5286,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
                         }
-#if DECOUPLE_ME_RES
                         uint32_t mg_size = context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay - context_ptr->mini_gop_start_index[mini_gop_index]+1;
 
                         //sort based on decoder order
@@ -6646,7 +5335,6 @@ void* picture_decision_kernel(void *input_ptr)
 
 
                         }
-#endif
                     } // End MINI GOPs loop
                 }
 

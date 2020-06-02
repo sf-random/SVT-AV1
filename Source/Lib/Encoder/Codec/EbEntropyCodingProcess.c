@@ -171,12 +171,6 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
     uint16_t tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows *
                         pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
     uint16_t tile_idx = 0;
-#if !EC_MEM_OPT
-    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-        reset_bitstream(entropy_coder_get_bitstream_ptr(
-            pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr));
-    }
-#endif
     uint32_t entropy_coding_qp;
 
     context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
@@ -397,9 +391,7 @@ void *entropy_coding_kernel(void *input_ptr) {
         uint16_t tile_width_in_sb = (cm->tiles_info.tile_col_start_mi[tile_col + 1] -
                                      cm->tiles_info.tile_col_start_mi[tile_col]) >>
                                     scs_ptr->seq_header.sb_size_log2;
-#if PR_1210
         EbBool frame_entropy_done = EB_FALSE;
-#endif
         {
             initial_process_call = EB_TRUE;
             y_sb_index           = rest_results_ptr->completed_sb_row_index_start;
@@ -523,12 +515,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                             for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
-#if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL)
-#else
-                                    pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL &&
-                                    pcs_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
-#endif
                                     write_stat_to_file(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
@@ -546,12 +533,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                             for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
-#if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
-#else
-                                    pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL &&
-                                    pcs_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
-#endif
                                     write_stat_to_file(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
@@ -564,35 +546,18 @@ void *entropy_coding_kernel(void *input_ptr) {
                                     eb_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
                             }
 
-#if PAL_MEM_OPT
                             //free palette data
                             if (pcs_ptr->tile_tok[0][0])
                                 EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
-#endif
 
 
 
-#if PR_1210
                             frame_entropy_done = EB_TRUE;
-#else
-                            // Get Empty Entropy Coding Results
-                            eb_get_empty_object(context_ptr->entropy_coding_output_fifo_ptr,
-                                                &entropy_coding_results_wrapper_ptr);
-                            entropy_coding_results_ptr =
-                                (EntropyCodingResults *)
-                                    entropy_coding_results_wrapper_ptr->object_ptr;
-                            entropy_coding_results_ptr->pcs_wrapper_ptr =
-                                rest_results_ptr->pcs_wrapper_ptr;
-
-                            // Post EntropyCoding Results
-                            eb_post_full_object(entropy_coding_results_wrapper_ptr);
-#endif
                         }
                     } // End if(PictureCompleteFlag)
                 }
                 eb_release_mutex(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_mutex);
             }
-#if PR_1210
             // Move the post here.
             // In some cases, PAK ends fast, pcs will be released before we quit the while-loop
             if (frame_entropy_done) {
@@ -608,7 +573,6 @@ void *entropy_coding_kernel(void *input_ptr) {
                 // Post EntropyCoding Results
                 eb_post_full_object(entropy_coding_results_wrapper_ptr);
             }
-#endif
         }
         // Release Mode Decision Results
         eb_release_object(rest_results_wrapper_ptr);

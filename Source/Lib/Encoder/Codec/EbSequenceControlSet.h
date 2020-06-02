@@ -76,17 +76,8 @@ typedef struct SequenceControlSet {
     EbBool    enable_altrefs;
     /*!<  */
     EbBlockMeanPrec          block_mean_calc_prec;
-#if !REMOVE_MRP_MODE
-    /*!< MRP (The signal changes per preset; 0: MRP mode 0, 1: MRP mode 1) Default is 0. */
-    uint8_t mrp_mode;
-#endif
     /*!< CDF (The signal changes per preset; 0: CDF update, 1: no CDF update) Default is 0.*/
     uint8_t cdf_mode;
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-    /*!< Non-square present flag to use for memory allocation
-        (The signal changes per preset; 0: NSQ absent, 1: NSQ present) Default is 1. */
-    uint8_t nsq_present;
-#endif
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
         (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
     uint8_t down_sampling_method_me_search;
@@ -169,9 +160,7 @@ typedef struct SequenceControlSet {
 
     /*!< Picture, reference, recon and input output buffer count */
     uint32_t picture_control_set_pool_init_count;
-#if DECOUPLE_ME_RES
     uint32_t me_pool_init_count;
-#endif
     uint32_t picture_control_set_pool_init_count_child;
     uint32_t pa_reference_picture_buffer_init_count;
     uint32_t reference_picture_buffer_init_count;

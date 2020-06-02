@@ -1423,11 +1423,7 @@ void residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pr
 
 uint64_t spatial_full_distortion_kernel4x_n_avx2_intrin(uint8_t *input, uint32_t input_offset,
                                                         uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                                         int32_t recon_offset,
-#else
-                                                        uint32_t recon_offset,
-#endif
                                                         uint32_t recon_stride, uint32_t area_width,
                                                         uint32_t area_height) {
     int32_t row_count = area_height;
@@ -1460,11 +1456,7 @@ uint64_t spatial_full_distortion_kernel4x_n_avx2_intrin(uint8_t *input, uint32_t
 
 uint64_t spatial_full_distortion_kernel8x_n_avx2_intrin(uint8_t *input, uint32_t input_offset,
                                                         uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                                         int32_t recon_offset,
-#else
-                                                        uint32_t recon_offset,
-#endif
                                                         uint32_t recon_stride, uint32_t area_width,
                                                         uint32_t area_height) {
     int32_t row_count = area_height;
@@ -1491,11 +1483,7 @@ uint64_t spatial_full_distortion_kernel8x_n_avx2_intrin(uint8_t *input, uint32_t
 
 uint64_t spatial_full_distortion_kernel16x_n_avx2_intrin(uint8_t *input, uint32_t input_offset,
                                                          uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                                          int32_t recon_offset,
-#else
-                                                         uint32_t recon_offset,
-#endif
                                                          uint32_t recon_stride, uint32_t area_width,
                                                          uint32_t area_height) {
     int32_t row_count = area_height;
@@ -1522,11 +1510,7 @@ static INLINE void spatial_full_distortion_kernel_64_avx2_intrin(const uint8_t *
 
 uint64_t spatial_full_distortion_kernel32x_n_avx2_intrin(uint8_t *input, uint32_t input_offset,
                                                          uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                                          int32_t recon_offset,
-#else
-                                                         uint32_t recon_offset,
-#endif
                                                          uint32_t recon_stride, uint32_t area_width,
                                                          uint32_t area_height) {
     int32_t row_count = area_height;
@@ -1546,11 +1530,7 @@ uint64_t spatial_full_distortion_kernel32x_n_avx2_intrin(uint8_t *input, uint32_
 
 uint64_t spatial_full_distortion_kernel64x_n_avx2_intrin(uint8_t *input, uint32_t input_offset,
                                                          uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                                          int32_t recon_offset,
-#else
-                                                         uint32_t recon_offset,
-#endif
                                                          uint32_t recon_stride, uint32_t area_width,
                                                          uint32_t area_height) {
     int32_t row_count = area_height;
@@ -1570,11 +1550,7 @@ uint64_t spatial_full_distortion_kernel64x_n_avx2_intrin(uint8_t *input, uint32_
 
 uint64_t spatial_full_distortion_kernel128x_n_avx2_intrin(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
     int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
-#else
-    uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
-#endif
     int32_t row_count = area_height;
     __m256i sum       = _mm256_setzero_si256();
     input += input_offset;
@@ -1593,11 +1569,7 @@ uint64_t spatial_full_distortion_kernel128x_n_avx2_intrin(
 
 uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset,
                                              uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                              int32_t recon_offset, uint32_t recon_stride,
-#else
-                                             uint32_t recon_offset, uint32_t recon_stride,
-#endif
                                              uint32_t area_width, uint32_t area_height) {
     const uint32_t leftover = area_width & 31;
     int32_t        h;
@@ -1736,11 +1708,7 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
  ************************************************/
 uint64_t full_distortion_kernel16_bits_avx2(uint8_t *input, uint32_t input_offset,
                                             uint32_t input_stride, uint8_t *recon,
-#if INT_RECON_OFFSET_FIX
                                             int32_t recon_offset, uint32_t recon_stride,
-#else
-                                            uint32_t recon_offset, uint32_t recon_stride,
-#endif
                                             uint32_t area_width, uint32_t area_height) {
     const uint32_t leftover = area_width & 15;
     uint32_t       w, h;

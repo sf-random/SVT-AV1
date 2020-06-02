@@ -136,9 +136,7 @@
 #define MIN_QP_TOKEN "-min-qp"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
-#if TPL_LA
 #define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
-#endif
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
 #define TILE_COL_TOKEN "-tile-columns"
@@ -372,11 +370,6 @@ static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
 static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
     cfg->wn_filter_mode = strtol(value, NULL, 0);
 };
-#if !REMOVE_COMBINE_CLASS12
-static void set_class_12_flag(const char *value, EbConfig *cfg) {
-    cfg->combine_class_12 = strtol(value, NULL, 0);
-};
-#endif
 static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
     cfg->edge_skp_angle_intra = strtol(value, NULL, 0);
 };
@@ -400,9 +393,6 @@ static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
 };
 static void set_spatial_sse_fl_flag(const char *value, EbConfig *cfg) {
     cfg->spatial_sse_fl = strtol(value, NULL, 0);
-};
-static void set_enable_sub_pel_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_subpel = strtol(value, NULL, 0);
 };
 static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
     cfg->over_bndry_blk = strtol(value, NULL, 0);
@@ -470,11 +460,9 @@ static void set_scene_change_detection(const char *value, EbConfig *cfg) {
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->look_ahead_distance = strtoul(value, NULL, 0);
 };
-#if TPL_LA
 static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
     cfg->enable_tpl_la = strtoul(value, NULL, 0);
 };
-#endif
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
     cfg->rate_control_mode = strtoul(value, NULL, 0);
 };
@@ -910,10 +898,6 @@ ConfigEntry config_entry_specific[] = {
       "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
       set_spatial_sse_fl_flag},
      {SINGLE_INPUT,
-      SUBPEL_TOKEN,
-      "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_sub_pel_flag},
-     {SINGLE_INPUT,
       OVR_BNDRY_BLK_NEW_TOKEN,
       "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
       set_over_bndry_blk_flag},
@@ -955,12 +939,6 @@ ConfigEntry config_entry_specific[] = {
       GLOBAL_MOTION_ENABLE_NEW_TOKEN,
       "Enable global motion (0: OFF, 1: ON [default])",
       set_enable_global_motion_flag},
-
-     // CLASS 12
-     {SINGLE_INPUT,
-      CLASS_12_NEW_TOKEN,
-      "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
-      set_class_12_flag},
      // EDGE SKIP ANGLE INTRA
      {SINGLE_INPUT,
       EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
@@ -1235,9 +1213,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance", set_look_ahead_distance},
-#if TPL_LA
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTplLA", set_enable_tpl_la},
-#endif
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
@@ -1258,7 +1234,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
     {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_fl_flag},
-    {SINGLE_INPUT, SUBPEL_TOKEN, "Subpel", set_enable_sub_pel_flag},
     {SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN, "OverBoundryBlock", set_over_bndry_blk_flag},
     {SINGLE_INPUT,
      NEW_NEAREST_COMB_INJECT_TOKEN,
@@ -1279,8 +1254,6 @@ ConfigEntry config_entry[] = {
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
 
-    // CLASS 12
-    {SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", set_class_12_flag},
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
@@ -1509,9 +1482,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->qp                  = 50;
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if TPL_LA
     config_ptr->enable_tpl_la       = 0;
-#endif
     config_ptr->target_bit_rate     = 7000000;
     config_ptr->max_qp_allowed      = 63;
     config_ptr->min_qp_allowed      = 10;
@@ -1529,9 +1500,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_restoration_filtering              = DEFAULT;
     config_ptr->sg_filter_mode                            = DEFAULT;
     config_ptr->wn_filter_mode                            = DEFAULT;
-#if !REMOVE_COMBINE_CLASS12
-    config_ptr->combine_class_12                          = DEFAULT;
-#endif
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
     config_ptr->intra_angle_delta                         = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
@@ -1540,7 +1508,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->spatial_sse_fl                            = DEFAULT;
-    config_ptr->enable_subpel                             = DEFAULT;
     config_ptr->over_bndry_blk                            = DEFAULT;
     config_ptr->new_nearest_comb_inject                   = DEFAULT;
     config_ptr->prune_unipred_me                          = DEFAULT;

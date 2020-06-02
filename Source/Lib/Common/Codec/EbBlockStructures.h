@@ -32,7 +32,6 @@ typedef struct mv32 {
     int32_t col;
 } MV32;
 
-#if TPL_LA
 #define GET_MV_RAWPEL(x) (((x) + 3 + ((x) >= 0)) >> 3)
 #define GET_MV_SUBPEL(x) ((x)*8)
 
@@ -58,7 +57,6 @@ typedef struct OisMbResults {
     int64_t intra_cost;
     int32_t intra_mode;
 } OisMbResults;
-#endif
 
 typedef struct CandidateMv {
     IntMv   this_mv;

@@ -83,22 +83,11 @@
 #define EB_OUTPUTRECONBUFFERSIZE                                        (MAX_PICTURE_WIDTH_SIZE*MAX_PICTURE_HEIGHT_SIZE*2)   // Recon Slice Size
 #define EB_OUTPUTSTATISTICSBUFFERSIZE                                   0x30            // 6X8 (8 Bytes for Y, U, V, number of bits, picture number, QP)
 #define EOS_NAL_BUFFER_SIZE                                             0x0010 // Bitstream used to code EOS NAL
-#if !OUTPUT_MEM_OPT
-#if NEW_RESOLUTION_RANGES
-#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)                ((ResolutionSize) < (INPUT_SIZE_720p_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0  )
-#else
-#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)                ((ResolutionSize) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0  )
-#endif
-#endif
 
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
-#if NOISE_BASED_TF_FRAMES
 #define SCD_LAD                                             12
-#else
-#define SCD_LAD                                              6
-#endif
 /**************************************
  * Globals
  **************************************/
@@ -345,11 +334,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
         if (core_count <= SINGLE_CORE_COUNT)
             ppcs_count = min_ppcs_count;
         else{
-#if NEW_RESOLUTION_RANGES
             if (res_class <= INPUT_SIZE_480p_RANGE) {
-#else
-            if (res_class < INPUT_SIZE_1080i_RANGE){
-#endif
                 if (core_count < CONS_CORE_COUNT)
                     ppcs_count = ppcs_count * 1;                // 1 sec
                 else if (core_count < LOW_SERVER_CORE_COUNT)
@@ -527,9 +512,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
-#if DECOUPLE_ME_RES
     uint32_t min_me;
-#endif
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
@@ -561,15 +544,9 @@ EbErrorType load_default_buffer_configuration_settings(
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
 
-#if DECOUPLE_ME_RES
         min_me = scs_ptr->static_config.look_ahead_distance==0 ? 1 : min_parent;
-#endif
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
-#if TPL_LA
         min_paref = 25 + scs_ptr->scd_delay + eos_delay + (scs_ptr->static_config.enable_tpl_la ? needed_lad_pictures : 0);
-#else
-        min_paref = 25 + scs_ptr->scd_delay + eos_delay;
-#endif
         if (scs_ptr->static_config.enable_overlays)
             min_paref *= 2;
 
@@ -587,9 +564,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
-#if DECOUPLE_ME_RES
         scs_ptr->me_pool_init_count = min_me;
-#endif
     }
     else {
         scs_ptr->input_buffer_fifo_init_count              = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
@@ -599,9 +574,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
         scs_ptr->overlay_input_picture_buffer_init_count   = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
-#if DECOUPLE_ME_RES
         scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
-#endif
     }
 
     //#====================== Inter process Fifos ======================
@@ -786,9 +759,7 @@ static void eb_enc_handle_dctor(EbPtr p)
     EB_FREE_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->scs_pool_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#if DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -1009,9 +980,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
     * Picture Control Set: Parent
     ************************************/
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#if DECOUPLE_ME_RES
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of SBs, not samples
         PictureControlSetInitData input_data;
@@ -1034,12 +1003,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
-#if !REMOVE_MRP_MODE
-        input_data.mrp_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_mode;
-#endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-        input_data.nsq_present = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->nsq_present;
-#endif
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
@@ -1050,9 +1013,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
 #endif
-#if TPL_LA
         input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_tpl_la;
-#endif
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -1063,7 +1024,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             picture_parent_control_set_creator,
             &input_data,
             NULL);
-#if DECOUPLE_ME_RES
         EB_NEW(
             enc_handle_ptr->me_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1073,7 +1033,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
             me_creator,
             &input_data,
             NULL);
-#endif
     }
 
     /************************************
@@ -1118,10 +1077,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_16bit_pipeline;
-#if RATE_MEM_OPT
-        input_data.serial_rate_est = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pic_based_rate_est &&
-            input_data.enc_dec_segment_col == 1 && input_data.enc_dec_segment_row == 1 ?  1 : 0;
-#endif
 
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
@@ -1984,51 +1939,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->use_output_stat_file)
         scs_ptr->static_config.super_block_size = 64;
     else
-#if MAR10_ADOPTIONS
         if (scs_ptr->static_config.screen_content_mode == 1)
-#if DEPTH_PART_CLEAN_UP
-#if APR08_ADOPTIONS
-#if M8_SB_SIZE
-#if UPGRADE_M6_M7_M8
             scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 128;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 64;
-#endif
-#else
-#if MAR11_ADOPTIONS
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M1) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
-#endif
-#endif
         else
-#if DEPTH_PART_CLEAN_UP
-#if M8_SB_SIZE
-#if UPGRADE_M6_M7_M8
             scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 128;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#endif
-#else
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
-#endif
-#if FIX_RC_SB_SIZE
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
-#else
-    scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 1) ? 64 : scs_ptr->static_config.super_block_size;
-#endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     // Configure the padding
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
@@ -2040,64 +1955,20 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         (scs_ptr->static_config.rate_control_mode > 0) ||
         scs_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : scs_ptr->static_config.enable_overlays;
-#if !REMOVE_MRP_MODE
-    //0: MRP Mode 0 (4,3)
-    //1: MRP Mode 1 (2,2)
-#if MAR2_M8_ADOPTIONS
-    // Memory Footprint reduction tool ONLY if no MRP (should be controlled using an API signal and not f(enc_mode))
-    scs_ptr->mrp_mode = 0;
-#else
-    scs_ptr->mrp_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
-#endif
-#endif
     //0: ON
     //1: OFF
-#if MAR2_M7_ADOPTIONS
-#if MAR10_ADOPTIONS
     // Memory Footprint reduction tool ONLY if no CDF (should be controlled using an API signal and not f(enc_mode))
     scs_ptr->cdf_mode = 0;
-#else
-    scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
-#endif
-#else
-    scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
-#endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-    //0: NSQ absent
-    //1: NSQ present
-#if MAR10_ADOPTIONS
-        // Memory Footprint reduction tool ONLY if no NSQ (should be controlled using an API signal and not f(enc_mode))
-    scs_ptr->nsq_present = 1;
-#else
-    scs_ptr->nsq_present = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#endif
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
     if (scs_ptr->static_config.screen_content_mode == 1)
-#if MAR3_M6_ADOPTIONS
-#if MAR10_ADOPTIONS
         if (scs_ptr->static_config.enc_mode <= ENC_M8)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M6)
-#endif
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M4)
-#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
     else
-#if MAR17_ADOPTIONS
         if (scs_ptr->static_config.enc_mode <= ENC_M8)
-#else
-#if MAR3_M6_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M6)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M4)
-#endif
-#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
@@ -2107,37 +1978,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // 0                            0: not allowed
     // 1                            1: allowed
     if (scs_ptr->static_config.over_bndry_blk == DEFAULT)
-#if OVER_BOUNDARY_BLOCK_MODE_1_FOR_ALL
         scs_ptr->over_boundary_block_mode = 1;
-#else
-#if MAR17_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M7)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M5)
-#endif
-            scs_ptr->over_boundary_block_mode = 1;
-        else
-            scs_ptr->over_boundary_block_mode = 0;
-#endif
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
         if (scs_ptr->static_config.screen_content_mode == 1)
             scs_ptr->mfmv_enabled = 0;
         else
-#if MAR3_M2_ADOPTIONS
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#endif
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
-#endif
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 
@@ -2171,27 +2019,6 @@ void copy_api_from_app(
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
 
     //hack for enc_modes to allow user see modes 0..6
-#if REMAP_MODES
-    uint8_t enc_mode_cfg = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
-    if (enc_mode_cfg == ENC_M0)
-        scs_ptr->static_config.enc_mode = ENC_M0;
-    else if (enc_mode_cfg == ENC_M1)
-        scs_ptr->static_config.enc_mode = ENC_M1;
-    else if (enc_mode_cfg == ENC_M2)
-        scs_ptr->static_config.enc_mode = ENC_M3;
-    else if (enc_mode_cfg == ENC_M3)
-        scs_ptr->static_config.enc_mode = ENC_M5;
-    else if (enc_mode_cfg == ENC_M4)
-        scs_ptr->static_config.enc_mode = ENC_M6;
-    else if (enc_mode_cfg == ENC_M5)
-        scs_ptr->static_config.enc_mode = ENC_M7;
-    else if (enc_mode_cfg == ENC_M6)
-        scs_ptr->static_config.enc_mode = ENC_M8;
-    else
-        scs_ptr->static_config.enc_mode = ENC_M8;
-
-    printf("Going to Run M%i \n", scs_ptr->static_config.enc_mode);
-#endif
 
 
     scs_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->snd_pass_enc_mode;
@@ -2223,10 +2050,6 @@ void copy_api_from_app(
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
     scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
 
-#if !REMOVE_COMBINE_CLASS12
-    //combine class 12
-    scs_ptr->static_config.combine_class_12             = ((EbSvtAv1EncConfiguration*)config_struct)->combine_class_12;
-#endif
     // edge skip angle intra
     scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
     // intra angle delta
@@ -2239,14 +2062,10 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_redundant_blk         = ((EbSvtAv1EncConfiguration*)config_struct)->enable_redundant_blk;
     // spatial sse in full loop
     scs_ptr->static_config.spatial_sse_fl               = ((EbSvtAv1EncConfiguration*)config_struct)->spatial_sse_fl;
-    // subpel
-    scs_ptr->static_config.enable_subpel                = ((EbSvtAv1EncConfiguration*)config_struct)->enable_subpel;
     // over boundry block mode
     scs_ptr->static_config.over_bndry_blk               = ((EbSvtAv1EncConfiguration*)config_struct)->over_bndry_blk;
     // new nearest comb injection
     scs_ptr->static_config.new_nearest_comb_inject      = ((EbSvtAv1EncConfiguration*)config_struct)->new_nearest_comb_inject;
-    // prune unipred at me
-    scs_ptr->static_config.prune_unipred_me             = ((EbSvtAv1EncConfiguration*)config_struct)->prune_unipred_me;
     //prune ref frame for rec partitions
     scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
     // NSQ table
@@ -2401,14 +2220,12 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
-#if TPL_LA
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
     scs_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)config_struct)->frames_to_be_encoded;
     if (scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.look_ahead_distance > (uint32_t)0) {
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be 32 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = 32;
     }
-#endif
 
     scs_ptr->static_config.enable_altrefs = config_struct->enable_altrefs;
     scs_ptr->static_config.altref_strength = config_struct->altref_strength;
@@ -2890,13 +2707,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-#if !REMOVE_COMBINE_CLASS12
-    if (config->combine_class_12 != 0 && config->combine_class_12 != 1 && config->combine_class_12 != -1) {
-      SVT_LOG("Error instance %u: Invalid combine MD Class1&2 flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->combine_class_12);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
-
     if (config->edge_skp_angle_intra != 0 && config->edge_skp_angle_intra != 1 && config->edge_skp_angle_intra != -1) {
       SVT_LOG("Error instance %u: Invalid Enable skip angle intra based on edge flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->edge_skp_angle_intra);
       return_error = EB_ErrorBadParameter;
@@ -2936,12 +2746,6 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid spatial_sse_fl flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->spatial_sse_fl);
       return_error = EB_ErrorBadParameter;
     }
-#if !REMOVE_ME_SUBPEL_CODE
-    if (config->enable_subpel != 0 && config->enable_subpel != 1 && config->enable_subpel != -1) {
-      SVT_LOG("Error instance %u: Invalid enable_subpel flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_subpel);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
 
     if (config->over_bndry_blk != 0 && config->over_bndry_blk != 1 && config->over_bndry_blk != -1) {
       SVT_LOG("Error instance %u: Invalid over_bndry_blk flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->over_bndry_blk);
@@ -2952,12 +2756,6 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid new_nearest_comb_inject flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->new_nearest_comb_inject);
       return_error = EB_ErrorBadParameter;
     }
-
-    if (config->prune_unipred_me != 0 && config->prune_unipred_me != 1 && config->prune_unipred_me != -1) {
-      SVT_LOG("Error instance %u: Invalid prune_unipred_me flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_unipred_me);
-      return_error = EB_ErrorBadParameter;
-    }
-
     if (config->prune_ref_rec_part != 0 && config->prune_ref_rec_part != 1 && config->prune_ref_rec_part != -1) {
       SVT_LOG("Error instance %u: Invalid prune_ref_rec_part flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_ref_rec_part);
       return_error = EB_ErrorBadParameter;
@@ -3084,10 +2882,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if TPL_LA
     config_ptr->enable_tpl_la = 0;
     config_ptr->frames_to_be_encoded = 0;
-#endif
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;
@@ -3106,19 +2902,14 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->wn_filter_mode = DEFAULT;
     config_ptr->edge_skp_angle_intra = DEFAULT;
     config_ptr->intra_angle_delta = DEFAULT;
-#if !REMOVE_COMBINE_CLASS12
-    config_ptr->combine_class_12 = DEFAULT;
-#endif
     config_ptr->inter_intra_compound = DEFAULT;
     config_ptr->enable_paeth = DEFAULT;
     config_ptr->enable_smooth = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
     config_ptr->enable_redundant_blk = DEFAULT;
     config_ptr->spatial_sse_fl = DEFAULT;
-    config_ptr->enable_subpel = DEFAULT;
     config_ptr->over_bndry_blk = DEFAULT;
     config_ptr->new_nearest_comb_inject = DEFAULT;
-    config_ptr->prune_unipred_me = DEFAULT;
     config_ptr->prune_ref_rec_part = DEFAULT;
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
@@ -3198,11 +2989,7 @@ EbErrorType eb_svt_enc_init_parameter(
 
     // Alt-Ref default values
     config_ptr->enable_altrefs = EB_TRUE;
-#if NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = ALTREF_MAX_NFRAMES;
-#else
-    config_ptr->altref_nframes = 7;
-#endif
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;
 
@@ -3387,10 +3174,8 @@ EB_API EbErrorType eb_svt_enc_stream_header(
     Bitstream                bitstream;
     OutputBitstreamUnit      output_bitstream;
     EbBufferHeaderType      *output_stream_buffer;
-#if OUTPUT_MEM_OPT
     uint32_t output_buffer_size =
         (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height));
-#endif
 
     memset(&bitstream, 0, sizeof(Bitstream));
     memset(&output_bitstream, 0, sizeof(OutputBitstreamUnit));
@@ -3401,22 +3186,14 @@ EB_API EbErrorType eb_svt_enc_stream_header(
         return EB_ErrorInsufficientResources;
     }
 
-#if OUTPUT_MEM_OPT
     output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * output_buffer_size);
-#else
-    output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * PACKETIZATION_PROCESS_BUFFER_SIZE);
-#endif
     if (!output_stream_buffer->p_buffer) {
         free(output_stream_buffer);
         return EB_ErrorInsufficientResources;
     }
 
     output_stream_buffer->size = sizeof(EbBufferHeaderType);
-#if OUTPUT_MEM_OPT
     output_stream_buffer->n_alloc_len = output_buffer_size;
-#else
-    output_stream_buffer->n_alloc_len = PACKETIZATION_PROCESS_BUFFER_SIZE;
-#endif
     output_stream_buffer->p_app_private = NULL;
     output_stream_buffer->pic_type = EB_AV1_INVALID_PICTURE;
     output_stream_buffer->n_filled_len = 0;
