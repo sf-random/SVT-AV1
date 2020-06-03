@@ -472,9 +472,11 @@ extern "C" {
 #define TPL_IMP_1PASS              1 // improve the tpl 1 pass by getting actions from aom 1 pass
 #define TPL_IMP_2PASS              1 // improve the tpl two pass by getting actions from old 2 pass
 #define TPL_IMP_USE_QPS            1 // use QPS in tpl
+#define TPL_IMP_RECON_INTRA        1 // use recon samples for intra in tpl
+#define TPL_IMP_TABLES              1
 
 
-#define TPL_IMP_RECON_INTRA        0 // WIP use recon samples for intra in tpl
+#define TPL_IMP_BETA 0 // WIP
 #define TPL_IMP_COST_UPDATE        0 // WIP
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
