@@ -9631,6 +9631,8 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 
 #if FULL_TXS
         context_ptr->md_staging_tx_size_mode = 1;
+        // reset tx_depth =0
+        candidate_buffer->candidate_ptr->tx_depth = 0;
 #else
 #if MR_MODE
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
