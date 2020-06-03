@@ -3343,7 +3343,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 int32_t best_dual_mode = 0;
                 // Find best of {R}x{R,Sm,Sh}
                 // EIGHTTAP_REGULAR mode is calculated beforehand
+#if FIX_DUAL_IFS
+                for (i = (SWITCHABLE_FILTERS - 1); i >= 1; --i) {
+#else
                 for (i = 1; i < SWITCHABLE_FILTERS; ++i) {
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      (InterpFilter)av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                                            (InterpFilter)filter_sets[i][1]);
@@ -3401,8 +3405,13 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 }
 
                 // From best of horizontal EIGHTTAP_REGULAR modes, check vertical modes
+#if FIX_DUAL_IFS
+                for (int i = (best_dual_mode + (SWITCHABLE_FILTERS * 2));
+                    i >= (best_dual_mode + SWITCHABLE_FILTERS); i -= SWITCHABLE_FILTERS) {
+#else
                 for (i = best_dual_mode + SWITCHABLE_FILTERS; i < filter_set_size;
                      i += SWITCHABLE_FILTERS) {
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                              (InterpFilter)filter_sets[i][1]);

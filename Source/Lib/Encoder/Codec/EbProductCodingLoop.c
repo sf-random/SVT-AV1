@@ -9029,6 +9029,15 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     // Set Skip Flag
     candidate_ptr->skip_flag = EB_FALSE;
 
+#if FULL_TXS
+    // Reset INTRA pred samples if TX size performed @ a previous stage to re-generate tx_depth=0 pred samples  
+    if (context_ptr->md_stage == MD_STAGE_3) {
+        if (!is_inter) {
+            product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
+                context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+        }
+    }  
+#endif
     if (candidate_ptr->type != INTRA_MODE) {
 #if REFACTOR_SIGNALS
         if (context_ptr->md_staging_perform_inter_pred) {
@@ -9312,8 +9321,13 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
     uint32_t cand_index;
 
     // Set MD Staging full_loop_core settings
+#if FULL_TXS
+    context_ptr->md_staging_tx_size_mode = 1;
+#else
     context_ptr->md_staging_tx_size_mode = 0;
+#endif
     context_ptr->md_staging_tx_search        = 0;
+
     context_ptr->md_staging_skip_full_chroma = EB_TRUE;
     context_ptr->md_staging_skip_rdoq        = EB_TRUE;
 #if ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS
@@ -9613,6 +9627,11 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
+
+
+#if FULL_TXS
+        context_ptr->md_staging_tx_size_mode = 1;
+#else
 #if MR_MODE
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
 #else
@@ -9629,6 +9648,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7) ? 1 : 0;
 #endif
 #endif
+#endif
 #if CAND_PRUN_OPT
         context_ptr->md_staging_tx_search = 1;
 #else
@@ -9642,6 +9662,8 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 ? 2
                 : 1;
 #endif
+
+
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
         context_ptr->md_staging_skip_rdoq = EB_FALSE;

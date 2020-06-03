@@ -1991,6 +1991,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->tx_size_search_mode = 0;
 
+#if FULL_TXS
+    pcs_ptr->tx_size_search_mode = 1;
+#endif
+
 #if APR22_ADOPTIONS
     // Assign whether to use TXS in inter classes (if TXS is ON)
     // 0 OFF - TXS in intra classes only
