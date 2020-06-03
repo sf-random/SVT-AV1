@@ -3250,11 +3250,19 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
+
+#if CHROMA_IFS
     EbBool           use_uv =
-            (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
-             md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND)
-            ? EB_TRUE
-            : EB_FALSE;
+        (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1)
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+    EbBool           use_uv =
+        (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
+            md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND)
+        ? EB_TRUE
+        : EB_FALSE;
+#endif
     const int32_t num_planes      = use_uv ? MAX_MB_PLANE : 1;
     int64_t       rd              = INT64_MAX;
     int32_t       switchable_rate = 0;

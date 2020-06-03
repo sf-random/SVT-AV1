@@ -38,6 +38,11 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define FULL_IFS 1
+#define DUAL_IFS 0
+#define CHROMA_IFS 0
+#define IFS_MD_STAGE_1 0
+
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
 #define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
 
