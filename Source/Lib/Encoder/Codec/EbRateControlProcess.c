@@ -5302,9 +5302,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
     } else if (!is_src_frame_alt_ref &&
                (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame)) {
 #if TPL_IMP_1PASS
-        double min_boost_factor = sqrt(pcs_ptr->parent_pcs_ptr->hierarchical_levels << 4);
-        int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw;
+        double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+        //int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw * 3 / 2;
+        int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + scs_ptr->static_config.look_ahead_distance;
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
+        //SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t hl=%d, min_boost_factor=%f\n", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, rc->gfu_boost, (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0), pcs_ptr->parent_pcs_ptr->hierarchical_levels, min_boost_factor);
 #else
         rc->gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
 #endif
@@ -5353,6 +5355,8 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 
     adjust_active_best_and_worst_quality(pcs_ptr, rc, rf_level, &active_worst_quality, &active_best_quality);
     q = active_best_quality;
+    //if (refresh_alt_ref_frame)
+    //    SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t num_stats_required_for_gfu_boost=%d, q=%d\n", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, rc->gfu_boost, (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0), pcs_ptr->parent_pcs_ptr->frames_in_sw + scs_ptr->static_config.look_ahead_distance, q);
     clamp(q, active_best_quality, active_worst_quality);
 
     return q;

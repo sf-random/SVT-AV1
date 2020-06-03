@@ -469,7 +469,7 @@ extern "C" {
 
 
 #define LAD_MEM_RED                1 // tpl works with lad 16. limit the look ahead to be 16
-#define TPL_IMP_1PASS              0 // improve the tpl 1 pass by getting actions from aom 1 pass
+#define TPL_IMP_1PASS              1 // improve the tpl 1 pass by getting actions from aom 1 pass
 #define TPL_IMP_2PASS              1 // improve the tpl two pass by getting actions from old 2 pass
 #define TPL_IMP_USE_QPS            1 // use QPS in tpl
 
