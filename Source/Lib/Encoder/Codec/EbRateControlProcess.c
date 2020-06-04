@@ -5031,7 +5031,7 @@ double av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
 }
 
 #define MAX_GFUBOOST_FACTOR 10.0
-#define MIN_GFUBOOST_FACTOR 4.0
+//#define MIN_GFUBOOST_FACTOR 4.0
 static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor,
                                      double r0, int frames_to_key) {
   double factor = av1_get_gfu_boost_projection_factor(min_factor, max_factor, frames_to_key);
@@ -5417,7 +5417,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 #endif
 
         // Baseline value derived from cpi->active_worst_quality and kf boost.
+#if TPL_IMP_TABLES
+        active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
+#else
         active_best_quality = get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
+#endif
 #if QPS_UPDATE
         // Allow somewhat lower kf minq with small image formats.
         if ((pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_width *
@@ -5941,8 +5945,8 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
     }
     ppcs_ptr->blk_lambda_tuning = EB_TRUE;
 }
-
 #endif
+
 /******************************************************
  * sb_qp_derivation_tpl_la
  * Calculates the QP per SB based on the tpl statistics

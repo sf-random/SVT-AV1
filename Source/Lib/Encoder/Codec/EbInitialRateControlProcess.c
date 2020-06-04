@@ -1082,7 +1082,6 @@ void tpl_mc_flow_dispenser(
     BlockGeom   blk_geom;
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-    int64_t recon_error = 1, sse = 1;
     TplStats  tpl_stats;
 
     (void)scs_ptr;
@@ -1197,6 +1196,7 @@ void tpl_mc_flow_dispenser(
                     const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
                     uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] + dst_basic_offset + dst_mb_offset;
                     int64_t inter_cost;
+                    int64_t recon_error = 1, sse = 1;
                     int32_t best_rf_idx = -1;
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
