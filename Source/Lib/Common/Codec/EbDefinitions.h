@@ -466,6 +466,11 @@ extern "C" {
 #define COEFF_BASED_TXT_BYPASS 1 // Use TXT statistics to bypass certain tx types
 #define COEFF_BASED_TXS_BYPASS 1 // Use TXS statistics to bypass certain tx search sizes
 
+// START SV01-JUNE PRESETS
+#define IMPROVED_DEPTH_CYCLES_REDUCTION 1
+#define IMPROVED_NSQ_CYCLES_REDUCTION 1
+// END SV01-JUNE PRESETS
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

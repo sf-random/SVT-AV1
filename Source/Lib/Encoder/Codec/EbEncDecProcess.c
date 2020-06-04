@@ -2273,6 +2273,85 @@ uint8_t m1_nsq_cycles_reduction_th[21] = {
 #endif
 #endif
 #if NSQ_CYCLES_REDUCTION
+#if IMPROVED_NSQ_CYCLES_REDUCTION
+void set_nsq_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint8_t nsq_cycles_red_mode) {
+    NsqCycleRControls*nsq_cycle_red_ctrls = &mdctxt->nsq_cycles_red_ctrls;
+    switch (nsq_cycles_red_mode)
+    {
+    case 0: // nsq_cycles_reduction Off
+        nsq_cycle_red_ctrls->enabled = 0;
+        nsq_cycle_red_ctrls->th = 0;
+        break;
+    case 1:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 1;
+        break;
+    case 2:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 2;
+        break;
+    case 3:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 3;
+        break;
+    case 4: 
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 4;
+        break;
+    case 5: 
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 6;
+        break;
+    case 6: 
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 7;
+        break;
+    case 7:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 8;
+        break;
+    case 8:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 9;
+        break;
+    case 9:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 10;
+        break;
+    case 10:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 11;
+        break;
+    case 11:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 12;
+        break;
+    case 12:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 13;
+        break;
+    case 13:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 14;
+        break;
+    case 14:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 15;
+        break;
+    case 15:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 20;
+        break;
+    case 16:
+        nsq_cycle_red_ctrls->enabled = 1;
+        nsq_cycle_red_ctrls->th = 30;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_nsq_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint8_t nsq_cycles_red_mode) {
 
     NsqCycleRControls*nsq_cycle_red_ctrls = &mdctxt->nsq_cycles_red_ctrls;
@@ -2308,6 +2387,7 @@ void set_nsq_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint8_t nsq_c
         break;
     }
 }
+#endif
 #endif
 
 #if DEPTH_CYCLES_REDUCTION
@@ -7190,6 +7270,61 @@ static uint8_t determine_sb_class(
 }
 #endif
 #if DEPTH_CYCLES_REDUCTION
+#if IMPROVED_DEPTH_CYCLES_REDUCTION
+#define DMPROB 2000 // max probabilty value for depth 1000 -> 10%
+// Depth probabilies per sq_size, pedicted depth and frequency band 
+// for sc content
+const uint16_t depth_cycles_reduction_th[6][5][18] = {
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 5 , 14 , 21 , 351 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+},
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 0 , 0 , 0 , 1 , 1 , 1 , 2 , 4 , 6 , 9 , 10 , 17 , 17 , 24 , 44 , 64 , 97 , 1249 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 0 , 1 , 6 , 4 , 6 , 7 , 10 , 12 , 15 , 14 , 16 , 20 , 13 , 15 , 25 , 31 , 35 , 169 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+},
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 7 , 14 , 22 , 17 , 20 , 24 , 35 , 42 , 50 , 57 , 78 , 97 , 68 , 82 , 136 , 199 , 238 , 1564 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 28 , 24 , 31 , 15 , 17 , 15 , 19 , 17 , 16 , 16 , 18 , 19 , 11 , 12 , 18 , 21 , 19 , 47 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+},
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 26 , 49 , 72 , 47 , 55 , 63 , 83 , 89 , 105 , 117 , 140 , 167 , 117 , 125 , 189 , 251 , 274 , 763 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 11 , 12 , 13 , 7 , 7 , 7 , 8 , 8 , 7 , 8 , 7 , 8 , 5 , 5 , 6 , 7 , 6 , 6 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+},
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 37 , 61 , 83 , 50 , 57 , 63 , 74 , 80 , 89 , 94 , 99 , 109 , 73 , 71 , 99 , 110 , 100 , 115 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 8 , 10 , 9 , 5 , 4 , 5 , 5 , 5 , 4 , 4 , 4 , 4 , 2 , 2 , 2 , 2 , 1 , 1 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+},
+{
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 7 , 10 , 12 , 7 , 7 , 8 , 9 , 9 , 10 , 10 , 9 , 10 , 6 , 5 , 7 , 6 , 4 , 2 },
+{ DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,
+  DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB,DMPROB },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+{ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }
+}
+};
+#else
 #define DEPTH_MAX_PROB 300 // max probabilty value for depth 100 -> 10%
 // Depth probabilies per sq_size, pedicted depth and frequency band 
 // for sc content
@@ -7283,6 +7418,7 @@ uint16_t depth_cycles_reduction_th[6][5][4] = {
 { 0,0,0,0}
 }
 };
+#endif
 #endif
 static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                           ModeDecisionContext *context_ptr, uint32_t sb_index) {
@@ -7554,6 +7690,31 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         if (depth_cycle_red_ctrls->enabled) {
                             int8_t addj_s_depth = 0;
                             int8_t addj_e_depth = 0;
+#if IMPROVED_DEPTH_CYCLES_REDUCTION
+                            if (context_ptr->sb_class) {
+                                uint8_t frequency_band = context_ptr->sb_class - 1;
+                                if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+                                    if (depth_cycle_red_ctrls->th) {
+                                        addj_s_depth = depth_cycles_reduction_th[sq_size_idx][0][frequency_band] < depth_cycle_red_ctrls->th ? 0 : -2;
+                                        if (addj_s_depth == 0)
+                                            addj_s_depth = depth_cycles_reduction_th[sq_size_idx][1][frequency_band] < depth_cycle_red_ctrls->th ? 0 : -1;
+                                        addj_e_depth = depth_cycles_reduction_th[sq_size_idx][4][frequency_band] < depth_cycle_red_ctrls->th ? 0 : 2;
+                                        if (addj_e_depth == 0)
+                                            addj_e_depth = depth_cycles_reduction_th[sq_size_idx][3][frequency_band] < depth_cycle_red_ctrls->th ? 0 : 1;
+                                    }
+                                }
+                                else {
+                                    if (depth_cycle_red_ctrls->th) {
+                                        addj_s_depth = depth_cycles_reduction_th[sq_size_idx][0][frequency_band] < depth_cycle_red_ctrls->th ? 0 : -2;
+                                        if (addj_s_depth == 0)
+                                            addj_s_depth = depth_cycles_reduction_th[sq_size_idx][1][frequency_band] < depth_cycle_red_ctrls->th ? 0 : -1;
+                                        addj_e_depth = depth_cycles_reduction_th[sq_size_idx][4][frequency_band] < depth_cycle_red_ctrls->th ? 0 : 2;
+                                        if (addj_e_depth == 0)
+                                            addj_e_depth = depth_cycles_reduction_th[sq_size_idx][3][frequency_band] < depth_cycle_red_ctrls->th ? 0 : 1;
+                                    }
+                                }
+                            }
+#else
                             if (context_ptr->sb_class) {
                                 uint8_t frequency_band = context_ptr->sb_class <= 11 ? 0 : context_ptr->sb_class <= 18 ? 1 : context_ptr->sb_class <= 23 ? 2 : 3;
                                 if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
@@ -7576,6 +7737,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                     }
                                 }
                             }
+#endif
                             s_depth = MAX(s_depth, addj_s_depth);
                             e_depth = MIN(e_depth, addj_e_depth);
                         }
