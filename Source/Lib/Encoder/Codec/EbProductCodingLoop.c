@@ -13178,11 +13178,16 @@ uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
                     band_idx = band_idx == 0 ? 0 : band_idx <= 3 ? 1 : 2;
                 else
                     band_idx = band_idx == 0 ? 0 : band_idx <= 8 ? 1 : 2;
+
 #if SSE_BASED_SPLITTING
                 uint8_t sse_gradian_band = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag ?
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].sse_gradian_band[context_ptr->blk_geom->shape] : 1;
+#if IMPROVED_NSQ_CYCLES_REDUCTION
+                uint64_t nsq_prob = block_prob_tab[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+#else
                 uint64_t nsq_prob = allowed_part_weight[sq_size_idx][context_ptr->blk_geom->shape][band_idx];
                 nsq_prob = sse_gradian_band == 0 ? (((100 * nsq_prob) - (nsq_prob * sse_grad_weight[sq_size_idx][context_ptr->blk_geom->shape][band_idx])) / (uint64_t)100) : nsq_prob;
+#endif
                 if (nsq_prob < context_ptr->coeff_area_based_bypass_nsq_th) {
                     skip_nsq = 1;
                 }
