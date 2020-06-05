@@ -467,6 +467,7 @@ extern "C" {
 #define COEFF_BASED_TXT_BYPASS 1 // Use TXT statistics to bypass certain tx types
 #define COEFF_BASED_TXS_BYPASS 1 // Use TXS statistics to bypass certain tx search sizes
 
+#define QPS_240P_UPDATE          1 // Modify the QPS of 240P to be similar to other resolution
 
 #define LAD_MEM_RED                1 // tpl works with lad 16. limit the look ahead to be 16
 #define TPL_IMP_1PASS              1 // improve the tpl 1 pass by getting actions from aom 1 pass
