@@ -121,7 +121,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     }
     // 0 - disable dual interpolation filter
     // 1 - enable vertical and horiz filter selection
-#if DUAL_IFS
+#if DUAL_IFS || ONLY_DUAL_SIGNAL
     scs_ptr->seq_header.enable_dual_filter                = 1;
 #else
     scs_ptr->seq_header.enable_dual_filter                = 0;

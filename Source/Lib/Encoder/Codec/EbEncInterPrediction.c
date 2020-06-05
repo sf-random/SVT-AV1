@@ -3085,7 +3085,7 @@ void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, ui
 
     *dist <<= 4;
 }
-
+#if !UPGRADE_RD_MODEL
 extern void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
                             EbPictureBufferDesc *prediction_ptr,
                             ModeDecisionContext *md_context_ptr, int32_t plane_from,
@@ -3192,7 +3192,7 @@ extern void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
     *out_rate_sum = (int32_t)rate_sum;
     *out_dist_sum = dist_sum;
 }
-
+#endif
 int32_t is_nontrans_global_motion(BlockSize                    sb_type,
                                   ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                   PictureControlSet *          picture_control_set_ptr) {
@@ -3314,6 +3314,68 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             md_context_ptr->blk_geom->origin_y,
             use_uv,
             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+
+
+#if UPGRADE_RD_MODEL
+    EbPictureBufferDesc *src_pic = md_context_ptr->hbd_mode_decision
+        ? picture_control_set_ptr->input_frame16bit
+        : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y +
+        (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+    uint8_t *src_buf = src_pic->buffer_y + (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+
+    uint8_t *pred_buffer =
+        prediction_ptr->buffer_y +
+        (md_context_ptr->hbd_mode_decision ? 2 : 1) * (prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x +
+        (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_y);
+
+    if (md_context_ptr->hbd_mode_decision) {
+        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+            md_context_ptr,
+            md_context_ptr->blk_geom->bsize,
+            md_context_ptr->blk_geom->bwidth,
+            md_context_ptr->blk_geom->bheight,
+            (uint8_t *)src_buf_hbd,
+            src_pic->stride_y,
+            pred_buffer,
+            prediction_ptr->stride_y,
+            0,
+            0,
+            0,
+            0,
+            &tmp_rate,
+            &tmp_dist,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL);
+    }
+    else {
+        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+            md_context_ptr,
+            md_context_ptr->blk_geom->bsize,
+            md_context_ptr->blk_geom->bwidth,
+            md_context_ptr->blk_geom->bheight,
+            src_buf,
+            src_pic->stride_y,
+            pred_buffer,
+            prediction_ptr->stride_y,
+            0,
+            0,
+            0,
+            0,
+            &tmp_rate,
+            &tmp_dist,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL);
+    }
+#else
     model_rd_for_sb(picture_control_set_ptr,
                     prediction_ptr,
                     md_context_ptr,
@@ -3322,7 +3384,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                     &tmp_rate,
                     &tmp_dist,
                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
-
+#endif
     rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
 
     if (assign_filter == SWITCHABLE) {
@@ -3334,6 +3396,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t       best_in_temp    = 0;
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
+#if !ONLY_DUAL_SIGNAL
             if (md_context_ptr->interpolation_search_level &&
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
                 int32_t tmp_rs;
@@ -3385,6 +3448,66 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if UPGRADE_RD_MODEL
+                    EbPictureBufferDesc *src_pic = md_context_ptr->hbd_mode_decision
+                        ? picture_control_set_ptr->input_frame16bit
+                        : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y +
+                        (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+                    uint8_t *src_buf = src_pic->buffer_y + (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+
+                    uint8_t *pred_buffer =
+                        prediction_ptr->buffer_y +
+                        (md_context_ptr->hbd_mode_decision ? 2 : 1) * (prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x +
+                        (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_y);
+
+                    if (md_context_ptr->hbd_mode_decision) {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            (uint8_t *)src_buf_hbd,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+                    else {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            src_buf,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+#else
                     model_rd_for_sb(picture_control_set_ptr,
                                     prediction_ptr,
                                     md_context_ptr,
@@ -3393,6 +3516,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
@@ -3449,6 +3573,66 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if UPGRADE_RD_MODEL
+                    EbPictureBufferDesc *src_pic = md_context_ptr->hbd_mode_decision
+                        ? picture_control_set_ptr->input_frame16bit
+                        : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y +
+                        (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+                    uint8_t *src_buf = src_pic->buffer_y + (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+
+                    uint8_t *pred_buffer =
+                        prediction_ptr->buffer_y +
+                        (md_context_ptr->hbd_mode_decision ? 2 : 1) * (prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x +
+                        (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_y);
+
+                    if (md_context_ptr->hbd_mode_decision) {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            (uint8_t *)src_buf_hbd,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+                    else {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            src_buf,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+#else
                     model_rd_for_sb(picture_control_set_ptr,
                                     prediction_ptr,
                                     md_context_ptr,
@@ -3457,6 +3641,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
@@ -3466,16 +3651,21 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         best_in_temp = !best_in_temp;
                     }
                 }
-            } else {
+            } else 
+#endif
+{
                 // EIGHTTAP_REGULAR mode is calculated beforehand
                 for (i = 1; i < filter_set_size; ++i) {
                     int32_t tmp_rs;
                     int64_t tmp_rd;
-
+ #if ONLY_DUAL_SIGNAL
+                    if (filter_sets[i][0] != filter_sets[i][1]) 
+                        continue;
+#else
                     if (/*cm->seq_params.enable_dual_filter*/ picture_control_set_ptr
                                                                       ->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter == 0)
                         if (filter_sets[i][0] != filter_sets[i][1]) continue;
-
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                              (InterpFilter)filter_sets[i][1]);
@@ -3513,7 +3703,66 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if UPGRADE_RD_MODEL
+                    EbPictureBufferDesc *src_pic = md_context_ptr->hbd_mode_decision
+                        ? picture_control_set_ptr->input_frame16bit
+                        : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y +
+                        (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+                    uint8_t *src_buf = src_pic->buffer_y + (md_context_ptr->blk_origin_x + src_pic->origin_x) +
+                        (md_context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
 
+                    uint8_t *pred_buffer =
+                        prediction_ptr->buffer_y +
+                        (md_context_ptr->hbd_mode_decision ? 2 : 1) * (prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x +
+                        (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_y);
+
+                    if (md_context_ptr->hbd_mode_decision) {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            (uint8_t *)src_buf_hbd,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+                    else {
+                        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
+                            md_context_ptr,
+                            md_context_ptr->blk_geom->bsize,
+                            md_context_ptr->blk_geom->bwidth,
+                            md_context_ptr->blk_geom->bheight,
+                            src_buf,
+                            src_pic->stride_y,
+                            pred_buffer,
+                            prediction_ptr->stride_y,
+                            0,
+                            0,
+                            0,
+                            0,
+                            &tmp_rate,
+                            &tmp_dist,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+                    }
+#else
                     model_rd_for_sb(picture_control_set_ptr,
                                     prediction_ptr,
                                     md_context_ptr,
@@ -3522,6 +3771,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
