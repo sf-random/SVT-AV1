@@ -9,14 +9,7 @@
 #include "EbDefinitions.h"
 
 #if REMOVE_ME_SUBPEL_CODE
-// To remove this file
-void;
-#ifdef __cplusplus
-extern "C" {
-#endif
-#ifdef __cplusplus
-}
-#endif
+#define  JUST_TO_FIX_EOF_STYLE_ERROR 1
 #else
 #ifdef __cplusplus
 extern "C" {
