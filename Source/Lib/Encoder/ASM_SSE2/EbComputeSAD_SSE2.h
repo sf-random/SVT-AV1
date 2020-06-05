@@ -10,6 +10,7 @@
 
 #if REMOVE_ME_SUBPEL_CODE
 #define  JUST_TO_FIX_EOF_STYLE_ERROR 1
+
 #else
 #ifdef __cplusplus
 extern "C" {
