@@ -10,6 +10,12 @@
 
 #if REMOVE_ME_SUBPEL_CODE
 // To remove this file
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef __cplusplus
+}
+#endif
 #else
 #ifdef __cplusplus
 extern "C" {
