@@ -10,6 +10,7 @@
 
 #if REMOVE_ME_SUBPEL_CODE
 // To remove this file
+void;
 #ifdef __cplusplus
 extern "C" {
 #endif
