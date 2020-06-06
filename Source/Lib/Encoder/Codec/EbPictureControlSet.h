@@ -163,6 +163,10 @@ typedef struct EbMdcLeafData {
     int8_t  pred_depth_refinement;
     int8_t  final_pred_depth_refinement;
 #endif
+#if DEPTH_STAT
+    int8_t  pred_depth;
+    int8_t  final_pred_depth;
+#endif
 } EbMdcLeafData;
 
 typedef struct MdcSbData {
@@ -416,6 +420,20 @@ typedef struct PictureControlSet {
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *                       rst_tmpbuf;
 #endif
+
+#if NSQ_STAT
+    uint32_t part_cnt[6][10][3][2];
+#endif
+#if DEPTH_STAT
+    uint32_t pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+#endif
+#if TXT_STATS
+    uint32_t txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+#endif
+#if TXS_STATS
+    uint32_t txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+#endif
+
 } PictureControlSet;
 
 // To optimize based on the max input size

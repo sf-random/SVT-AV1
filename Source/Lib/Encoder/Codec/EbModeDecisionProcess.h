@@ -150,6 +150,9 @@ typedef struct MdBlkStruct {
 #if TRACK_PER_DEPTH_DELTA
     int8_t pred_depth_refinement;
 #endif
+#if DEPTH_STAT
+    int8_t pred_depth;
+#endif
 } MdBlkStruct;
 
 struct ModeDecisionCandidate;
@@ -252,9 +255,9 @@ typedef struct  InterCompoundControls {
 typedef struct RefPruningControls {
     uint8_t intra_to_inter_pruning_enabled; // 0: OFF; 1: use intra to inter distortion deviation to derive best_refs
     uint8_t inter_to_inter_pruning_enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
-#if PRUNING_PER_INTER_TYPE 
+#if PRUNING_PER_INTER_TYPE
     uint8_t best_refs[TOT_INTER_GROUP];     // 0: OFF; 1: limit the injection to the best references based on distortion
-    uint8_t closest_refs[TOT_INTER_GROUP];  // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD) 
+    uint8_t closest_refs[TOT_INTER_GROUP];  // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
 #else
     uint8_t best_refs;
 #endif
@@ -281,7 +284,7 @@ typedef struct DepthReductionCtrls {
 #if ADD_MD_NSQ_SEARCH
 typedef struct MdNsqMotionSearchCtrls {
     uint8_t enabled;                    // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD 
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
 #if !PERFORM_SUB_PEL_MD
     uint8_t perform_sub_pel;            // 0: skip NSQ subpel search;  1: perform NSQ subpel search
 #endif
@@ -298,8 +301,8 @@ typedef struct MdNsqMotionSearchCtrls {
 #if PERFORM_SUB_PEL_MD
 typedef struct MdSubPelSearchCtrls {
     uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
-    uint8_t use_ssd;                             // 0: search using SAD; 1: search using SSD 
-                                                 
+    uint8_t use_ssd;                             // 0: search using SAD; 1: search using SSD
+
     uint8_t do_4x4;                              // 0: do not perform search for 4x4 and inherit Parent MV; 1: perform search for SQ
     uint8_t do_nsq;                              // 0: do not perform search for NSQ and inherit SQ MV if NSQ Full Pel search not performed; 1: perform search for NSQ
     uint8_t half_pel_search_enabled;             // 0: OFF; 1: ON
@@ -308,7 +311,7 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
 #if SEARCH_TOP_N
-    uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_search_pos_cnt full-pel candidates) 
+    uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_search_pos_cnt full-pel candidates)
 #endif
     uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
     uint8_t quarter_pel_search_scan;             // 0: H, V, D; 1: H, V, 2: H, 3: V
@@ -787,6 +790,18 @@ typedef struct ModeDecisionContext {
 #if UNIFY_TXT
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc *recon_ptr[TX_TYPES];
+#endif
+#if NSQ_STAT
+    uint32_t part_cnt[6][10][3][2];
+#endif
+#if DEPTH_STAT
+    uint32_t pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+#endif
+#if TXT_STATS
+    uint32_t txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+#endif
+#if TXS_STATS
+    uint32_t txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
 #endif
 } ModeDecisionContext;
 

@@ -837,7 +837,7 @@ static INLINE uint16_t highbd_clip_pixel_add(uint16_t dest, TranHigh trans, int3
     trans = HIGHBD_WRAPLOW(trans, bd);
     return clip_pixel_highbd(dest + (int32_t)trans, bd);
 }
-
+#if !REMOVE_UNUSED_CODE
 /*********************************
 * Picture Single Channel Kernel
 *********************************/
@@ -909,7 +909,7 @@ void picture_addition_kernel16_bit(uint16_t *pred_ptr, uint32_t pred_stride, int
     //    SVT_LOG("\n");
     return;
 }
-
+#endif
 void av1_perform_inverse_transform_recon_luma(PictureControlSet *          pcs_ptr,
                                               ModeDecisionContext *        context_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer) {
@@ -1495,13 +1495,29 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
         nics_scling_level = 3;
     else if (pcs_ptr->enc_mode <= ENC_M1)
         nics_scling_level = 4;
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M2)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         nics_scling_level = 5;
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
         nics_scling_level = 7;
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
         nics_scling_level = pcs_ptr->parent_pcs_ptr->sc_content_detected ? 7 : 8;
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
         nics_scling_level = 8;
     else
         nics_scling_level = pcs_ptr->parent_pcs_ptr->sc_content_detected ? 9 : 8;
@@ -4259,7 +4275,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                     }
                 }
             } else {
-#endif 
+#endif
             ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
             EbPictureBufferDesc *  prediction_ptr = candidate_buffer->prediction_ptr;
 
@@ -4696,7 +4712,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
 #if SEARCH_TOP_N
     if (context_ptr->md_subpel_search_ctrls.half_pel_search_enabled) {
 
-        // Derive valid_fp_pos_cnt 
+        // Derive valid_fp_pos_cnt
         uint8_t fp_pos_idx = 0;
         while (fp_pos_idx < MD_MAX_BEST_FP_POS && context_ptr->md_best_fp_pos[fp_pos_idx].dist != (uint32_t)~0) {
             fp_pos_idx++;
@@ -4935,7 +4951,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #if PERFORM_SUB_PEL_MD
 
-                if (context_ptr->md_subpel_search_ctrls.enabled && 
+                if (context_ptr->md_subpel_search_ctrls.enabled &&
                   (((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && ((context_ptr->blk_geom->bsize != BLOCK_4X4) || (context_ptr->md_subpel_search_ctrls.do_4x4))) || // SQ no 4x4 or do_4x4
                    ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_subpel_search_ctrls.do_nsq))) { // NSQ and do_nsq == 1
 
@@ -5007,7 +5023,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
                     // If 4x4 but do_4x4 == 0 then inherit Parent MV (already refined)
                     if (!context_ptr->md_subpel_search_ctrls.do_4x4 && (context_ptr->blk_geom->bsize == BLOCK_4X4) && context_ptr->md_local_blk_unit[parent_depth_idx_mds].avail_blk_flag) {
-    
+
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][0] =
                             context_ptr->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][0];
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][list_idx][ref_idx][1] =
@@ -13645,8 +13661,8 @@ void block_based_depth_reduction(
 #endif
 #if COEFF_BASED_BYPASS_NSQ
 #if MERGED_COEFF_BAND
-#if NSQ_CYCLES_REDUCTION
-#if !MERGED_COEFF_BAND
+#if NSQ_CYCLES_REDUCTION || MERGED_COEFF_BAND
+#if !MERGED_COEFF_BAND || PROB_PER_PRESET
 uint8_t get_allowed_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 #else
 uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
@@ -13702,7 +13718,26 @@ uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
                 uint8_t sse_gradian_band = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag ?
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].sse_gradian_band[context_ptr->blk_geom->shape] : 1;
 #if IMPROVED_NSQ_CYCLES_REDUCTION
+#if PROB_PER_PRESET
+                uint64_t nsq_prob;
+                if (pcs_ptr->enc_mode == ENC_M0) {
+                    nsq_prob = block_prob_tab[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M1) {
+                    nsq_prob = block_prob_tab_m1[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M3) {
+                    nsq_prob = block_prob_tab_m3[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M5) {
+                    nsq_prob = block_prob_tab_m5[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M6) {
+                    nsq_prob = block_prob_tab_m6[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M7) {
+                    nsq_prob = block_prob_tab_m7[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }else if (pcs_ptr->enc_mode == ENC_M8) {
+                    nsq_prob = block_prob_tab_m8[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+                }
+#else
                 uint64_t nsq_prob = block_prob_tab[sq_size_idx][context_ptr->blk_geom->shape][band_idx][sse_gradian_band];
+#endif
 #else
                 uint64_t nsq_prob = allowed_part_weight[sq_size_idx][context_ptr->blk_geom->shape][band_idx];
                 nsq_prob = sse_gradian_band == 0 ? (((100 * nsq_prob) - (nsq_prob * sse_grad_weight[sq_size_idx][context_ptr->blk_geom->shape][band_idx])) / (uint64_t)100) : nsq_prob;
@@ -14066,7 +14101,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if TRACK_PER_DEPTH_DELTA
         context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement = leaf_data_ptr->final_pred_depth_refinement;
 #endif
-
+#if DEPTH_STAT
+        context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth = leaf_data_ptr->final_pred_depth;
+#endif
         context_ptr->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag =
             (uint16_t)leaf_data_ptr->split_flag;
         blk_ptr->split_flag =
@@ -14114,9 +14151,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         uint8_t  redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
+#if NSQ_CYCLES_REDUCTION_REDUCE_OVERHEAD
+#if !MERGED_COEFF_BAND
+            uint8_t skip_nsq = get_allowed_block(pcs_ptr, context_ptr);
+#else
+            uint8_t skip_nsq = get_allowed_block(context_ptr);
+#endif
+#endif
 #if DEPTH_PART_CLEAN_UP
 #if REDUCE_COMPLEX_CLIP_CYCLES || SB_CLASSIFIER
+#if NSQ_CYCLES_REDUCTION_REDUCE_OVERHEAD
+        if (!context_ptr->md_disallow_nsq && !skip_nsq)
+#else
         if (!context_ptr->md_disallow_nsq)
+#endif
 #else
         if (!pcs_ptr->parent_pcs_ptr->disallow_nsq)
 #endif
@@ -14128,7 +14176,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         context_ptr->similar_blk_avail = 0;
 #if DEPTH_PART_CLEAN_UP
 #if REDUCE_COMPLEX_CLIP_CYCLES || SB_CLASSIFIER
+#if NSQ_CYCLES_REDUCTION_REDUCE_OVERHEAD
+        if (!context_ptr->md_disallow_nsq && !skip_nsq)
+#else
         if (!context_ptr->md_disallow_nsq)
+#endif
 #else
         if (!pcs_ptr->parent_pcs_ptr->disallow_nsq)
 #endif
@@ -14255,7 +14307,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             // skip until we reach the next block @ the parent block depth
             if (blk_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
                 skip_next_sq = 0;
-            
+
 #if !REMOVE_SQ_WEIGHT_QP_CHECK && !SHUT_SQ_WEIGHT_INTRA_FILTER
             uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(scs_ptr, pcs_ptr, context_ptr);
 #else
@@ -14265,10 +14317,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             skip_next_depth = context_ptr->blk_ptr->do_not_process_block;
 #endif
 #if COEFF_BASED_BYPASS_NSQ
-#if !MERGED_COEFF_BAND
+#if !NSQ_CYCLES_REDUCTION_REDUCE_OVERHEAD
+#if !MERGED_COEFF_BAND || PROB_PER_PRESET
             uint8_t skip_nsq = get_allowed_block(pcs_ptr, context_ptr);
 #else
             uint8_t skip_nsq = get_allowed_block(context_ptr);
+#endif
 #endif
 
             if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&

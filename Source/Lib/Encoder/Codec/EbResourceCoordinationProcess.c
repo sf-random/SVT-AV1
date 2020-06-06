@@ -215,7 +215,11 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
 #else
 #if REVERT_BLUE
+#if PRESET_SHIFITNG
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#else
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M7) ? 1 : 0;
+#endif
 #else
             scs_ptr->seq_header.enable_restoration = 1;
 #endif
@@ -865,6 +869,115 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         // Init SB Params
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
+#if SEPERATE_INTRA_INTER_PIC_STAT
+#if NSQ_STAT
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        scs_ptr->mix_part_cnt[depthidx][partidx][band][sse_idx] = 0;
+                        scs_ptr->inter_part_cnt[depthidx][partidx][band][sse_idx] = 0;
+                        scs_ptr->intra_part_cnt[depthidx][partidx][band][sse_idx] = 0;
+                    }
+                }
+            }
+        }
+#endif
+#if DEPTH_STAT
+        for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++) {
+            for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++) {
+                for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++) {
+                    scs_ptr->mix_pred_depth_count[cur_depth][band][pred_depth] = 0;
+                    scs_ptr->inter_pred_depth_count[cur_depth][band][pred_depth] = 0;
+                    scs_ptr->intra_pred_depth_count[cur_depth][band][pred_depth] = 0;
+                }
+            }
+        }
+
+#endif
+#if TXT_STATS
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+            for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                                scs_ptr->mix_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx] = 0;
+                                scs_ptr->inter_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx] = 0;
+                                scs_ptr->intra_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+#if TXS_STATS
+        for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                    for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                scs_ptr->mix_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx] = 0;
+                                scs_ptr->inter_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx] = 0;
+                                scs_ptr->intra_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+#else
+#if NSQ_STAT
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        scs_ptr->part_cnt[depthidx][partidx][band][sse_idx] = 0;
+                    }
+                }
+            }
+        }
+#endif
+#if DEPTH_STAT
+    for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++)
+        for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++)
+            for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++)
+                    scs_ptr->pred_depth_count[cur_depth][band][pred_depth] = 0;
+#endif
+#if TXT_STATS
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+                for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                    for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                                for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                                    scs_ptr->txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+#if TXS_STATS
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                                for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                    scs_ptr->txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+#endif
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);
@@ -880,7 +993,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound =
 #if MAY12_ADOPTIONS
+#if PRESET_SHIFITNG
+                (scs_ptr->static_config.enc_mode <= ENC_M2 &&
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M4 &&
+#endif
                     scs_ptr->static_config.screen_content_mode != 1)
                     ? 1
                     : 0;
@@ -935,7 +1052,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.enable_filter_intra)
 #if MAY19_ADOPTIONS
                 scs_ptr->seq_header.enable_filter_intra =
+#if PRESET_SHIFITNG
+                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #else
 #if APR23_ADOPTIONS_2
                 scs_ptr->seq_header.enable_filter_intra =

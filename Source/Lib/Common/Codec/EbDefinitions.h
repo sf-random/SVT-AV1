@@ -426,7 +426,7 @@ extern "C" {
 #define SHUT_ME_CAND_SORTING       1 // Bypass ME bipred search and shut ME cands sorting
 #define PRUNING_PER_INTER_TYPE     1 // Added the ability to signal best_refs per INTER type
 #define PD0_INTER_CAND             1 // Enable all PA_ME cands @ PD0
-#define SHUT_ME_NSQ_SEARCH         1 // Disable NSQ search @ ME, and use sub-block MV(s)/distortion(s) to derive MVs for NSQ blocks  
+#define SHUT_ME_NSQ_SEARCH         1 // Disable NSQ search @ ME, and use sub-block MV(s)/distortion(s) to derive MVs for NSQ blocks
 #define FIX_SHUT_ME_NSQ_SEARCH     1 // Use the parent SQ MV as NSQ MV
 #define ADD_MD_NSQ_SEARCH          1 // Perform NSQ motion search @ MD
 #define NSQ_REMOVAL_CODE_CLEAN_UP  1 // Remove NSQ circuitry from ME
@@ -450,13 +450,15 @@ extern "C" {
 #define REMOVE_ME_SUBPEL_CODE      1 // Shut subpel ME
 #define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
 #define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
-#define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0) 
+#define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0)
 #define SEARCH_TOP_N               1 // Perform 1/2 Pel search @ MD for the top N Full-Pel position(s). Used N=5 for M0 and N=3 for M1
 
+
+#endif
 #define FIX_WARNINGS                    1     // fix build warnings
 #define FIX_WARNINGS_WIN                1     // fix build warnings
 
-#endif
+
 #define NSQ_CYCLES_REDUCTION 1
 #define DEPTH_CYCLES_REDUCTION 1
 #define CLEANUP_CYCLE_ALLOCATION 1
@@ -466,9 +468,67 @@ extern "C" {
 #define COEFF_BASED_TXT_BYPASS 1 // Use TXT statistics to bypass certain tx types
 #define COEFF_BASED_TXS_BYPASS 1 // Use TXS statistics to bypass certain tx search sizes
 
+#define REMOVE_UNUSED_CODE              1 // Remove unused code
+#define PRESET_SHIFITNG                 1 // Shift presets (new encoderMode  <- old encoderMode)
+                                          // M: (0 <- 0);(1 <- 1);(2 <- 3);(3 <- 5);(4 <- 6);(5 <- 7);(6 <- 8);(7 <- 8);(8 <- 8);
+#define REDUCE_MR_COMP_CANDS    1 // Bug fix: Adopt the M0 level of inter_inter_distortion_based_reference_pruning to reduce compound candidates in MR
+
 // START SV01-JUNE PRESETS
 #define IMPROVED_DEPTH_CYCLES_REDUCTION 1
 #define IMPROVED_NSQ_CYCLES_REDUCTION 1
+#define DISALLOW_NSQ_CYCLES_REDUCTION_IN_ISLICE 0
+#define NSQ_CYCLES_REDUCTION_REDUCE_OVERHEAD 0
+
+#define PROB_PER_PRESET 0
+#if PROB_PER_PRESET
+#define M1_PROB 1
+#define M3_PROB 1
+#define M5_PROB 1
+#define M6_PROB 1
+#define M7_PROB 1
+#define M8_PROB 1
+#endif
+#define PEROM_SATS 0
+#if  PEROM_SATS
+#define NSQ_STAT 1
+#if NSQ_STAT
+#define ENABLE_NSQ 1
+#endif
+#define DEPTH_STAT 1
+#if DEPTH_STAT
+#define ENABLE_4X4 1
+#define ENABLE_M1P1 1
+#endif
+// TXT STATS
+#define SHUT_TXT_IMPACT_FEATURES 1 // Shut features that impact TXT for statistics
+
+#define TXT_STATS 1 // Add code for generating TXS statistics
+#if TXT_STATS
+#define STATS_DEPTHS    2
+#define STATS_TX_SIZES  3 //TX_SIZES_ALL // # of partition depths
+#define STATS_BANDS     2
+#define STATS_TX_TYPES  TX_TYPES // 16 TXT levels (# of tx types)
+#define STATS_CLASSES   2 // INTRA/INTER
+#define STATS_DELTAS    3 // negative, pred, positive
+#endif
+
+// TXS STATS
+#define TXS_FULL 1
+
+#define TXS_STATS 1 // Add code for generating TXS statistics
+#if TXS_STATS
+#define STATS_DEPTHS_TXS  6 // # of partition depths
+#define STATS_SHAPES  2 // SQ/NSQ // SQ, H, V, HA, HB, VA, VB, H4, V4 (not necessarily in order) - split to be ignored
+#define STATS_BANDS   2 // [0,10[, [10,100]
+#define STATS_LEVELS  3 // 3 TXS levels (i.e. TXS depths): 0, 1, 2
+#define STATS_CLASSES 2 // INTRA/INTER
+#define STATS_DELTAS  3 // -1, 0 , +1
+#endif
+
+
+#define SEPERATE_INTRA_INTER_PIC_STAT 1
+#endif
+
 
 #define T25M_TXS_STATS 1
 #define T25M_TXT_STATS 1

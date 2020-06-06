@@ -207,6 +207,41 @@ typedef struct SequenceControlSet {
     uint32_t cdef_process_init_count;
     uint32_t rest_process_init_count;
     uint32_t total_process_init_count;
+#if SEPERATE_INTRA_INTER_PIC_STAT
+#if NSQ_STAT
+    uint32_t intra_part_cnt[6][10][3][2];
+    uint32_t inter_part_cnt[6][10][3][2];
+    uint32_t mix_part_cnt[6][10][3][2];
+#endif
+#if DEPTH_STAT
+    uint32_t intra_pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+    uint32_t inter_pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+    uint32_t mix_pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+#endif
+#if TXT_STATS
+    uint32_t intra_txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+    uint32_t inter_txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+    uint32_t mix_txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+#endif
+#if TXS_STATS
+    uint32_t intra_txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+    uint32_t inter_txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+    uint32_t mix_txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+#endif
+#else
+#if NSQ_STAT
+    uint32_t part_cnt[6][10][3][2];
+#endif
+#if DEPTH_STAT
+    uint32_t pred_depth_count[6][NUMBER_OF_SB_CLASS + 1][5];
+#endif
+#if TXT_STATS
+    uint32_t txt_cnt[STATS_DEPTHS][STATS_TX_SIZES][STATS_DELTAS][STATS_BANDS][STATS_CLASSES][STATS_TX_TYPES];
+#endif
+#if TXS_STATS
+    uint32_t txs_cnt[STATS_DEPTHS_TXS][STATS_DELTAS][STATS_SHAPES][STATS_BANDS][STATS_CLASSES][STATS_LEVELS];
+#endif
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

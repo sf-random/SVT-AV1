@@ -10,6 +10,513 @@
 
 static void eb_sequence_control_set_dctor(EbPtr p) {
     SequenceControlSet *obj = (SequenceControlSet *)p;
+#if SEPERATE_INTRA_INTER_PIC_STAT
+#if NSQ_STAT
+        uint64_t total = 0;
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        total += obj->mix_part_cnt[depthidx][partidx][band][sse_idx];
+                    }
+                }
+            }
+        }
+        if (total) {
+            printf("\n");
+            printf("nsq mix stats start\n");
+            for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+                for (uint8_t partidx = 0; partidx < 9; partidx++) {
+                    for (uint8_t band = 0; band < 3; band++) {
+                        for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                            printf("%d\t", obj->mix_part_cnt[depthidx][partidx][band][sse_idx]);
+                        }
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("nsq mix stats end\n");
+        }
+        fflush(stdout);
+        total = 0;
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        total += obj->inter_part_cnt[depthidx][partidx][band][sse_idx];
+                    }
+                }
+            }
+        }
+        if (total) {
+            printf("\n");
+            printf("nsq inter stats start\n");
+            for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+                for (uint8_t partidx = 0; partidx < 9; partidx++) {
+                    for (uint8_t band = 0; band < 3; band++) {
+                        for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                            printf("%d\t", obj->inter_part_cnt[depthidx][partidx][band][sse_idx]);
+                        }
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("nsq inter stats end\n");
+        }
+        fflush(stdout);
+        total = 0;
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        total += obj->intra_part_cnt[depthidx][partidx][band][sse_idx];
+                    }
+                }
+            }
+        }
+        if (total) {
+            printf("\n");
+            printf("nsq intra stats start\n");
+            for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+                for (uint8_t partidx = 0; partidx < 9; partidx++) {
+                    for (uint8_t band = 0; band < 3; band++) {
+                        for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                            printf("%d\t", obj->intra_part_cnt[depthidx][partidx][band][sse_idx]);
+                        }
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("nsq intra stats end\n");
+        }
+        fflush(stdout);
+#endif
+#if DEPTH_STAT
+    uint32_t sum = 0;
+    for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++)
+     for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++)
+        for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++)
+            sum+= obj->mix_pred_depth_count[cur_depth][band][pred_depth];
+     if (sum) {
+         printf("\n");
+         printf("depth mix stats start\n");
+         for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++) {
+             for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++) {
+                 for (uint8_t band = 1; band < NUMBER_OF_SB_CLASS + 1; band++) {
+                         printf("%d\t", obj->mix_pred_depth_count[cur_depth][band][pred_depth]);
+                 }
+                 printf("\n");
+             }
+             printf("\n");
+         }
+        printf("\n");
+        printf("depth mix stats end\n");
+     }
+     fflush(stdout);
+    sum = 0;
+    for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++)
+     for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++)
+        for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++)
+            sum+= obj->inter_pred_depth_count[cur_depth][band][pred_depth];
+     if (sum) {
+         printf("\n");
+         printf("depth inter stats start\n");
+         for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++) {
+             for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++) {
+                 for (uint8_t band = 1; band < NUMBER_OF_SB_CLASS + 1; band++) {
+                         printf("%d\t", obj->inter_pred_depth_count[cur_depth][band][pred_depth]);
+                 }
+                 printf("\n");
+             }
+             printf("\n");
+         }
+        printf("\n");
+        printf("depth inter stats end\n");
+     }
+     fflush(stdout);
+     sum = 0;
+    for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++)
+     for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++)
+        for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++)
+            sum+= obj->intra_pred_depth_count[cur_depth][band][pred_depth];
+     if (sum) {
+         printf("\n");
+         printf("depth intra stats start\n");
+         for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++) {
+             for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++) {
+                 for (uint8_t band = 1; band < NUMBER_OF_SB_CLASS + 1; band++) {
+                         printf("%d\t", obj->intra_pred_depth_count[cur_depth][band][pred_depth]);
+                 }
+                 printf("\n");
+             }
+             printf("\n");
+         }
+        printf("\n");
+        printf("depth intra stats end\n");
+     }
+     fflush(stdout);
+#endif
+#if TXT_STATS
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                            total += obj->mix_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txt mix stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 1; txs_idx < STATS_TX_TYPES; txs_idx++) { // don't print DCT_DCT
+                                printf("%d\t", obj->mix_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                        //printf("\n");
+                    }
+                    //printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txt mix stats end\n");
+    }
+    fflush(stdout);
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                            total += obj->inter_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txt inter stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 1; txs_idx < STATS_TX_TYPES; txs_idx++) { // don't print DCT_DCT
+                                printf("%d\t", obj->inter_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                        //printf("\n");
+                    }
+                    //printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txt inter stats end\n");
+    }
+    fflush(stdout);
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                            total += obj->intra_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txt intra stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 1; txs_idx < STATS_TX_TYPES; txs_idx++) { // don't print DCT_DCT
+                                printf("%d\t", obj->intra_txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                        //printf("\n");
+                    }
+                    //printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txt intra stats end\n");
+    }
+    fflush(stdout);
+#endif
+#if TXS_STATS
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+        for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            total += obj->mix_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txs mix stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        //if (partidx == PARTITION_SPLIT)
+                        //    continue;
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                printf("%d\t", obj->mix_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                    }
+                    printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txs mix stats end\n");
+        fflush(stdout);
+    }
+total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+        for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            total += obj->inter_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txs inter stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        //if (partidx == PARTITION_SPLIT)
+                        //    continue;
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                printf("%d\t", obj->inter_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                    }
+                    printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txs inter stats end\n");
+        fflush(stdout);
+    }
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+        for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            total += obj->intra_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txs intra stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        //if (partidx == PARTITION_SPLIT)
+                        //    continue;
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                printf("%d\t", obj->intra_txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                    }
+                    printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txs intra stats end\n");
+        fflush(stdout);
+    }
+#endif
+#else
+#if NSQ_STAT
+        uint64_t total = 0;
+        for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+            for (uint8_t partidx = 0; partidx < 10; partidx++) {
+                for (uint8_t band = 0; band < 3; band++) {
+                    for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                        total += obj->part_cnt[depthidx][partidx][band][sse_idx];
+                    }
+                }
+            }
+        }
+        if (total) {
+            printf("\n");
+            printf("nsq stats start\n");
+            for (uint8_t depthidx = 0; depthidx < 6; depthidx++) {
+                for (uint8_t partidx = 0; partidx < 9; partidx++) {
+                    for (uint8_t band = 0; band < 3; band++) {
+                        for (uint8_t sse_idx = 0; sse_idx < 2; sse_idx++) {
+                            printf("%d\t", obj->part_cnt[depthidx][partidx][band][sse_idx]);
+                        }
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("nsq stats end\n");
+        }
+        fflush(stdout);
+#endif
+#if DEPTH_STAT
+    uint32_t sum = 0;
+    for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++)
+     for (uint8_t band = 0; band < NUMBER_OF_SB_CLASS + 1; band++)
+        for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++)
+            sum+= obj->pred_depth_count[cur_depth][band][pred_depth];
+     if (sum) {
+         printf("\n");
+         printf("depth stats start\n");
+         for (uint8_t cur_depth = 0; cur_depth < 6; cur_depth++) {
+             for (uint8_t pred_depth = 0; pred_depth < 5; pred_depth++) {
+                 for (uint8_t band = 1; band < NUMBER_OF_SB_CLASS + 1; band++) {
+                         printf("%d\t", obj->pred_depth_count[cur_depth][band][pred_depth]);
+                 }
+                 printf("\n");
+             }
+             printf("\n");
+         }
+        printf("\n");
+        printf("depth stats end\n");
+     }
+     fflush(stdout);
+#endif
+#if TXT_STATS
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+        for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+            for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_TX_TYPES; txs_idx++) {
+                            total += obj->txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txt stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t tx_size = 0; tx_size < STATS_TX_SIZES; tx_size++) {
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 1; txs_idx < STATS_TX_TYPES; txs_idx++) { // don't print DCT_DCT
+                                printf("%d\t", obj->txt_cnt[depthidx][tx_size][depth_delta][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                        //printf("\n");
+                    }
+                    //printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txt stats end\n");
+        fflush(stdout);
+    }
+#endif
+#if TXS_STATS
+    total = 0;
+    for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+        for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+            for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                    for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+                        for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                            total += obj->txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (total) {
+        printf("txs stats start\n");
+        for (uint8_t classidx = 0; classidx < STATS_CLASSES; classidx++) {
+            for (uint8_t depthidx = 0; depthidx < STATS_DEPTHS_TXS; depthidx++) {
+                for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
+                    for (uint8_t partidx = 0; partidx < STATS_SHAPES; partidx++) {
+                        //if (partidx == PARTITION_SPLIT)
+                        //    continue;
+                        for (uint8_t band = 0; band < STATS_BANDS; band++) {
+                            for (uint8_t txs_idx = 0; txs_idx < STATS_LEVELS; txs_idx++) {
+                                printf("%d\t", obj->txs_cnt[depthidx][depth_delta][partidx][band][classidx][txs_idx]);
+                            }
+                            printf("\n");
+                        }
+                    }
+                    printf("\n");
+                }
+            }
+        }
+        printf("\n");
+        printf("txs stats end\n");
+        fflush(stdout);
+    }
+#endif
+#endif
     EB_FREE_ARRAY(obj->sb_params_array);
     EB_FREE_ARRAY(obj->sb_geom);
 }
