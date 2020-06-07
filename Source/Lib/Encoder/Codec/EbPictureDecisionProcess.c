@@ -2179,7 +2179,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (pcs_ptr->sc_content_detected)
 #if SHIFT_M5_SC_TO_M3
 #if PRESET_SHIFITNG
-                pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M1 ? 2 : 0;
+                pcs_ptr->compound_mode = (MR_MODE || MR_TEST_8) ? 1 : pcs_ptr->enc_mode <= ENC_M1 ? 2 : 0;
 #else
                 pcs_ptr->compound_mode = MR_MODE ? 1 : pcs_ptr->enc_mode <= ENC_M2 ? 2 : 0;
 

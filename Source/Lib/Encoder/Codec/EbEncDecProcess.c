@@ -27,7 +27,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 
-#if MR_MODE
+#if MR_MODE || MR_TEST_0
 #define MR_MODE_MULTI_PASS_PD 1
 #else
 #define MR_MODE_MULTI_PASS_PD 0
@@ -3511,7 +3511,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
 #if APR22_ADOPTIONS
-            else if(MR_MODE)
+            else if(MR_MODE || MR_TEST_1)
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
@@ -4208,7 +4208,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_1_cand_prune_th = 75;
     else
 #if MAY16_7PM_ADOPTIONS
-        if (MR_MODE)
+        if (MR_MODE || MR_TEST_3)
             context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
 #if PRESET_SHIFITNG
         else if (enc_mode <= ENC_M0 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && enc_mode <= ENC_M1))
@@ -4514,7 +4514,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->sq_weight = 100;
 
     else
-        if (MR_MODE)
+        if (MR_MODE || MR_TEST_4)
 #if MAY19_ADOPTIONS
             context_ptr->sq_weight = 115;
 #else
@@ -5075,7 +5075,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_nsq_mv_search_level = 0;
     else
-        if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
+        if (MR_MODE || MR_TEST_2 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
             context_ptr->md_nsq_mv_search_level = 1;
         else if (enc_mode <= ENC_M0)
             context_ptr->md_nsq_mv_search_level = 2;
@@ -8201,7 +8201,7 @@ void set_pic_complexity_controls(PictureControlSet * pcs_ptr, ModeDecisionContex
     // 2:                     Safe threshold + qp_offset OFF
     // 3:                     Medium threshold + qp_offset OFF
     // 4:                     Agressive threshold + qp_offset OFF
-    mdctxt->reduce_complex_clip_cycles_level = MR_MODE ? 0 : 1;
+    mdctxt->reduce_complex_clip_cycles_level = (MR_MODE || MR_TEST_7) ? 0 : 1;
 
     uint8_t pic_complexity_mode = mdctxt->reduce_complex_clip_cycles_level;
     switch (pic_complexity_mode)
