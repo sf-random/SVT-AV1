@@ -3085,7 +3085,7 @@ void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, ui
 
     *dist <<= 4;
 }
-
+#if !BASIC_MODEL
 extern void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
                             EbPictureBufferDesc *prediction_ptr,
                             ModeDecisionContext *md_context_ptr, int32_t plane_from,
@@ -3192,7 +3192,7 @@ extern void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
     *out_rate_sum = (int32_t)rate_sum;
     *out_dist_sum = dist_sum;
 }
-
+#endif
 int32_t is_nontrans_global_motion(BlockSize                    sb_type,
                                   ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                   PictureControlSet *          picture_control_set_ptr) {
@@ -3310,63 +3310,41 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
-    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr =
+        picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     const uint32_t input_origin_index =
-        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
+        input_picture_ptr->stride_y +
         (md_context_ptr->blk_origin_x + input_picture_ptr->origin_x);
 
-    const uint32_t blk_origin_index = md_context_ptr->blk_geom->origin_x + md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
+    const uint32_t blk_origin_index =
+        md_context_ptr->blk_geom->origin_x +
+        md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
 
-    uint8_t use_ssd = 0;
-    uint32_t fast_lambda;
-    if (use_ssd) {
-        fast_lambda = md_context_ptr->hbd_mode_decision ?
-            md_context_ptr->full_lambda_md[EB_10_BIT_MD] :
-            md_context_ptr->full_lambda_md[EB_8_BIT_MD];
-    }
-    else {
-        fast_lambda = md_context_ptr->hbd_mode_decision ?
-            md_context_ptr->fast_lambda_md[EB_10_BIT_MD] :
-            md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
-    }
+    uint32_t fast_lambda = md_context_ptr->hbd_mode_decision
+        ? md_context_ptr->fast_lambda_md[EB_10_BIT_MD]
+        : md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
     uint32_t luma_fast_distortion;
-    if (use_ssd) {
-        EbSpatialFullDistType spatial_full_dist_type_fun = md_context_ptr->hbd_mode_decision
-            ? full_distortion_kernel16_bits
-            : spatial_full_distortion_kernel;
-
-        luma_fast_distortion = (uint32_t) spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                input_origin_index,
+    if (!md_context_ptr->hbd_mode_decision) {
+        luma_fast_distortion =
+            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                input_picture_ptr->buffer_y + input_origin_index,
                 input_picture_ptr->stride_y,
-                prediction_ptr->buffer_y,
-                (int32_t)blk_origin_index,
+                prediction_ptr->buffer_y + blk_origin_index,
                 prediction_ptr->stride_y,
-                md_context_ptr->blk_geom->bwidth,
-                md_context_ptr->blk_geom->bheight);
-
+                md_context_ptr->blk_geom->bheight,
+                md_context_ptr->blk_geom->bwidth));
     }
     else {
-        assert((md_context_ptr->blk_geom->bwidth >> 3) < 17);
-        if (!md_context_ptr->hbd_mode_decision) {
-            luma_fast_distortion =
-                (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
-                    input_picture_ptr->buffer_y + input_origin_index,
-                    input_picture_ptr->stride_y,
-                    prediction_ptr->buffer_y + blk_origin_index,
-                    prediction_ptr->stride_y,
-                    md_context_ptr->blk_geom->bheight,
-                    md_context_ptr->blk_geom->bwidth));
-        }
-        else {
-            luma_fast_distortion =
-                (uint32_t)(luma_fast_distortion = sad_16b_kernel(
-                ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
-                    input_picture_ptr->stride_y,
-                    ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
-                    prediction_ptr->stride_y,
-                    md_context_ptr->blk_geom->bheight,
-                    md_context_ptr->blk_geom->bwidth));
-        }
+        luma_fast_distortion = (uint32_t)(
+            luma_fast_distortion = sad_16b_kernel(
+            ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                input_picture_ptr->stride_y,
+                ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
+                prediction_ptr->stride_y,
+                md_context_ptr->blk_geom->bheight,
+                md_context_ptr->blk_geom->bwidth));
     }
     rd = RDCOST(fast_lambda, switchable_rate, luma_fast_distortion);
 #else
@@ -3441,63 +3419,41 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
-                    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    EbPictureBufferDesc *input_picture_ptr =
+                        picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
                     const uint32_t input_origin_index =
-                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
+                        input_picture_ptr->stride_y +
                         (md_context_ptr->blk_origin_x + input_picture_ptr->origin_x);
 
-                    const uint32_t blk_origin_index = md_context_ptr->blk_geom->origin_x + md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
+                    const uint32_t blk_origin_index =
+                        md_context_ptr->blk_geom->origin_x +
+                        md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
 
-                    uint8_t use_ssd = 0;
-                    uint32_t fast_lambda;
-                    if (use_ssd) {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->full_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->full_lambda_md[EB_8_BIT_MD];
-                    }
-                    else {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->fast_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
-                    }
+                    uint32_t fast_lambda = md_context_ptr->hbd_mode_decision
+                        ? md_context_ptr->fast_lambda_md[EB_10_BIT_MD]
+                        : md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
                     uint32_t luma_fast_distortion;
-                    if (use_ssd) {
-                        EbSpatialFullDistType spatial_full_dist_type_fun = md_context_ptr->hbd_mode_decision
-                            ? full_distortion_kernel16_bits
-                            : spatial_full_distortion_kernel;
-
-                        luma_fast_distortion = (uint32_t) spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                                input_origin_index,
+                    if (!md_context_ptr->hbd_mode_decision) {
+                        luma_fast_distortion =
+                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                                input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
-                                prediction_ptr->buffer_y,
-                                (int32_t)blk_origin_index,
+                                prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
-                                md_context_ptr->blk_geom->bwidth,
-                                md_context_ptr->blk_geom->bheight);
-
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
                     else {
-                        assert((md_context_ptr->blk_geom->bwidth >> 3) < 17);
-                        if (!md_context_ptr->hbd_mode_decision) {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
-                                    input_picture_ptr->buffer_y + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    prediction_ptr->buffer_y + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
-                        else {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = sad_16b_kernel(
-                                ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
+                        luma_fast_distortion = (uint32_t)(
+                            luma_fast_distortion = sad_16b_kernel(
+                            ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                                input_picture_ptr->stride_y,
+                                ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
+                                prediction_ptr->stride_y,
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
 #else
@@ -3563,64 +3519,43 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 #if BASIC_MODEL
-                    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    EbPictureBufferDesc *input_picture_ptr =
+                        picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
                     const uint32_t input_origin_index =
-                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
+                        input_picture_ptr->stride_y +
                         (md_context_ptr->blk_origin_x + input_picture_ptr->origin_x);
 
-                    const uint32_t blk_origin_index = md_context_ptr->blk_geom->origin_x + md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
+                    const uint32_t blk_origin_index =
+                        md_context_ptr->blk_geom->origin_x +
+                        md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
 
-                    uint8_t use_ssd = 0;
-                    uint32_t fast_lambda;
-                    if (use_ssd) {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->full_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->full_lambda_md[EB_8_BIT_MD];
-                    }
-                    else {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->fast_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
-                    }
+                    uint32_t fast_lambda = md_context_ptr->hbd_mode_decision
+                        ? md_context_ptr->fast_lambda_md[EB_10_BIT_MD]
+                        : md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
                     uint32_t luma_fast_distortion;
-                    if (use_ssd) {
-                        EbSpatialFullDistType spatial_full_dist_type_fun = md_context_ptr->hbd_mode_decision
-                            ? full_distortion_kernel16_bits
-                            : spatial_full_distortion_kernel;
-
-                        luma_fast_distortion = (uint32_t) spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                                input_origin_index,
+                    if (!md_context_ptr->hbd_mode_decision) {
+                        luma_fast_distortion =
+                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                                input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
-                                prediction_ptr->buffer_y,
-                                (int32_t)blk_origin_index,
+                                prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
-                                md_context_ptr->blk_geom->bwidth,
-                                md_context_ptr->blk_geom->bheight);
-
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
                     else {
-                        assert((md_context_ptr->blk_geom->bwidth >> 3) < 17);
-                        if (!md_context_ptr->hbd_mode_decision) {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
-                                    input_picture_ptr->buffer_y + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    prediction_ptr->buffer_y + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
-                        else {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = sad_16b_kernel(
-                                ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
+                        luma_fast_distortion = (uint32_t)(
+                            luma_fast_distortion = sad_16b_kernel(
+                            ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                                input_picture_ptr->stride_y,
+                                ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
+                                prediction_ptr->stride_y,
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
+
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
 #else
                     model_rd_for_sb(picture_control_set_ptr,
@@ -3691,64 +3626,43 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
-                    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                    EbPictureBufferDesc *input_picture_ptr =
+                        picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
                     const uint32_t input_origin_index =
-                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+                        (md_context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
+                        input_picture_ptr->stride_y +
                         (md_context_ptr->blk_origin_x + input_picture_ptr->origin_x);
 
-                    const uint32_t blk_origin_index = md_context_ptr->blk_geom->origin_x + md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
+                    const uint32_t blk_origin_index =
+                        md_context_ptr->blk_geom->origin_x +
+                        md_context_ptr->blk_geom->origin_y * md_context_ptr->sb_size;
 
-                    uint8_t use_ssd = 0;
-                    uint32_t fast_lambda;
-                    if (use_ssd) {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->full_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->full_lambda_md[EB_8_BIT_MD];
-                    }
-                    else {
-                        fast_lambda = md_context_ptr->hbd_mode_decision ?
-                            md_context_ptr->fast_lambda_md[EB_10_BIT_MD] :
-                            md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
-                    }
+                    uint32_t fast_lambda = md_context_ptr->hbd_mode_decision
+                        ? md_context_ptr->fast_lambda_md[EB_10_BIT_MD]
+                        : md_context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
                     uint32_t luma_fast_distortion;
-                    if (use_ssd) {
-                        EbSpatialFullDistType spatial_full_dist_type_fun = md_context_ptr->hbd_mode_decision
-                            ? full_distortion_kernel16_bits
-                            : spatial_full_distortion_kernel;
-
-                        luma_fast_distortion = (uint32_t) spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                                input_origin_index,
+                    if (!md_context_ptr->hbd_mode_decision) {
+                        luma_fast_distortion =
+                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                                input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
-                                prediction_ptr->buffer_y,
-                                (int32_t)blk_origin_index,
+                                prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
-                                md_context_ptr->blk_geom->bwidth,
-                                md_context_ptr->blk_geom->bheight);
-
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
                     else {
-                        assert((md_context_ptr->blk_geom->bwidth >> 3) < 17);
-                        if (!md_context_ptr->hbd_mode_decision) {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
-                                    input_picture_ptr->buffer_y + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    prediction_ptr->buffer_y + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
-                        else {
-                            luma_fast_distortion =
-                                (uint32_t)(luma_fast_distortion = sad_16b_kernel(
-                                ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
-                                    input_picture_ptr->stride_y,
-                                    ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
-                                    prediction_ptr->stride_y,
-                                    md_context_ptr->blk_geom->bheight,
-                                    md_context_ptr->blk_geom->bwidth));
-                        }
+                        luma_fast_distortion = (uint32_t)(
+                            luma_fast_distortion = sad_16b_kernel(
+                            ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                                input_picture_ptr->stride_y,
+                                ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
+                                prediction_ptr->stride_y,
+                                md_context_ptr->blk_geom->bheight,
+                                md_context_ptr->blk_geom->bwidth));
                     }
+
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
 #else
                     model_rd_for_sb(picture_control_set_ptr,
@@ -3777,7 +3691,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
         }
 
-#if IFS_UPDATE_FAST_RATE 1
+#if IFS_UPDATE_FAST_RATE
         candidate_buffer_ptr->candidate_ptr->fast_luma_rate += switchable_rate;
 #endif
     }
