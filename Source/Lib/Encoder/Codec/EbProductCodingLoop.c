@@ -4154,6 +4154,25 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                    context_ptr->blk_geom->bwidth);
                 }
             }
+#if SEARCH_TOP_N
+            if (track_best_fp_pos) {
+                // Find the pos that holds the max dist
+                uint32_t max_dist = 0;
+                uint8_t max_dist_fp_pos_idx = 0;
+                for (uint8_t fp_pos_idx = 0; fp_pos_idx < MD_MAX_BEST_FP_POS; fp_pos_idx++) {
+                    if (context_ptr->md_best_fp_pos[fp_pos_idx].dist > max_dist) {
+                        max_dist = context_ptr->md_best_fp_pos[fp_pos_idx].dist;
+                        max_dist_fp_pos_idx = fp_pos_idx;
+                    }
+                }
+                // Update max_dist_fp_pos_idx spot if better distortion
+                if (distortion < max_dist) {
+                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].mvx = mvx + (refinement_pos_x * search_step);
+                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].mvy = mvy + (refinement_pos_y * search_step);
+                    context_ptr->md_best_fp_pos[max_dist_fp_pos_idx].dist = distortion;
+                }
+            }
+#endif
             if (distortion < *best_distortion) {
                 *best_mvx = mvx + (refinement_pos_x * search_step);
                 *best_mvy = mvy + (refinement_pos_y * search_step);
@@ -4727,7 +4746,8 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 }
             }
         }
-
+        if (context_ptr->pd_pass == PD_PASS_2)
+            printf("");
         for (uint8_t fp_pos_idx = 0; fp_pos_idx < MIN(context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt, valid_fp_pos_cnt); fp_pos_idx++) {
             md_sub_pel_search(
                 pcs_ptr,

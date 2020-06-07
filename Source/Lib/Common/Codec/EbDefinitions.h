@@ -49,6 +49,7 @@ extern "C" {
 #define CHROMA_IFS 0
 
 #define IFS_MD_STAGE_1 1
+#define BASIC_MODEL 1
 #define UPGRADE_RD_MODEL 0
 #define UPGRADE_CURVE_FIT_MODEL 0
 /*********************************/
