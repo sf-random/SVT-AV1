@@ -2810,6 +2810,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     uint8_t txt_cycles_reduction_level = 0;
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
 #endif
+
+#if BASIC_MODEL
+    if (pd_pass == PD_PASS_0)
+        context_ptr->interpolation_search_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->interpolation_search_level = 0;
+    else if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+        context_ptr->interpolation_search_level = 0;
+    else
+        context_ptr->interpolation_search_level = 1;
+#else
     // Interpolation search Level                     Settings
     // 0                                              OFF
     // 1                                              Interpolation search at
@@ -2842,7 +2853,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else
         context_ptr->interpolation_search_level = IT_SEARCH_OFF;
-
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD

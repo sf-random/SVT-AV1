@@ -3250,12 +3250,14 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
+#if !BASIC_MODEL
     EbBool           use_uv =
             (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
              md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND)
             ? EB_TRUE
             : EB_FALSE;
     const int32_t num_planes      = use_uv ? MAX_MB_PLANE : 1;
+#endif
     int64_t       rd              = INT64_MAX;
     int32_t       switchable_rate = 0;
     int32_t       i;
@@ -3306,7 +3308,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if BASIC_MODEL
+            0,
+#else
             use_uv,
+#endif
             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
@@ -3327,24 +3333,22 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
     uint32_t luma_fast_distortion;
     if (!md_context_ptr->hbd_mode_decision) {
-        luma_fast_distortion =
-            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+        luma_fast_distortion = nxm_sad_kernel_sub_sampled(
                 input_picture_ptr->buffer_y + input_origin_index,
                 input_picture_ptr->stride_y,
                 prediction_ptr->buffer_y + blk_origin_index,
                 prediction_ptr->stride_y,
                 md_context_ptr->blk_geom->bheight,
-                md_context_ptr->blk_geom->bwidth));
+                md_context_ptr->blk_geom->bwidth);
     }
     else {
-        luma_fast_distortion = (uint32_t)(
-            luma_fast_distortion = sad_16b_kernel(
+        luma_fast_distortion = sad_16b_kernel(
             ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
                 input_picture_ptr->stride_y,
                 ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
                 prediction_ptr->stride_y,
                 md_context_ptr->blk_geom->bheight,
-                md_context_ptr->blk_geom->bwidth));
+                md_context_ptr->blk_geom->bwidth);
     }
     rd = RDCOST(fast_lambda, switchable_rate, luma_fast_distortion);
 #else
@@ -3415,7 +3419,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             prediction_ptr,
                             md_context_ptr->blk_geom->origin_x,
                             md_context_ptr->blk_geom->origin_y,
+#if BASIC_MODEL
+                            0,
+#else
                             use_uv,
+#endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
@@ -3436,24 +3444,22 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     uint32_t luma_fast_distortion;
                     if (!md_context_ptr->hbd_mode_decision) {
-                        luma_fast_distortion =
-                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                        luma_fast_distortion = nxm_sad_kernel_sub_sampled(
                                 input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
                     else {
-                        luma_fast_distortion = (uint32_t)(
-                            luma_fast_distortion = sad_16b_kernel(
+                        luma_fast_distortion = sad_16b_kernel(
                             ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
 #else
@@ -3516,7 +3522,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             prediction_ptr,
                             md_context_ptr->blk_geom->origin_x,
                             md_context_ptr->blk_geom->origin_y,
+#if BASIC_MODEL
+                            0,
+#else
                             use_uv,
+#endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 #if BASIC_MODEL
                     EbPictureBufferDesc *input_picture_ptr =
@@ -3536,24 +3546,22 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     uint32_t luma_fast_distortion;
                     if (!md_context_ptr->hbd_mode_decision) {
-                        luma_fast_distortion =
-                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                        luma_fast_distortion = nxm_sad_kernel_sub_sampled(
                                 input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
                     else {
-                        luma_fast_distortion = (uint32_t)(
-                            luma_fast_distortion = sad_16b_kernel(
+                        luma_fast_distortion = sad_16b_kernel(
                             ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
 
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
@@ -3622,7 +3630,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             prediction_ptr,
                             md_context_ptr->blk_geom->origin_x,
                             md_context_ptr->blk_geom->origin_y,
+#if BASIC_MODEL
+                            0,
+#else
                             use_uv,
+#endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if BASIC_MODEL
@@ -3643,24 +3655,22 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     uint32_t luma_fast_distortion;
                     if (!md_context_ptr->hbd_mode_decision) {
-                        luma_fast_distortion =
-                            (uint32_t)(luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                        luma_fast_distortion = nxm_sad_kernel_sub_sampled(
                                 input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 prediction_ptr->buffer_y + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
                     else {
-                        luma_fast_distortion = (uint32_t)(
-                            luma_fast_distortion = sad_16b_kernel(
+                        luma_fast_distortion = sad_16b_kernel(
                             ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
                                 prediction_ptr->stride_y,
                                 md_context_ptr->blk_geom->bheight,
-                                md_context_ptr->blk_geom->bwidth));
+                                md_context_ptr->blk_geom->bwidth);
                     }
 
                     tmp_rd = RDCOST(fast_lambda, tmp_rs, luma_fast_distortion);
@@ -5899,7 +5909,11 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         return return_error;
     }
 #if FIX_IFS_OFF_CASE
+#if BASIC_MODEL
+    if (md_context_ptr->interpolation_search_level) {
+#else
     if (md_context_ptr->interpolation_search_level != IT_SEARCH_OFF) {
+#endif
 #else
     if (md_context_ptr->interpolation_search_level == IT_SEARCH_OFF)
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;

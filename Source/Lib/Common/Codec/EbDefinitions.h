@@ -1020,13 +1020,13 @@ typedef enum TxSearchLevel {
     TX_SEARCH_INTER_DEPTH,
     TX_SEARCH_FULL_LOOP
 } TxSearchLevel;
-
+#if !BASIC_MODEL
 typedef enum InterpolationSearchLevel {
     IT_SEARCH_OFF,
     IT_SEARCH_FAST_LOOP_UV_BLIND,
     IT_SEARCH_FAST_LOOP,
 } InterpolationSearchLevel;
-
+#endif
 typedef enum NsqSearchLevel {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,
