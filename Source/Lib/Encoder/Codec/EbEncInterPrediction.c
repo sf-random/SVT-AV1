@@ -3374,8 +3374,12 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             int32_t       best_in_temp    = 0;
 #endif
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
+#if FULL_DUAL
+            if (0) {
+#else
             if (md_context_ptr->interpolation_search_level &&
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
+#endif
                 int32_t tmp_rs;
                 int64_t tmp_rd;
 

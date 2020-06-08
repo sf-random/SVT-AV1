@@ -476,9 +476,10 @@ extern "C" {
 #define IFS_MD_STAGE_1            1 // Move ifs from md_stage_3() to md_stage_1()
 #define SHUT_MERGE_1D_INTER_BLOCK 1 // Remove merge 1D feature
 
-#define BASIC_MODEL 1
+#define BASIC_MODEL          1
 #define IFS_UPDATE_FAST_RATE 1
-#define ENABLE_DUAL 1
+#define ENABLE_DUAL          1
+#define FULL_DUAL            1
 
 #define MR_TEST_0 0 // multi-pass PD
 #define MR_TEST_1 0 // nearest-new 
