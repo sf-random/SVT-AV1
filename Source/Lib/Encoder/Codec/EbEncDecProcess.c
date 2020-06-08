@@ -3540,7 +3540,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
 #if APR22_ADOPTIONS
-            else if(MR_MODE || MR_TEST_9)
+            else if(MR_MODE || MR_TEST_8)
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
@@ -4560,7 +4560,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->sq_weight = 100;
 
     else
-        if (MR_MODE || MR_TEST_4)
+        if (MR_MODE || MR_TEST_3)
 #if MAY19_ADOPTIONS 
             context_ptr->sq_weight = 115;
 #else
@@ -4890,7 +4890,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          pcs_ptr->parent_pcs_ptr->sc_content_detected == 0) ? EB_FALSE : EB_TRUE;
 #else
 #if JUNE8_ADOPTIONS
-        if (MR_MODE || MR_TEST_3)
+        if (MR_MODE || MR_TEST_2)
             context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
         else
 #endif

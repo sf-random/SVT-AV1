@@ -939,7 +939,7 @@ EbErrorType signal_derivation_me_kernel_oq(
 #if ME_HME_PRUNING_CLEANUP
 
     // Set hme/me based reference pruning level (0-4)
-    if (MR_MODE || MR_TEST_5)
+    if (MR_MODE || MR_TEST_4)
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
     else if (pcs_ptr->sc_content_detected)
 #if ADOPT_SC_HME_PRUNING

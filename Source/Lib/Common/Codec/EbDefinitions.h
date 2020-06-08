@@ -483,7 +483,7 @@ extern "C" {
 
 
 #define MR_TEST_0 0 // multi-pass PD
-#define MR_TEST_1 0// txs
+#define MR_TEST_1 0 // txs
 #define MR_TEST_2 0 // coeff based
 #define MR_TEST_3 0 // sq weight
 #define MR_TEST_4 0 // hme_prune
