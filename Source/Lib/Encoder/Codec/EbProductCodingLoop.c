@@ -4736,6 +4736,42 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
 }
 #endif
+
+#if SQ_QUICK_SEARCH
+void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
+
+    int16_t  best_search_mvx = (int16_t)~0;
+    int16_t  best_search_mvy = (int16_t)~0;
+    uint32_t best_search_distortion = (uint32_t)~0;
+
+
+    md_full_pel_search(pcs_ptr,
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        context_ptr->md_sq_motion_search_ctrls.use_ssd,
+        list_idx,
+        ref_idx,
+        *me_mv_x,
+        *me_mv_y,
+        -(context_ptr->md_sq_motion_search_ctrls.full_pel_search_width >> 1),
+        +(context_ptr->md_sq_motion_search_ctrls.full_pel_search_width >> 1),
+        -(context_ptr->md_sq_motion_search_ctrls.full_pel_search_height >> 1),
+        +(context_ptr->md_sq_motion_search_ctrls.full_pel_search_height >> 1),
+        8,
+#if SEARCH_TOP_N
+        context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
+#endif
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_distortion);
+
+    *me_mv_x = best_search_mvx;
+    *me_mv_y = best_search_mvy;
+}
+#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
@@ -4984,6 +5020,20 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                   &me_mv_x,
                                   &me_mv_y);
                 }
+
+#if SQ_QUICK_SEARCH
+                else if (context_ptr->md_sq_motion_search_ctrls.enabled) {
+                    md_sq_motion_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        list_idx,
+                        ref_idx,
+                        &me_mv_x,
+                        &me_mv_y);
+                }
+#endif
 #if PERFORM_SUB_PEL_MD
 
                 if (context_ptr->md_subpel_search_ctrls.enabled &&
@@ -9691,12 +9741,21 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     } else {
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
+#if FIX_TX_END_DEPTH
+        if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
+            context_ptr->blk_geom->bwidth <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
+            context_ptr->blk_geom->bheight <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+#else
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
                      context_ptr->blk_geom->bwidth <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
              context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
                      context_ptr->blk_geom->bheight <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+#endif
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
         else
             end_tx_depth = 0;

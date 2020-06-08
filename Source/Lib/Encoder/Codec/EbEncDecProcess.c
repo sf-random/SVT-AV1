@@ -1696,8 +1696,13 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     case 1:
         md_nsq_motion_search_ctrls->enabled = 1;
         md_nsq_motion_search_ctrls->use_ssd = 0;
+#if NSQ_QUICK_SEARCH
+        md_nsq_motion_search_ctrls->full_pel_search_width = 63;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 63;
+#else
         md_nsq_motion_search_ctrls->full_pel_search_width = 31;
         md_nsq_motion_search_ctrls->full_pel_search_height = 31;
+#endif
 #if !PERFORM_SUB_PEL_MD
         md_nsq_motion_search_ctrls->perform_sub_pel = 1;
         md_nsq_motion_search_ctrls->half_pel_search_width = 3;
@@ -1710,8 +1715,13 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     case 2:
         md_nsq_motion_search_ctrls->enabled = 1;
         md_nsq_motion_search_ctrls->use_ssd = 0;
+#if NSQ_QUICK_SEARCH
+        md_nsq_motion_search_ctrls->full_pel_search_width = 63;
+        md_nsq_motion_search_ctrls->full_pel_search_height = 63;
+#else
         md_nsq_motion_search_ctrls->full_pel_search_width = 15;
         md_nsq_motion_search_ctrls->full_pel_search_height = 15;
+#endif
 #if !PERFORM_SUB_PEL_MD
         md_nsq_motion_search_ctrls->perform_sub_pel = 1;
         md_nsq_motion_search_ctrls->half_pel_search_width = 3;
@@ -1745,6 +1755,28 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
         md_nsq_motion_search_ctrls->quarter_pel_search_width = 3;
         md_nsq_motion_search_ctrls->quarter_pel_search_height = 3;
 #endif
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+#if SQ_QUICK_SEARCH
+void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
+
+    MdSqMotionSearchCtrls *md_sq_motion_search_ctrls = &mdctxt->md_sq_motion_search_ctrls;
+
+    switch (md_sq_mv_search_level)
+    {
+    case 0:
+        md_sq_motion_search_ctrls->enabled = 0;
+        break;
+    case 1:
+        md_sq_motion_search_ctrls->enabled = 1;
+        md_sq_motion_search_ctrls->use_ssd = 0;
+        md_sq_motion_search_ctrls->full_pel_search_width = 63;
+        md_sq_motion_search_ctrls->full_pel_search_height = 63;
         break;
     default:
         assert(0);
@@ -3522,7 +3554,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
 #if APR22_ADOPTIONS
-            else if(MR_MODE || MR_TEST_1)
+            else if(MR_MODE || MR_TEST_9)
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
@@ -5100,6 +5132,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_nsq_mv_search_level = 4;
 
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
+#endif
+#if SQ_QUICK_SEARCH
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_sq_mv_search_level = 1;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_sq_mv_search_level = 0;
+    else
+        context_ptr->md_sq_mv_search_level = 0;
+
+    md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if PERFORM_SUB_PEL_MD
     if (pd_pass == PD_PASS_0)
