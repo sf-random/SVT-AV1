@@ -27,7 +27,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 
-#if MR_MODE
+#if MR_MODE || MR_TEST_0
 #define MR_MODE_MULTI_PASS_PD 1
 #else
 #define MR_MODE_MULTI_PASS_PD 0
@@ -2958,7 +2958,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
 #if FIXED_LAST_STAGE_SC
 #if JUNE8_ADOPTIONS
-    if (MR_MODE) {
+    if (MR_MODE || MR_TEST_8) {
         context_ptr->chroma_at_last_md_stage = 0;
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
@@ -3540,7 +3540,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
 #if APR22_ADOPTIONS
-            else if(MR_MODE)
+            else if(MR_MODE || MR_TEST_9)
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
@@ -4560,8 +4560,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->sq_weight = 100;
 
     else
-        if (MR_MODE)
-#if MAY19_ADOPTIONS
+        if (MR_MODE || MR_TEST_4)
+#if MAY19_ADOPTIONS 
             context_ptr->sq_weight = 115;
 #else
 #if APR22_ADOPTIONS
@@ -4890,7 +4890,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          pcs_ptr->parent_pcs_ptr->sc_content_detected == 0) ? EB_FALSE : EB_TRUE;
 #else
 #if JUNE8_ADOPTIONS
-        if (MR_MODE)
+        if (MR_MODE || MR_TEST_3)
             context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
         else
 #endif

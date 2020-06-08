@@ -1527,7 +1527,7 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 
     uint8_t nics_scling_level ;
 #if MAY19_ADOPTIONS
-    if (MR_MODE)
+    if (MR_MODE || MR_TEST_6)
         nics_scling_level = 0;
     else if (pcs_ptr->enc_mode <= ENC_M0)
 #if JUNE8_ADOPTIONS
@@ -10313,7 +10313,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
-#if MR_MODE
+#if MR_MODE || MR_TEST_1
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
 #else
 #if CLASS_MERGING
