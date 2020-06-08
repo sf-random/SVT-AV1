@@ -10035,17 +10035,7 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
     uint32_t cand_index;
 
     // Set MD Staging full_loop_core settings
-#if FULL_TXT
-    context_ptr->md_staging_tx_search =
-        (candidate_ptr->cand_class == CAND_CLASS_0 ||
-#if CLASS_MERGING
-            candidate_ptr->cand_class == CAND_CLASS_3)
-#else
-        candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7)
-#endif
-        ? 2
-        : 1;
-#else
+#if !FULL_TXT
     context_ptr->md_staging_tx_size_mode = 0;
 #endif
     context_ptr->md_staging_tx_search        = 0;
@@ -10067,6 +10057,19 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
             context_ptr->cand_buff_indices[context_ptr->target_class][full_loop_candidate_index];
         candidate_buffer = candidate_buffer_ptr_array[cand_index];
         candidate_ptr    = candidate_buffer->candidate_ptr;
+
+
+#if FULL_TXT
+        context_ptr->md_staging_tx_search =
+            (candidate_ptr->cand_class == CAND_CLASS_0 ||
+#if CLASS_MERGING
+                candidate_ptr->cand_class == CAND_CLASS_3)
+#else
+            candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7)
+#endif
+            ? 2
+            : 1;
+#endif
 #if CAND_PRUN_OPT
         candidate_ptr->txt_level = context_ptr->md_txt_search_level;
         candidate_ptr->txs_level = 0;
