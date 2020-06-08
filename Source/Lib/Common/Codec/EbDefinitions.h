@@ -492,6 +492,12 @@ extern "C" {
 #define MR_TEST_7 0 // chroma
 #define MR_TEST_8 0 // new_nearest_near_comb_injection
 
+
+#define FULL_SSSE 0
+#define FULL_TXT  0
+#define ONLY_FULL_MODE_TXT 0
+#define FIX_INCOMPLETE_SB 0
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

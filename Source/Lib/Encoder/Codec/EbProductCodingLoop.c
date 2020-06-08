@@ -9749,12 +9749,21 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     } else {
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
+#if FIX_INCOMPLETE_SB
+        if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
+            context_ptr->blk_geom->bwidth <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
+            context_ptr->blk_geom->bheight <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+#else
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
                      context_ptr->blk_geom->bwidth <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
              context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
                      context_ptr->blk_geom->bheight <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+#endif
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
         else
             end_tx_depth = 0;
@@ -10026,12 +10035,28 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
     uint32_t cand_index;
 
     // Set MD Staging full_loop_core settings
+#if FULL_TXT
+    context_ptr->md_staging_tx_search =
+        (candidate_ptr->cand_class == CAND_CLASS_0 ||
+#if CLASS_MERGING
+            candidate_ptr->cand_class == CAND_CLASS_3)
+#else
+        candidate_ptr->cand_class == CAND_CLASS_6 || candidate_ptr->cand_class == CAND_CLASS_7)
+#endif
+        ? 2
+        : 1;
+#else
     context_ptr->md_staging_tx_size_mode = 0;
+#endif
     context_ptr->md_staging_tx_search        = 0;
     context_ptr->md_staging_skip_full_chroma = EB_TRUE;
     context_ptr->md_staging_skip_rdoq        = EB_TRUE;
 #if ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS
+#if FULL_SSSE
+    context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
+#else
     context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
+#endif
 #else
     context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
 #endif
@@ -10133,7 +10158,11 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_skip_inter_chroma_pred    = EB_TRUE;
 #endif
 #if ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS
+#if FULL_SSSE
+        context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
+#else
         context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
+#endif
 #else
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
 #endif
@@ -10332,6 +10361,9 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #if CAND_PRUN_OPT
         context_ptr->md_staging_tx_search = 1;
 #else
+#if ONLY_FULL_MODE_TXT
+        context_ptr->md_staging_tx_search = 2;
+#else
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
 #if CLASS_MERGING
@@ -10341,6 +10373,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
                 ? 2
                 : 1;
+#endif
 #endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
 
