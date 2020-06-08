@@ -484,10 +484,7 @@ extern "C" {
 #define IFS_CHROMA           1 
 #endif
 
-#define SQ_QUICK_SEARCH  0 // To be removed
-#define NSQ_QUICK_SEARCH 0 // To be removed
 
-#define FIX_TX_END_DEPTH 0
 
 #define MR_TEST_0 0 // multi-pass PD
 #define MR_TEST_1 0// txs
@@ -499,6 +496,15 @@ extern "C" {
 #define MR_TEST_7 0 // reduce_complex_clip_cycles_level
 #define MR_TEST_8 0 // compound
 #define MR_TEST_9 0 // new_nearest_near_comb_injection
+
+#define SHUT_TF   0
+#define SB_64X64  0
+
+#define SQ_QUICK_SEARCH  0 // To be removed
+#define NSQ_QUICK_SEARCH 0 // To be removed
+
+#define FIX_TX_END_DEPTH 0
+
 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

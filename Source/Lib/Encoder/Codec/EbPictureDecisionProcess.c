@@ -2409,6 +2409,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         context_ptr->tf_level = 3;
+
+#if SHUT_TF
+    context_ptr->tf_level = 3;
+#endif
+    
     set_tf_controls(context_ptr, context_ptr->tf_level);
 #endif
     return return_error;
