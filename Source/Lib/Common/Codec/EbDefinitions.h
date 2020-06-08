@@ -479,7 +479,8 @@ extern "C" {
 #define BASIC_MODEL          1
 #define IFS_UPDATE_FAST_RATE 1
 #define ENABLE_DUAL          1
-#define FULL_DUAL            1
+#define FULL_DUAL            0
+#define IFS_CHROMA           1 
 
 #define MR_TEST_0 0 // multi-pass PD
 #define MR_TEST_1 0 // nearest-new 
