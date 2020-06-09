@@ -1450,7 +1450,11 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[PA_ME_GROUP]         = 7;
         ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
         ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
+#if PRUNE_NEAREST_NEW_NEAR_BEST
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 2;
+#else
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 7;
+#endif
         ref_pruning_ctrls->best_refs[WARP_GROUP]          = 7;
         ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]     = 7;
         ref_pruning_ctrls->best_refs[PRED_ME_GROUP]       = 7;
@@ -1458,7 +1462,11 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->closest_refs[PA_ME_GROUP]         = 0;
         ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]       = 0;
         ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]        = 1;
+#if PRUNE_NEAREST_NEW_NEAR_CLOSEST
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 1;
+#else
         ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+#endif
         ref_pruning_ctrls->closest_refs[WARP_GROUP]          = 0;
         ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]     = 1;
         ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]       = 0;
@@ -3544,7 +3552,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
+#if PRUNE_NEAREST_NEW_NEAR
+                context_ptr->new_nearest_near_comb_injection = 1;
+#else
                 context_ptr->new_nearest_near_comb_injection = 0;
+#endif
 
         else
             context_ptr->new_nearest_near_comb_injection =
@@ -4562,7 +4574,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (MR_MODE || MR_TEST_3)
 #if MAY19_ADOPTIONS 
+#if SQ_WEIGHT_110
+            context_ptr->sq_weight = 110;
+#else
             context_ptr->sq_weight = 115;
+#endif
 #else
 #if APR22_ADOPTIONS
             context_ptr->sq_weight = (uint32_t)~0;
