@@ -2958,7 +2958,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
 #if FIXED_LAST_STAGE_SC
 #if JUNE8_ADOPTIONS
-    if (MR_MODE || MR_TEST_8) {
+    if (MR_MODE || MR_TEST_7) {
         context_ptr->chroma_at_last_md_stage = 0;
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
