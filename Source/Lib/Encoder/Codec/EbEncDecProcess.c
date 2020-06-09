@@ -3552,7 +3552,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 1;
 #endif
             else
-#if PRUNE_NEAREST_NEW_NEAR
+#if PRUNE_NEAREST_NEW_NEAR_CLOSEST || PRUNE_NEAREST_NEW_NEAR_BEST
                 context_ptr->new_nearest_near_comb_injection = 1;
 #else
                 context_ptr->new_nearest_near_comb_injection = 0;
