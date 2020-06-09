@@ -495,7 +495,7 @@ extern "C" {
 #define SQ_WEIGHT_110                  0
 #define PRUNE_NEAREST_NEW_NEAR_CLOSEST 0
 #define PRUNE_NEAREST_NEW_NEAR_BEST    0
-#define TXS_INTER_DEPTH_1              0
+#define TXS_INTER_DEPTH_1              1
 
 #define FULL_SSSE 0
 #define FULL_TXT  0

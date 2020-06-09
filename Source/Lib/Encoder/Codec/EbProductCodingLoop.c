@@ -10357,7 +10357,7 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
-#if MR_MODE || MR_TEST_1
+#if MR_MODE || MR_TEST_1 || TXS_INTER_DEPTH_1
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
 #else
 #if CLASS_MERGING
