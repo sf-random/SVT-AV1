@@ -863,10 +863,6 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
                         RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
                     intra_cost  += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
-#if TPL_IMP_COST_UPDATE
-                    intra_cost += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-                    mc_dep_cost += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-#endif
                 }
             }
             double rk = 0;
@@ -1107,12 +1103,6 @@ void tpl_mc_flow_dispenser(
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
 
 #if TPL_IMP_USE_QPS
-    //if (scs_ptr->static_config.qp > 43) {
-    //    //qIndex = quantizer_to_qindex[43];
-    //    uint8_t temp_qp = (uint8_t)scs_ptr->static_config.qp >= 48 ? ((uint8_t)scs_ptr->static_config.qp - 5) : 43;
-    //    qIndex = quantizer_to_qindex[temp_qp];
-    //
-    //}
     const  double delta_rate_new[7][6] =
     {
         { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
@@ -1618,11 +1608,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
             intra_cost_base  += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
             mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
-#if TPL_IMP_COST_UPDATE
-            intra_cost_base += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-            mc_dep_cost_base += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-#endif
-
         }
     }
 
@@ -1660,10 +1645,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                         RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
                     intra_cost  += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
-#if TPL_IMP_COST_UPDATE
-                    intra_cost += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-                    mc_dep_cost += RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->recrf_rate, 0);
-#endif
                 }
             }
             double beta = 1.0;

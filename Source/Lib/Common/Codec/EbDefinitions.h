@@ -476,9 +476,6 @@ extern "C" {
 #define TPL_IMP_RECON_INTRA        1 // use recon samples for intra in tpl
 #define TPL_IMP_TABLES              1
 
-
-#define TPL_IMP_BETA 0 // WIP
-#define TPL_IMP_COST_UPDATE        0 // WIP
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
