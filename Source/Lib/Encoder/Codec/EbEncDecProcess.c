@@ -1451,7 +1451,7 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
         ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
 #if PRUNE_NEAREST_NEW_NEAR_BEST
-        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 4;
 #else
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 7;
 #endif
@@ -8722,7 +8722,9 @@ void *enc_dec_kernel(void *input_ptr) {
 #endif
 
                     }
-
+#if TRACK_DIST_PER_MV_REF_0 || TRACK_DIST_PER_MV_REF_1
+                    memset(context_ptr->md_context->tot_mv_res, 0, 2 * BLOCK_MAX_COUNT_SB_128 * sizeof(uint16_t));
+#endif
                     // Configure the SB
                     mode_decision_configure_sb(
 #if QP2QINDEX

@@ -502,6 +502,9 @@ extern "C" {
 #define ONLY_FULL_MODE_TXT 0
 #define FIX_INCOMPLETE_SB 0
 
+
+#define TRACK_DIST_PER_MV_REF_0    1 // Track subpel search distortion(s) to skip compensation 
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
