@@ -490,9 +490,9 @@ extern "C" {
 #define MR_TEST_5 0 // nic
 #define MR_TEST_6 0 // compound
 #define MR_TEST_7 0 // chroma
-#define MR_TEST_8 0 // new_nearest_near_comb_injection
+#define MR_TEST_8 1 // new_nearest_near_comb_injection
 
-#define TXS_INTER_DEPTH_1 1
+#define TXS_INTER_DEPTH_1 0
 
 #define FULL_SSSE 0
 #define FULL_TXT  0
