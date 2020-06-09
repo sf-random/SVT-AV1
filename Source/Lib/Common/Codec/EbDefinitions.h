@@ -492,9 +492,9 @@ extern "C" {
 #define MR_TEST_7 0 // chroma
 #define MR_TEST_8 0 // new_nearest_near_comb_injection
 
-#define SQ_WEIGHT_110                  0
-#define PRUNE_NEAREST_NEW_NEAR_CLOSEST 1
-#define PRUNE_NEAREST_NEW_NEAR_BEST    1
+#define SQ_WEIGHT_110                  1
+#define PRUNE_NEAREST_NEW_NEAR_CLOSEST 0
+#define PRUNE_NEAREST_NEW_NEAR_BEST    0
 #define TXS_INTER_DEPTH_1              0
 
 #define FULL_SSSE 0

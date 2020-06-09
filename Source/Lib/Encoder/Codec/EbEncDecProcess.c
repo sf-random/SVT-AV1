@@ -4628,7 +4628,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                         context_ptr->sq_weight = (uint32_t)~0;
 #else
 #if MAY15_M0_ADOPTIONS
+#if SQ_WEIGHT_110
+                        context_ptr->sq_weight = 110;
+#else
                         context_ptr->sq_weight = 105;
+#endif
 #else
                     context_ptr->sq_weight =
                     sequence_control_set_ptr->static_config.sq_weight + 10;
