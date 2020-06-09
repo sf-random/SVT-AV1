@@ -78,7 +78,7 @@ int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
     daala_data = eb_od_ec_enc_done(&br->ec, &daala_bytes);
     if (daala_data) {
         nb_bits    = eb_od_ec_enc_tell(&br->ec);
-        memcpy(br->buffer, daala_data, daala_bytes);
+        eb_memcpy((void*)br->buffer, (void*)daala_data, daala_bytes);
     } else {
         SVT_ERROR("eb_od_ec_enc_done returns null ptr");
     }
