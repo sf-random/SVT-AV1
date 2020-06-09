@@ -7576,12 +7576,20 @@ static void tx_search_update_recon_sample_neighbor_array(
 
     return;
 }
+#if TXS_INTER_DEPTH_1
+uint8_t get_end_tx_depth(BlockSize bsize, uint32_t is_inter) {
+#else
 uint8_t get_end_tx_depth(BlockSize bsize) {
+#endif
     uint8_t tx_depth = 0;
     if (bsize == BLOCK_64X64 || bsize == BLOCK_32X32 || bsize == BLOCK_16X16 ||
         bsize == BLOCK_64X32 || bsize == BLOCK_32X64 || bsize == BLOCK_16X32 ||
         bsize == BLOCK_32X16 || bsize == BLOCK_16X8 || bsize == BLOCK_8X16)
+#if TXS_INTER_DEPTH_1
+        tx_depth = is_inter ? 1 : 2;
+#else
         tx_depth = 2;
+#endif
     else if (bsize == BLOCK_8X8 || bsize == BLOCK_64X16 || bsize == BLOCK_16X64 ||
              bsize == BLOCK_32X8 || bsize == BLOCK_8X32 || bsize == BLOCK_16X4 ||
              bsize == BLOCK_4X16)
@@ -9764,7 +9772,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                      context_ptr->blk_geom->bheight <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
 #endif
+#if TXS_INTER_DEPTH_1
+            end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize, is_inter);
+#else
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
+#endif
         else
             end_tx_depth = 0;
 
