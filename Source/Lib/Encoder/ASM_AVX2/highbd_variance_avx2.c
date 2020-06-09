@@ -139,7 +139,12 @@ VAR_FN(64, 16, 16, 10);
 
 #undef VAR_FN
 
-void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
+/*
+* Compute varaince for 16bit input, only for blocks 32x32
+* This kernel is only used by variance_highbd_avx2()
+* Return: SAD and sum of square differences
+*/
+static inline void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
                                 int ref_stride, uint32_t *sse, int *sum) {
     uint32_t sse0;
     int      sum0;
@@ -158,6 +163,9 @@ void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride, const uint1
     }
 }
 
+/*
+* Helper function to compute variance with 16 bit input for square blocks of size 16 and 32
+*/
 uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse) {
     assert(w == h);

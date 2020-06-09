@@ -460,6 +460,28 @@ INSTANTIATE_TEST_CASE_P(Variance, HbdSquareVarianceTest,
                         ::testing::ValuesIn(HbdSquareVarTestVector));
 
 
+/**
+ * @brief Unit test for different implementation of HBD variance with size 16x16 and 32x32
+ * functions:
+ * - variance_highbd_c
+ * - variance_highbd_avx2
+ *
+ * Test strategy:
+ *  This test case use random source, max source, zero source as test
+ * pattern.
+ *
+ * Expected result:
+ *  Results come from reference function and target function are
+ * equal.
+ *
+ * Test cases:
+ * - ZeroTest
+ * - MaximumTest
+ * - MatchTest
+ *
+ * @author  intel tszumski
+ *
+ */
 using HighBdVarianceNoRoundFunc = uint32_t (*)(const uint16_t* src,
                                                int32_t src_stride,
                                                const uint16_t* ref,
