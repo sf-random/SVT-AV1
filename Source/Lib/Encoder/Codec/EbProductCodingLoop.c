@@ -5263,9 +5263,12 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
     }
     return distortion;
 }
-
+#if PRUNE_NEAREST_NEW_NEAR_CLOSEST
+#define MIN_REF_TO_TAG 0
+#else
 // Tag ref frame(s) as to_do or not
 #define MIN_REF_TO_TAG 2
+#endif
 void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          EbPictureBufferDesc *input_picture_ptr, uint32_t blk_origin_index) {
 
