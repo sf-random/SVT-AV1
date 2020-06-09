@@ -632,7 +632,7 @@ enum {
 #define BLOCK_MAX_COUNT_SB_128 4421 // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64 1101 // TODO: reduce alloction for 64x64
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
-#if MAR12_ADOPTIONS && MR_MODE
+#if MAR12_ADOPTIONS && (MR_MODE || MR_TEST_5)
 #define MAX_NFL 250 // Maximum number of candidates MD can support
 #else
 #define MAX_NFL 125 // Maximum number of candidates MD can support
