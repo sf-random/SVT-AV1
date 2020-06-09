@@ -494,7 +494,7 @@ extern "C" {
 
 #define SQ_WEIGHT_110                  0
 #define PRUNE_NEAREST_NEW_NEAR_CLOSEST 0
-#define PRUNE_NEAREST_NEW_NEAR_BEST    0
+#define PRUNE_NEAREST_NEW_NEAR_BEST    1
 #define TXS_INTER_DEPTH_1              0
 
 #define FULL_SSSE 0
@@ -503,7 +503,7 @@ extern "C" {
 #define FIX_INCOMPLETE_SB 0
 
 
-#define TRACK_DIST_PER_MV_REF_0    1 // Track subpel search distortion(s) to skip compensation 
+#define TRACK_DIST_PER_MV_REF_0    0 // Track subpel search distortion(s) to skip compensation 
 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
