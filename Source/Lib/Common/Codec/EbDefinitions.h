@@ -506,8 +506,8 @@ extern "C" {
 #define TRACK_DIST_PER_MV_REF_0    0 // Track subpel search distortion(s) to skip compensation 
 
 /************************************************/
-#define SSD_SUB_PEL_SEARCH 1
-#define SUBPEL_15x15 0
+#define SSD_SUB_PEL_SEARCH 0
+#define SUBPEL_15x15 1
 /************************************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
