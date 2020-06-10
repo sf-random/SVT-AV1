@@ -5738,6 +5738,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         use_ssd = EB_FALSE;
 #endif
 #endif
+
+#if PRED_ME_SSD_ONLY_SQ
+    use_ssd = ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) ? 1 : 0);
+#endif
+
     uint8_t                   hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                     ? EB_8_BIT_MD
                                     : context_ptr->hbd_mode_decision;

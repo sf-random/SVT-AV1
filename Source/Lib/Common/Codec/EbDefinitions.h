@@ -508,7 +508,8 @@ extern "C" {
 /************************************************/
 #define SSD_SUB_PEL_SEARCH 0
 #define SUBPEL_15x15 0
-#define SSD_SUB_PEL_ONLY_SQ 1
+#define SSD_SUB_PEL_ONLY_SQ 0
+#define PRED_ME_SSD_ONLY_SQ 1
 /************************************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
