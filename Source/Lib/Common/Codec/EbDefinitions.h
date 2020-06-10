@@ -484,10 +484,10 @@ extern "C" {
 
 #define MR_TEST_0 0 // multi-pass PD
 #define MR_TEST_1 0 // txs
-#define MR_TEST_2 1 // coeff based
+#define MR_TEST_2 0 // coeff based
 #define MR_TEST_3 0 // sq weight
-#define MR_TEST_4 1 // hme_prune
-#define MR_TEST_5 1 // nic
+#define MR_TEST_4 0 // hme_prune
+#define MR_TEST_5 0 // nic
 #define MR_TEST_6 0 // compound
 #define MR_TEST_7 0 // chroma
 #define MR_TEST_8 0 // new_nearest_near_comb_injection
