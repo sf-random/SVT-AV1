@@ -500,7 +500,7 @@ extern "C" {
 #define FULL_SSSE 0
 #define FULL_TXT  0
 #define ONLY_FULL_MODE_TXT 0
-#define FIX_INCOMPLETE_SB              0
+#define FIX_INCOMPLETE_SB              1
 
 
 #define TRACK_DIST_PER_MV_REF_0    0 // Track subpel search distortion(s) to skip compensation 
