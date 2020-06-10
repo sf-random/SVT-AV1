@@ -1050,8 +1050,9 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
                             Quants *const quants, Dequants *const deq);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
-#if TPL_IMP_USE_QPS
+#if TPL_IMP
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
 #endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
@@ -1102,7 +1103,7 @@ void tpl_mc_flow_dispenser(
     MacroblockPlane mb_plane;
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
 
-#if TPL_IMP_USE_QPS
+#if TPL_IMP
     const  double delta_rate_new[7][6] =
     {
         { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
@@ -1344,7 +1345,7 @@ void tpl_mc_flow_dispenser(
                         above_row = above_data + 16;
                         left_col = left_data + 16;
                         TxSize tx_size = TX_16X16;
-#if TPL_IMP_RECON_INTRA
+#if TPL_IMP
                         uint8_t *recon_buffer =
                             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] +
                             dst_basic_offset;
@@ -1690,7 +1691,6 @@ EbErrorType tpl_mc_flow(
     InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
     PictureParentControlSet          *temp_pcs_ptr;
     PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = {NULL, };
-    PictureParentControlSet          *pcs_array_new[MAX_TPL_LA_SW] = {NULL, };
 
     uint32_t                         inputQueueIndex;
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);

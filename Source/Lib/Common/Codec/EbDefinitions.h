@@ -469,12 +469,8 @@ extern "C" {
 
 #define QPS_240P_UPDATE          1 // Modify the QPS of 240P to be similar to other resolution
 
-#define LAD_MEM_RED                1 // tpl works with lad 16. limit the look ahead to be 16
-#define TPL_IMP_1PASS              1 // improve the tpl 1 pass by getting actions from aom 1 pass
-#define TPL_IMP_2PASS              1 // improve the tpl two pass by getting actions from old 2 pass
-#define TPL_IMP_USE_QPS            1 // use QPS in tpl
-#define TPL_IMP_RECON_INTRA        1 // use recon samples for intra in tpl
-#define TPL_IMP_TABLES              1
+#define LAD_MEM_RED              1 // tpl works with lad 16. limit the look ahead to be 16
+#define TPL_IMP                  1 // tpl improvement changes
 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////

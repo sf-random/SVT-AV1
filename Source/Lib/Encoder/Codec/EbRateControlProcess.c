@@ -4829,7 +4829,7 @@ static int get_active_quality(int q, int gfu_boost, int low, int high, int *low_
         return low_motion_minq[q] + adjustment;
     }
 }
-#if TPL_IMP_TABLES
+#if TPL_IMP
 static int get_kf_active_quality_tpl(const RATE_CONTROL *const rc, int q,
     AomBitDepth bit_depth) {
     int *kf_low_motion_minq_cqp;
@@ -4895,7 +4895,7 @@ static int get_kf_boost_from_r0(double r0, int frames_to_key, int is_smaller_360
     return boost;
 }
 
-#if TPL_IMP_1PASS
+#if TPL_IMP
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolution input_resolution) {
     double factor = sqrt((double)frames_to_key);
     factor = AOMMIN(factor, 10.0);
@@ -5140,12 +5140,12 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
         const int new_kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, is_smaller_360p);
 
-#if TPL_IMP_2PASS
+#if TPL_IMP
         if(rc->kf_boost != kf_low)
 #endif
         rc->kf_boost = combine_prior_with_tpl_boost(rc->kf_boost, new_kf_boost, frames_to_key);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
-#if TPL_IMP_TABLES
+#if TPL_IMP
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
 #else
         active_best_quality = get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
@@ -5158,8 +5158,7 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
 #endif
         // Make a further adjustment based on the kf zero motion measure.
         q_adj_factor +=
-            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct);
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -5180,11 +5179,8 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
         int frames_to_key = (int)MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded)
                            - (pcs_ptr->parent_pcs_ptr->picture_number % (scs_ptr->intra_period_length + 1)) + 15;
         const int new_gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
-        if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
-            SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, new_gfu_boost,
-               rc->gfu_boost);
         rc->arf_boost_factor = 1;
-#if TPL_IMP_2PASS
+#if TPL_IMP
         rc->arf_boost_factor =
             (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
              (int)referenced_area_avg - (int)pcs_ptr->ref_pic_referenced_area_avg_array[0][0] >=
@@ -5194,8 +5190,6 @@ static int adaptive_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL 
                 : (float_t)1;
 #endif
         rc->gfu_boost = combine_prior_with_tpl_boost(rc->gfu_boost, new_gfu_boost, frames_to_key);
-        if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
-            SVT_LOG("newBoost:%d\n", rc->gfu_boost);
         q = active_worst_quality;
 
         // non ref frame or repeated frames with re-encode
@@ -5287,7 +5281,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->best_quality    = MINQ;
 
         int frames_to_key = (int)MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
-#if TPL_IMP_1PASS
+#if TPL_IMP
         rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, scs_ptr->input_resolution);
 #else
         int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
@@ -5295,7 +5289,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 #endif
 
         // Baseline value derived from cpi->active_worst_quality and kf boost.
-#if TPL_IMP_TABLES
+#if TPL_IMP
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
 #else
         active_best_quality = get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
@@ -5308,8 +5302,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 #endif
         // Make a further adjustment based on the kf zero motion measure.
         q_adj_factor +=
-            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct);
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -5317,12 +5310,10 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (!is_src_frame_alt_ref &&
                (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame)) {
-#if TPL_IMP_1PASS
+#if TPL_IMP
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
-        //int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw * 3 / 2;
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + scs_ptr->static_config.look_ahead_distance;
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
-        //SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t hl=%d, min_boost_factor=%f\n", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, rc->gfu_boost, (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0), pcs_ptr->parent_pcs_ptr->hierarchical_levels, min_boost_factor);
 #else
         rc->gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
 #endif
@@ -5371,8 +5362,6 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 
     adjust_active_best_and_worst_quality(pcs_ptr, rc, rf_level, &active_worst_quality, &active_best_quality);
     q = active_best_quality;
-    //if (refresh_alt_ref_frame)
-    //    SVT_LOG("poc %ld\tr0:%.5f\tnewBoost:%d\toldBoost:%d\t num_stats_required_for_gfu_boost=%d, q=%d\n", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->r0, rc->gfu_boost, (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0), pcs_ptr->parent_pcs_ptr->frames_in_sw + scs_ptr->static_config.look_ahead_distance, q);
     clamp(q, active_best_quality, active_worst_quality);
 
     return q;
@@ -5445,8 +5434,7 @@ static int adaptive_qindex_calc_two_pass(PictureControlSet *pcs_ptr, RATE_CONTRO
 #endif
         // Make a further adjustment based on the kf zero motion measure.
         q_adj_factor +=
-            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct);
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
