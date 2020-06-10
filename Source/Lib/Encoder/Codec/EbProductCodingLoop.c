@@ -5263,7 +5263,7 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
     }
     return distortion;
 }
-#if 0//PRUNE_NEAREST_NEW_NEAR_CLOSEST
+#if PRUNE_NEAREST_NEW_NEAR_CLOSEST
 #define MIN_REF_TO_TAG 0
 #else
 // Tag ref frame(s) as to_do or not

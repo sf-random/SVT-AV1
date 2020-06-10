@@ -1451,7 +1451,7 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]       = 2;
         ref_pruning_ctrls->best_refs[BI_3x3_GROUP]        = 2;
 #if PRUNE_NEAREST_NEW_NEAR_BEST
-        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 0;
 #else
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 7;
 #endif
