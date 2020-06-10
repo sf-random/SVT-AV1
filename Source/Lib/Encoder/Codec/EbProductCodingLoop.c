@@ -3823,7 +3823,11 @@ void md_stage_0(
     uint64_t best_first_fast_cost_search_candidate_cost  = MAX_CU_COST;
     int32_t  best_first_fast_cost_search_candidate_index = INVALID_FAST_CANDIDATE_INDEX;
 #endif
+#if SSD_FAST_LOOP
+    EbBool   use_ssd = EB_TRUE;
+#else
     EbBool   use_ssd = EB_FALSE;
+#endif
 #if !REMOVE_UNUSED_CODE_PH2
     uint32_t fast_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->fast_lambda_md[EB_10_BIT_MD] :

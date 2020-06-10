@@ -513,8 +513,10 @@ extern "C" {
 #define SSD_SUB_PEL_ONLY_SQ 0
 #define PRED_ME_SSD_ONLY_SQ 0
 
-#define BASIC_MODEL          1
+#define BASIC_MODEL          0
 #define IFS_UPDATE_FAST_RATE 0
+
+#define SSD_FAST_LOOP 1
 /************************************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
