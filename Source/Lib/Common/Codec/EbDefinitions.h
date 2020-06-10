@@ -516,7 +516,8 @@ extern "C" {
 #define BASIC_MODEL          0
 #define IFS_UPDATE_FAST_RATE 0
 
-#define SSD_FAST_LOOP 1
+#define SSD_FAST_LOOP 0
+#define REGULAR_MD_STAGE_0 1
 /************************************************/
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
