@@ -1285,7 +1285,6 @@ void full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, i
 }
 
 void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
-                                                 int32_t *recon_coeff, uint32_t recon_coeff_stride,
                                                  uint64_t distortion_result[DIST_CALC_TOTAL],
                                                  uint32_t area_width, uint32_t area_height) {
     uint32_t row_count, col_count;
@@ -1308,7 +1307,6 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_
         } while (--col_count);
 
         coeff += coeff_stride;
-        recon_coeff += coeff_stride;
         row_count -= 1;
     } while (row_count > 0);
 
@@ -1318,7 +1316,6 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_
     temp2 = _mm_shuffle_epi32(temp1, 0x4e);
     temp1 = _mm_add_epi64(temp1, temp2);
     _mm_storeu_si128((__m128i *)distortion_result, temp1);
-    (void)recon_coeff_stride;
 }
 
 static INLINE void residual32_avx2(const uint8_t *const input, const uint8_t *const pred,
