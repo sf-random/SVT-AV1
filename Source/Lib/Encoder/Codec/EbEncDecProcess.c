@@ -1768,8 +1768,11 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
     case 0: md_subpel_search_ctrls->enabled = 0; break;
     case 1:
         md_subpel_search_ctrls->enabled = 1;
+#if SSD_SUB_PEL_SEARCH
+        md_subpel_search_ctrls->use_ssd = 1;
+#else
         md_subpel_search_ctrls->use_ssd = 0;
-
+#endif
         md_subpel_search_ctrls->do_4x4 = 1;
         md_subpel_search_ctrls->do_nsq = 1;
 
@@ -1861,6 +1864,16 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
     md_subpel_search_ctrls->eight_pel_search_height = 3;
     md_subpel_search_ctrls->eight_pel_interpolation = 0;
 
+
+#if SUBPEL_15x15
+    if (md_subpel_search_level == 1) {
+        md_subpel_search_ctrls->quarter_pel_search_width = 15;
+        md_subpel_search_ctrls->quarter_pel_search_height = 15;
+
+        md_subpel_search_ctrls->eight_pel_search_width = 15;
+        md_subpel_search_ctrls->eight_pel_search_height = 15;
+    }
+#endif
 }
 #endif
 #if SB_CLASSIFIER
