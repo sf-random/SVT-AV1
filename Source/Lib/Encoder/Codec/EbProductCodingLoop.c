@@ -4863,7 +4863,11 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 input_picture_ptr,
                 input_origin_index,
                 blk_origin_index,
+#if SSD_SUB_PEL_ONLY_SQ
+                ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) ? 1 : 0),
+#else
                 context_ptr->md_subpel_search_ctrls.use_ssd,
+#endif
                 list_idx,
                 ref_idx,
                 context_ptr->md_best_fp_pos[fp_pos_idx].mvx,
@@ -4913,7 +4917,11 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             input_picture_ptr,
             input_origin_index,
             blk_origin_index,
+#if SSD_SUB_PEL_ONLY_SQ
+            ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) ? 1 : 0),
+#else
             context_ptr->md_subpel_search_ctrls.use_ssd,
+#endif
             list_idx,
             ref_idx,
             best_search_mvx,
@@ -4938,7 +4946,11 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 input_picture_ptr,
                 input_origin_index,
                 blk_origin_index,
+#if SSD_SUB_PEL_ONLY_SQ
+                ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) ? 1 : 0),
+#else
                 context_ptr->md_subpel_search_ctrls.use_ssd,
+#endif
                 list_idx,
                 ref_idx,
                 best_search_mvx,
