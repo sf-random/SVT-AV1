@@ -323,7 +323,7 @@ void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stri
             out16_bit_buffer += out_stride << 1;
         }
     } else if (width == 16) {
-        __m128i in_n_bit, in_8_bit, in_n_bit_stride, in_8bit_stride, out0, out1, out2, out3;
+        __m128i in_n_bit, in_8_bit, in_n_bit_stride, in_8bit_stride, out2, out3;
 
         for (y = 0; y < height; y += 2) {
             in_n_bit       = _mm_loadu_si128((__m128i *)inn_bit_buffer);
