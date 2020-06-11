@@ -1230,23 +1230,6 @@ void eb_aom_highbd_blend_a64_mask_sse4_1(uint16_t *dst, uint32_t dst_stride, con
                              int             w,
                              int             h);
 
-    // Dimensions are: bd_index X width_index X subw X subh
-    static const BlendFn blend[2][2][2][2] = {
-        {// bd == 8 or 10
-         {// w % 8 == 0
-          {blend_a64_mask_b10_w8n_sse4_1, blend_a64_mask_b10_sy_w8n_sse4_1},
-          {blend_a64_mask_b10_sx_w8n_sse4_1, blend_a64_mask_b10_sx_sy_w8n_sse4_1}},
-         {// w == 4
-          {blend_a64_mask_b10_w4_sse4_1, blend_a64_mask_b10_sy_w4_sse4_1},
-          {blend_a64_mask_b10_sx_w4_sse4_1, blend_a64_mask_b10_sx_sy_w4_sse4_1}}},
-        {// bd == 12
-         {// w % 8 == 0
-          {blend_a64_mask_b12_w8n_sse4_1, blend_a64_mask_b12_sy_w8n_sse4_1},
-          {blend_a64_mask_b12_sx_w8n_sse4_1, blend_a64_mask_b12_sx_sy_w8n_sse4_1}},
-         {// w == 4
-          {blend_a64_mask_b12_w4_sse4_1, blend_a64_mask_b12_sy_w4_sse4_1},
-          {blend_a64_mask_b12_sx_w4_sse4_1, blend_a64_mask_b12_sx_sy_w4_sse4_1}}}};
-
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
 
@@ -1274,7 +1257,22 @@ void eb_aom_highbd_blend_a64_mask_sse4_1(uint16_t *dst, uint32_t dst_stride, con
         //uint16_t *const dst = CONVERT_TO_SHORTPTR(dst_8);
         //const uint16_t *const src0 = CONVERT_TO_SHORTPTR(src0_8);
         //const uint16_t *const src1 = CONVERT_TO_SHORTPTR(src1_8);
-
+        // Dimensions are: bd_index X width_index X subw X subh
+        static const BlendFn blend[2][2][2][2] = {
+            {// bd == 8 or 10
+             {// w % 8 == 0
+              {blend_a64_mask_b10_w8n_sse4_1, blend_a64_mask_b10_sy_w8n_sse4_1},
+              {blend_a64_mask_b10_sx_w8n_sse4_1, blend_a64_mask_b10_sx_sy_w8n_sse4_1}},
+             {// w == 4
+              {blend_a64_mask_b10_w4_sse4_1, blend_a64_mask_b10_sy_w4_sse4_1},
+              {blend_a64_mask_b10_sx_w4_sse4_1, blend_a64_mask_b10_sx_sy_w4_sse4_1}}},
+            {// bd == 12
+             {// w % 8 == 0
+              {blend_a64_mask_b12_w8n_sse4_1, blend_a64_mask_b12_sy_w8n_sse4_1},
+              {blend_a64_mask_b12_sx_w8n_sse4_1, blend_a64_mask_b12_sx_sy_w8n_sse4_1}},
+             {// w == 4
+              {blend_a64_mask_b12_w4_sse4_1, blend_a64_mask_b12_sy_w4_sse4_1},
+              {blend_a64_mask_b12_sx_w4_sse4_1, blend_a64_mask_b12_sx_sy_w4_sse4_1}}}};
         blend[bd == 12][(w >> 2) & 1][subw != 0][subh != 0](
             dst, dst_stride, src0, src0_stride, src1, src1_stride, mask, mask_stride, w, h);
     }
