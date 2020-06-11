@@ -1287,7 +1287,7 @@ void full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, i
 void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
                                                  uint64_t distortion_result[DIST_CALC_TOTAL],
                                                  uint32_t area_width, uint32_t area_height) {
-    uint32_t row_count, col_count;
+    uint32_t row_count;
     __m256i  sum = _mm256_setzero_si256();
     __m128i  temp1, temp2;
 
@@ -1295,7 +1295,7 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_
     do {
         int32_t *coeff_temp = coeff;
 
-        col_count = area_width / 4;
+        uint32_t col_count = area_width / 4;
         do {
             __m128i x0;
             __m256i y0, z0;
