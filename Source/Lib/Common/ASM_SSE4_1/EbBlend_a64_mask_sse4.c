@@ -384,19 +384,6 @@ void aom_blend_a64_mask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint8_t 
                              uint32_t       mask_stride,
                              int            w,
                              int            h);
-
-    // Dimensions are: width_index X subx X suby
-    static const BlendFn blend[3][2][2] = {
-        {// w % 16 == 0
-         {blend_a64_mask_w16n_sse4_1, blend_a64_mask_sy_w16n_sse4_1},
-         {blend_a64_mask_sx_w16n_sse4_1, blend_a64_mask_sx_sy_w16n_sse4_1}},
-        {// w == 4
-         {blend_a64_mask_w4_sse4_1, blend_a64_mask_sy_w4_sse4_1},
-         {blend_a64_mask_sx_w4_sse4_1, blend_a64_mask_sx_sy_w4_sse4_1}},
-        {// w == 8
-         {blend_a64_mask_w8_sse4_1, blend_a64_mask_sy_w8_sse4_1},
-         {blend_a64_mask_sx_w8_sse4_1, blend_a64_mask_sx_sy_w8_sse4_1}}};
-
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
 
@@ -419,6 +406,17 @@ void aom_blend_a64_mask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint8_t 
                              subx,
                              suby);
     } else {
+        // Dimensions are: width_index X subx X suby
+        static const BlendFn blend[3][2][2] = {
+            {// w % 16 == 0
+             {blend_a64_mask_w16n_sse4_1, blend_a64_mask_sy_w16n_sse4_1},
+             {blend_a64_mask_sx_w16n_sse4_1, blend_a64_mask_sx_sy_w16n_sse4_1}},
+            {// w == 4
+             {blend_a64_mask_w4_sse4_1, blend_a64_mask_sy_w4_sse4_1},
+             {blend_a64_mask_sx_w4_sse4_1, blend_a64_mask_sx_sy_w4_sse4_1}},
+            {// w == 8
+             {blend_a64_mask_w8_sse4_1, blend_a64_mask_sy_w8_sse4_1},
+             {blend_a64_mask_sx_w8_sse4_1, blend_a64_mask_sx_sy_w8_sse4_1}}};
         assert(((w >> 2) & 3) < 3);
         blend[(w >> 2) & 3][subx != 0][suby != 0](
             dst, dst_stride, src0, src0_stride, src1, src1_stride, mask, mask_stride, w, h);
