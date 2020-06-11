@@ -1425,7 +1425,6 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
     int32_t        h;
     __m256i        sum = _mm256_setzero_si256();
     __m128i        sum_l, sum_h, s;
-    uint64_t       spatial_distortion = 0;
     input += input_offset;
     recon += recon_offset;
 
@@ -1453,8 +1452,7 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
                 sum_h              = _mm256_extracti128_si256(sum, 1);
                 s                  = _mm_add_epi32(sum_l, sum_h);
                 s                  = _mm_add_epi32(s, _mm_srli_si128(s, 4));
-                spatial_distortion = _mm_cvtsi128_si32(s);
-                return spatial_distortion;
+                return _mm_cvtsi128_si32(s);
             }
         } else if (leftover == 8) {
             h = area_height;
