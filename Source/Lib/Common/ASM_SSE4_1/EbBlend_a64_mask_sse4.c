@@ -1299,18 +1299,6 @@ void eb_aom_highbd_blend_a64_vmask_sse4_1(uint16_t *dst, uint32_t dst_stride, co
                              int             w,
                              int             h);
 
-    // Dimensions are: bd_index X width_index
-    static const BlendFn blend[2][2] = {{
-                                             // bd == 8 or 10
-                                             blend_a64_vmask_b10_w8n_sse4_1, // w % 8 == 0
-                                             blend_a64_vmask_b10_w4_sse4_1, // w == 4
-                                         },
-                                         {
-                                             // bd == 12
-                                             blend_a64_vmask_b12_w8n_sse4_1, // w % 8 == 0
-                                             blend_a64_vmask_b12_w4_sse4_1, // w == 4
-                                         }};
-
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
 
@@ -1328,7 +1316,17 @@ void eb_aom_highbd_blend_a64_vmask_sse4_1(uint16_t *dst, uint32_t dst_stride, co
         //uint16_t *const dst = CONVERT_TO_SHORTPTR(dst_8);
         //const uint16_t *const src0 = CONVERT_TO_SHORTPTR(src0_8);
         //const uint16_t *const src1 = CONVERT_TO_SHORTPTR(src1_8);
-
+        // Dimensions are: bd_index X width_index
+        static const BlendFn blend[2][2] = {{
+                                                // bd == 8 or 10
+                                                blend_a64_vmask_b10_w8n_sse4_1, // w % 8 == 0
+                                                blend_a64_vmask_b10_w4_sse4_1, // w == 4
+                                            },
+                                            {
+                                                // bd == 12
+                                                blend_a64_vmask_b12_w8n_sse4_1, // w % 8 == 0
+                                                blend_a64_vmask_b12_w4_sse4_1, // w == 4
+                                            }};
         blend[bd == 12][(w >> 2) & 1](
             dst, dst_stride, src0, src0_stride, src1, src1_stride, mask, w, h);
     }
