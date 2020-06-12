@@ -522,6 +522,9 @@ extern "C" {
 #define SEPARATE_ADAPTIVE_TXT_INTER_INTRA 1 // Separate the inter/intra actions for adaptive TXT
 
 #define USE_REGULAR_MD_STAGE_0 1 // Use Regular (instead of Bilinear) @ md_stage_0()
+
+#define SUBPEL_REMOVE_QP_CHECK  1
+#define SUBPEL_REMOVE_RES_CHECK 0
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

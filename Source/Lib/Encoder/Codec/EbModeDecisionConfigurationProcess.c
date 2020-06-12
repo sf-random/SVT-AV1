@@ -1195,9 +1195,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #if !MAR2_M8_ADOPTIONS
         pcs_ptr->enc_mode <= ENC_M7 &&
 #endif
+#if !SUBPEL_REMOVE_QP_CHECK
                 frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+#endif
 #if NEW_RESOLUTION_RANGES
+#if SUBPEL_REMOVE_RES_CHECK
+                (1)
+#else
                 (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+#endif
 #else
                 (scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
 #endif
