@@ -121,7 +121,11 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     }
     // 0 - disable dual interpolation filter
     // 1 - enable vertical and horiz filter selection
+#if IFS_DUALL_ALL
+    scs_ptr->seq_header.enable_dual_filter                = 1;
+#else
     scs_ptr->seq_header.enable_dual_filter                = 0;
+#endif
     scs_ptr->seq_header.order_hint_info.enable_order_hint = 1;
     // 0 - disable order hint, and related tools:
     // jnt_comp, ref_frame_mvs, frame_sign_bias

@@ -3326,6 +3326,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t       best_in_temp    = 0;
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
+#if !IFS_DUALL_ALL
             if (md_context_ptr->interpolation_search_level &&
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
                 int32_t tmp_rs;
@@ -3449,16 +3450,18 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         best_in_temp = !best_in_temp;
                     }
                 }
-            } else {
+            } else 
+#endif
+{
                 // EIGHTTAP_REGULAR mode is calculated beforehand
                 for (i = 1; i < filter_set_size; ++i) {
                     int32_t tmp_rs;
                     int64_t tmp_rd;
-
+#if !IFS_DUALL_ALL
                     if (/*cm->seq_params.enable_dual_filter*/ picture_control_set_ptr
                                                                       ->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter == 0)
                         if (filter_sets[i][0] != filter_sets[i][1]) continue;
-
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                              (InterpFilter)filter_sets[i][1]);
