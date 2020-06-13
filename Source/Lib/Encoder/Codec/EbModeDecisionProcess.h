@@ -326,7 +326,9 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t eight_pel_search_width;              // 1/8 Pel search area width
     uint8_t eight_pel_search_height;             // 1/8 Pel search area height
     uint8_t eight_pel_interpolation;             // 1/8 Pel interpolation method
-
+#if IMPROVE_EIGHT_PEL
+    uint8_t eight_pel_search_pos_cnt;           // [1:MD_MAX_BEST_FP_POS] total number of eight-pel position(s) to search (i.e. perform 1/8 Pel for the top quarter_pel_search_pos_cnt full-pel candidates)
+#endif
 }MdSubPelSearchCtrls;
 #if SEARCH_TOP_N
 typedef struct MdFpResults {
@@ -707,6 +709,8 @@ typedef struct ModeDecisionContext {
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
 #if IMPROVE_QUARTER_PEL
     MdFpResults md_best_hp_pos[MD_MAX_BEST_FP_POS];
+#endif
+#if IMPROVE_EIGHT_PEL
     MdFpResults md_best_qp_pos[MD_MAX_BEST_FP_POS];
 #endif
 #endif

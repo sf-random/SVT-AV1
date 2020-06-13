@@ -4293,6 +4293,9 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                        int16_t mvx, int16_t mvy, int16_t search_position_start_x,
                        int16_t search_position_end_x, int16_t search_position_start_y,
                        int16_t search_position_end_y, int16_t search_step,
+#if IMPROVE_EIGHT_PEL
+                       uint8_t track_best_pos,
+#endif
                        int16_t *best_mvx,
                        int16_t *best_mvy, uint32_t *best_distortion,
 #if PERFORM_SUB_PEL_MD
@@ -4464,8 +4467,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #endif
 
 #if IMPROVE_QUARTER_PEL
-            //if (track_best_fp_pos) 
-            if(search_step == 4)
+            if (track_best_pos && search_step == 4)
             {
                 // Find the pos that holds the max dist
                 uint32_t max_dist = 0;
@@ -4481,6 +4483,27 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                     context_ptr->md_best_hp_pos[max_dist_hp_pos_idx].mvx = mvx + (refinement_pos_x * search_step);
                     context_ptr->md_best_hp_pos[max_dist_hp_pos_idx].mvy = mvy + (refinement_pos_y * search_step);
                     context_ptr->md_best_hp_pos[max_dist_hp_pos_idx].dist = distortion;
+                }
+            }
+#endif
+
+#if IMPROVE_EIGHT_PEL
+            if (track_best_pos && search_step == 2)
+            {
+                // Find the pos that holds the max dist
+                uint32_t max_dist = 0;
+                uint8_t max_dist_qp_pos_idx = 0;
+                for (uint8_t qp_pos_idx = 0; qp_pos_idx < MD_MAX_BEST_FP_POS; qp_pos_idx++) {
+                    if (context_ptr->md_best_qp_pos[qp_pos_idx].dist > max_dist) {
+                        max_dist = context_ptr->md_best_qp_pos[qp_pos_idx].dist;
+                        max_dist_qp_pos_idx = qp_pos_idx;
+                    }
+                }
+                // Update max_dist_qp_pos_idx spot if better distortion
+                if (distortion < max_dist) {
+                    context_ptr->md_best_qp_pos[max_dist_qp_pos_idx].mvx = mvx + (refinement_pos_x * search_step);
+                    context_ptr->md_best_qp_pos[max_dist_qp_pos_idx].mvy = mvy + (refinement_pos_y * search_step);
+                    context_ptr->md_best_qp_pos[max_dist_qp_pos_idx].dist = distortion;
                 }
             }
 #endif
@@ -4880,6 +4903,9 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 4,
+#if IMPROVE_EIGHT_PEL
+                context_ptr->md_subpel_search_ctrls.quarter_pel_search_pos_cnt > 1,
+#endif
                 &best_search_mvx,
                 &best_search_mvy,
                 &best_search_distortion,
@@ -4966,6 +4992,9 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             -(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             +(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             2,
+#if IMPROVE_EIGHT_PEL
+            context_ptr->md_subpel_search_ctrls.eight_pel_search_pos_cnt > 1,
+#endif
             &best_search_mvx,
             &best_search_mvy,
             &best_search_distortion,
@@ -4978,6 +5007,36 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
 #endif
     if (context_ptr->md_subpel_search_ctrls.eight_pel_search_enabled)
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)
+#if IMPROVE_EIGHT_PEL
+        {
+            // Derive valid_qp_pos_cnt
+            uint8_t qp_pos_idx = 0;
+            while (qp_pos_idx < MD_MAX_BEST_FP_POS && context_ptr->md_best_qp_pos[qp_pos_idx].dist != (uint32_t)~0) {
+                qp_pos_idx++;
+            }
+            uint8_t valid_qp_pos_cnt = qp_pos_idx;
+            // Sort md_best_qp_pos
+            if (valid_qp_pos_cnt == 0) { // Full-Pel search not performed @ MD (if SQ or if NSQ search @ MD skipped)
+                context_ptr->md_best_qp_pos[0].mvx = best_search_mvx;
+                context_ptr->md_best_qp_pos[0].mvy = best_search_mvy;
+
+                valid_qp_pos_cnt = 1;
+            }
+            else {  // Sort md_qp_res_array
+                MdFpResults *md_best_qp_pos_p = &(context_ptr->md_best_qp_pos[0]);
+                for (uint16_t i = 0; i < valid_qp_pos_cnt - 1; ++i) {
+                    for (uint16_t j = i + 1; j < valid_qp_pos_cnt; ++j) {
+                        if (context_ptr->md_best_qp_pos[j].dist < context_ptr->md_best_qp_pos[i].dist) {
+                            MdFpResults temp = md_best_qp_pos_p[i];
+                            md_best_qp_pos_p[i] = md_best_qp_pos_p[j];
+                            md_best_qp_pos_p[j] = temp;
+                        }
+                    }
+                }
+            }
+
+            for (uint8_t qp_pos_idx = 0; qp_pos_idx < MIN(context_ptr->md_subpel_search_ctrls.eight_pel_search_pos_cnt, valid_qp_pos_cnt); qp_pos_idx++) {
+#endif
             md_sub_pel_search(
                 pcs_ptr,
                 context_ptr,
@@ -4987,20 +5046,31 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 context_ptr->md_subpel_search_ctrls.use_ssd,
                 list_idx,
                 ref_idx,
+#if IMPROVE_EIGHT_PEL
+                context_ptr->md_best_qp_pos[qp_pos_idx].mvx,
+                context_ptr->md_best_qp_pos[qp_pos_idx].mvy,
+#else
                 best_search_mvx,
                 best_search_mvy,
+#endif
                 -(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
                 +(context_ptr->md_subpel_search_ctrls.eight_pel_search_width >> 1),
                 -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 1,
+#if IMPROVE_EIGHT_PEL
+                0,
+#endif
                 &best_search_mvx,
                 &best_search_mvy,
                 &best_search_distortion,
                 context_ptr->md_subpel_search_ctrls.eight_pel_interpolation,
                 0,
                 context_ptr->md_subpel_search_ctrls.eight_pel_search_scan);
-
+#if IMPROVE_EIGHT_PEL
+            }
+        }
+#endif
     *me_mv_x = best_search_mvx;
     *me_mv_y = best_search_mvy;
 }
@@ -5056,9 +5126,14 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     context_ptr->md_best_fp_pos[fp_pos_idx].dist = (uint32_t) ~0;
 
 #if IMPROVE_QUARTER_PEL
-                // Set md_best_fp_pos array dist(s) to max
+                // Set md_best_hp_pos array dist(s) to max
                 for (uint8_t hp_pos_idx = 0; hp_pos_idx < MD_MAX_BEST_FP_POS; hp_pos_idx++)
                     context_ptr->md_best_hp_pos[hp_pos_idx].dist = (uint32_t)~0;
+#endif
+#if IMPROVE_EIGHT_PEL
+                // Set md_best_qp_pos array dist(s) to max
+                for (uint8_t qp_pos_idx = 0; qp_pos_idx < MD_MAX_BEST_FP_POS; qp_pos_idx++)
+                    context_ptr->md_best_qp_pos[qp_pos_idx].dist = (uint32_t)~0;
 #endif
 #endif
 
@@ -6094,6 +6169,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           4,
+#if IMPROVE_EIGHT_PEL
+                                          0,
+#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
@@ -6125,6 +6203,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   4,
+#if IMPROVE_EIGHT_PEL
+                                                  0,
+#endif
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
@@ -6153,6 +6234,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           2,
+#if IMPROVE_EIGHT_PEL
+                                          0,
+#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,
@@ -6184,6 +6268,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   2,
+#if IMPROVE_EIGHT_PEL
+                                                  0,
+#endif
                                                   &best_search_mvx,
                                                   &best_search_mvy,
                                                   &best_search_distortion,
@@ -6213,6 +6300,9 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           1,
+#if IMPROVE_QUARTER_PEL
+                                          0,
+#endif
                                           &best_search_mvx,
                                           &best_search_mvy,
                                           &best_search_distortion,

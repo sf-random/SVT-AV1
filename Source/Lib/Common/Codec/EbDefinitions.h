@@ -528,6 +528,7 @@ extern "C" {
 #define IFS_DUALL_ALL           0    
 
 #define IMPROVE_QUARTER_PEL  1
+#define IMPROVE_EIGHT_PEL    1
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

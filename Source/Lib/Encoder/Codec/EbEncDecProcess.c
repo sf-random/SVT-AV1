@@ -1845,11 +1845,13 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->quarter_pel_search_enabled = 1;
         md_subpel_search_ctrls->quarter_pel_search_scan    = 0;
 #if IMPROVE_QUARTER_PEL        
-        md_subpel_search_ctrls->quarter_pel_search_pos_cnt = 4;
+        md_subpel_search_ctrls->quarter_pel_search_pos_cnt = 5;
 #endif
         md_subpel_search_ctrls->eight_pel_search_enabled = 1;
         md_subpel_search_ctrls->eight_pel_search_scan    = 0;
-
+#if IMPROVE_EIGHT_PEL
+        md_subpel_search_ctrls->eight_pel_search_pos_cnt = 5;
+#endif
         break;
     case 2:
         md_subpel_search_ctrls->enabled = 1;
@@ -1871,7 +1873,9 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 #endif
         md_subpel_search_ctrls->eight_pel_search_enabled = 1;
         md_subpel_search_ctrls->eight_pel_search_scan = 0;
-
+#if IMPROVE_EIGHT_PEL
+        md_subpel_search_ctrls->eight_pel_search_pos_cnt = 1;
+#endif
         break;
     case 3:
         md_subpel_search_ctrls->enabled = 1;
@@ -1893,7 +1897,9 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
 #endif
         md_subpel_search_ctrls->eight_pel_search_enabled = 1;
         md_subpel_search_ctrls->eight_pel_search_scan    = 0;
-
+#if IMPROVE_EIGHT_PEL
+        md_subpel_search_ctrls->eight_pel_search_pos_cnt = 1;
+#endif
         break;
     case 4:
         md_subpel_search_ctrls->enabled = 1;
@@ -1913,7 +1919,9 @@ void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_se
         md_subpel_search_ctrls->quarter_pel_search_pos_cnt = 1;
 #endif
         md_subpel_search_ctrls->eight_pel_search_enabled = 0;
-
+#if IMPROVE_EIGHT_PEL
+        md_subpel_search_ctrls->eight_pel_search_pos_cnt = 1;
+#endif
         break;
 
     default: assert(0); break;
