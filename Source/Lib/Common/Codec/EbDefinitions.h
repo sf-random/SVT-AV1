@@ -526,7 +526,7 @@ extern "C" {
 #define SUBPEL_REMOVE_QP_CHECK  0
 #define SUBPEL_REMOVE_RES_CHECK 0
 #define IFS_DUALL_ALL           0    
-
+#define IMPROVE_HALF_PEL     1
 #define IMPROVE_QUARTER_PEL  1
 #define IMPROVE_EIGHT_PEL    1
 #endif
