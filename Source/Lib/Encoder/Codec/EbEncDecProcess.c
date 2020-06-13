@@ -4874,6 +4874,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
     depth_cycles_red_mode = pcs_ptr->slice_type != I_SLICE ? 0 : 0;
 #endif
+    // Temporary solution (to clean-up)
+    if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        depth_cycles_red_mode = 0;
+
     set_depth_cycle_redcution_controls(context_ptr, depth_cycles_red_mode);
 #endif
     // Weighting (expressed as a percentage) applied to
