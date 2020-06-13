@@ -311,14 +311,16 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t half_pel_search_height;              // 1/2 Pel search area height
     uint8_t half_pel_interpolation;              // 1/2 Pel interpolation method
 #if SEARCH_TOP_N
-    uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/3 Pel for the top half_pel_search_pos_cnt full-pel candidates)
+    uint8_t half_pel_search_pos_cnt;             // [1:MD_MAX_BEST_FP_POS] total number of full-pel position(s) to search (i.e. perform 1/2 Pel for the top half_pel_search_pos_cnt full-pel candidates)
 #endif
     uint8_t quarter_pel_search_enabled;          // 0: OFF; 1: ON
     uint8_t quarter_pel_search_scan;             // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t quarter_pel_search_width;            // 1/4 Pel search area width
     uint8_t quarter_pel_search_height;           // 1/4 Pel search area height
     uint8_t quarter_pel_interpolation;           // 1/4 Pel interpolation method
-
+#if IMPROVE_QUARTER_PEL
+    uint8_t quarter_pel_search_pos_cnt;          // [1:MD_MAX_BEST_FP_POS] total number of half-pel position(s) to search (i.e. perform 1/4 Pel for the top half_pel_search_pos_cnt full-pel candidates)
+#endif
     uint8_t eight_pel_search_enabled;            // 0: OFF; 1: ON
     uint8_t eight_pel_search_scan;               // 0: H, V, D; 1: H, V, 2: H, 3: V
     uint8_t eight_pel_search_width;              // 1/8 Pel search area width
@@ -703,6 +705,10 @@ typedef struct ModeDecisionContext {
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
+#if IMPROVE_QUARTER_PEL
+    MdFpResults md_best_hp_pos[MD_MAX_BEST_FP_POS];
+    MdFpResults md_best_qp_pos[MD_MAX_BEST_FP_POS];
+#endif
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
