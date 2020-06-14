@@ -3009,6 +3009,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_cycles_reduction_level = 1;
     }
 #endif
+#if DISALLOW_CYCLES_REDUCTION
+    if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        txt_cycles_reduction_level = 0;
+#endif
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
 #endif
     // Interpolation search Level                     Settings
@@ -4819,8 +4823,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          nsq_cycles_red_mode = 0;
 #endif
 #endif
-
+#if DISALLOW_CYCLES_REDUCTION
+    if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        nsq_cycles_red_mode = 0;
+#endif
     set_nsq_cycle_redcution_controls(context_ptr, nsq_cycles_red_mode);
+
 
     NsqCycleRControls*nsq_cycle_red_ctrls = &context_ptr->nsq_cycles_red_ctrls;
     // Overwrite allcation action when nsq_cycles_reduction th is higher.
@@ -4830,6 +4838,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->nsq_cycles_reduction_th = nsq_cycle_red_ctrls->th;
     else
         context_ptr->nsq_cycles_reduction_th = 0;
+
 
 #else
     if(nsq_cycle_red_ctrls->enabled)
@@ -4875,8 +4884,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     depth_cycles_red_mode = pcs_ptr->slice_type != I_SLICE ? 0 : 0;
 #endif
     // Temporary solution (to clean-up)
+#if DISALLOW_CYCLES_REDUCTION
     if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
         depth_cycles_red_mode = 0;
+#endif
 
     set_depth_cycle_redcution_controls(context_ptr, depth_cycles_red_mode);
 #endif
