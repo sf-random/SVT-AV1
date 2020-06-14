@@ -4999,7 +4999,11 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             &best_search_mvy,
             &best_search_distortion,
             context_ptr->md_subpel_search_ctrls.quarter_pel_interpolation,
+#if IMPROVE_QUARTER_PEL
+            1,
+#else
             0,
+#endif
             context_ptr->md_subpel_search_ctrls.quarter_pel_search_scan);
 #if IMPROVE_QUARTER_PEL
     }
