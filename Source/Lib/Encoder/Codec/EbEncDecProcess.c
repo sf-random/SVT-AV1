@@ -3066,6 +3066,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if MAR10_ADOPTIONS
 #if FIX_CHROMA_PALETTE_INTERACTION
 #if MAY12_ADOPTIONS
+#if PUSH_M4_DIFFS
+            if (enc_mode <= ENC_M4)
+#else
 #if JUNE11_ADOPTIONS
             if (enc_mode <= ENC_M3)
 #else
@@ -3073,6 +3076,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_M2)
 #else
             if (enc_mode <= ENC_M4)
+#endif
 #endif
 #endif
 #else
@@ -3104,6 +3108,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 : CHROMA_MODE_3;
 #endif
 #if PRESETS_SHIFT
+#if PUSH_M4_DIFFS
+        else if (enc_mode <= ENC_M4)
+#else
 #if JUNE11_ADOPTIONS
         else if (enc_mode <= ENC_M3)
 #else
@@ -3111,6 +3118,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M2)
 #else
         else if (enc_mode <= ENC_M4)
+#endif
 #endif
 #endif
             context_ptr->chroma_level = CHROMA_MODE_0;
@@ -4802,17 +4810,27 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if JUNE11_ADOPTIONS
         if (pcs_ptr->slice_type == I_SLICE) {
+#if PUSH_M4_DIFFS
+            if (enc_mode <= ENC_M4)
+#else
             if (enc_mode <= ENC_M3)
+#endif
                 nsq_cycles_red_mode = 0;
             else
                 nsq_cycles_red_mode = 1;
         }
         else
         {
+#if PUSH_M4_DIFFS
+            if (enc_mode <= ENC_M4)
+#else
             if (enc_mode <= ENC_M3)
+#endif
                 nsq_cycles_red_mode = 0;
+#if !PUSH_M4_DIFFS
             else if (enc_mode <= ENC_M4)
                 nsq_cycles_red_mode = 2;
+#endif
             else
                 nsq_cycles_red_mode = 15;
         }
@@ -5000,9 +5018,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                     context_ptr->sq_weight = 100;
 #endif
 #endif
+#if PUSH_M4_DIFFS
+                else if (enc_mode <= ENC_M3)
+                        context_ptr->sq_weight = 95;
+                else
+                        context_ptr->sq_weight = 85;
+#else
                 else
                     context_ptr->sq_weight =
                     sequence_control_set_ptr->static_config.sq_weight - 5;
+#endif
             else
 
 #endif
@@ -5059,9 +5084,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #endif
+#if PUSH_M4_DIFFS
+            else if (enc_mode <= ENC_M3)
+                context_ptr->sq_weight = 95;
+            else
+                context_ptr->sq_weight = 85;
+#else
             else
                 context_ptr->sq_weight =
                 sequence_control_set_ptr->static_config.sq_weight - 5;
+#endif
 
 #if NEW_CYCLE_ALLOCATION && !DISALLOW_ALL_ACTIONS
     if (context_ptr->enable_area_based_cycles_allocation) {
@@ -8440,6 +8472,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             else
 #endif
 #if MAY16_7PM_ADOPTIONS
+#if PUSH_M4_DIFFS
+                            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
 #if JUNE11_ADOPTIONS
                             if (pcs_ptr->enc_mode <= ENC_M3) {
 #else
@@ -8450,6 +8485,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M1)) {
 #else
                             if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M2)) {
+#endif
 #endif
 #endif
 #endif

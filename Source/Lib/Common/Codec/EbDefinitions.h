@@ -524,6 +524,7 @@ extern "C" {
 #define USE_REGULAR_MD_STAGE_0 1 // Use Regular (instead of Bilinear) @ md_stage_0()
 // Temporary solution (to clean-up)
 #define DISALLOW_CYCLES_REDUCTION 1
+#define PUSH_M4_DIFFS 1 // Push out bad slope M4 features
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
