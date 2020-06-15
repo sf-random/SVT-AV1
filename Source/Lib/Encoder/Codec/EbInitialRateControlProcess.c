@@ -497,29 +497,22 @@ void me_based_global_motion_detection(PictureParentControlSet *pcs_ptr) {
 void update_global_motion_detection_over_time(EncodeContext *          encode_context_ptr,
                                               SequenceControlSet *     scs_ptr,
                                               PictureParentControlSet *pcs_ptr) {
-    InitialRateControlReorderEntry *temp_queue_entry_ptr;
-    PictureParentControlSet *       temp_pcs_ptr;
-
     uint32_t total_pan_pictures     = 0;
     uint32_t total_checked_pictures = 0;
     uint32_t total_tilt_pictures    = 0;
-    uint32_t update_is_pan_frames_to_check;
-    uint32_t input_queue_index;
-    uint32_t frames_to_check_index;
-
     (void)scs_ptr;
 
     // Determine number of frames to check (8 frames)
-    update_is_pan_frames_to_check = MIN(8, pcs_ptr->frames_in_sw);
+    uint32_t update_is_pan_frames_to_check = MIN(8, pcs_ptr->frames_in_sw);
 
     // Walk the first N entries in the sliding window
-    input_queue_index = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
+    uint32_t input_queue_index = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
     uint32_t update_frames_to_check = update_is_pan_frames_to_check;
-    for (frames_to_check_index = 0; frames_to_check_index < update_frames_to_check;
+    for (uint32_t frames_to_check_index = 0; frames_to_check_index < update_frames_to_check;
          frames_to_check_index++) {
-        temp_queue_entry_ptr =
+        InitialRateControlReorderEntry *temp_queue_entry_ptr =
             encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        temp_pcs_ptr =
+        PictureParentControlSet *temp_pcs_ptr =
             ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
 
         if (temp_pcs_ptr->slice_type != I_SLICE) {
