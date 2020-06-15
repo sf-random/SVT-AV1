@@ -530,7 +530,7 @@ extern "C" {
 #define IMPROVE_QUARTER_PEL  0
 #define IMPROVE_EIGHT_PEL    0
 
-#define FIX_TX_BLOCK_GEOMETRY 1
+#define FIX_TX_BLOCK_GEOMETRY 0
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
