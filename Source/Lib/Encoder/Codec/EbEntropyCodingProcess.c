@@ -421,8 +421,6 @@ void *entropy_coding_kernel(void *input_ptr) {
                     context_ptr->sb_origin_y = (y_sb_index + tile_sb_start_y) << sb_size_log2;
                     if (x_sb_index == 0 && y_sb_index == 0) {
                         eb_av1_reset_loop_restoration(pcs_ptr, tile_idx);
-
-                    if (x_sb_index == 0 && y_sb_index == 0) {
                         context_ptr->tok = pcs_ptr->tile_tok[tile_row][tile_col];
                     }
                     sb_ptr->total_bits = 0;
