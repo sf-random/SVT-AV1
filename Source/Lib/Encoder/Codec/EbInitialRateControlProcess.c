@@ -128,29 +128,23 @@ EbBool check_mv_for_non_uniform_motion(int32_t *x_current_mv, int32_t *y_current
 }
 
 void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr) {
-    uint32_t sb_count;
     uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
-    uint32_t sb_origin_x;
-    uint32_t sb_origin_y;
 
-    int32_t  x_current_mv                   = 0;
-    int32_t  y_current_mv                   = 0;
-    int32_t  x_left_mv                      = 0;
-    int32_t  y_left_mv                      = 0;
-    int32_t  x_top_mv                       = 0;
-    int32_t  y_top_mv                       = 0;
-    int32_t  x_right_mv                     = 0;
-    int32_t  y_right_mv                     = 0;
-    int32_t  x_bottom_mv                    = 0;
-    int32_t  y_bottom_mv                    = 0;
-    uint32_t count_of_non_uniform_neighbors = 0;
+    int32_t x_current_mv = 0;
+    int32_t y_current_mv = 0;
+    int32_t x_left_mv    = 0;
+    int32_t y_left_mv    = 0;
+    int32_t x_top_mv     = 0;
+    int32_t y_top_mv     = 0;
+    int32_t x_right_mv   = 0;
+    int32_t y_right_mv   = 0;
+    int32_t x_bottom_mv  = 0;
+    int32_t y_bottom_mv  = 0;
 
-    for (sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-        count_of_non_uniform_neighbors = 0;
-
-        sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-        sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
+    for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
+        uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
+        uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
 
         if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
             ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
@@ -163,8 +157,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_left_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_left_mv, &y_left_mv);
 
             // Top MV
             if (sb_origin_y == 0) {
@@ -172,8 +164,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_top_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_top_mv, &y_top_mv);
 
             // Right MV
             if ((sb_origin_x + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->width) {
@@ -181,8 +171,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_right_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_right_mv, &y_right_mv);
 
             // Bottom MV
             if ((sb_origin_y + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->height) {
@@ -190,8 +178,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_bottom_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_bottom_mv, &y_bottom_mv);
         }
     }
 }
