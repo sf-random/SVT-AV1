@@ -1244,8 +1244,6 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
                                              frm_hdr->force_integer_mv);
                 gm_mv[1].as_int = 0;
             } else {
-                MvReferenceFrame rf[2];
-                av1_set_ref_frame(rf, ref_frame);
                 gm_mv[0] = gm_get_motion_vector_enc(&pcs_ptr->parent_pcs_ptr->global_motion[rf[0]],
                                                     frm_hdr->allow_high_precision_mv,
                                                     bsize,
