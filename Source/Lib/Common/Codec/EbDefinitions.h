@@ -531,6 +531,8 @@ extern "C" {
 #define DEPTH_TH 0 // up to 8 Ref is 5
 #define TXT_LEVEL 7 // up to 5
 #endif
+#define ADAPTIVE_NSQ_LEVEL_FIX 1 // Replace invalid level
+#define JUNE14_M0_ADOPTIONS 1 // M0, MR, and MRS adoptions
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

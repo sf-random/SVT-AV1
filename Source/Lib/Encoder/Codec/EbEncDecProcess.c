@@ -4656,7 +4656,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->md_stage_2_3_cand_prune_th = 45;
             else
                 context_ptr->md_stage_2_3_cand_prune_th = 15;
+#if JUNE14_M0_ADOPTIONS
+        else if (MR_MODE)
+#else
         else if (enc_mode <= ENC_M0)
+#endif
             context_ptr->md_stage_2_3_cand_prune_th = 45;
 #if JUNE11_ADOPTIONS
         else if (enc_mode <= ENC_M1)
@@ -4850,7 +4854,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 nsq_cycles_red_mode = 2;
 #endif
             else
+#if ADAPTIVE_NSQ_LEVEL_FIX
                 nsq_cycles_red_mode = 14;
+#else
+                nsq_cycles_red_mode = 15;
+#endif
 #if TESTING
             nsq_cycles_red_mode = NSQ_TH;
 #endif
@@ -4898,7 +4906,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else {
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if JUNE14_M0_ADOPTIONS
+            if (enc_mode <= ENC_M0)
+#else
             if (MR_MODE)
+#endif
                 depth_cycles_red_mode = 0;
             else if (enc_mode <= ENC_M1)
                 depth_cycles_red_mode = 2;
@@ -5584,6 +5596,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_nsq_mv_search_level = 0;
     else
+#if JUNE14_M0_ADOPTIONS
+        if (MRS_MODE)
+#else
 #if ADD_MRS_MODE
         if (MRS_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
@@ -5593,11 +5608,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #endif
 #endif
+#endif
             context_ptr->md_nsq_mv_search_level = 1;
+#if ADD_MD_NSQ_SEARCH
+        else if (enc_mode <= ENC_M1 || pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#else
 #if JUNE9_ADOPTIONS
         else if (enc_mode <= ENC_M1)
 #else
         else if (enc_mode <= ENC_M0)
+#endif
 #endif
             context_ptr->md_nsq_mv_search_level = 2;
 #if PRESET_SHIFITNG
@@ -8415,7 +8435,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         // Shut thresholds in MR_MODE
 #if APR22_ADOPTIONS
 #if MAY12_ADOPTIONS
+#if JUNE14_M0_ADOPTIONS
+                        if (MRS_MODE) {
+                            s_depth = -2;
+                            e_depth = 2;
+                        }
+                        else if (MR_MODE) {
+#else
                         if (MR_MODE_MULTI_PASS_PD) {
+#endif
 #else
                         if (MR_MODE_MULTI_PASS_PD || (pcs_ptr->parent_pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M0)) {
 #endif
