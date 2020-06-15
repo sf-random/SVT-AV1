@@ -2556,6 +2556,21 @@ void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_c
         txt_cycle_red_ctrls->intra_th = 5;
         txt_cycle_red_ctrls->inter_th = 8;
         break;
+    case 6:
+        txt_cycle_red_ctrls->enabled = 1;
+        txt_cycle_red_ctrls->intra_th = 5;
+        txt_cycle_red_ctrls->inter_th = 50;
+        break;
+    case 7:
+        txt_cycle_red_ctrls->enabled = 1;
+        txt_cycle_red_ctrls->intra_th = 5;
+        txt_cycle_red_ctrls->inter_th = 100;
+        break;
+    case 8:
+        txt_cycle_red_ctrls->enabled = 1;
+        txt_cycle_red_ctrls->intra_th = 5;
+        txt_cycle_red_ctrls->inter_th = 200;
+        break;
     default:
         assert(0);
         break;
@@ -3007,9 +3022,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_cycles_reduction_level = 0;
         else
             txt_cycles_reduction_level = 1;
+#if TESTING
+        txt_cycles_reduction_level = TXT_LEVEL;
+#endif
     }
 #endif
-#if DISALLOW_CYCLES_REDUCTION
+#if 0//DISALLOW_CYCLES_REDUCTION
     if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
         txt_cycles_reduction_level = 0;
 #endif
@@ -4832,7 +4850,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 nsq_cycles_red_mode = 2;
 #endif
             else
-                nsq_cycles_red_mode = 15;
+                nsq_cycles_red_mode = 14;
+#if TESTING
+            nsq_cycles_red_mode = NSQ_TH;
+#endif
+
         }
 #else
 #if ADABTIVE_NSQ_CR
@@ -4894,6 +4916,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             depth_cycles_red_mode = 5;
         else
             depth_cycles_red_mode = 6;
+#if TESTING
+            depth_cycles_red_mode = DEPTH_TH;
+#endif
+
     }
 #else
     depth_cycles_red_mode = pcs_ptr->slice_type != I_SLICE ? 0 : 0;
@@ -8030,12 +8056,17 @@ void generate_txt_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_
                 }
             }
         }
+        //printf("\nTXT_PROB\n");
         for (uint8_t depth_delta = 0; depth_delta < STATS_DELTAS; depth_delta++) {
             for (uint8_t txs_idx = 1; txs_idx < STATS_TX_TYPES; txs_idx++) {
                 context_ptr->txt_prob[depth_delta][txs_idx] = (uint32_t)((txt_cnt[depth_delta][txs_idx] * (uint32_t)10000) / (uint32_t)samples_num);
+                //printf("%d\t ",context_ptr->txt_prob[depth_delta][txs_idx]);
             }
+            //printf("\n");
         }
+        //printf("\n");
     }
+    //printf("\n");
 }
 #endif
 #if SB_CLASSIFIER

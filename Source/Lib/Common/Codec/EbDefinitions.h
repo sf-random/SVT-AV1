@@ -525,6 +525,12 @@ extern "C" {
 // Temporary solution (to clean-up)
 #define DISALLOW_CYCLES_REDUCTION 1
 #define PUSH_M4_DIFFS 1 // Push out bad slope M4 features
+#define TESTING 0
+#if TESTING
+#define NSQ_TH 0 // up to 14
+#define DEPTH_TH 0 // up to 8 Ref is 5
+#define TXT_LEVEL 7 // up to 5
+#endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
