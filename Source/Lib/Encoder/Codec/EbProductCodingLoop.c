@@ -4293,7 +4293,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                        int16_t mvx, int16_t mvy, int16_t search_position_start_x,
                        int16_t search_position_end_x, int16_t search_position_start_y,
                        int16_t search_position_end_y, int16_t search_step,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                        uint8_t track_best_pos,
 #endif
                        int16_t *best_mvx,
@@ -4903,7 +4903,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 -(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.half_pel_search_height >> 1),
                 4,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                 context_ptr->md_subpel_search_ctrls.quarter_pel_search_pos_cnt > 1,
 #endif
                 &best_search_mvx,
@@ -4980,7 +4980,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             context_ptr->md_subpel_search_ctrls.use_ssd,
             list_idx,
             ref_idx,
-#if IMPROVE_QUARTER_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
             context_ptr->md_best_hp_pos[hp_pos_idx].mvx,
             context_ptr->md_best_hp_pos[hp_pos_idx].mvy,
 #else
@@ -4992,8 +4992,12 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
             -(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             +(context_ptr->md_subpel_search_ctrls.quarter_pel_search_height >> 1),
             2,
+#if IMPROVE_QUARTER_PEL 
 #if IMPROVE_EIGHT_PEL
             context_ptr->md_subpel_search_ctrls.eight_pel_search_pos_cnt > 1,
+#else
+            0,
+#endif
 #endif
             &best_search_mvx,
             &best_search_mvy,
@@ -5062,7 +5066,7 @@ void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext
                 -(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 +(context_ptr->md_subpel_search_ctrls.eight_pel_search_height >> 1),
                 1,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                 0,
 #endif
                 &best_search_mvx,
@@ -6173,7 +6177,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                           4,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                                           0,
 #endif
                                           &best_search_mvx,
@@ -6207,7 +6211,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_HALF_PEL_REF_WINDOW >> 1),
                                                   4,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                                                   0,
 #endif
                                                   &best_search_mvx,
@@ -6238,7 +6242,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                           2,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                                           0,
 #endif
                                           &best_search_mvx,
@@ -6272,7 +6276,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                   -(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   +(PRED_ME_QUARTER_PEL_REF_WINDOW >> 1),
                                                   2,
-#if IMPROVE_EIGHT_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                                                   0,
 #endif
                                                   &best_search_mvx,
@@ -6304,7 +6308,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                           -(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           +(PRED_ME_EIGHT_PEL_REF_WINDOW >> 1),
                                           1,
-#if IMPROVE_QUARTER_PEL
+#if IMPROVE_QUARTER_PEL || IMPROVE_EIGHT_PEL
                                           0,
 #endif
                                           &best_search_mvx,

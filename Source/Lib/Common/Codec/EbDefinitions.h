@@ -527,7 +527,7 @@ extern "C" {
 #define SUBPEL_REMOVE_RES_CHECK 0
 #define IFS_DUALL_ALL           0    
 #define IMPROVE_HALF_PEL     0
-#define IMPROVE_QUARTER_PEL  0
+#define IMPROVE_QUARTER_PEL  1
 #define IMPROVE_EIGHT_PEL    0
 
 #define FIX_TX_BLOCK_GEOMETRY 1
