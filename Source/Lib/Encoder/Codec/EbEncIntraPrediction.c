@@ -818,7 +818,7 @@ void eb_av1_predict_intra_block_16bit(
         uint16_t              max_val = (bit_depth == EB_8BIT) ? 0xFF : 0xFFFF;
         for (int32_t r = 0; r < txhpx; ++r)
             for (int32_t c = 0; c < txwpx; ++c)
-                dst[r * dst_stride + c] = CLIP3(0, max_val, palette[map[(r + y) * wpx + c + x]]);
+                dst[r * dst_stride + c] = palette[map[(r + y) * wpx + c + x]] > max_val ? max_val : palette[map[(r + y) * wpx + c + x]];
         return;
     }
 
