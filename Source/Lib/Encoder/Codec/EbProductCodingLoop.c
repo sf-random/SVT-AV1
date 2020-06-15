@@ -7756,22 +7756,34 @@ static void tx_search_update_recon_sample_neighbor_array(
 
     return;
 }
-#if !FIX_TX_BLOCK_GEOMETRY
+
 uint8_t get_end_tx_depth(BlockSize bsize) {
     uint8_t tx_depth = 0;
 
+
+#if FIX_TX_BLOCK_GEOMETRY
+    if (bsize == BLOCK_64X64 || bsize == BLOCK_32X32 || bsize == BLOCK_16X16 ||
+        bsize == BLOCK_64X32 || bsize == BLOCK_32X64 || bsize == BLOCK_16X32 ||
+        bsize == BLOCK_32X16 || bsize == BLOCK_16X8 || bsize == BLOCK_8X16 ||
+        bsize == BLOCK_64X16 || bsize == BLOCK_16X64 ||
+        bsize == BLOCK_32X8 || bsize == BLOCK_8X32 || bsize == BLOCK_16X4 ||
+        bsize == BLOCK_4X16)
+        tx_depth = 2;
+    else if (bsize == BLOCK_8X8)
+        tx_depth = 1;
+#else
     if (bsize == BLOCK_64X64 || bsize == BLOCK_32X32 || bsize == BLOCK_16X16 ||
         bsize == BLOCK_64X32 || bsize == BLOCK_32X64 || bsize == BLOCK_16X32 ||
         bsize == BLOCK_32X16 || bsize == BLOCK_16X8 || bsize == BLOCK_8X16)
         tx_depth = 2;
     else if (bsize == BLOCK_8X8 || bsize == BLOCK_64X16 || bsize == BLOCK_16X64 ||
              bsize == BLOCK_32X8 || bsize == BLOCK_8X32 || bsize == BLOCK_16X4 ||
-             bsize == BLOCK_4X16)
+             bsize == BLOCK_4X16)      
         tx_depth = 1;
-
+#endif
     return tx_depth;
 }
-#endif
+
 #if TXT_CONTROL
 uint8_t allowed_txt[6][TX_SIZES_ALL][TX_TYPES];
 #else
@@ -9976,11 +9988,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                      context_ptr->blk_geom->bheight <
                  pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
 #endif
-#if FIX_TX_BLOCK_GEOMETRY
-            end_tx_depth = (context_ptr->blk_geom->bsize == BLOCK_8X8) ? 1 : 2;
-#else
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
-#endif
         else
             end_tx_depth = 0;
 
