@@ -1,3 +1,4 @@
 branches:
   except:
     - svt-01
+    - test-app-off
