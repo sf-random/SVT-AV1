@@ -646,27 +646,23 @@ void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
 void update_motion_field_uniformity_over_time(EncodeContext *          encode_context_ptr,
                                               SequenceControlSet *     scs_ptr,
                                               PictureParentControlSet *pcs_ptr) {
-    InitialRateControlReorderEntry *temp_queue_entry_ptr;
-    PictureParentControlSet *       temp_pcs_ptr;
-    uint32_t                        input_queue_index;
-    uint32_t                        no_frames_to_check;
-    uint32_t                        frames_to_check_index;
     //SVT_LOG("To update POC %d\tframesInSw = %d\n", pcs_ptr->picture_number, pcs_ptr->frames_in_sw);
     // Determine number of frames to check N
-    no_frames_to_check = MIN(
+    uint32_t no_frames_to_check = MIN(
         MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
         scs_ptr->static_config.look_ahead_distance);
 
     // Walk the first N entries in the sliding window starting picture + 1
-    input_queue_index = (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-                         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
+    uint32_t input_queue_index =
+        (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
+         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
         ? 0
         : encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (frames_to_check_index = 0; frames_to_check_index < no_frames_to_check - 1;
+    for (uint32_t frames_to_check_index = 0; frames_to_check_index < no_frames_to_check - 1;
          frames_to_check_index++) {
-        temp_queue_entry_ptr =
+        InitialRateControlReorderEntry *temp_queue_entry_ptr =
             encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        temp_pcs_ptr =
+        PictureParentControlSet *temp_pcs_ptr =
             ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
 
         if (temp_pcs_ptr->end_of_sequence_flag)
