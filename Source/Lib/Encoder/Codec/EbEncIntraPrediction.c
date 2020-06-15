@@ -787,19 +787,14 @@ void eb_av1_predict_intra_block_16bit(
         // 4x4 luma blocks).
         // First, find the top-left-most luma block covered by this chroma block
 
-        ModeInfo *mi_ptr = xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x)];
+        mi_ptr = xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x)];
 
         // Then, we consider the luma region covered by the left or above 4x4 chroma
         // prediction. We want to point to the chroma reference block in that
         // region, which is the bottom-right-most mi unit.
         // This leads to the following offsets:
-        MbModeInfo *chroma_above_mi =
-                chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
-        xd->chroma_above_mbmi = chroma_above_mi;
-
-        MbModeInfo *chroma_left_mi =
-                chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
-        xd->chroma_left_mbmi = chroma_left_mi;
+        xd->chroma_above_mbmi = chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
+        xd->chroma_left_mbmi = chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
     }
 
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
