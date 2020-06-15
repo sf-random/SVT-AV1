@@ -33,14 +33,13 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     EbPictureBufferDesc *quarter_picture_ptr;
     EbPictureBufferDesc *ref_picture_ptr;
     SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    pa_reference_object =
-            (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-    quarter_picture_ptr =
-            (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
-            ? (EbPictureBufferDesc *)pa_reference_object->quarter_filtered_picture_ptr
-            : (EbPictureBufferDesc *)pa_reference_object->quarter_decimated_picture_ptr;
-    uint32_t num_of_list_to_search =
-            (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+    pa_reference_object          = (EbPaReferenceObject *)
+                              pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+    quarter_picture_ptr = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+        ? (EbPictureBufferDesc *)pa_reference_object->quarter_filtered_picture_ptr
+        : (EbPictureBufferDesc *)pa_reference_object->quarter_decimated_picture_ptr;
+    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
+                                                                      : (uint32_t)REF_LIST_1;
 
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint32_t num_of_ref_pic_to_search;
@@ -48,9 +47,9 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             num_of_ref_pic_to_search = 1;
         else
             num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
-                                          ? pcs_ptr->ref_list0_count_try
-                                          : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count_try
-                                          : pcs_ptr->ref_list1_count_try;
+                ? pcs_ptr->ref_list0_count_try
+                : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count_try
+                                           : pcs_ptr->ref_list1_count_try;
 
         // Limit the global motion search to the first frame types of ref lists
         num_of_ref_pic_to_search = MIN(num_of_ref_pic_to_search, 1);
@@ -63,17 +62,17 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             if (context_ptr->me_alt_ref == EB_TRUE)
                 reference_object = (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             else
-                reference_object =
-                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                                ->object_ptr;
+                reference_object = (EbPaReferenceObject *)pcs_ptr
+                                       ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
+                                       ->object_ptr;
 
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode
             if (pcs_ptr->gm_level == GM_DOWN) {
-                quarter_ref_pic_ptr =
-                        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
-                        ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
-                        : (EbPictureBufferDesc *)reference_object->quarter_decimated_picture_ptr;
+                quarter_ref_pic_ptr = (scs_ptr->down_sampling_method_me_search ==
+                                       ME_FILTERED_DOWNSAMPLED)
+                    ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
+                    : (EbPictureBufferDesc *)reference_object->quarter_decimated_picture_ptr;
                 ref_picture_ptr   = quarter_ref_pic_ptr;
                 input_picture_ptr = quarter_picture_ptr;
             } else {
@@ -100,8 +99,8 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
     for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) {
         memset(&params_by_motion[m], 0, sizeof(params_by_motion[m]));
-        params_by_motion[m].inliers =
-            malloc(sizeof(*(params_by_motion[m].inliers)) * 2 * MAX_CORNERS);
+        params_by_motion[m].inliers = malloc(sizeof(*(params_by_motion[m].inliers)) * 2 *
+                                             MAX_CORNERS);
     }
 
     const double *       params_this_motion;
@@ -114,10 +113,10 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
     // clang-format on
 
     int            frm_corners[2 * MAX_CORNERS];
-    unsigned char *frm_buffer =
-        input_pic->buffer_y + input_pic->origin_x + input_pic->origin_y * input_pic->stride_y;
-    unsigned char *ref_buffer =
-        ref_pic->buffer_y + ref_pic->origin_x + ref_pic->origin_y * ref_pic->stride_y;
+    unsigned char *frm_buffer = input_pic->buffer_y + input_pic->origin_x +
+        input_pic->origin_y * input_pic->stride_y;
+    unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->origin_x +
+        ref_pic->origin_y * ref_pic->stride_y;
 
     EbWarpedMotionParams global_motion = default_warp_params;
 
@@ -162,7 +161,8 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                                       RANSAC_NUM_MOTIONS);
 
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
-                if (inliers_by_motion[i] == 0) continue;
+                if (inliers_by_motion[i] == 0)
+                    continue;
 
                 params_this_motion = params_by_motion[i].params;
                 av1_convert_model_to_params(params_this_motion, &tmp_wm_params);
@@ -192,18 +192,20 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                 }
             }
             if (global_motion.wmtype <= AFFINE)
-                if (!eb_get_shear_params(&global_motion)) global_motion = default_warp_params;
+                if (!eb_get_shear_params(&global_motion))
+                    global_motion = default_warp_params;
 
             if (global_motion.wmtype == TRANSLATION) {
-                global_motion.wmmat[0] =
-                    convert_to_trans_prec(allow_high_precision_mv, global_motion.wmmat[0]) *
+                global_motion.wmmat[0] = convert_to_trans_prec(allow_high_precision_mv,
+                                                               global_motion.wmmat[0]) *
                     GM_TRANS_ONLY_DECODE_FACTOR;
-                global_motion.wmmat[1] =
-                    convert_to_trans_prec(allow_high_precision_mv, global_motion.wmmat[1]) *
+                global_motion.wmmat[1] = convert_to_trans_prec(allow_high_precision_mv,
+                                                               global_motion.wmmat[1]) *
                     GM_TRANS_ONLY_DECODE_FACTOR;
             }
 
-            if (global_motion.wmtype == IDENTITY) continue;
+            if (global_motion.wmtype == IDENTITY)
+                continue;
 
             const int64_t ref_frame_error = eb_av1_frame_error(EB_FALSE,
                                                                EB_8BIT,
@@ -214,7 +216,8 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                                                                input_pic->height,
                                                                input_pic->stride_y);
 
-            if (ref_frame_error == 0) continue;
+            if (ref_frame_error == 0)
+                continue;
 
             // If the best error advantage found doesn't meet the threshold for
             // this motion type, revert to IDENTITY.
@@ -224,7 +227,9 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                     GM_ERRORADV_TR_0 /* TODO: check error advantage */)) {
                 global_motion = default_warp_params;
             }
-            if (global_motion.wmtype != IDENTITY) { break; }
+            if (global_motion.wmtype != IDENTITY) {
+                break;
+            }
         }
     }
 
