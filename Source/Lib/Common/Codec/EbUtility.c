@@ -823,8 +823,8 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 blk_geom_mds[*idx_mds].txsize_uv[tx_depth][txb_itr] =
                     blk_geom_mds[*idx_mds].txsize_uv[0][0];
                 //   0  1 2 3
-                uint8_t offsetx[0] = { 0,  0};
-                uint8_t offsety[0] = { 0, 16};
+                uint8_t offsetx[2] = { 0,  0};
+                uint8_t offsety[2] = { 0, 16};
                 uint8_t tbx = offsetx[txb_itr];
                 uint8_t tby = offsety[txb_itr];
 

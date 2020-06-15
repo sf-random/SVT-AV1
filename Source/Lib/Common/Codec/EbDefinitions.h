@@ -527,10 +527,10 @@ extern "C" {
 #define SUBPEL_REMOVE_RES_CHECK 0
 #define IFS_DUALL_ALL           0    
 #define IMPROVE_HALF_PEL     0
-#define IMPROVE_QUARTER_PEL  1
-#define IMPROVE_EIGHT_PEL    1
+#define IMPROVE_QUARTER_PEL  0
+#define IMPROVE_EIGHT_PEL    0
 
-#define FIX_TX_BLOCK_GEOMETRY 0
+#define FIX_TX_BLOCK_GEOMETRY 1
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
@@ -1234,16 +1234,24 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
+#if FIX_TX_BLOCK_GEOMETRY
+     TX_4X8,   TX_8X4,   TX_8X16,   TX_16X8,   TX_16X32, TX_32X16},
+#else
      TX_4X4,   TX_4X4,   TX_8X8,   TX_8X8,   TX_16X16, TX_16X16},
+#endif
     // tx_depth 2
     {TX_4X4,   TX_4X8, TX_8X4, TX_8X8,   TX_4X4,   TX_4X4,   TX_4X4,
      TX_8X8,   TX_8X8, TX_8X8, TX_16X16, TX_16X16, TX_16X16,
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
+#if FIX_TX_BLOCK_GEOMETRY
+     TX_4X4,   TX_4X4,   TX_8X8,   TX_8X8,   TX_16X16, TX_16X16 } };
+#else
      TX_4X16, // No depth 2
      TX_16X4, // No depth 2
      TX_4X4,   TX_4X4, TX_8X8, TX_8X8}};
+#endif
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };
