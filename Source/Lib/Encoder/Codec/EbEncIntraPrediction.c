@@ -1233,7 +1233,6 @@ EbErrorType update_neighbor_samples_array_open_loop(
 {
     EbErrorType    return_error = EB_ErrorNone;
 
-    uint32_t idx;
     uint8_t  *src_ptr;
     uint8_t  *read_ptr;
     uint32_t count;
@@ -1266,7 +1265,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
         count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
-        for (idx = 0; idx < count; ++idx) {
+        for (uint32_t idx = 0; idx < count; ++idx) {
             *left_ref = *read_ptr;
             read_ptr += stride;
             left_ref++;
