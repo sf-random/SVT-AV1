@@ -3018,10 +3018,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_cycles_reduction_level = 0;
         else if (pd_pass == PD_PASS_1)
             txt_cycles_reduction_level = 0;
+#if TXS_TXT_ADOPTIONS
+        else if (enc_mode <= ENC_M0)
+            txt_cycles_reduction_level = 0;
+        else if (enc_mode <= ENC_M3)
+            txt_cycles_reduction_level = 1;
+        else
+            txt_cycles_reduction_level = 5;
+#else
         else if (enc_mode <= ENC_M2)
             txt_cycles_reduction_level = 0;
         else
             txt_cycles_reduction_level = 1;
+#endif
 #if TESTING
         txt_cycles_reduction_level = TXT_LEVEL;
 #endif

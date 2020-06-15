@@ -533,6 +533,7 @@ extern "C" {
 #endif
 #define ADAPTIVE_NSQ_LEVEL_FIX 1 // Replace invalid level
 #define JUNE14_M0_ADOPTIONS 1 // M0, MR, and MRS adoptions
+#define TXS_TXT_ADOPTIONS 1 // Turn on TXS in inter and recoup speed using TXT cycles reduction
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
