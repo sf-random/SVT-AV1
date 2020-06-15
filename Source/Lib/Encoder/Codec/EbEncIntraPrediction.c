@@ -1263,9 +1263,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
             read_ptr += stride;
             left_ref++;
         }
-        left_ref += (block_size_half - count);
-    }else
-        left_ref += count;
+    }
 
     // Get the top-row
     count = block_size_half;
@@ -1273,9 +1271,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         eb_memcpy(above_ref, read_ptr, count);
-        above_ref += (block_size_half - count);
     }else
-        above_ref += count;
 
     return return_error;
 }
