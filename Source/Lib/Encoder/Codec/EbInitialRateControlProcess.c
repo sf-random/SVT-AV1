@@ -442,14 +442,11 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 ************************************************/
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // PA Reference Pictures
-    uint32_t num_of_list_to_search;
-    uint32_t list_index;
-    uint32_t ref_pic_index;
     if (pcs_ptr->slice_type != I_SLICE) {
-        num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
+        uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
 
         // List Loop
-        for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
             // Release PA Reference Pictures
             uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                 ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
@@ -457,7 +454,8 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
                     ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
                     : MIN(pcs_ptr->ref_list1_count, scs_ptr->reference_count);
 
-            for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+            for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
+                 ++ref_pic_index) {
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
                     eb_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
                 }
