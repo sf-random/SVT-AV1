@@ -103,7 +103,6 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                                              MAX_CORNERS);
     }
 
-    int                  inliers_by_motion[RANSAC_NUM_MOTIONS];
     // clang-format off
     static const double k_indentity_params[MAX_PARAMDIM - 1] = {
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0
@@ -121,7 +120,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
     const EbWarpedMotionParams *ref_params = &default_warp_params;
 
     {
-        int frm_corners[2 * MAX_CORNERS];
+        int frm_corners[2 * MAX_CORNERS], inliers_by_motion[RANSAC_NUM_MOTIONS];
         // compute interest points using FAST features
         int num_frm_corners = av1_fast_corner_detect(frm_buffer,
                                                      input_pic->width,
