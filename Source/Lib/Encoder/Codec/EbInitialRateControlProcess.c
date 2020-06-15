@@ -224,11 +224,8 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
             }
         }
     } else {
-        uint32_t sb_count;
         uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
             BLOCK_SIZE_64;
-        uint32_t sb_origin_x;
-        uint32_t sb_origin_y;
 
         uint32_t total_checked_sbs = 0;
         uint32_t total_pan_sbs     = 0;
@@ -252,9 +249,9 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
         uint32_t total_tilt_high_amp_sbs = 0;
         uint32_t total_pan_high_amp_sbs  = 0;
 
-        for (sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-            sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-            sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
+        for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
+            uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
+            uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
             if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
                 ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
                 // Current MV
