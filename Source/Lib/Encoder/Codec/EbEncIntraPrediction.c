@@ -926,9 +926,6 @@ EbErrorType eb_av1_intra_prediction_cl(
             (md_context_ptr->mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] != INTRA_MODE) ? DC_PRED/*EB_INTRA_DC*/ :
             (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array->top_array[intra_luma_mode_top_neighbor_index]);       //   use DC. This seems like we could use a SB-width
 
-    md_context_ptr->intra_chroma_left_mode = md_context_ptr->intra_luma_left_mode;
-    md_context_ptr->intra_chroma_top_mode = md_context_ptr->intra_luma_top_mode;
-
     md_context_ptr->intra_chroma_left_mode = (uint32_t)(
             (md_context_ptr->mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] != INTRA_MODE) ? UV_DC_PRED :
             (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->left_array[intra_chroma_mode_left_neighbor_index]);
