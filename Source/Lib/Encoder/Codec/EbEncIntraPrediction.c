@@ -1259,7 +1259,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         eb_memcpy(above_ref, read_ptr, count);
-    }else
+    }
 
     return return_error;
 }
