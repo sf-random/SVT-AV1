@@ -9,6 +9,9 @@
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
 
+#if MEM_OPT_PALETTE
+int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+#endif
 static void mode_decision_context_dctor(EbPtr p) {
     ModeDecisionContext *obj = (ModeDecisionContext *)p;
 #if SB64_MEM_OPT
