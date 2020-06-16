@@ -2175,21 +2175,37 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         {
             //NEAREST_NEAREST
             int16_t to_inject_mv_x_l0 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .this_mv.as_mv.col;
+#endif
             int16_t to_inject_mv_y_l0 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .this_mv.as_mv.row;
+#endif
             int16_t to_inject_mv_x_l1 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .comp_mv.as_mv.col;
+#endif
             int16_t to_inject_mv_y_l1 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .comp_mv.as_mv.row;
+#endif
 
             inj_mv = context_ptr->injected_mv_count_bipred == 0 ||
                      mrp_is_already_injected_mv_bipred(context_ptr,
@@ -2523,13 +2539,21 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                     pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
 #endif
                 int16_t to_inject_mv_x_l0 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .this_mv.as_mv.col;
+#endif
                 int16_t to_inject_mv_y_l0 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .this_mv.as_mv.row;
+#endif
                 int16_t to_inject_mv_x_l1 =
                     context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][get_list_idx(rf[1])]
                     [ref_idx_1][0];
@@ -2681,13 +2705,21 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr
                     ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
                 int16_t to_inject_mv_x_l1 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .comp_mv.as_mv.col;
+#endif
                 int16_t to_inject_mv_y_l1 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .comp_mv.as_mv.row;
+#endif
 
                 inj_mv = context_ptr->injected_mv_count_bipred == 0 ||
                          mrp_is_already_injected_mv_bipred(context_ptr,
@@ -5637,8 +5669,12 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     IntMv nearestmv, nearmv;
     eb_av1_find_best_ref_mvs_from_stack(
         0,
+#if MEM_OPT_MV_STACK
+        context_ptr->ed_ref_mv_stack /*mbmi_ext*/,
+#else
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
             .ed_ref_mv_stack /*mbmi_ext*/,
+#endif
         xd,
         ref_frame,
         &nearestmv,
@@ -5652,9 +5688,13 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     // Ref DV should not have sub-pel.
     assert((dv_ref.as_mv.col & 7) == 0);
     assert((dv_ref.as_mv.row & 7) == 0);
+#if MEM_OPT_MV_STACK
+    context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv = dv_ref;
+#else
     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
         .ed_ref_mv_stack[INTRA_FRAME][0]
         .this_mv = dv_ref;
+#endif
 
     /* pointer to current frame */
     Yv12BufferConfig cur_buf;
@@ -5799,13 +5839,21 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
         cand_array[*cand_cnt].motion_vector_xl0       = dv_cand[dv_i].col;
         cand_array[*cand_cnt].motion_vector_yl0       = dv_cand[dv_i].row;
         cand_array[*cand_cnt].motion_vector_pred_x[REF_LIST_0] =
+#if MEM_OPT_MV_STACK
+            context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.col;
+#else
             context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                 .ed_ref_mv_stack[INTRA_FRAME][0]
                 .this_mv.as_mv.col;
+#endif
         cand_array[*cand_cnt].motion_vector_pred_y[REF_LIST_0] =
+#if MEM_OPT_MV_STACK
+            context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.row;
+#else
             context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                 .ed_ref_mv_stack[INTRA_FRAME][0]
                 .this_mv.as_mv.row;
+#endif
         cand_array[*cand_cnt].drl_index         = 0;
         cand_array[*cand_cnt].ref_mv_index      = 0;
 #if !CLEAN_UP_SB_DATA_7

@@ -94,8 +94,10 @@ typedef struct MdBlkStruct {
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
     uint64_t             default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
+#if !MEM_OPT_MV_STACK
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
+#endif
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
 #if CLEAN_UP_SB_DATA_1
     uint32_t best_d1_blk;
@@ -362,6 +364,10 @@ typedef struct ModeDecisionContext {
     InterPredictionContext *      inter_prediction_context;
     MdBlkStruct *                md_local_blk_unit;
     BlkStruct *                  md_blk_arr_nsq;
+#if MEM_OPT_MV_STACK
+    CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
+                               [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
+#endif
 #if DEPTH_PART_CLEAN_UP
     MdcSbData *mdc_sb_array;
 #endif

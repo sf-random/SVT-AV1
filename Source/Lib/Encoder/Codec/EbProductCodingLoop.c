@@ -1403,8 +1403,12 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         use_ssd ? full_lambda : fast_lambda,
         use_ssd,
         pcs_ptr,
+#if MEM_OPT_MV_STACK
+        &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
               .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
         context_ptr->blk_geom,
         context_ptr->blk_origin_y >> MI_SIZE_LOG2,
         context_ptr->blk_origin_x >> MI_SIZE_LOG2,
@@ -3910,8 +3914,12 @@ void md_stage_0(
                         fast_lambda,
                         0,
                         pcs_ptr,
+#if MEM_OPT_MV_STACK
+                        &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
                         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                               .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
                         context_ptr->blk_geom,
                         context_ptr->blk_origin_y >> MI_SIZE_LOG2,
                         context_ptr->blk_origin_x >> MI_SIZE_LOG2,
@@ -11486,8 +11494,12 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     0,
                     0,
                     pcs_ptr,
+#if MEM_OPT_MV_STACK
+                    &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
                     &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                           .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
                     context_ptr->blk_geom,
                     context_ptr->blk_origin_y >> MI_SIZE_LOG2,
                     context_ptr->blk_origin_x >> MI_SIZE_LOG2,
