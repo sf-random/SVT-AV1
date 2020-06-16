@@ -140,7 +140,7 @@ VAR_FN(64, 16, 16, 10);
 #undef VAR_FN
 
 /*
-* Compute varaince for 16bit input, only for blocks 32x32
+* Compute variance for 16bit input, only for blocks 32x32
 * This kernel is only used by variance_highbd_avx2()
 * Return: SAD and sum of square differences
 */
