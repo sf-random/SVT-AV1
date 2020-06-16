@@ -5765,8 +5765,12 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
     uint32_t               dv_i;
 
     for (dv_i = 0; dv_i < num_dv_cand; dv_i++) {
+#if MEM_OPT_PALETTE
+        cand_array[*cand_cnt].palette_info = NULL;
+#else
         cand_array[*cand_cnt].palette_info.pmi.palette_size[0] = 0;
         cand_array[*cand_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
         cand_array[*cand_cnt].type                             = INTRA_MODE;
         cand_array[*cand_cnt].intra_luma_mode                  = DC_PRED;
         cand_array[*cand_cnt].distortion_ready                 = 0;
@@ -6010,8 +6014,12 @@ void  inject_intra_candidates(
                     int32_t  p_angle = mode_to_angle_map[(PredictionMode)open_loop_intra_candidate] + angle_delta * ANGLE_STEP;
                     if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
                         cand_array[cand_total_cnt].type = INTRA_MODE;
+#if MEM_OPT_PALETTE
+                        cand_array[cand_total_cnt].palette_info = NULL;
+#else
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
                         cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
                         cand_array[cand_total_cnt].distortion_ready = 0;
                         cand_array[cand_total_cnt].use_intrabc = 0;
@@ -6071,8 +6079,12 @@ void  inject_intra_candidates(
         }
         else {
             cand_array[cand_total_cnt].type = INTRA_MODE;
+#if MEM_OPT_PALETTE
+            cand_array[cand_total_cnt].palette_info = NULL;
+#else
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
             cand_array[cand_total_cnt].distortion_ready = 0;
             cand_array[cand_total_cnt].use_intrabc = 0;
@@ -6172,8 +6184,12 @@ void  inject_filter_intra_candidates(
             cand_array[cand_total_cnt].use_intrabc = 0;
             cand_array[cand_total_cnt].filter_intra_mode = filter_intra_mode;
             cand_array[cand_total_cnt].is_directional_mode_flag = 0;
+#if MEM_OPT_PALETTE
+            cand_array[cand_total_cnt].palette_info = NULL;
+#else
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
 
             // Search the best independent intra chroma mode
@@ -6333,8 +6349,12 @@ void  inject_palette_candidates(
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
 
         palette_cand_array[cand_i].pmi.palette_size[1] = 0;
+#if MEM_OPT_PALETTE
+        cand_array[can_total_cnt].palette_info = &palette_cand_array[cand_i];
+#else
         memcpy(cand_array[can_total_cnt].palette_info.color_idx_map, palette_cand_array[cand_i].color_idx_map, 64 * 64);
         memcpy(&cand_array[can_total_cnt].palette_info.pmi, &palette_cand_array[cand_i].pmi, sizeof(PaletteModeInfo));
+#endif
         assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
         //to re check these fields
         cand_array[can_total_cnt].type = INTRA_MODE;
@@ -6490,8 +6510,12 @@ EbErrorType generate_md_stage_0_cand(
 #endif
     //can be removed later if need be
     for (uint16_t i = 0; i < cand_total_cnt; i++) {
+#if MEM_OPT_PALETTE
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL);
+#else
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] == 0);
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+#endif
     }
 #if SHUT_PALETTE_BC_PD_PASS_0_1
     if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize)) {
@@ -6504,8 +6528,15 @@ EbErrorType generate_md_stage_0_cand(
             &cand_total_cnt);
     }
     for (uint16_t i = 0; i < cand_total_cnt; i++) {
+#if MEM_OPT_PALETTE
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL ||
+                context_ptr->fast_candidate_array[i].palette_info->pmi.palette_size[0] < 9);
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL ||
+                context_ptr->fast_candidate_array[i].palette_info->pmi.palette_size[1] == 0);
+#else
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] < 9);
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+#endif
     }
 #if SHUT_PALETTE_BC_PD_PASS_0_1
     }
@@ -6544,7 +6575,12 @@ EbErrorType generate_md_stage_0_cand(
 #if !CLASS_MERGING
                 if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
 #endif
+#if MEM_OPT_PALETTE
+                  if (cand_ptr->palette_info == NULL ||
+                          cand_ptr->palette_info->pmi.palette_size[0] == 0) {
+#else
                   if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
                   }
@@ -6830,13 +6866,29 @@ uint32_t product_full_mode_decision(
         }
         if (blk_ptr->prediction_mode_flag == INTRA_MODE)
         {
+#if MEM_OPT_PALETTE
+            if (candidate_ptr->palette_info)
+                memcpy(&blk_ptr->palette_info.pmi, &candidate_ptr->palette_info->pmi, sizeof(PaletteModeInfo));
+            else
+                memset(&blk_ptr->palette_info.pmi, 0, sizeof(PaletteModeInfo));
+#else
             memcpy(&blk_ptr->palette_info.pmi, &candidate_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
+#endif
 #if SHUT_PALETTE_BC_PD_PASS_0_1
             if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize))
 #else
             if(svt_av1_allow_palette(context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
 #endif
+#if MEM_OPT_PALETTE
+            {
+               if (candidate_ptr->palette_info)
+                   memcpy(blk_ptr->palette_info.color_idx_map, candidate_ptr->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
+               else
+                   memset(blk_ptr->palette_info.color_idx_map, 0, MAX_PALETTE_SQUARE);
+            }
+#else
                memcpy(blk_ptr->palette_info.color_idx_map, candidate_ptr->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
+#endif
         }
         else {
             blk_ptr->palette_info.pmi.palette_size[0] = blk_ptr->palette_info.pmi.palette_size[1] = 0;

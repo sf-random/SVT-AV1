@@ -19,7 +19,9 @@ static void mode_decision_context_dctor(EbPtr p) {
         if (obj->palette_cand_array[cd].color_idx_map)
             EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
     for (uint32_t cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index) {
+#if !MEM_OPT_PALETTE
         if (obj->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map)
+#endif
 #if SB64_MEM_OPT
             for (uint32_t coded_leaf_index = 0; coded_leaf_index < block_max_count_sb;
 #else
@@ -28,7 +30,9 @@ static void mode_decision_context_dctor(EbPtr p) {
                  ++coded_leaf_index)
                 if (obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map)
                     EB_FREE_ARRAY(obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map);
+#if !MEM_OPT_PALETTE
         EB_FREE_ARRAY(obj->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map);
+#endif
     }
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
@@ -175,12 +179,16 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             &context_ptr->fast_candidate_array[cand_index];
         context_ptr->fast_candidate_ptr_array[cand_index]->md_rate_estimation_ptr =
             context_ptr->md_rate_estimation_ptr;
+#if MEM_OPT_PALETTE
+            context_ptr->fast_candidate_ptr_array[cand_index]->palette_info = NULL;
+#else
         if (cfg_palette)
             EB_MALLOC_ARRAY(
                 context_ptr->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map,
                 MAX_PALETTE_SQUARE);
         else
             context_ptr->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map = NULL;
+#endif
     }
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (cfg_palette)
@@ -382,7 +390,12 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                 context_ptr->md_blk_arr_nsq[0].neigh_top_recon[0] + offset;
         }
 #endif
+#if MEM_OPT_PALETTE
+        const BlockGeom *blk_geom = get_blk_geom_mds(coded_leaf_index);
+        if (svt_av1_allow_palette(cfg_palette, blk_geom->bsize))
+#else
         if (cfg_palette)
+#endif
             EB_MALLOC_ARRAY(
                 context_ptr->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map,
                 MAX_PALETTE_SQUARE);

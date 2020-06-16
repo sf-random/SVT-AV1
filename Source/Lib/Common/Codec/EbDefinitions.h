@@ -520,6 +520,7 @@ extern "C" {
 
 #define FIX_TX_BLOCK_GEOMETRY 1 // Fix tx construction for tx_depth=1 of 4NxN and Nx4N
 
+#define MEM_OPT_PALETTE     1 // Memory optimization for palette
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

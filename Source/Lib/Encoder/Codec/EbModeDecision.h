@@ -70,7 +70,11 @@ typedef struct ModeDecisionCandidate {
     EbBool      merge_flag;
     uint16_t    count_non_zero_coeffs;
     uint8_t     type;
+#if MEM_OPT_PALETTE
+    PaletteInfo *palette_info;
+#else
     PaletteInfo palette_info;
+#endif
     // MD Rate Estimation Ptr
     MdRateEstimationContext *md_rate_estimation_ptr; // 64 bits
     uint64_t                 fast_luma_rate;
