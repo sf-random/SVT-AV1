@@ -522,6 +522,27 @@ extern "C" {
 #define DISALLOW_CYCLES_REDUCTION_REF 1 // Disallow Depth and NSQ cycles reduction in REF frames
 #define FIX_NSQ_CYCLE_RED_LEVEL 1 // Remove invalid setting for nsq cycles reduction
 #define JUNE15_ADOPTIONS 1 // M0, MR, and MRS adoptions
+
+#define IMPROVE_SUB_PEL       1 // Perform 1/4-Pel and 1/8-Pel refinement around multiple points (~top N best positions): 
+#if IMPROVE_SUB_PEL
+#define IMPROVE_HALF_PEL    1
+#define IMPROVE_QUARTER_PEL 1
+#define IMPROVE_EIGHT_PEL   1
+#endif
+
+#define LIBAOM_BUG_FIXES            1 // libaom bug fixes
+#if LIBAOM_BUG_FIXES
+#define GLOBAL_ME_BUG_FIX_0       1 // Fix ransac() 
+#define GLOBAL_ME_BUG_FIX_1       1 // Sometimes num_inliers is not initialized due to early exit present in ransac() function.Which leads to aomedia : 2449 "SEGV on unknown address".
+#define LOOP_FILTER_COVERSION_FIX 1 // aom_dsp / loopfilter: fix int sanitizer
+#define TRANSFORM_FIX_0           1 // Fix condition on 'result_64' in half_btf()
+#define TRANSFORM_FIX_1           1 // Fix range computation for idtx
+#define CRC_CALC_FIX              1 // Fix integer sanitizer warning in hash.c
+#define OBMC_BUG_FIX              1 // Fix mv err cost for obmc subpel motion search (by default not used)
+#endif
+
+#define BWD_ALTREF_PA_ME_CAND_FIX 1 // (BWD, ALT) prep bug fix
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
