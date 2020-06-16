@@ -812,16 +812,13 @@ void eb_av1_predict_intra_block_16bit(
     const int32_t x = col_off << tx_size_wide_log2[0];
     const int32_t y = row_off << tx_size_high_log2[0];
     if (use_palette) {
-        int32_t r, c;
         const uint8_t *const map = palette_info->color_idx_map;
         const uint16_t *const palette =
             palette_info->pmi.palette_colors + plane * PALETTE_MAX_SIZE;
         uint16_t              max_val = (bit_depth == EB_8BIT) ? 0xFF : 0xFFFF;
-        for (r = 0; r < txhpx; ++r) {
-            for (c = 0; c < txwpx; ++c) {
+        for (int32_t r = 0; r < txhpx; ++r)
+            for (int32_t c = 0; c < txwpx; ++c)
                 dst[r * dst_stride + c] = CLIP3(0, max_val, palette[map[(r + y) * wpx + c + x]]);
-            }
-        }
         return;
     }
 
