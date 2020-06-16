@@ -529,7 +529,7 @@ extern "C" {
 #define IMPROVE_HALF_PEL     0
 #define IMPROVE_MULTIPLE_SEARCH  1
 #define IMPROVE_QUARTER_PEL      1
-#define IMPROVE_EIGHT_PEL    0
+#define IMPROVE_EIGHT_PEL    1
 
 #define FIX_TX_BLOCK_GEOMETRY 1
 #endif
