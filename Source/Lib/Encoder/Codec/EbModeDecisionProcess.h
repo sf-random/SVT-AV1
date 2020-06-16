@@ -707,12 +707,6 @@ typedef struct ModeDecisionContext {
     MdSubPelSearchCtrls md_subpel_search_ctrls;
 #if SEARCH_TOP_N
     MdFpResults md_best_fp_pos[MD_MAX_BEST_FP_POS];
-#if IMPROVE_QUARTER_PEL
-    MdFpResults md_best_hp_pos[MD_MAX_BEST_FP_POS];
-#endif
-#if IMPROVE_EIGHT_PEL
-    MdFpResults md_best_qp_pos[MD_MAX_BEST_FP_POS];
-#endif
 #endif
 #endif
 #if !PRUNING_PER_INTER_TYPE
