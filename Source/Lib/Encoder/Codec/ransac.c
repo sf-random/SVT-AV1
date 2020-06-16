@@ -212,7 +212,8 @@ static int find_translation(int np, double *pts1, double *pts2, double *mat) {
 
 static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
     const int np2  = np * 2;
-    double *  a    = (double *)malloc(sizeof(*a) * (np2 * 5 + 20));
+    double *  a;
+    EB_MALLOC(a, sizeof(*a) * (np2 * 5 + 20));
     double *  b    = a + np2 * 4;
     double *  temp = b + np2;
     int       i;
@@ -241,11 +242,11 @@ static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
         b[2 * i + 1] = dy;
     }
     if (!least_squares(4, a, np2, 4, b, temp, mat)) {
-        free(a);
+        EB_FREE(a);
         return 1;
     }
     denormalize_rotzoom_reorder(mat, t1, t2);
-    free(a);
+    EB_FREE(a);
     return 0;
 }
 
@@ -387,18 +388,18 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
     if (npoints < minpts * MINPTS_MULTIPLIER || npoints == 0)
         return 1;
 
-    points1      = (double *)malloc(sizeof(*points1) * npoints * 2);
-    points2      = (double *)malloc(sizeof(*points2) * npoints * 2);
-    corners1     = (double *)malloc(sizeof(*corners1) * npoints * 2);
-    corners2     = (double *)malloc(sizeof(*corners2) * npoints * 2);
-    image1_coord = (double *)malloc(sizeof(*image1_coord) * npoints * 2);
+    EB_MALLOC(points1,     sizeof(*points1) * npoints * 2);
+    EB_MALLOC(points2,     sizeof(*points2) * npoints * 2);
+    EB_MALLOC(corners1,    sizeof(*corners1) * npoints * 2);
+    EB_MALLOC(corners2,    sizeof(*corners2) * npoints * 2);
+    EB_MALLOC(image1_coord,sizeof(*image1_coord) * npoints * 2);
 
-    motions = (RANSAC_MOTION *)malloc(sizeof(RANSAC_MOTION) * num_desired_motions);
+    EB_MALLOC(motions, sizeof(RANSAC_MOTION) * num_desired_motions);
     for (int i = 0; i < num_desired_motions; ++i) {
-        motions[i].inlier_indices = (int *)malloc(sizeof(*motions->inlier_indices) * npoints);
+        EB_MALLOC(motions[i].inlier_indices, sizeof(*motions->inlier_indices) * npoints);
         clear_motion(motions + i, npoints);
     }
-    current_motion.inlier_indices = (int *)malloc(sizeof(*current_motion.inlier_indices) * npoints);
+    EB_MALLOC(current_motion.inlier_indices, sizeof(*current_motion.inlier_indices) * npoints);
     clear_motion(&current_motion, npoints);
 
     worst_kept_motion = motions;
@@ -515,16 +516,16 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
     }
 
 finish_ransac:
-    free(points1);
-    free(points2);
-    free(corners1);
-    free(corners2);
-    free(image1_coord);
-    free(current_motion.inlier_indices);
+    EB_FREE(points1);
+    EB_FREE(points2);
+    EB_FREE(corners1);
+    EB_FREE(corners2);
+    EB_FREE(image1_coord);
+    EB_FREE(current_motion.inlier_indices);
     if (motions) {
         for (int i = 0; i < num_desired_motions; ++i)
-            free(motions[i].inlier_indices);
-        free(motions);
+            EB_FREE(motions[i].inlier_indices);
+        EB_FREE(motions);
     }
 
     return ret_val;

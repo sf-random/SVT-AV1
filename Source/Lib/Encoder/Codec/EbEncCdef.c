@@ -1177,7 +1177,7 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     return best_tot_mse;
 }
 
-void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
+EbErrorType finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                         int32_t selected_strength_cnt[64]) {
     (void)context_ptr;
     int32_t                         fast    = 0;
@@ -1196,8 +1196,8 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t       sb_count;
     int32_t       nvfb              = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t       nhfb              = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    int32_t *     sb_index          = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
-    int32_t *     selected_strength = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+    int32_t *     sb_index;
+    int32_t *     selected_strength;
     int32_t       best_frame_gi_cnt = 0;
     const int32_t total_strengths   = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
     int32_t       gi_step;
@@ -1205,6 +1205,8 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t       start_gi;
     int32_t       end_gi;
 
+    EB_MALLOC(sb_index, nvfb * nhfb * sizeof(*sb_index));
+    EB_MALLOC(selected_strength, nvfb * nhfb * sizeof(*selected_strength));
     assert(sb_index != NULL);
     assert(selected_strength != NULL);
 
@@ -1234,9 +1236,8 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         EB_FALSE);
     lambda = full_lambda;
 
-    mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
-    mse[1] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
-
+    EB_MALLOC_ARRAY(mse[0], sizeof(**mse) * nvfb * nhfb);
+    EB_MALLOC_ARRAY(mse[1], sizeof(**mse) * nvfb * nhfb);
     sb_count = 0;
     for (fbr = 0; fbr < nvfb; ++fbr) {
         for (fbc = 0; fbc < nhfb; ++fbc) {
@@ -1361,8 +1362,9 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
     ppcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 
-    free(mse[0]);
-    free(mse[1]);
-    free(sb_index);
-    free(selected_strength);
+    EB_FREE_ARRAY(mse[0]);
+    EB_FREE_ARRAY(mse[1]);
+    EB_FREE(sb_index);
+    EB_FREE(selected_strength);
+    return EB_ErrorNone;
 }

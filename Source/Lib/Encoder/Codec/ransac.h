@@ -18,7 +18,7 @@
 #include <memory.h>
 
 #include "global_motion.h"
-
+#include "EbMalloc.h"
 typedef int (*RansacFunc)(int *matched_points, int npoints, int *num_inliers_by_motion,
                           MotionModel *params_by_motion, int num_motions);
 typedef int (*RansacFuncDouble)(double *matched_points, int npoints, int *num_inliers_by_motion,

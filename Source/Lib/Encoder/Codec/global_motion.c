@@ -289,7 +289,7 @@ static int compute_global_motion_feature_based(TransformationType type, unsigned
         ref_buffer, frm_width, frm_height, ref_stride, ref_corners, MAX_CORNERS);
 
     // find correspondences between the two images
-    correspondences     = (int *)malloc(num_frm_corners * 4 * sizeof(*correspondences));
+    EB_MALLOC(correspondences, num_frm_corners * 4 * sizeof(*correspondences));
     num_correspondences = av1_determine_correspondence(frm_buffer,
                                                        (int *)frm_corners,
                                                        num_frm_corners,
@@ -315,7 +315,7 @@ static int compute_global_motion_feature_based(TransformationType type, unsigned
         }
     }
 
-    free(correspondences);
+    EB_FREE(correspondences);
 
     // Return true if any one of the motions has inliers.
     for (i = 0; i < num_motions; ++i) {
