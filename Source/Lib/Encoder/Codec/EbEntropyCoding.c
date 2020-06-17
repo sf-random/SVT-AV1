@@ -6126,7 +6126,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
 
     if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_mode, blk_geom->bsize)) {
         assert(blk_ptr->palette_info.color_idx_map != NULL && "free palette:Null");
-        free(blk_ptr->palette_info.color_idx_map);
+        EB_FREE(blk_ptr->palette_info.color_idx_map);
         blk_ptr->palette_info.color_idx_map = NULL;
     }
 

@@ -36,7 +36,7 @@ int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
     vector->size         = 0;
     vector->capacity     = MAX(VECTOR_MINIMUM_CAPACITY, capacity);
     vector->element_size = element_size;
-    vector->data         = malloc(vector->capacity * element_size);
+    EB_MALLOC(vector->data, vector->capacity * element_size);
 
     return vector->data == NULL ? VECTOR_ERROR : VECTOR_SUCCESS;
 }
@@ -47,7 +47,7 @@ int eb_aom_vector_destroy(Vector *vector) {
 
     if (vector == NULL) return VECTOR_ERROR;
 
-    free(vector->data);
+    EB_FREE(vector->data);
     vector->data = NULL;
 
     return VECTOR_SUCCESS;
@@ -137,8 +137,8 @@ int _vector_reallocate(Vector *vector, size_t new_capacity) {
 
     new_capacity_in_bytes = new_capacity * vector->element_size;
     old                   = vector->data;
-
-    if ((vector->data = malloc(new_capacity_in_bytes)) == NULL) return VECTOR_ERROR;
+    EB_MALLOC(vector->data, new_capacity_in_bytes);
+    if (vector->data == NULL) return VECTOR_ERROR;
 #ifdef __STDC_LIB_EXT1__
     /* clang-format off */
     if (memcpy_s(vector->data,

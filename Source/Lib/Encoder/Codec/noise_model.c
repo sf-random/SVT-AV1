@@ -117,11 +117,11 @@ static INLINE double get_noise_var(const uint8_t *data, const uint8_t *denoised,
 
 static void equation_system_free(AomEquationSystem *eqns) {
     if (!eqns) return;
-    free(eqns->A);
+    EB_FREE(eqns->A);
     eqns->A = NULL;
-    free(eqns->b);
+    EB_FREE(eqns->b);
     eqns->b = NULL;
-    free(eqns->x);
+    EB_FREE(eqns->x);
     eqns->x = NULL;
     eqns->n = 0;
 }
@@ -141,9 +141,9 @@ static void equation_system_copy(AomEquationSystem *dst, const AomEquationSystem
 }
 
 static int32_t equation_system_init(AomEquationSystem *eqns, int32_t n) {
-    eqns->A = (double *)malloc(sizeof(*eqns->A) * n * n);
-    eqns->b = (double *)malloc(sizeof(*eqns->b) * n);
-    eqns->x = (double *)malloc(sizeof(*eqns->x) * n);
+    EB_MALLOC(eqns->A, sizeof(*eqns->A) * n * n);
+    EB_MALLOC(eqns->b, sizeof(*eqns->b) * n);
+    EB_MALLOC(eqns->x, sizeof(*eqns->x) * n);
     eqns->n = n;
     if (!eqns->A || !eqns->b || !eqns->x) {
         SVT_ERROR("Failed to allocate system of equations of size %d\n", n);
@@ -156,13 +156,15 @@ static int32_t equation_system_init(AomEquationSystem *eqns, int32_t n) {
 
 static int32_t equation_system_solve(AomEquationSystem *eqns) {
     const int32_t n   = eqns->n;
-    double *      b   = (double *)malloc(sizeof(*b) * n);
-    double *      A   = (double *)malloc(sizeof(*A) * n * n);
+    double *      b;
+    double *      A;
+    EB_MALLOC(b, sizeof(*b) * n);
+    EB_MALLOC(A, sizeof(*A) * n * n);
     int32_t       ret = 0;
     if (A == NULL || b == NULL) {
         SVT_ERROR("Unable to allocate temp values of size %dx%d\n", n, n);
-        free(b);
-        free(A);
+        EB_FREE(b);
+        EB_FREE(A);
         return 0;
     }
     memcpy(A, eqns->A, sizeof(*eqns->A) * n * n);
@@ -1307,11 +1309,11 @@ int32_t eb_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised
     }
     init_success &=
         eb_aom_flat_block_finder_init(&block_finder_full, block_size, bit_depth, use_highbd);
-    result  = (float *)malloc((num_blocks_h + 2) * block_size * result_stride * sizeof(*result));
-    plane   = (float *)malloc(block_size * block_size * sizeof(*plane));
+    EB_MALLOC(result,(num_blocks_h + 2) * block_size * result_stride * sizeof(*result));
+    EB_MALLOC(plane,block_size * block_size * sizeof(*plane));
     block   = (float *)eb_aom_memalign(32, 2 * block_size * block_size * sizeof(*block));
-    block_d = (double *)malloc(block_size * block_size * sizeof(*block_d));
-    plane_d = (double *)malloc(block_size * block_size * sizeof(*plane_d));
+    EB_MALLOC(block_d,block_size * block_size * sizeof(*block_d));
+    EB_MALLOC(plane_d,block_size * block_size * sizeof(*plane_d));
     window_full = get_half_cos_window(block_size);
     tx_full     = eb_aom_noise_tx_malloc(block_size);
 
@@ -1411,11 +1413,11 @@ int32_t eb_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised
                                       k_block_normalization);
         }
     }
-    free(result);
-    free(plane);
+    EB_FREE(result);
+    EB_FREE(plane);
     eb_aom_free(block);
-    free(plane_d);
-    free(block_d);
+    EB_FREE(plane_d);
+    EB_FREE(block_d);
     free(window_full);
 
     eb_aom_noise_tx_free(tx_full);

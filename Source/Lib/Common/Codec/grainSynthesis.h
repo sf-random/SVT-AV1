@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-
+#include "EbMalloc.h"
 /*!\brief Structure containing film grain synthesis parameters for a frame
      *
      * This structure contains input parameters for film grain synthesis

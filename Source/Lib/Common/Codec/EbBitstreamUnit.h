@@ -203,7 +203,7 @@ struct OdEcEnc {
 
 /*See entenc.c for further documentation.*/
 
-void eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) OD_ARG_NONNULL(1);
+EbErrorType eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) OD_ARG_NONNULL(1);
 void eb_od_ec_enc_reset(OdEcEnc *enc) OD_ARG_NONNULL(1);
 void eb_od_ec_enc_clear(OdEcEnc *enc) OD_ARG_NONNULL(1);
 

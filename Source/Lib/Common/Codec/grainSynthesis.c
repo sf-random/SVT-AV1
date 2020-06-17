@@ -345,17 +345,17 @@ static void init_arrays(AomFilmGrain *params, int32_t luma_stride, int32_t chrom
     *cr_line_buf =
         (int32_t *)malloc(sizeof(**cr_line_buf) * chroma_stride * (2 >> chroma_subsamp_y));
 
-    *y_col_buf  = (int32_t *)malloc(sizeof(**y_col_buf) * (luma_subblock_size_y + 2) * 2);
+    *y_col_buf = (int32_t *)malloc(sizeof(**y_col_buf) * (luma_subblock_size_y + 2) * 2);
     *cb_col_buf = (int32_t *)malloc(sizeof(**cb_col_buf) *
-                                    (chroma_subblock_size_y + (2 >> chroma_subsamp_y)) *
-                                    (2 >> chroma_subsamp_x));
+        (chroma_subblock_size_y + (2 >> chroma_subsamp_y)) *
+        (2 >> chroma_subsamp_x));
     *cr_col_buf = (int32_t *)malloc(sizeof(**cr_col_buf) *
-                                    (chroma_subblock_size_y + (2 >> chroma_subsamp_y)) *
-                                    (2 >> chroma_subsamp_x));
+        (chroma_subblock_size_y + (2 >> chroma_subsamp_y)) *
+        (2 >> chroma_subsamp_x));
 
     *luma_grain_block = (int32_t *)malloc(sizeof(**luma_grain_block) * luma_grain_samples);
-    *cb_grain_block   = (int32_t *)malloc(sizeof(**cb_grain_block) * chroma_grain_samples);
-    *cr_grain_block   = (int32_t *)malloc(sizeof(**cr_grain_block) * chroma_grain_samples);
+    *cb_grain_block = (int32_t *)malloc(sizeof(**cb_grain_block) * chroma_grain_samples);
+    *cr_grain_block = (int32_t *)malloc(sizeof(**cr_grain_block) * chroma_grain_samples);
 }
 
 static void dealloc_arrays(AomFilmGrain *params, int32_t ***pred_pos_luma,

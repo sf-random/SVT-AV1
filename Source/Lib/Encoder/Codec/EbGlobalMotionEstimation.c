@@ -95,13 +95,12 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
-void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
+EbErrorType compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
                            EbWarpedMotionParams *bestWarpedMotion, int allow_high_precision_mv) {
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
     for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) {
         memset(&params_by_motion[m], 0, sizeof(params_by_motion[m]));
-        params_by_motion[m].inliers =
-            malloc(sizeof(*(params_by_motion[m].inliers)) * 2 * MAX_CORNERS);
+        EB_MALLOC(params_by_motion[m].inliers, sizeof(*(params_by_motion[m].inliers)) * 2 * MAX_CORNERS);
     }
 
     const double *       params_this_motion;
@@ -230,5 +229,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
     *bestWarpedMotion = global_motion;
 
-    for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) { free(params_by_motion[m].inliers); }
+    for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) { EB_FREE(params_by_motion[m].inliers); }
+
+    return EB_ErrorNone;
 }

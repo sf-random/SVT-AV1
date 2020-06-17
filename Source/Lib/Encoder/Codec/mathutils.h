@@ -70,7 +70,7 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
     double *scratch_ = NULL;
     double *at_a, *atb;
     if (!scratch) {
-        scratch_ = (double *)malloc(sizeof(*scratch) * n * (n + 1));
+        EB_MALLOC(scratch_, sizeof(*scratch) * n * (n + 1));
         scratch  = scratch_;
     }
     at_a = scratch;
@@ -86,7 +86,7 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
         for (k = 0; k < rows; ++k) atb[i] += A[k * stride + i] * b[k];
     }
     int32_t ret = linsolve(n, at_a, n, atb, x);
-    if (scratch_) free(scratch_);
+    if (scratch_) EB_FREE(scratch_);
     return ret;
 }
 

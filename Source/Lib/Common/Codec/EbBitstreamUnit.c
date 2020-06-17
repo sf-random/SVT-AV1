@@ -166,20 +166,21 @@ static void od_ec_enc_normalize(OdEcEnc *enc, OdEcWindow low, unsigned rng) {
 
 /*Initializes the encoder.
 size: The initial size of the buffer, in bytes.*/
-void eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
+EbErrorType eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
     eb_od_ec_enc_reset(enc);
-    enc->buf     = (uint8_t *)malloc(sizeof(*enc->buf) * size);
+    EB_MALLOC(enc->buf, sizeof(*enc->buf) * size);
     enc->storage = size;
     if (size > 0 && enc->buf == NULL) {
         enc->storage = 0;
         enc->error   = -1;
     }
-    enc->precarry_buf     = (uint16_t *)malloc(sizeof(*enc->precarry_buf) * size);
+    EB_MALLOC(enc->precarry_buf, sizeof(*enc->precarry_buf) * size);
     enc->precarry_storage = size;
     if (size > 0 && enc->precarry_buf == NULL) {
         enc->precarry_storage = 0;
         enc->error            = -1;
     }
+    return EB_ErrorNone;
 }
 
 /*Reinitializes the encoder.*/
@@ -199,8 +200,8 @@ void eb_od_ec_enc_reset(OdEcEnc *enc) {
 
 /*Frees the buffers used by the encoder.*/
 void eb_od_ec_enc_clear(OdEcEnc *enc) {
-    free(enc->precarry_buf);
-    free(enc->buf);
+    EB_FREE(enc->precarry_buf);
+    EB_FREE(enc->buf);
 }
 
 /*Encodes a symbol given its frequency in Q15.

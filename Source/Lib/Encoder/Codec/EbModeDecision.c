@@ -4596,7 +4596,7 @@ void assert_release(int statement) {
     if (statement == 0) SVT_LOG("ASSERT_ERRRR\n");
 }
 
-void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
+EbErrorType intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                      const SequenceControlSet *scs, BlkStruct *blk_ptr, MV *dv_cand,
                      uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
@@ -4644,8 +4644,7 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     //temp buffer for hash me
     for (int xi = 0; xi < 2; xi++)
         for (int yj = 0; yj < 2; yj++)
-            x->hash_value_buffer[xi][yj] =
-                (uint32_t *)malloc(AOM_BUFFER_SIZE_FOR_BLOCK_HASH * sizeof(uint32_t));
+             EB_MALLOC(x->hash_value_buffer[xi][yj], AOM_BUFFER_SIZE_FOR_BLOCK_HASH * sizeof(uint32_t));
 
     IntMv nearestmv, nearmv;
     eb_av1_find_best_ref_mvs_from_stack(
@@ -4764,6 +4763,8 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
 
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++) free(x->hash_value_buffer[i][j]);
+
+    return EB_ErrorNone;
 }
 
 void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

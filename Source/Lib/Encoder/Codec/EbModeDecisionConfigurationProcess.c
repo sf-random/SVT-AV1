@@ -1327,6 +1327,17 @@ void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 
     if (ref_stamp >= 0) motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
 }
+EbErrorType add_hash_table(int pic_width, int pic_height, uint32_t *block_hash_values[2][2], int8_t  *is_block_same[2][3]) {
+    int       k, j;
+
+    for (k = 0; k < 2; k++) {
+        for (j = 0; j < 2; j++)
+            EB_MALLOC(block_hash_values[k][j], sizeof(uint32_t) * pic_width * pic_height);
+        for (j = 0; j < 3; j++)
+            EB_MALLOC(is_block_same[k][j], sizeof(int8_t) * pic_width * pic_height);
+    }
+    return EB_ErrorNone;
+}
 
 /* Mode Decision Configuration Kernel */
 
@@ -1551,13 +1562,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 int8_t *  is_block_same[2][3];
                 int       k, j;
 
-                for (k = 0; k < 2; k++) {
-                    for (j = 0; j < 2; j++)
-                        block_hash_values[k][j] = malloc(sizeof(uint32_t) * pic_width * pic_height);
-                    for (j = 0; j < 3; j++)
-                        is_block_same[k][j] = malloc(sizeof(int8_t) * pic_width * pic_height);
-                }
-
+                add_hash_table(pic_width, pic_height, block_hash_values, is_block_same);
                 //pcs_ptr->hash_table.p_lookup_table = NULL;
                 //av1_hash_table_create(&pcs_ptr->hash_table);
 
@@ -1651,8 +1656,8 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                                             128);
 
                 for (k = 0; k < 2; k++) {
-                    for (j = 0; j < 2; j++) free(block_hash_values[k][j]);
-                    for (j = 0; j < 3; j++) free(is_block_same[k][j]);
+                    for (j = 0; j < 2; j++) EB_FREE(block_hash_values[k][j]);
+                    for (j = 0; j < 3; j++) EB_FREE(is_block_same[k][j]);
                 }
             }
 
