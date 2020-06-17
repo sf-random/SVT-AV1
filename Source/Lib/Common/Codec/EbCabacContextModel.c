@@ -3044,19 +3044,38 @@ void eb_av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
 #if CONFIG_ENTROPY_STATS
     cm->coef_cdf_category = index;
 #endif
-    eb_memcpy(fc->txb_skip_cdf, av1_default_txb_skip_cdfs[index],sizeof(av1_default_txb_skip_cdfs[index]));
-    eb_memcpy(fc->eob_extra_cdf, av1_default_eob_extra_cdfs[index], sizeof(av1_default_eob_extra_cdfs[index]));
-    eb_memcpy(fc->dc_sign_cdf, av1_default_dc_sign_cdfs[index], sizeof(av1_default_dc_sign_cdfs[index]));
-    eb_memcpy(fc->coeff_br_cdf, av1_default_coeff_lps_multi_cdfs[index], sizeof(av1_default_coeff_lps_multi_cdfs[index]));
-    eb_memcpy(fc->coeff_base_cdf, av1_default_coeff_base_multi_cdfs[index], sizeof(av1_default_coeff_base_multi_cdfs[index]));
-    eb_memcpy(fc->coeff_base_eob_cdf, av1_default_coeff_base_eob_multi_cdfs[index], sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf16, av1_default_eob_multi16_cdfs[index],sizeof(av1_default_eob_multi16_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf32, av1_default_eob_multi32_cdfs[index],sizeof(av1_default_eob_multi32_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf64, av1_default_eob_multi64_cdfs[index],sizeof(av1_default_eob_multi64_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf128, av1_default_eob_multi128_cdfs[index],sizeof(av1_default_eob_multi128_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf256, av1_default_eob_multi256_cdfs[index],sizeof(av1_default_eob_multi256_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf512, av1_default_eob_multi512_cdfs[index],sizeof(av1_default_eob_multi512_cdfs[index]));
-    eb_memcpy(fc->eob_flag_cdf1024,av1_default_eob_multi1024_cdfs[index], sizeof(av1_default_eob_multi1024_cdfs[index]));
+    if (eb_memcpy != NULL)
+    {
+        eb_memcpy(fc->txb_skip_cdf, av1_default_txb_skip_cdfs[index], sizeof(av1_default_txb_skip_cdfs[index]));
+        eb_memcpy(fc->eob_extra_cdf, av1_default_eob_extra_cdfs[index], sizeof(av1_default_eob_extra_cdfs[index]));
+        eb_memcpy(fc->dc_sign_cdf, av1_default_dc_sign_cdfs[index], sizeof(av1_default_dc_sign_cdfs[index]));
+        eb_memcpy(fc->coeff_br_cdf, av1_default_coeff_lps_multi_cdfs[index], sizeof(av1_default_coeff_lps_multi_cdfs[index]));
+        eb_memcpy(fc->coeff_base_cdf, av1_default_coeff_base_multi_cdfs[index], sizeof(av1_default_coeff_base_multi_cdfs[index]));
+        eb_memcpy(fc->coeff_base_eob_cdf, av1_default_coeff_base_eob_multi_cdfs[index], sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf16, av1_default_eob_multi16_cdfs[index], sizeof(av1_default_eob_multi16_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf32, av1_default_eob_multi32_cdfs[index], sizeof(av1_default_eob_multi32_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf64, av1_default_eob_multi64_cdfs[index], sizeof(av1_default_eob_multi64_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf128, av1_default_eob_multi128_cdfs[index], sizeof(av1_default_eob_multi128_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf256, av1_default_eob_multi256_cdfs[index], sizeof(av1_default_eob_multi256_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf512, av1_default_eob_multi512_cdfs[index], sizeof(av1_default_eob_multi512_cdfs[index]));
+        eb_memcpy(fc->eob_flag_cdf1024, av1_default_eob_multi1024_cdfs[index], sizeof(av1_default_eob_multi1024_cdfs[index]));
+    }
+    else
+    {
+        eb_memcpy_c(fc->txb_skip_cdf, av1_default_txb_skip_cdfs[index], sizeof(av1_default_txb_skip_cdfs[index]));
+        eb_memcpy_c(fc->eob_extra_cdf, av1_default_eob_extra_cdfs[index], sizeof(av1_default_eob_extra_cdfs[index]));
+        eb_memcpy_c(fc->dc_sign_cdf, av1_default_dc_sign_cdfs[index], sizeof(av1_default_dc_sign_cdfs[index]));
+        eb_memcpy_c(fc->coeff_br_cdf, av1_default_coeff_lps_multi_cdfs[index], sizeof(av1_default_coeff_lps_multi_cdfs[index]));
+        eb_memcpy_c(fc->coeff_base_cdf, av1_default_coeff_base_multi_cdfs[index], sizeof(av1_default_coeff_base_multi_cdfs[index]));
+        eb_memcpy_c(fc->coeff_base_eob_cdf, av1_default_coeff_base_eob_multi_cdfs[index], sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf16, av1_default_eob_multi16_cdfs[index], sizeof(av1_default_eob_multi16_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf32, av1_default_eob_multi32_cdfs[index], sizeof(av1_default_eob_multi32_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf64, av1_default_eob_multi64_cdfs[index], sizeof(av1_default_eob_multi64_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf128, av1_default_eob_multi128_cdfs[index], sizeof(av1_default_eob_multi128_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf256, av1_default_eob_multi256_cdfs[index], sizeof(av1_default_eob_multi256_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf512, av1_default_eob_multi512_cdfs[index], sizeof(av1_default_eob_multi512_cdfs[index]));
+        eb_memcpy_c(fc->eob_flag_cdf1024, av1_default_eob_multi1024_cdfs[index], sizeof(av1_default_eob_multi1024_cdfs[index]));
+    }
 }
 
 static void reset_cdf_symbol_counter(AomCdfProb *cdf_ptr, int32_t num_cdfs, int32_t cdf_stride,

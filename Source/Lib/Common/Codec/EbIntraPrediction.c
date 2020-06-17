@@ -2476,7 +2476,7 @@ void eb_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength)
     const int32_t filt = strength - 1;
     uint16_t edge[129];
 
-    eb_memcpy(edge, p, sz * sizeof(*p));
+    eb_memcpy_c(edge, p, sz * sizeof(*p));
     for (int32_t i = 1; i < sz; i++) {
         int32_t s = 0;
         for (int32_t j = 0; j < INTRA_EDGE_TAPS; j++) {

@@ -864,7 +864,10 @@ void fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_s
 static void copy_area(int32_t *src, int32_t src_stride, int32_t *dst, int32_t dst_stride,
                       int32_t width, int32_t height) {
     while (height) {
-        eb_memcpy(dst, src, width * sizeof(*src));
+        if (eb_memcpy != NULL)
+            eb_memcpy(dst, src, width * sizeof(*src));
+        else
+            eb_memcpy_c(dst, src, width * sizeof(*src));
         src += src_stride;
         dst += dst_stride;
         --height;
