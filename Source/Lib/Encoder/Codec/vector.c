@@ -114,7 +114,7 @@ void *_vector_offset(Vector *vector, size_t index) {
 void _vector_assign(Vector *vector, size_t index, void *element) {
     /* Insert the element */
     void *offset = _vector_offset(vector, index);
-    eb_memcpy((void*)offset, (void*)element, vector->element_size);
+    eb_memcpy(offset, element, vector->element_size);
 }
 
 int _vector_adjust_capacity(Vector *vector) {

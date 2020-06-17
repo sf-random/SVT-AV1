@@ -150,11 +150,11 @@ static void build_intra_predictors(
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            eb_memcpy((void*)above_row, (void*)above_ref, n_top_px);
+            eb_memcpy(above_row, above_ref, n_top_px);
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                eb_memcpy((void*)(above_row + txwpx), (void*)(above_ref + txwpx), n_topright_px);
+                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)
@@ -339,11 +339,11 @@ static void build_intra_predictors_high(
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            eb_memcpy((void*)above_row, (void*)above_ref, n_top_px * sizeof(above_ref[0]));
+            eb_memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                eb_memcpy((void*)(above_row + txwpx), (void*)(above_ref + txwpx),
+                eb_memcpy(above_row + txwpx, above_ref + txwpx,
                        n_topright_px * sizeof(above_ref[0]));
                 i += n_topright_px;
             }

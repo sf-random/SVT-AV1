@@ -3501,7 +3501,7 @@ static void copy_output_recon_buffer(
     dst->flags = src->flags;
     dst->pic_type = src->pic_type;
     if (src->p_buffer)
-        eb_memcpy((void*)dst->p_buffer, (void*)src->p_buffer, src->n_filled_len);
+        eb_memcpy(dst->p_buffer, src->p_buffer, src->n_filled_len);
 
     return;
 }

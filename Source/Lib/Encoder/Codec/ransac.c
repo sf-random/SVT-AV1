@@ -477,8 +477,8 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
                 // will be recomputed later using only the inliers.
                 worst_kept_motion->num_inliers = current_motion.num_inliers;
                 worst_kept_motion->variance    = current_motion.variance;
-                eb_memcpy((void*)worst_kept_motion->inlier_indices,
-                        (void*)current_motion.inlier_indices,
+                eb_memcpy(worst_kept_motion->inlier_indices,
+                        current_motion.inlier_indices,
                        sizeof(*current_motion.inlier_indices) * npoints);
                 assert(npoints > 0);
                 // Determine the new worst kept motion and its num_inliers and variance.
@@ -507,8 +507,8 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
                 motions[i].num_inliers, points1, points2, params_by_motion[i].params);
 
             params_by_motion[i].num_inliers = motions[i].num_inliers;
-            eb_memcpy((void*)params_by_motion[i].inliers,
-                    (void*)motions[i].inlier_indices,
+            eb_memcpy(params_by_motion[i].inliers,
+                    motions[i].inlier_indices,
                    sizeof(*motions[i].inlier_indices) * npoints);
         }
         num_inliers_by_motion[i] = motions[i].num_inliers;

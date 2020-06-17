@@ -64,8 +64,8 @@ static INLINE void RENAME(calc_centroids)(const int *data, int *centroids, const
 
     for (i = 0; i < k; ++i) {
         if (count[i] == 0) {
-            eb_memcpy((void*)(centroids + i * AV1_K_MEANS_DIM),
-                    (void*)(data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM),
+            eb_memcpy(centroids + i * AV1_K_MEANS_DIM,
+                   data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM,
                    sizeof(centroids[0]) * AV1_K_MEANS_DIM);
         } else {
             for (j = 0; j < AV1_K_MEANS_DIM; ++j) {

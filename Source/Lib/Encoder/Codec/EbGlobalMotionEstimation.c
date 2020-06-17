@@ -139,8 +139,8 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
-                eb_memcpy((void*)params_by_motion[i].params,
-                        (void*)k_indentity_params,
+                eb_memcpy(params_by_motion[i].params,
+                       k_indentity_params,
                        (MAX_PARAMDIM - 1) * sizeof(*(params_by_motion[i].params)));
             }
 

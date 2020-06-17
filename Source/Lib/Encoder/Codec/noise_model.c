@@ -667,7 +667,7 @@ int32_t eb_aom_noise_model_init(AomNoiseModel *model, const AomNoiseModelParams 
         return 0;
     }
 
-    eb_memcpy((void*)&model->params, (void*)&params, sizeof(params));
+    eb_memcpy(&model->params, &params, sizeof(params));
     for (c = 0; c < 3; ++c) {
         if (!noise_state_init(&model->combined_state[c], n + (c > 0), bit_depth)) {
             SVT_ERROR("Failed to allocate noise state for channel %d\n", c);

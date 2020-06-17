@@ -166,7 +166,7 @@ void av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, in
 
     for (int i = 0; i < max_itr; ++i) {
         const int64_t pre_dist = this_dist;
-        eb_memcpy((void*)pre_centroids, (void*)centroids, sizeof(pre_centroids[0]) * k);
+        eb_memcpy(pre_centroids, centroids, sizeof(pre_centroids[0]) * k);
         eb_memcpy(pre_indices, indices, sizeof(pre_indices[0]) * n);
 
         calc_centroids_1_avx2(data, centroids, indices, n, k);
