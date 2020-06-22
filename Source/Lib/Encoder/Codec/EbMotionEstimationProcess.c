@@ -237,7 +237,11 @@ void* set_me_hme_params_oq(
             }
 #endif
 #if UNIFY_SC_NSC
+#if M8_TO_M7_ME_HME
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
             else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 350;
             }

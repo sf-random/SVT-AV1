@@ -2958,7 +2958,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else {
 #if UNIFY_SC_NSC
+#if M8_TO_M7_TXT_SEARCH
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M7)
+#endif
             context_ptr->md_txt_search_level = 0;
         else
             context_ptr->md_txt_search_level = 3;
@@ -4302,7 +4306,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if JUNE17_ADOPTIONS
 #if M7_PRED_ME
+#if M8_TO_M7_PRED_ME
+                else if (enc_mode <= ENC_M6)
+#else
                 else if (enc_mode <= ENC_M7)
+#endif
 #else
                 else if (enc_mode <= ENC_M6)
 #endif

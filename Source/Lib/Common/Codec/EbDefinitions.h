@@ -567,6 +567,12 @@ extern "C" {
 
 #define UNIFY_SC_NSC        1 // Unify the SC/NSC settings, except for Palette, IBC, and ME
 #define REMOVE_PRINT_STATEMENTS 1 // remove print statements
+
+// M8-to-M7 diffs
+#define M8_TO_M7_PRED_ME    0
+#define M8_TO_M7_TXT_SEARCH 0
+#define M8_TO_M7_MRP        0
+#define M8_TO_M7_ME_HME     0
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

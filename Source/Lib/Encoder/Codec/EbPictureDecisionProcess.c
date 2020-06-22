@@ -2281,7 +2281,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if NEW_TXS_SETTINGS
 #if JUNE17_ADOPTIONS
+#if M8_TO_M7_TXT_SEARCH
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -2785,7 +2789,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
             if (pcs_ptr->enc_mode <= ENC_M5)
                 pcs_ptr->mrp_level = 2;
+#if M8_TO_M7_MRP
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
                 pcs_ptr->mrp_level = 6;
             else
                 pcs_ptr->mrp_level = pcs_ptr->is_used_as_reference_flag  ? 6 : 9;
