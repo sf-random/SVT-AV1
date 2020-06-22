@@ -174,7 +174,7 @@ static int32_t equation_system_solve(AomEquationSystem *eqns) {
         free(A);
         return 0;
     }
-    if (eb_memcpy != NULL) 
+    if (eb_memcpy != NULL)
     {
         eb_memcpy(A, eqns->A, sizeof(*eqns->A) * n * n);
         eb_memcpy(b, eqns->b, sizeof(*eqns->b) * n);
