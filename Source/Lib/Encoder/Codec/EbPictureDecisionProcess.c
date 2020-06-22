@@ -2281,7 +2281,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if NEW_TXS_SETTINGS
 #if JUNE17_ADOPTIONS
-#if M8_TO_M7_TXT_SEARCH
+#if M8_TO_M7_TXS_SEARCH
     else if (pcs_ptr->enc_mode <= ENC_M6)
 #else
     else if (pcs_ptr->enc_mode <= ENC_M7)

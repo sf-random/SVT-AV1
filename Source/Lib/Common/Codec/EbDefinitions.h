@@ -571,6 +571,7 @@ extern "C" {
 // M8-to-M7 diffs
 #define M8_TO_M7_PRED_ME    0
 #define M8_TO_M7_TXT_SEARCH 0
+#define M8_TO_M7_TXS_SEARCH 0
 #define M8_TO_M7_MRP        0
 #define M8_TO_M7_ME_HME     0
 #endif
