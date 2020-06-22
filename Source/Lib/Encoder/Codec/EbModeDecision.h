@@ -252,7 +252,13 @@ typedef struct ModeDecisionCandidateBuffer {
     **************************************/
 extern EbErrorType mode_decision_candidate_buffer_ctor(
 #if SB64_MEM_OPT
+#if MEM_OPT_MD_BUF_DESC
+    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
+    EbPictureBufferDesc *temp_residual_ptr, EbPictureBufferDesc *temp_recon_ptr,
+    uint64_t *fast_cost_ptr,
+#else
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size, uint64_t *fast_cost_ptr,
+#endif
 #else
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint64_t *fast_cost_ptr,
 #endif

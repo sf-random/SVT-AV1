@@ -114,6 +114,10 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->residual_quant_coeff_ptr);
 #endif
 
+#if MEM_OPT_MD_BUF_DESC
+    EB_DELETE(obj->temp_residual_ptr);
+    EB_DELETE(obj->temp_recon_ptr);
+#endif
 }
 
 /******************************************************
@@ -210,6 +214,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr, MAX_NFL_BUFF);
     EB_MALLOC_ARRAY(context_ptr->full_cost_merge_ptr, MAX_NFL_BUFF);
+#if !MEM_OPT_MD_BUF_DESC
     // Candidate Buffers
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, MAX_NFL_BUFF);
     for (buffer_index = 0; buffer_index < MAX_NFL_BUFF; ++buffer_index) {
@@ -232,6 +237,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                &(context_ptr->full_cost_merge_ptr[buffer_index]));
 #endif
     }
+#endif
 
 #if !SB64_MEM_OPT
     EB_NEW(context_ptr->candidate_buffer_tx_depth_1,
@@ -509,6 +515,42 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         eb_picture_buffer_desc_ctor,
         (EbPtr)&picture_buffer_desc_init_data);
 
+#endif
+
+#if MEM_OPT_MD_BUF_DESC
+    EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
+    double_width_picture_buffer_desc_init_data.max_width          = sb_size;
+    double_width_picture_buffer_desc_init_data.max_height         = sb_size;
+    double_width_picture_buffer_desc_init_data.bit_depth          = EB_16BIT;
+    double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
+    double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    double_width_picture_buffer_desc_init_data.left_padding       = 0;
+    double_width_picture_buffer_desc_init_data.right_padding      = 0;
+    double_width_picture_buffer_desc_init_data.top_padding        = 0;
+    double_width_picture_buffer_desc_init_data.bot_padding        = 0;
+    double_width_picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+
+    EB_NEW(context_ptr->temp_recon_ptr,
+           eb_picture_buffer_desc_ctor,
+           (EbPtr)&picture_buffer_desc_init_data);
+    EB_NEW(context_ptr->temp_residual_ptr,
+           eb_picture_buffer_desc_ctor,
+           (EbPtr)&double_width_picture_buffer_desc_init_data);
+
+    // Candidate Buffers
+    EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, MAX_NFL_BUFF);
+    for (buffer_index = 0; buffer_index < MAX_NFL_BUFF; ++buffer_index) {
+        EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
+               mode_decision_candidate_buffer_ctor,
+               context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+               sb_size,
+               context_ptr->temp_residual_ptr,
+               context_ptr->temp_recon_ptr,
+               &(context_ptr->fast_cost_array[buffer_index]),
+               &(context_ptr->full_cost_array[buffer_index]),
+               &(context_ptr->full_cost_skip_ptr[buffer_index]),
+               &(context_ptr->full_cost_merge_ptr[buffer_index]));
+    }
 #endif
     return EB_ErrorNone;
 }

@@ -819,6 +819,10 @@ typedef struct ModeDecisionContext {
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint32_t txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif
+#if MEM_OPT_MD_BUF_DESC
+    EbPictureBufferDesc* temp_residual_ptr;
+    EbPictureBufferDesc* temp_recon_ptr;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,

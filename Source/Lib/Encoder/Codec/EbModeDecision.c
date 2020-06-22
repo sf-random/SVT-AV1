@@ -606,12 +606,16 @@ static void mode_decision_candidate_buffer_dctor(EbPtr p) {
     EB_DELETE(obj->prediction_ptr_temp);
     EB_DELETE(obj->cfl_temp_prediction_ptr);
 #endif
+#if !MEM_OPT_MD_BUF_DESC
     EB_DELETE(obj->residual_ptr);
+#endif
 #if !CAND_MEM_OPT
     EB_DELETE(obj->residual_quant_coeff_ptr);
 #endif
     EB_DELETE(obj->recon_coeff_ptr);
+#if !MEM_OPT_MD_BUF_DESC
     EB_DELETE(obj->recon_ptr);
+#endif
 }
 static void mode_decision_scratch_candidate_buffer_dctor(EbPtr p) {
     ModeDecisionCandidateBuffer *obj = (ModeDecisionCandidateBuffer *)p;
@@ -635,11 +639,17 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
 #if SB64_MEM_OPT
                                                 uint8_t sb_size,
 #endif
+#if MEM_OPT_MD_BUF_DESC
+                                                EbPictureBufferDesc *temp_residual_ptr,
+                                                EbPictureBufferDesc *temp_recon_ptr,
+#endif
                                                 uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr,
                                                 uint64_t *full_cost_skip_ptr,
                                                 uint64_t *full_cost_merge_ptr) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
+#if !MEM_OPT_MD_BUF_DESC
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
+#endif
 
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
 
@@ -661,6 +671,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     picture_buffer_desc_init_data.top_padding                     = 0;
     picture_buffer_desc_init_data.bot_padding                     = 0;
     picture_buffer_desc_init_data.split_mode                      = EB_FALSE;
+#if !MEM_OPT_MD_BUF_DESC
 #if SB64_MEM_OPT
     double_width_picture_buffer_desc_init_data.max_width          = sb_size;
     double_width_picture_buffer_desc_init_data.max_height         = sb_size;
@@ -676,6 +687,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     double_width_picture_buffer_desc_init_data.top_padding        = 0;
     double_width_picture_buffer_desc_init_data.bot_padding        = 0;
     double_width_picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+#endif
 
 #if SB64_MEM_OPT
     thirty_two_width_picture_buffer_desc_init_data.max_width    = sb_size;
@@ -710,9 +722,13 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
 #endif
+#if !MEM_OPT_MD_BUF_DESC
     EB_NEW(buffer_ptr->residual_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&double_width_picture_buffer_desc_init_data);
+#else
+    buffer_ptr->residual_ptr = temp_residual_ptr;
+#endif
 #if !CAND_MEM_OPT
     EB_NEW(buffer_ptr->residual_quant_coeff_ptr,
            eb_picture_buffer_desc_ctor,
@@ -722,8 +738,12 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
            eb_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
 
+#if !MEM_OPT_MD_BUF_DESC
     EB_NEW(
         buffer_ptr->recon_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
+#else
+    buffer_ptr->recon_ptr = temp_recon_ptr;
+#endif
 
     // Costs
     buffer_ptr->fast_cost_ptr       = fast_cost_ptr;
