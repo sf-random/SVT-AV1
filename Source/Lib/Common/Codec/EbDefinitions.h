@@ -571,8 +571,8 @@ extern "C" {
 #define ENABLE_REF_PRUNE 1
 
 #define PRUNE_ADJUST_ME_BUG_FIX   0 // Enable for BASE and incomplete 64x64
-#define PRUNE_ADJUST_ME_BUG_FIX_0 1 // Enable for BASE
-#define PRUNE_ADJUST_ME_BUG_FIX_1 0 // Enable for incomplete 64x64
+#define PRUNE_ADJUST_ME_BUG_FIX_0 0 // Enable for BASE
+#define PRUNE_ADJUST_ME_BUG_FIX_1 1 // Enable for incomplete 64x64
 
 #define UNIFY_SC_NSC_ME 0
 #if UNIFY_SC_NSC_ME
