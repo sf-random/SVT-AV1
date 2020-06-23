@@ -10037,9 +10037,39 @@ void integer_search_sb(
 #if ME_HME_PRUNING_CLEANUP
 #if USE_ME_MULTIPLIER
             uint32_t me_sr_multiplier = 1;
-            if (ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x) > 128 || ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y) > 128) {
-                me_sr_multiplier = 4;
+            if (context_ptr->me_alt_ref == EB_FALSE) {
+                if (context_ptr->enable_hme_level2_flag && (context_ptr->number_hme_search_region_in_width > 1 || context_ptr->number_hme_search_region_in_height > 1)) {
+
+                    // Compute the sum of all elements 
+                    double  sum = 0;
+                    for (int i = 0; i < context_ptr->number_hme_search_region_in_width; i++)
+                        for (int j = 0; j < context_ptr->number_hme_search_region_in_height; j++)
+                            sum = sum + (float)context_ptr->hme_level2_sad[list_index][ref_pic_index][i][j];
+                                      
+                    double  average = sum / (float) (context_ptr->number_hme_search_region_in_width * context_ptr->number_hme_search_region_in_height);
+
+                    // Compute  variance  and standard deviation  
+                    double  sum1 = 0;
+                    for (int i = 0; i < context_ptr->number_hme_search_region_in_width; i++)
+                        for (int j = 0; j < context_ptr->number_hme_search_region_in_height; j++)
+                    {
+                        sum1 = sum1 + pow(((float)context_ptr->hme_level2_sad[list_index][ref_pic_index][i][j] - average), 2);
+                    }
+                    double variance = sum1 / (float)(context_ptr->number_hme_search_region_in_width * context_ptr->number_hme_search_region_in_height);
+                    double std_deviation = sqrt(variance);
+
+                    if(std_deviation >= 1)
+                        me_sr_multiplier = 4;
+
+
+                }
+                else {
+                    printf("\n ---> error");
+                }
             }
+            //if (ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x) > 128 || ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y) > 128) {
+            //    me_sr_multiplier = 4;
+            //}
 
             search_area_width = (((search_area_width * me_sr_multiplier) / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
             search_area_height = MAX(1, ((search_area_height * me_sr_multiplier) / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
