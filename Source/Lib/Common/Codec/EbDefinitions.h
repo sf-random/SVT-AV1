@@ -567,6 +567,16 @@ extern "C" {
 
 #define UNIFY_SC_NSC        1 // Unify the SC/NSC settings, except for Palette, IBC, and ME
 #define REMOVE_PRINT_STATEMENTS 1 // remove print statements
+
+#define PRUNE_ADJUST_ME_BUG_FIX   0 // Enable for BASE and incomplete 64x64
+#define PRUNE_ADJUST_ME_BUG_FIX_0 0 // Enable for BASE
+#define PRUNE_ADJUST_ME_BUG_FIX_1 0 // Enable for incomplete 64x64
+
+#define UNIFY_SC_NSC_ME 0
+#if UNIFY_SC_NSC_ME
+#define USE_SAME_ME_SETTINGS 1
+#define USE_ME_MULTIPLIER    1
+#endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

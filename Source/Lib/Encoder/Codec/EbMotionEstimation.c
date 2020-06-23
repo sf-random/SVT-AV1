@@ -10035,8 +10035,18 @@ void integer_search_sb(
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
 #if ME_HME_PRUNING_CLEANUP
+#if USE_ME_MULTIPLIER
+            uint32_t me_sr_multiplier = 1;
+            if (ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x) > 128 || ABS(context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y) > 128) {
+                me_sr_multiplier = 4;
+            }
+
+            search_area_width = (((search_area_width * me_sr_multiplier) / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
+            search_area_height = MAX(1, ((search_area_height * me_sr_multiplier) / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
+#else
             search_area_width = ((search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
             search_area_height = MAX(1, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
+#endif
 #else
             if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index] == SC_HME_TH_STILL) {
                 search_area_width = ((search_area_width / SC_SR_DENOM_STILL) + 7) & ~0x07;
@@ -12492,10 +12502,22 @@ EbErrorType motion_estimate_sb(
     num_of_list_to_search =
         (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
+#if PRUNE_ADJUST_ME_BUG_FIX
+    //pruning of the references is not done for alt-ref / when HMeLevel2 not done
+    uint8_t prune_ref = (context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag) ? 1 : 0;
+#elif PRUNE_ADJUST_ME_BUG_FIX_0
+    uint8_t prune_ref = (context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
+        context_ptr->me_alt_ref == EB_FALSE && sb_height == BLOCK_SIZE_64) ? 1 : 0;
+#elif PRUNE_ADJUST_ME_BUG_FIX_1  
+    uint8_t prune_ref = (context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
+        context_ptr->me_alt_ref == EB_FALSE &&
+        pcs_ptr->temporal_layer_index > 0) ? 1 : 0;
+#else
     //pruning of the references is not done for alt-ref / Base-Layer (HME not done for list1 refs) / non-complete-SBs when HMeLevel2 is done
     uint8_t prune_ref = (context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
         context_ptr->me_alt_ref == EB_FALSE && sb_height == BLOCK_SIZE_64 &&
         pcs_ptr->temporal_layer_index > 0) ? 1 : 0;
+#endif
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
