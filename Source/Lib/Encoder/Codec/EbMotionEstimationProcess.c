@@ -1109,7 +1109,11 @@ EbErrorType signal_derivation_me_kernel_oq(
     else
 #endif
         if (enc_mode <= ENC_M0)
+#if ENABLE_REF_PRUNE
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#endif
 #if JUNE11_ADOPTIONS
         else if (enc_mode <= ENC_M3)
 #else
