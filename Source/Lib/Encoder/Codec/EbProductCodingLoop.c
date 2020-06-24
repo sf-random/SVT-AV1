@@ -5307,58 +5307,62 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     // Two checks are performed towards identifying potential high active block and PA_ME failure
     // 1st check: the PA_ME MV distortion is high but not higher than dc distortion
-    if (context_ptr->blk_geom->sq_size <= 64) {
-        if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
-            if (best_search_distortion < early_intra_distortion)
-            {// INTRA should not be significantly better
-                search_area_multiplier = 1;
-            }
-        }
-    }
-
     // 2nd check (exploit both temporal and spatial information): active collocated block (Temporal-MVP) or active surrounding block(s) (Spatial-MVP)
-#if 0
+#if 1
     MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
     uint8_t      drli, max_drl_index;
     IntMv        nearestmv[2], nearmv[2], ref_mv[2];
-    if (search_area_multiplier) {
-        int16_t mvp_x_array[MAX_MVP_CANIDATES];
-        int16_t mvp_y_array[MAX_MVP_CANIDATES];
-        int8_t  mvp_count = 0;
-        //NEAREST
-        mvp_x_array[mvp_count] =
-            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-            .ref_mvs[frame_type][0]
-            .as_mv.col;
-        mvp_y_array[mvp_count] =
-            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-            .ref_mvs[frame_type][0]
-            .as_mv.row;
-        mvp_count++;
+    if (context_ptr->blk_geom->sq_size <= 64) {
+        if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
+            if (best_search_distortion < early_intra_distortion)
+            {
+                int16_t mvp_x_array[MAX_MVP_CANIDATES];
+                int16_t mvp_y_array[MAX_MVP_CANIDATES];
+                int8_t  mvp_count = 0;
+                //NEAREST
+                mvp_x_array[mvp_count] =
+                    ABS(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .ref_mvs[frame_type][0]
+                    .as_mv.col);
+                mvp_y_array[mvp_count] =
+                    ABS(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .ref_mvs[frame_type][0]
+                    .as_mv.row);
+                mvp_count++;
 
-        //NEAR
-        max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+                //NEAR
+                max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
 
-        for (drli = 0; drli < max_drl_index; drli++) {
-            get_av1_mv_pred_drl(context_ptr,
-                context_ptr->blk_ptr,
-                frame_type,
-                0,
-                NEARMV,
-                drli,
-                nearestmv,
-                nearmv,
-                ref_mv);
+                for (drli = 0; drli < max_drl_index; drli++) {
+                    get_av1_mv_pred_drl(context_ptr,
+                        context_ptr->blk_ptr,
+                        frame_type,
+                        0,
+                        NEARMV,
+                        drli,
+                        nearestmv,
+                        nearmv,
+                        ref_mv);
 
-            mvp_x_array[mvp_count] = nearmv[0].as_mv.col;
-            mvp_y_array[mvp_count] = nearmv[0].as_mv.row;
-            mvp_count++;
-        }
-        for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
-            //if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
-            if (mvp_x_array[mvp_count] > 1024 || mvp_y_array[mvp_count] > 1024) {
-                search_area_multiplier = 4;
-                break;
+                    mvp_x_array[mvp_count] = ABS(nearmv[0].as_mv.col);
+                    mvp_y_array[mvp_count] = ABS(nearmv[0].as_mv.row);
+                    mvp_count++;
+                }
+                // fixed comb 0
+                for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
+                    if (mvp_x_array[mvp_count] > 1024 || mvp_y_array[mvp_count] > 1024) {
+                        search_area_multiplier = MAX(4, search_area_multiplier);
+                    }
+                    else if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
+                        search_area_multiplier = MAX(3, search_area_multiplier);
+                    }
+                    else if (mvp_x_array[mvp_count] > 256 || mvp_y_array[mvp_count] > 256) {
+                        search_area_multiplier = MAX(2, search_area_multiplier);
+                    }
+                    else if (mvp_x_array[mvp_count] > 128 || mvp_y_array[mvp_count] > 128) {
+                        search_area_multiplier = MAX(1, search_area_multiplier);
+                    }
+                }
             }
         }
     }
