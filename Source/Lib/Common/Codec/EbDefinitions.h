@@ -584,8 +584,8 @@ extern "C" {
 
 
 
-#define TESTING_SHUT_NSQ 1
-
+#define TESTING_SHUT_NSQ    1
+#define ME_USE_NSC_SETTING  1 
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
