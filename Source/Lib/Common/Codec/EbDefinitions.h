@@ -581,6 +581,11 @@ extern "C" {
 #define ADMDTM4_TUNE 1
 #define ADMDTM5_TUNE 1
 #endif
+
+
+
+#define TESTING_SHUT_NSQ 1
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

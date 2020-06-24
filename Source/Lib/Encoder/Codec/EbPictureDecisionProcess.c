@@ -1313,6 +1313,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if SHUT_FEATURE_INTERACTIONS
     pcs_ptr->disallow_nsq = EB_FALSE;
 #endif
+#if TESTING_SHUT_NSQ
+    pcs_ptr->disallow_nsq = EB_TRUE;
+#endif
 #if NSQ_REMOVAL_CODE_CLEAN_UP
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
 #else
