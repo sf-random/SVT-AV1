@@ -5263,13 +5263,9 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
     }
     return distortion;
 }
-void md_sq_motion_search(PictureControlSet *pcs_ptr, MvReferenceFrame frame_type, ModeDecisionContext *context_ptr,
+void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
-    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
-
-    MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
-    uint8_t      drli, max_drl_index;
-    IntMv        nearestmv[2], nearmv[2], ref_mv[2];
+    uint32_t blk_origin_index, MvReferenceFrame frame_type, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
 
     uint32_t early_intra_distortion = (uint32_t)~0;
     // INTRA not supported if sq_size > 64
@@ -5320,8 +5316,11 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, MvReferenceFrame frame_type
         }
     }
 
-    // 2nd check (exploit both temporal and spatial information): active collocated block (Temporal-MVP) or active surrounding (Spatial-MVP)
-#if 1
+    // 2nd check (exploit both temporal and spatial information): active collocated block (Temporal-MVP) or active surrounding block(s) (Spatial-MVP)
+#if 0
+    MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+    uint8_t      drli, max_drl_index;
+    IntMv        nearestmv[2], nearmv[2], ref_mv[2];
     if (search_area_multiplier) {
         int16_t mvp_x_array[MAX_MVP_CANIDATES];
         int16_t mvp_y_array[MAX_MVP_CANIDATES];
@@ -5356,8 +5355,9 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, MvReferenceFrame frame_type
             mvp_count++;
         }
         for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
-            if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
-                search_area_multiplier = 2;
+            //if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
+            if (mvp_x_array[mvp_count] > 1024 || mvp_y_array[mvp_count] > 1024) {
+                search_area_multiplier = 4;
                 break;
             }
         }
@@ -5738,12 +5738,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
 #if FIX_HIGH_MOTION
                 else if (context_ptr->md_sq_motion_search_ctrls.enabled) {
-                    md_sq_motion_search(pcs_ptr,
-                        rf[0],
+                    md_sq_motion_search(pcs_ptr,                      
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
                         blk_origin_index,
+                        rf[0],
                         list_idx,
                         ref_idx,
                         &me_mv_x,
