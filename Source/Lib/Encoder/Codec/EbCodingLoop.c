@@ -2798,6 +2798,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 sb_height >> 1);
         }
         else {
+#if R2R_10bit_FIX
+        sb_width = sb_height = scs_ptr->sb_size_pix;
+#endif
             const uint32_t input_luma_offset =
                 ((sb_origin_y + input_picture->origin_y) * input_picture->stride_y) +
                 (sb_origin_x + input_picture->origin_x);
