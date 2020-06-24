@@ -5263,10 +5263,13 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
     }
     return distortion;
 }
-void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+void md_sq_motion_search(PictureControlSet *pcs_ptr, MvReferenceFrame frame_type, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
     uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
 
+    MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+    uint8_t      drli, max_drl_index;
+    IntMv        nearestmv[2], nearmv[2], ref_mv[2];
 
     uint32_t early_intra_distortion = (uint32_t)~0;
     // INTRA not supported if sq_size > 64
@@ -5304,26 +5307,70 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         &best_search_mvy,
         &best_search_distortion);
 
+    uint8_t search_area_multiplier = 0;
 
-    // Full-pel search adjustment
-    uint8_t perform_md_full_pel_search = 0;
-    //if(* me_mv_x > 16 || *me_mv_y > 16) { // 1st check
+    // Two checks are performed towards identifying potential high active block and PA_ME failure
+    // 1st check: the PA_ME MV distortion is high but not higher than dc distortion
     if (context_ptr->blk_geom->sq_size <= 64) {
         if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
             if (best_search_distortion < early_intra_distortion)
             {// INTRA should not be significantly better
-                perform_md_full_pel_search = 1;
+                search_area_multiplier = 1;
             }
         }
     }
 
-    if (perform_md_full_pel_search) {
+    // 2nd check (exploit both temporal and spatial information): active collocated block (Temporal-MVP) or active surrounding (Spatial-MVP)
+#if 1
+    if (search_area_multiplier) {
+        int16_t mvp_x_array[MAX_MVP_CANIDATES];
+        int16_t mvp_y_array[MAX_MVP_CANIDATES];
+        int8_t  mvp_count = 0;
+        //NEAREST
+        mvp_x_array[mvp_count] =
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+            .ref_mvs[frame_type][0]
+            .as_mv.col;
+        mvp_y_array[mvp_count] =
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+            .ref_mvs[frame_type][0]
+            .as_mv.row;
+        mvp_count++;
+
+        //NEAR
+        max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+
+        for (drli = 0; drli < max_drl_index; drli++) {
+            get_av1_mv_pred_drl(context_ptr,
+                context_ptr->blk_ptr,
+                frame_type,
+                0,
+                NEARMV,
+                drli,
+                nearestmv,
+                nearmv,
+                ref_mv);
+
+            mvp_x_array[mvp_count] = nearmv[0].as_mv.col;
+            mvp_y_array[mvp_count] = nearmv[0].as_mv.row;
+            mvp_count++;
+        }
+        for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
+            if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
+                search_area_multiplier = 2;
+                break;
+            }
+        }
+    }
+#endif
+    if (search_area_multiplier) {
 
         uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[list_idx][ref_idx]));
         int8_t round_up = ((dist % 8) == 0) ? 0 : 1; // factor to slowdown the ME search region growth to MAX
         dist = ((dist * 5) / 8) + round_up;
-        uint16_t search_area_width = MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width);
-        uint16_t search_area_height = MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
+        uint16_t search_area_width = search_area_multiplier * MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width);
+        uint16_t search_area_height = search_area_multiplier *  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
+
 
         md_full_pel_search(pcs_ptr,
             context_ptr,
@@ -5610,7 +5657,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         av1_set_ref_frame(rf, ref_pair);
 
         if (rf[1] == NONE_FRAME) {
-
+ 
             uint8_t          list_idx = get_list_idx(rf[0]);
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
 
@@ -5692,6 +5739,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if FIX_HIGH_MOTION
                 else if (context_ptr->md_sq_motion_search_ctrls.enabled) {
                     md_sq_motion_search(pcs_ptr,
+                        rf[0],
                         context_ptr,
                         input_picture_ptr,
                         input_origin_index,
@@ -5997,8 +6045,13 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 
             // Evaluate MVP (if available)
+#if FIX_HIGH_MOTION
+            int16_t mvp_x_array[MAX_MVP_CANIDATES];
+            int16_t mvp_y_array[MAX_MVP_CANIDATES];
+#else
             int16_t mvp_x_array[PRED_ME_MAX_MVP_CANIDATES];
             int16_t mvp_y_array[PRED_ME_MAX_MVP_CANIDATES];
+#endif
             int8_t  mvp_count = 0;
             //NEAREST
             mvp_x_array[mvp_count] =
@@ -6400,8 +6453,13 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         uint32_t best_search_distortion = (int32_t)~0;
 
         // Step 0: derive the MVP list; 1 nearest and up to 3 near
+#if FIX_HIGH_MOTION
+        int16_t mvp_x_array[MAX_MVP_CANIDATES];
+        int16_t mvp_y_array[MAX_MVP_CANIDATES];
+#else
         int16_t mvp_x_array[PRED_ME_MAX_MVP_CANIDATES];
         int16_t mvp_y_array[PRED_ME_MAX_MVP_CANIDATES];
+#endif
         int8_t  mvp_count = 0;
         if (rf[1] == NONE_FRAME) {
             MvReferenceFrame frame_type = rf[0];
