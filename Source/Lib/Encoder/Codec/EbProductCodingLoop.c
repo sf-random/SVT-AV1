@@ -5181,6 +5181,175 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
 }
 #endif
+#if FIX_HIGH_MOTION
+uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+    int32_t blk_origin_index, EbBool use_ssd) {
+
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
+        ? EB_8_BIT_MD
+        : context_ptr->hbd_mode_decision;
+
+    uint32_t distortion;
+    ModeDecisionCandidateBuffer *candidate_buffer =
+        &(context_ptr->candidate_buffer_ptr_array[0][0]);
+    candidate_buffer->candidate_ptr = &(context_ptr->fast_candidate_array[0]);
+
+    ModeDecisionCandidate *candidate_ptr = candidate_buffer->candidate_ptr;
+    EbPictureBufferDesc *prediction_ptr = candidate_buffer->prediction_ptr;
+
+    candidate_ptr->type = INTRA_MODE;
+    candidate_ptr->palette_info.pmi.palette_size[0] = 0;
+    candidate_ptr->palette_info.pmi.palette_size[1] = 0;
+    candidate_ptr->intra_luma_mode = DC_PRED;
+    candidate_ptr->distortion_ready = 0;
+    candidate_ptr->use_intrabc = 0;
+    candidate_ptr->filter_intra_mode = FILTER_INTRA_MODES;
+    candidate_ptr->is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidate_ptr->intra_luma_mode);
+    candidate_ptr->angle_delta[PLANE_TYPE_Y] = 0;
+    candidate_ptr->ref_frame_type = INTRA_FRAME;
+    candidate_ptr->pred_mode = (PredictionMode)candidate_ptr->intra_luma_mode;
+    candidate_ptr->motion_mode = SIMPLE_TRANSLATION;
+    candidate_ptr->is_interintra_used = 0;
+
+    // Prediction
+#if !REFACTOR_SIGNALS
+    context_ptr->uv_search_path = 0;
+#endif
+    context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
+    context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
+#if REFACTOR_SIGNALS
+    context_ptr->uv_intra_comp_only = EB_FALSE;
+#endif
+    product_prediction_fun_table[INTRA_MODE](
+        hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+
+    // Distortion
+    if (use_ssd) {
+        EbSpatialFullDistType spatial_full_dist_type_fun =
+            hbd_mode_decision ? full_distortion_kernel16_bits
+            : spatial_full_distortion_kernel;
+
+        distortion = (uint32_t)spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+            input_origin_index,
+            input_picture_ptr->stride_y,
+            prediction_ptr->buffer_y,
+            blk_origin_index,
+            prediction_ptr->stride_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight);
+    }
+    else {
+        assert((context_ptr->blk_geom->bwidth >> 3) < 17);
+
+        if (hbd_mode_decision) {
+            distortion = sad_16b_kernel(
+                ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                input_picture_ptr->stride_y,
+                ((uint16_t *)prediction_ptr->buffer_y) + blk_origin_index,
+                prediction_ptr->stride_y,
+                context_ptr->blk_geom->bheight,
+                context_ptr->blk_geom->bwidth);
+        }
+        else {
+            distortion =
+                nxm_sad_kernel_sub_sampled(input_picture_ptr->buffer_y + input_origin_index,
+                    input_picture_ptr->stride_y,
+                    prediction_ptr->buffer_y + blk_origin_index,
+                    prediction_ptr->stride_y,
+                    context_ptr->blk_geom->bheight,
+                    context_ptr->blk_geom->bwidth);
+        }
+    }
+    return distortion;
+}
+void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
+    uint32_t blk_origin_index, uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y) {
+
+
+    uint32_t early_intra_distortion = (uint32_t)~0;
+    // INTRA not supported if sq_size > 64
+    if (context_ptr->blk_geom->sq_size <= 64) {
+        early_intra_distortion = early_intra_evaluation(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            blk_origin_index,
+            context_ptr->md_sq_motion_search_ctrls.use_ssd); // use SAD
+    }
+
+
+    int16_t  best_search_mvx = (int16_t)~0;
+    int16_t  best_search_mvy = (int16_t)~0;
+    uint32_t best_search_distortion = (uint32_t)~0;
+    md_full_pel_search(pcs_ptr,
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        context_ptr->md_sq_motion_search_ctrls.use_ssd,
+        list_idx,
+        ref_idx,
+        *me_mv_x,
+        *me_mv_y,
+        0,
+        0,
+        0,
+        0,
+        8,
+#if SEARCH_TOP_N
+        0,
+#endif
+        &best_search_mvx,
+        &best_search_mvy,
+        &best_search_distortion);
+
+
+    // Full-pel search adjustment
+    uint8_t perform_md_full_pel_search = 0;
+    //if(* me_mv_x > 16 || *me_mv_y > 16) { // 1st check
+    if (context_ptr->blk_geom->sq_size <= 64) {
+        if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
+            if (best_search_distortion < early_intra_distortion)
+            {// INTRA should not be significantly better
+                perform_md_full_pel_search = 1;
+            }
+        }
+    }
+
+    if (perform_md_full_pel_search) {
+
+        uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[list_idx][ref_idx]));
+        int8_t round_up = ((dist % 8) == 0) ? 0 : 1; // factor to slowdown the ME search region growth to MAX
+        dist = ((dist * 5) / 8) + round_up;
+        uint16_t search_area_width = MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width);
+        uint16_t search_area_height = MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
+
+        md_full_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            context_ptr->md_sq_motion_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            *me_mv_x,
+            *me_mv_y,
+            -search_area_width >> 1,
+            +search_area_width >> 1,
+            -search_area_height >> 1,
+            +search_area_height >> 1,
+            8,
+#if SEARCH_TOP_N
+            0,
+#endif
+            &best_search_mvx,
+            &best_search_mvy,
+            &best_search_distortion);
+    }
+    *me_mv_x = best_search_mvx;
+    *me_mv_y = best_search_mvy;
+}
+#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_pa_me_cand(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
@@ -5520,6 +5689,19 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                   &me_mv_x,
                                   &me_mv_y);
                 }
+#if FIX_HIGH_MOTION
+                else if (context_ptr->md_sq_motion_search_ctrls.enabled) {
+                    md_sq_motion_search(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        input_origin_index,
+                        blk_origin_index,
+                        list_idx,
+                        ref_idx,
+                        &me_mv_x,
+                        &me_mv_y);
+                }
+#endif
 #if PERFORM_SUB_PEL_MD
 
                 if (context_ptr->md_subpel_search_ctrls.enabled &&
@@ -5634,6 +5816,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     }
 }
 #if MD_REFERENCE_MASKING
+#if !FIX_HIGH_MOTION
 uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                             EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
                             int32_t blk_origin_index, EbBool use_ssd) {
@@ -5715,6 +5898,7 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
     }
     return distortion;
 }
+#endif
 #if !ABILITY_TO_USE_CLOSEST_ONLY
 // Tag ref frame(s) as to_do or not
 #define MIN_REF_TO_TAG 2

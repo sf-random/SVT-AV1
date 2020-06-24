@@ -1865,6 +1865,32 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     }
 }
 #endif
+#if FIX_HIGH_MOTION
+void md_sq_motion_search_controls(PictureControlSet *pcs_ptr, ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
+
+    MdSqMotionSearchCtrls *md_sq_motion_search_ctrls = &mdctxt->md_sq_motion_search_ctrls;
+
+    switch (md_sq_mv_search_level)
+    {
+    case 0:
+        md_sq_motion_search_ctrls->enabled = 0;
+        break;
+    case 1:
+        md_sq_motion_search_ctrls->enabled            = 1;
+        md_sq_motion_search_ctrls->use_ssd            = 0;
+        md_sq_motion_search_ctrls->search_area_width  = 175;
+        md_sq_motion_search_ctrls->search_area_height = 175;
+
+        md_sq_motion_search_ctrls->max_me_search_width  = 750;
+        md_sq_motion_search_ctrls->max_me_search_height = 750;
+
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_search_level) {
     MdSubPelSearchCtrls *md_subpel_search_ctrls = &mdctxt->md_subpel_search_ctrls;
@@ -6139,6 +6165,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->block_based_depth_reduction_level = 0;
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
+#endif
+#if FIX_HIGH_MOTION
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_sq_mv_search_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_sq_mv_search_level = 0;
+    else
+        context_ptr->md_sq_mv_search_level = 1;
+
+    md_sq_motion_search_controls(pcs_ptr, context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if ADD_MD_NSQ_SEARCH
     if (pd_pass == PD_PASS_0)
