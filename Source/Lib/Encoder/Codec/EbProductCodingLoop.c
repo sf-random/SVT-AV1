@@ -5313,7 +5313,8 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     uint8_t      drli, max_drl_index;
     IntMv        nearestmv[2], nearmv[2], ref_mv[2];
     if (context_ptr->blk_geom->sq_size <= 64) {
-        if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
+        if (best_search_distortion > ((uint32_t)(10 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) 
+        {
             if (best_search_distortion < early_intra_distortion)
             {
                 int16_t mvp_x_array[MAX_MVP_CANIDATES];
@@ -5348,18 +5349,19 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     mvp_y_array[mvp_count] = ABS(nearmv[0].as_mv.row);
                     mvp_count++;
                 }
+
                 // fixed comb 0
                 for (int8_t mvp_index = 0; mvp_index < mvp_count; mvp_index++) {
-                    if (mvp_x_array[mvp_count] > 1024 || mvp_y_array[mvp_count] > 1024) {
+                    if (mvp_x_array[mvp_index] > 1024 || mvp_y_array[mvp_index] > 1024) {
                         search_area_multiplier = MAX(4, search_area_multiplier);
                     }
-                    else if (mvp_x_array[mvp_count] > 512 || mvp_y_array[mvp_count] > 512) {
+                    else if (mvp_x_array[mvp_index] > 512 || mvp_y_array[mvp_index] > 512) {
                         search_area_multiplier = MAX(3, search_area_multiplier);
                     }
-                    else if (mvp_x_array[mvp_count] > 256 || mvp_y_array[mvp_count] > 256) {
+                    else if (mvp_x_array[mvp_index] > 256 || mvp_y_array[mvp_index] > 256) {
                         search_area_multiplier = MAX(2, search_area_multiplier);
                     }
-                    else if (mvp_x_array[mvp_count] > 128 || mvp_y_array[mvp_count] > 128) {
+                    else if (mvp_x_array[mvp_index] > 128 || mvp_y_array[mvp_index] > 128) {
                         search_area_multiplier = MAX(1, search_area_multiplier);
                     }
                 }
@@ -5372,8 +5374,8 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[list_idx][ref_idx]));
         int8_t round_up = ((dist % 8) == 0) ? 0 : 1; // factor to slowdown the ME search region growth to MAX
         dist = ((dist * 5) / 8) + round_up;
-        uint16_t search_area_width = search_area_multiplier * MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width);
-        uint16_t search_area_height = search_area_multiplier *  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height*dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
+        uint16_t search_area_width  =  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width  * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width );
+        uint16_t search_area_height =  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
 
 
         md_full_pel_search(pcs_ptr,
