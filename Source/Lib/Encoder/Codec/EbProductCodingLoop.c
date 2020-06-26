@@ -4343,7 +4343,11 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         EbBool use_ssd, uint8_t list_idx, int8_t ref_idx, int16_t mvx, int16_t mvy,
                         int16_t search_position_start_x, int16_t search_position_end_x,
                         int16_t search_position_start_y, int16_t search_position_end_y,
+#if SPARSE_SEARCH
+                        int16_t sparse_search_step,
+#else
                         int16_t search_step,
+#endif
 #if SEARCH_TOP_N
                         uint8_t track_best_fp_pos,
 #endif
@@ -4523,12 +4527,21 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
              refinement_pos_x <= search_position_end_x;
              ++refinement_pos_x) {
 #else
+#if SPARSE_SEARCH
+for (int32_t refinement_pos_x = search_position_start_x;
+    refinement_pos_x <= search_position_end_x;
+    refinement_pos_x = refinement_pos_x + sparse_search_step) {
+    for (int32_t refinement_pos_y = search_position_start_y;
+        refinement_pos_y <= search_position_end_y;
+        refinement_pos_y = refinement_pos_y + sparse_search_step) {
+#else
     for (int32_t refinement_pos_x = search_position_start_x;
          refinement_pos_x <= search_position_end_x;
          ++refinement_pos_x) {
         for (int32_t refinement_pos_y = search_position_start_y;
              refinement_pos_y <= search_position_end_y;
              ++refinement_pos_y) {
+#endif
 #endif
 #if INT_RECON_OFFSET_FIX
             // Never negative here
@@ -4587,15 +4600,25 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
                 // Update max_dist_best_mv_idx spot if better distortion
                 if (distortion < max_dist) {
+#if SPARSE_SEARCH
+                    context_ptr->md_motion_search_best_mv[max_dist_best_mv_idx].mvx = mvx + (refinement_pos_x * 8);
+                    context_ptr->md_motion_search_best_mv[max_dist_best_mv_idx].mvy = mvy + (refinement_pos_y * 8);
+#else
                     context_ptr->md_motion_search_best_mv[max_dist_best_mv_idx].mvx = mvx + (refinement_pos_x * search_step);
                     context_ptr->md_motion_search_best_mv[max_dist_best_mv_idx].mvy = mvy + (refinement_pos_y * search_step);
+#endif
                     context_ptr->md_motion_search_best_mv[max_dist_best_mv_idx].dist = distortion;
                 }
             }
 #endif
             if (distortion < *best_distortion) {
+#if SPARSE_SEARCH
+                *best_mvx = mvx + (refinement_pos_x * 8);
+                *best_mvy = mvy + (refinement_pos_y * 8);
+#else
                 *best_mvx = mvx + (refinement_pos_x * search_step);
                 *best_mvy = mvy + (refinement_pos_y * search_step);
+#endif
                 *best_distortion = distortion;
             }
         }
@@ -5032,7 +5055,11 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             0,
             0,
             0,
+#if SPARSE_SEARCH
+            1,
+#else
             8,
+#endif
 #if SEARCH_TOP_N
 #if IMPROVE_QUARTER_PEL
 #if IMPROVE_EIGHT_PEL
@@ -5123,7 +5150,11 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_width >> 1),
         -(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
+#if SPARSE_SEARCH
+        1,
+#else
         8,
+#endif
 #if SEARCH_TOP_N
         context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
 #endif
@@ -5283,7 +5314,11 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         0,
         0,
         0,
+#if SPARSE_SEARCH
+        1,
+#else
         8,
+#endif
 #if SEARCH_TOP_N
         0,
 #endif
@@ -5341,8 +5376,8 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     if (search_area_multiplier) {
         int8_t round_up = ((dist % 8) == 0) ? 0 : 1; // factor to slowdown the ME search region growth to MAX
         dist = ((dist * 5) / 8) + round_up;
-        uint16_t search_area_width  =  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_width  * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_width );
-        uint16_t search_area_height =  MIN((context_ptr->md_sq_motion_search_ctrls.search_area_height * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_me_search_height);
+        uint16_t sparse_search_area_width = MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_width  * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_width);
+        uint16_t sparse_search_area_height =  MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_height * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_height);
 
 
         md_full_pel_search(pcs_ptr,
@@ -5354,20 +5389,55 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             ref_idx,
             *me_mv_x,
             *me_mv_y,
-            -search_area_width >> 1,
-            +search_area_width >> 1,
-            -search_area_height >> 1,
-            +search_area_height >> 1,
+            -((sparse_search_area_width  / context_ptr->md_sq_motion_search_ctrls.sparse_search_step) * context_ptr->md_sq_motion_search_ctrls.sparse_search_step) >> 1,
+            +((sparse_search_area_width  / context_ptr->md_sq_motion_search_ctrls.sparse_search_step) * context_ptr->md_sq_motion_search_ctrls.sparse_search_step) >> 1,
+            -((sparse_search_area_height / context_ptr->md_sq_motion_search_ctrls.sparse_search_step) * context_ptr->md_sq_motion_search_ctrls.sparse_search_step) >> 1,
+            +((sparse_search_area_height / context_ptr->md_sq_motion_search_ctrls.sparse_search_step) * context_ptr->md_sq_motion_search_ctrls.sparse_search_step) >> 1,
+#if SPARSE_SEARCH
+            context_ptr->md_sq_motion_search_ctrls.sparse_search_step,
+#else
             8,
+#endif
 #if SEARCH_TOP_N
             0,
 #endif
             &best_search_mvx,
             &best_search_mvy,
             &best_search_distortion);
+
+        *me_mv_x = best_search_mvx;
+        *me_mv_y = best_search_mvy;
+
+       // Perform 3x3 refinement around the best sparse search MV
+        md_full_pel_search(pcs_ptr,
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            context_ptr->md_sq_motion_search_ctrls.use_ssd,
+            list_idx,
+            ref_idx,
+            *me_mv_x,
+            *me_mv_y,
+            -context_ptr->md_sq_motion_search_ctrls.search_area_width >> 1,
+            +context_ptr->md_sq_motion_search_ctrls.search_area_width >> 1,
+            -context_ptr->md_sq_motion_search_ctrls.search_area_height >> 1,
+            +context_ptr->md_sq_motion_search_ctrls.search_area_height >> 1,
+#if SPARSE_SEARCH
+            1,
+#else
+            8,
+#endif
+#if SEARCH_TOP_N
+            0,
+#endif
+            &best_search_mvx,
+            &best_search_mvy,
+            &best_search_distortion);
+
+        *me_mv_x = best_search_mvx;
+        *me_mv_y = best_search_mvy;
     }
-    *me_mv_x = best_search_mvx;
-    *me_mv_y = best_search_mvy;
+
 }
 #endif
 #if PERFORM_SUB_PEL_MD
@@ -6838,7 +6908,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                    +(context_ptr->pred_me_full_pel_search_width >> 1),
                                    -(context_ptr->pred_me_full_pel_search_height >> 1),
                                    +(context_ptr->pred_me_full_pel_search_height >> 1),
+#if SPARSE_SEARCH
+                                   1,
+#else
                                    8,
+#endif
 #if SEARCH_TOP_N
                                    0,
 #endif
