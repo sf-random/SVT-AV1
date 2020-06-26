@@ -444,6 +444,9 @@ typedef struct PictureControlSet {
 #if ADAPTIVE_TXT_CR
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif
+#if DERIVE_ACTIVITY
+    uint8_t activity_level[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size

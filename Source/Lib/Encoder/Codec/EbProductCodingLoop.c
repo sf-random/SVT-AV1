@@ -5379,6 +5379,10 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         uint16_t sparse_search_area_width = MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_width  * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_width);
         uint16_t sparse_search_area_height =  MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_height * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_height);
 
+        if (pcs_ptr->activity_level[list_idx][ref_idx] == 0) {
+            sparse_search_area_width = sparse_search_area_width / 5;
+            sparse_search_area_height = sparse_search_area_height / 5;
+        }
 
         md_full_pel_search(pcs_ptr,
             context_ptr,

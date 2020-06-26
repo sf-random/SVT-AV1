@@ -10089,6 +10089,10 @@ void set_pic_complexity_controls(PictureControlSet * pcs_ptr, ModeDecisionContex
     }
 }
 #endif
+
+#if DERIVE_ACTIVITY
+void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr);
+#endif
 /* EncDec (Encode Decode) Kernel */
 /*********************************************************************************
 *
@@ -10243,6 +10247,111 @@ void *enc_dec_kernel(void *input_ptr) {
                                  segments_ptr->segment_band_count - 1) /
                                 segments_ptr->segment_band_count;
 
+
+#if DERIVE_ACTIVITY
+            if(pcs_ptr->slice_type != I_SLICE)
+                if (segment_index == 0) {
+                    // Derive activity level using 8x8 PA_ME MVs 
+                    uint32_t num_of_list_to_search =
+                        (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+
+                    // List Loop
+                    for (uint32_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
+
+                        uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                            ? pcs_ptr->parent_pcs_ptr->mrp_ctrls.ref_list0_count_try
+                            : (list_idx == REF_LIST_0) ? pcs_ptr->parent_pcs_ptr->mrp_ctrls.ref_list0_count_try
+                            : pcs_ptr->parent_pcs_ptr->mrp_ctrls.ref_list1_count_try;
+
+                        // Ref Picture Loop
+                        for (uint8_t ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
+
+                            pcs_ptr->activity_level[list_idx][ref_idx] = 0;
+
+                            uint64_t total_8x8              = 0;
+                            uint64_t total_less_than_8      = 0;
+                            uint64_t total_higher_than_8    = 0;
+                            uint64_t total_higher_than_16   = 0;
+                            uint64_t total_higher_than_32   = 0;
+                            uint64_t total_higher_than_64   = 0;
+                            uint64_t total_higher_than_128  = 0;
+
+                            for (int sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
+                                MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[sb_index];
+
+
+                                for (uint32_t blk_index = 0; blk_index < scs_ptr->max_block_cnt; blk_index++) {
+                                    const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+                                    if (blk_geom->shape == PART_N && blk_geom->bwidth == 8 && blk_geom->bheight == 8) {
+                                        if (((pcs_ptr->sb_ptr_array[sb_index]->origin_x + blk_geom->origin_x + blk_geom->bwidth ) <= pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->width) &&
+                                           ((pcs_ptr->sb_ptr_array[sb_index]->origin_y + blk_geom->origin_y + blk_geom->bheight) <= pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->height))
+                                        {
+
+
+
+                                            derive_me_offsets(scs_ptr, pcs_ptr, context_ptr->md_context);
+                                            if (is_me_data_present(context_ptr->md_context, me_results, list_idx, ref_idx)) {
+
+                                                int16_t me_mv_x;
+                                                int16_t me_mv_y;
+                                                if (list_idx == 0) {
+                                                    me_mv_x = (me_results->me_mv_array[context_ptr->md_context->me_block_offset*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
+                                                    me_mv_y = (me_results->me_mv_array[context_ptr->md_context->me_block_offset*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
+                                                }
+                                                else {
+                                                    me_mv_x = (me_results->me_mv_array[context_ptr->md_context->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
+                                                    me_mv_y = (me_results->me_mv_array[context_ptr->md_context->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
+                                                }
+
+
+                                                total_8x8++;
+                                                if (ABS(me_mv_x) > 128 || ABS(me_mv_y) > 128)
+                                                    total_higher_than_128++;
+                                                else if (ABS(me_mv_x) > 64 || ABS(me_mv_y) > 64)
+                                                    total_higher_than_64++;
+                                                else if (ABS(me_mv_x) > 32 || ABS(me_mv_y) > 32)
+                                                    total_higher_than_32++;
+                                                else if (ABS(me_mv_x) > 16 || ABS(me_mv_y) > 16)
+                                                    total_higher_than_16++;
+                                                else if (ABS(me_mv_x) > 8 || ABS(me_mv_y) > 8)
+                                                    total_higher_than_8++;
+                                                else
+                                                    total_less_than_8++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (total_8x8) {
+                               uint64_t percentage_less_than_8 = (total_less_than_8 * 100) / total_8x8;
+                               uint64_t percentage_higher_than_8 = (total_higher_than_8 * 100) / total_8x8;
+                               uint64_t percentage_higher_than_16 = (total_higher_than_32 * 100) / total_8x8;
+                               uint64_t percentage_higher_than_32 = (total_higher_than_32 * 100) / total_8x8;
+                               uint64_t percentage_higher_than_64 = (total_higher_than_64 * 100) / total_8x8;
+                               uint64_t percentage_higher_than_128 = (total_higher_than_128 * 100) / total_8x8;
+
+                                 if (percentage_higher_than_128 > 10)
+                                    pcs_ptr->activity_level[list_idx][ref_idx] = 5;
+                                else if (percentage_higher_than_128 + percentage_higher_than_64 > 10)
+                                    pcs_ptr->activity_level[list_idx][ref_idx] = 4;
+                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 > 10)
+                                    pcs_ptr->activity_level[list_idx][ref_idx] = 3;
+                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 + percentage_higher_than_16 > 10)
+                                     pcs_ptr->activity_level[list_idx][ref_idx] = 2;
+                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 + percentage_higher_than_16 + percentage_higher_than_8 > 10)
+                                     pcs_ptr->activity_level[list_idx][ref_idx] = 1;
+                                else
+                                    pcs_ptr->activity_level[list_idx][ref_idx] = 0;
+                            } 
+                           // printf("\npoc=%d\t list_idx=%d\t ref_idx=%d \t total_8x8=%d\t total_less_than_64 = %d \t total_higher_than_64=%d \t total_higher_than_128=%d \t  total_higher_than_256=%d\t total_higher_than_512=%d\t  total_higher_than_1024", pcs_ptr->picture_number, list_idx, ref_idx, total_8x8, total_less_than_64, total_higher_than_64, total_higher_than_128, total_higher_than_256, total_higher_than_512, total_higher_than_1024);
+
+                            //printf("\npoc=%d\t list_idx=%d\t ref_idx=%d \t activity_level=%d\n", pcs_ptr->picture_number, list_idx, ref_idx, pcs_ptr->activity_level[list_idx][ref_idx]);
+
+
+                        }
+                    }
+            }
+#endif
             // Reset Coding Loop State
             reset_mode_decision(scs_ptr,
                                 context_ptr->md_context,
