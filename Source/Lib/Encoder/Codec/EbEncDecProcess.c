@@ -1880,8 +1880,8 @@ void md_sq_motion_search_controls(PictureControlSet *pcs_ptr, ModeDecisionContex
         md_sq_motion_search_ctrls->use_ssd            = 0;
         md_sq_motion_search_ctrls->sparse_search_step = 2;
 
-        md_sq_motion_search_ctrls->sparse_search_area_width  = 100;
-        md_sq_motion_search_ctrls->sparse_search_area_height = 100;
+        md_sq_motion_search_ctrls->sparse_search_area_width  = 16;
+        md_sq_motion_search_ctrls->sparse_search_area_height = 16;
 
         md_sq_motion_search_ctrls->max_sparse_search_area_width  = 750;
         md_sq_motion_search_ctrls->max_sparse_search_area_height = 750;
@@ -10268,13 +10268,14 @@ void *enc_dec_kernel(void *input_ptr) {
 
                             pcs_ptr->activity_level[list_idx][ref_idx] = 0;
 
-                            uint64_t total_8x8              = 0;
-                            uint64_t total_less_than_8      = 0;
-                            uint64_t total_higher_than_8    = 0;
-                            uint64_t total_higher_than_16   = 0;
-                            uint64_t total_higher_than_32   = 0;
-                            uint64_t total_higher_than_64   = 0;
-                            uint64_t total_higher_than_128  = 0;
+                            uint64_t total_8x8             = 0;
+                            uint64_t total_less_than_8     = 0;
+                            uint64_t total_higher_than_8   = 0;
+                            uint64_t total_higher_than_16  = 0;
+                            uint64_t total_higher_than_32  = 0;
+                            uint64_t total_higher_than_64  = 0;
+                            uint64_t total_higher_than_128 = 0;
+                            uint64_t total_higher_than_256 = 0;
 
                             for (int sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
                                 MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[sb_index];
@@ -10305,7 +10306,9 @@ void *enc_dec_kernel(void *input_ptr) {
 
 
                                                 total_8x8++;
-                                                if (ABS(me_mv_x) > 128 || ABS(me_mv_y) > 128)
+                                                if (ABS(me_mv_x) > 256 || ABS(me_mv_y) > 256)
+                                                    total_higher_than_256++;
+                                                else if (ABS(me_mv_x) > 128 || ABS(me_mv_y) > 128)
                                                     total_higher_than_128++;
                                                 else if (ABS(me_mv_x) > 64 || ABS(me_mv_y) > 64)
                                                     total_higher_than_64++;
@@ -10322,30 +10325,66 @@ void *enc_dec_kernel(void *input_ptr) {
                                     }
                                 }
                             }
+                            uint64_t percentage_less_than_8    ;
+                            uint64_t percentage_higher_than_8  ;
+                            uint64_t percentage_higher_than_16 ;
+                            uint64_t percentage_higher_than_32 ;
+                            uint64_t percentage_higher_than_64 ;
+                            uint64_t percentage_higher_than_128;
+                            uint64_t percentage_higher_than_256;
+
                             if (total_8x8) {
-                               uint64_t percentage_less_than_8 = (total_less_than_8 * 100) / total_8x8;
-                               uint64_t percentage_higher_than_8 = (total_higher_than_8 * 100) / total_8x8;
-                               uint64_t percentage_higher_than_16 = (total_higher_than_32 * 100) / total_8x8;
-                               uint64_t percentage_higher_than_32 = (total_higher_than_32 * 100) / total_8x8;
-                               uint64_t percentage_higher_than_64 = (total_higher_than_64 * 100) / total_8x8;
-                               uint64_t percentage_higher_than_128 = (total_higher_than_128 * 100) / total_8x8;
 
-                                 if (percentage_higher_than_128 > 10)
-                                    pcs_ptr->activity_level[list_idx][ref_idx] = 5;
-                                else if (percentage_higher_than_128 + percentage_higher_than_64 > 10)
-                                    pcs_ptr->activity_level[list_idx][ref_idx] = 4;
-                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 > 10)
-                                    pcs_ptr->activity_level[list_idx][ref_idx] = 3;
-                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 + percentage_higher_than_16 > 10)
-                                     pcs_ptr->activity_level[list_idx][ref_idx] = 2;
-                                else if (percentage_higher_than_128 + percentage_higher_than_64 + percentage_higher_than_32 + percentage_higher_than_16 + percentage_higher_than_8 > 10)
-                                     pcs_ptr->activity_level[list_idx][ref_idx] = 1;
-                                else
-                                    pcs_ptr->activity_level[list_idx][ref_idx] = 0;
+                             percentage_less_than_8     = (total_less_than_8     * 100) / total_8x8;
+                             percentage_higher_than_8   = (total_higher_than_8   * 100) / total_8x8;
+                             percentage_higher_than_16  = (total_higher_than_16  * 100) / total_8x8;
+                             percentage_higher_than_32  = (total_higher_than_32  * 100) / total_8x8;
+                             percentage_higher_than_64  = (total_higher_than_64  * 100) / total_8x8;
+                             percentage_higher_than_128 = (total_higher_than_128 * 100) / total_8x8;
+                             percentage_higher_than_256 = (total_higher_than_256 * 100) / total_8x8;
+
+                             if (percentage_higher_than_256 > 5)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 6;
+                             else if (percentage_higher_than_128 > 10)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 5;
+                             else if (percentage_higher_than_128 + percentage_higher_than_64 > 10)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 4;
+                             else if (percentage_higher_than_128 + percentage_higher_than_64 +
+                                 percentage_higher_than_32 >
+                                 10)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 3;
+                             else if (percentage_higher_than_128 + percentage_higher_than_64 +
+                                 percentage_higher_than_32 + percentage_higher_than_16 >
+                                 10)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 2;
+                             else if (percentage_higher_than_128 + percentage_higher_than_64 +
+                                 percentage_higher_than_32 + percentage_higher_than_16 +
+                                 percentage_higher_than_8 >
+                                 10)
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 1;
+                             else
+                                 pcs_ptr->activity_level[list_idx][ref_idx] = 0;
+
+                             //printf(
+                             //    "\npoc=%d\t list_idx=%d\t ref_idx=%d \t "
+                             //    "percentage_higher_than_8=%d\t percentage_higher_than_16 = %d \t "
+                             //    "percentage_higher_than_32=%d \t percentage_higher_than_64=%d \t  "
+                             //    "percentage_higher_than_128=%d\t",
+                             //    "percentage_higher_than_256=%d\t",
+                             //    pcs_ptr->picture_number,
+                             //    list_idx,
+                             //    ref_idx,
+                             //    percentage_higher_than_8,
+                             //    percentage_higher_than_16,
+                             //    percentage_higher_than_32,
+                             //    percentage_higher_than_64,
+                             //    percentage_higher_than_128,
+                             //    percentage_higher_than_256);
+
                             } 
-                           // printf("\npoc=%d\t list_idx=%d\t ref_idx=%d \t total_8x8=%d\t total_less_than_64 = %d \t total_higher_than_64=%d \t total_higher_than_128=%d \t  total_higher_than_256=%d\t total_higher_than_512=%d\t  total_higher_than_1024", pcs_ptr->picture_number, list_idx, ref_idx, total_8x8, total_less_than_64, total_higher_than_64, total_higher_than_128, total_higher_than_256, total_higher_than_512, total_higher_than_1024);
 
-                            //printf("\npoc=%d\t list_idx=%d\t ref_idx=%d \t activity_level=%d\n", pcs_ptr->picture_number, list_idx, ref_idx, pcs_ptr->activity_level[list_idx][ref_idx]);
+
+                           //printf("\npoc=%d\t list_idx=%d\t ref_idx=%d \t activity_level=%d\n", pcs_ptr->picture_number, list_idx, ref_idx, pcs_ptr->activity_level[list_idx][ref_idx]);
 
 
                         }

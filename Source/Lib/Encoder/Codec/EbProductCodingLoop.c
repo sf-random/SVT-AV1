@@ -5367,7 +5367,7 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     
                 }
 #else
-                search_area_multiplier = 1;
+                search_area_multiplier = pcs_ptr->activity_level[list_idx][ref_idx];
 #endif
             }
         }
@@ -5378,11 +5378,6 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         dist = ((dist * 5) / 8) + round_up;
         uint16_t sparse_search_area_width = MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_width  * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_width);
         uint16_t sparse_search_area_height =  MIN((context_ptr->md_sq_motion_search_ctrls.sparse_search_area_height * search_area_multiplier * dist), context_ptr->md_sq_motion_search_ctrls.max_sparse_search_area_height);
-
-        if (pcs_ptr->activity_level[list_idx][ref_idx] == 0) {
-            sparse_search_area_width = sparse_search_area_width / 5;
-            sparse_search_area_height = sparse_search_area_height / 5;
-        }
 
         md_full_pel_search(pcs_ptr,
             context_ptr,
