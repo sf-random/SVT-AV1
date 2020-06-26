@@ -1878,10 +1878,13 @@ void md_sq_motion_search_controls(PictureControlSet *pcs_ptr, ModeDecisionContex
     case 1:
         md_sq_motion_search_ctrls->enabled            = 1;
         md_sq_motion_search_ctrls->use_ssd            = 0;
+#if QUICK_CHECK
+        md_sq_motion_search_ctrls->sparse_search_step = 8;
+#else
         md_sq_motion_search_ctrls->sparse_search_step = 2;
-
-        md_sq_motion_search_ctrls->sparse_search_area_width  = 16;
-        md_sq_motion_search_ctrls->sparse_search_area_height = 16;
+#endif
+        md_sq_motion_search_ctrls->sparse_search_area_width  = 20;
+        md_sq_motion_search_ctrls->sparse_search_area_height = 20;
 
         md_sq_motion_search_ctrls->max_sparse_search_area_width  = 750;
         md_sq_motion_search_ctrls->max_sparse_search_area_height = 750;
