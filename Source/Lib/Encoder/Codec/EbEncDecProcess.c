@@ -1878,11 +1878,11 @@ void md_sq_motion_search_controls(PictureControlSet *pcs_ptr, ModeDecisionContex
     case 1:
         md_sq_motion_search_ctrls->enabled            = 1;
         md_sq_motion_search_ctrls->use_ssd            = 0;
-        md_sq_motion_search_ctrls->search_area_width  = 31;
-        md_sq_motion_search_ctrls->search_area_height = 31;
+        md_sq_motion_search_ctrls->search_area_width  = 100;
+        md_sq_motion_search_ctrls->search_area_height = 100;
 
-        md_sq_motion_search_ctrls->max_me_search_width  = 751;
-        md_sq_motion_search_ctrls->max_me_search_height = 751;
+        md_sq_motion_search_ctrls->max_me_search_width  = 750;
+        md_sq_motion_search_ctrls->max_me_search_height = 750;
 
         break;
     default:
@@ -6166,13 +6166,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
 #endif
-#if FIX_HIGH_MOTION
+#if FIX_HIGH_MOTION //-------------- here
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_sq_mv_search_level = 0;
     else
-        context_ptr->md_sq_mv_search_level = 1;
+        context_ptr->md_sq_mv_search_level = 1;// (pcs_ptr->temporal_layer_index >= 3);
 
     md_sq_motion_search_controls(pcs_ptr, context_ptr, context_ptr->md_sq_mv_search_level);
 #endif

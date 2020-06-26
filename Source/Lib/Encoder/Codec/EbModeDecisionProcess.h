@@ -862,6 +862,16 @@ typedef struct ModeDecisionContext {
 #if ON_OFF_FEATURE_MRP
     uint8_t mrp_level;
 #endif
+#if FIX_HIGH_MOTION //---
+    uint32_t dc_distortion;
+
+    uint32_t mvp_distortion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];\
+    uint32_t best_mvp_distortion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+
+    int16_t mvp_x_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];
+    int16_t mvp_y_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];
+    int8_t  mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,

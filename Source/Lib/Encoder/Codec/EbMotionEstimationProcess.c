@@ -121,7 +121,7 @@ void* set_me_hme_params_oq(
     // Set the minimum ME search area
 #if UNIFY_SC_NSC
 #if ME_USE_NSC_SETTING
-    if (0)
+    if (0/*pcs_ptr->sc_content_detected && pcs_ptr->temporal_layer_index < 3*/)
 #else
     if (pcs_ptr->sc_content_detected)
 #endif
