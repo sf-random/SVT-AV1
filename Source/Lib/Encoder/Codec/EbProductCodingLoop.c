@@ -5348,7 +5348,7 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif              
             if (best_search_distortion < context_ptr->dc_distortion)
             {
-#if 1
+#if 0
                 // fixed comb 0
                 for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
                     if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > (1024* dist) || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > (1024 * dist)) {
