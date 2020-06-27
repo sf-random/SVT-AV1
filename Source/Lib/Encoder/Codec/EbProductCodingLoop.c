@@ -5365,9 +5365,9 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 128 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 128 || *me_mv_x > 128 || *me_mv_y > 128) {
                         search_area_multiplier = MAX(3, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64 || *me_mv_x > 64 || *me_mv_y > 64) {
-                        search_area_multiplier = MAX(2, search_area_multiplier);
-                    }
+                    //else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64 || *me_mv_x > 64 || *me_mv_y > 64) {
+                    //    search_area_multiplier = MAX(2, search_area_multiplier);
+                    //}
                     //else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 32 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 32 || *me_mv_x > 32 || *me_mv_y > 32) {
                     //    search_area_multiplier = MAX(1, search_area_multiplier);
                     //}
