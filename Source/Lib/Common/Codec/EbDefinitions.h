@@ -589,7 +589,7 @@ extern "C" {
 #define FIX_HIGH_MOTION     1
 #define SPARSE_SEARCH       1
 #define DERIVE_ACTIVITY     1
-#define QUICK_CHECK         1
+#define QUICK_CHECK         0
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
