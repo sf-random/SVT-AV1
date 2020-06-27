@@ -5348,7 +5348,8 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         //if (best_search_distortion > ((uint32_t)(((fast_lambda * 5) / 1000) * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight)))
         //if (best_search_distortion < context_ptr->best_mvp_distortion[list_idx][ref_idx]) {
 
-        if (best_search_distortion > ((uint32_t)(8 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) {
+        //if (best_search_distortion > ((uint32_t)(8 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) 
+        {
 
 #else
         if (best_search_distortion > ((uint32_t)(8 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) 
