@@ -5353,22 +5353,22 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
                      
 
-                    if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256 || *me_mv_x > 256 || *me_mv_y > 256) {
+                    if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 8192 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 8192 || *me_mv_x > 8192 || *me_mv_y > 8192) {
                         search_area_multiplier = MAX(6, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 128 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 128 || *me_mv_x > 128 || *me_mv_y > 128) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 2048 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 2048 || *me_mv_x > 2048 || *me_mv_y > 2048) {
                         search_area_multiplier = MAX(5, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64 || *me_mv_x > 64 || *me_mv_y > 64) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256 || *me_mv_x > 256 || *me_mv_y > 256) {
                         search_area_multiplier = MAX(4, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 32 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 32 || *me_mv_x > 32 || *me_mv_y > 32) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 128 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 128 || *me_mv_x > 128 || *me_mv_y > 128) {
                         search_area_multiplier = MAX(3, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 16 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 16 || *me_mv_x > 16 || *me_mv_y > 16) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64 || *me_mv_x > 64 || *me_mv_y > 64) {
                         search_area_multiplier = MAX(2, search_area_multiplier);
                     }
-                    else {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 32 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 32 || *me_mv_x > 32 || *me_mv_y > 32) {
                         search_area_multiplier = MAX(1, search_area_multiplier);
                     }
 
