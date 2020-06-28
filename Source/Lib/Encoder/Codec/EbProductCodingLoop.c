@@ -5359,7 +5359,7 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             if(context_ptr->best_mvp_distortion[list_idx][ref_idx] >= best_search_distortion || 
               ((((best_search_distortion - context_ptr->best_mvp_distortion[list_idx][ref_idx]) *100) / best_search_distortion) < 5))
 #endif              
-            //if (best_search_distortion < context_ptr->dc_distortion)
+            if (best_search_distortion < context_ptr->dc_distortion)
             {
 
 
