@@ -6180,7 +6180,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_sq_mv_search_level = 0;
     else
-        context_ptr->md_sq_mv_search_level = 1;// (pcs_ptr->temporal_layer_index >= 3);
+#if BASE_ONLY
+        context_ptr->md_sq_mv_search_level = (pcs_ptr->temporal_layer_index == 0);
+#else
+        context_ptr->md_sq_mv_search_level = 1;
+#endif
 
     md_sq_motion_search_controls(pcs_ptr, context_ptr, context_ptr->md_sq_mv_search_level);
 #endif

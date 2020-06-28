@@ -591,8 +591,10 @@ extern "C" {
 #define DERIVE_ACTIVITY     0
 #define QUICK_CHECK         0
 
-#define USE_TMVP            1
+#define USE_TMVP            0
 
+
+#define BASE_ONLY           1
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
