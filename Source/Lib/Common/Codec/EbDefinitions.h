@@ -590,6 +590,9 @@ extern "C" {
 #define SPARSE_SEARCH       1
 #define DERIVE_ACTIVITY     0
 #define QUICK_CHECK         0
+
+#define USE_TMVP            0
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

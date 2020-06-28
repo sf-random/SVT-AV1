@@ -5359,8 +5359,16 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             if(context_ptr->best_mvp_distortion[list_idx][ref_idx] >= best_search_distortion || 
               ((((best_search_distortion - context_ptr->best_mvp_distortion[list_idx][ref_idx]) *100) / best_search_distortion) < 5))
 #endif              
-            if (best_search_distortion < context_ptr->dc_distortion)
+            //if (best_search_distortion < context_ptr->dc_distortion)
             {
+
+
+#if USE_TMVP
+                EbReferenceObject *ref_obj = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+
+                if (!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME))
+                    printf("");
+#endif
 #if 1
                 // fixed comb 0
                 for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
