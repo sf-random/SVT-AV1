@@ -5337,15 +5337,15 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     {
 #if 1 // pa_me vs. mvp
 
-        //uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
-        //    context_ptr->fast_lambda_md[EB_10_BIT_MD] :
-        //    context_ptr->fast_lambda_md[EB_8_BIT_MD];
+        uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
+            context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+            context_ptr->fast_lambda_md[EB_8_BIT_MD];
 
         //uint64_t th = RDCOST(fast_lambda, 16, context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight);
 
         //uint64_t th = RDCOST(fast_lambda, 16, context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight);
-        //if (RDCOST(fast_lambda, 16, best_search_distortion) > RDCOST(fast_lambda, 16, context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))
-        //if (best_search_distortion > ((uint32_t)(((fast_lambda * 5) / 1000) * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight)))
+        if (RDCOST(fast_lambda, 16, best_search_distortion) > RDCOST(fast_lambda, 16, 5 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))
+        //if (best_search_distortion > ((uint32_t) (((fast_lambda * 5)/ 1000) * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight)))
         //if (best_search_distortion < context_ptr->best_mvp_distortion[list_idx][ref_idx]) {
 
         //if (best_search_distortion > ((uint32_t)(8 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))) 
@@ -5366,20 +5366,27 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
                      
 
-                    if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 8192 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 8192 /*|| *me_mv_x > 8192 || *me_mv_y > 8192*/) {
+                    if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 8192 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 8192 ) {
                         search_area_multiplier = MAX(6, search_area_multiplier);
                     }
-
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 2048 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 2048 /*|| *me_mv_x > 2048 || *me_mv_y > 2048*/) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 2048 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 2048 ) {
                         search_area_multiplier = MAX(5, search_area_multiplier);
                     }
-
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 512 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 512/* || *me_mv_x > 512 || *me_mv_y > 512*/) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 512 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 512) {
                         search_area_multiplier = MAX(4, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256/* || *me_mv_x > 256 || *me_mv_y > 256*/) {
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256) {
                         search_area_multiplier = MAX(3, search_area_multiplier);
                     }
+                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64) {
+                        search_area_multiplier = MAX(2, search_area_multiplier);
+                    }
+                    else {
+                        search_area_multiplier = MAX(1, search_area_multiplier);
+                    }
+
+                    // just for testing 
+                    //search_area_multiplier = 6;
 
                     //else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 128 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 128 || *me_mv_x > 128 || *me_mv_y > 128) {
                     //    search_area_multiplier = MAX(1, search_area_multiplier);
