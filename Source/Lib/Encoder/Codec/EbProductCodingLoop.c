@@ -5366,9 +5366,29 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #if USE_TMVP
                 EbReferenceObject *ref_obj = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
-                if (!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME))
-                    printf("");
-#endif
+                if (!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME)) {
+
+                    for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
+
+
+                        if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 8192 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 8192) {
+                            search_area_multiplier = MAX(6, search_area_multiplier);
+                        }
+                        else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 2048 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 2048) {
+                            search_area_multiplier = MAX(5, search_area_multiplier);
+                        }
+                        else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 512 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 512) {
+                            search_area_multiplier = MAX(4, search_area_multiplier);
+                        }
+                        else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256) {
+                            search_area_multiplier = MAX(3, search_area_multiplier);
+                        }
+                    }
+                }
+                else {
+                    search_area_multiplier = MAX(6, search_area_multiplier);
+                }
+#else
 #if 1
                 // fixed comb 0
                 for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx]; mvp_index++) {
@@ -5405,9 +5425,8 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     //else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 32 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 32 || *me_mv_x > 32 || *me_mv_y > 32) {
                     //    search_area_multiplier = MAX(1, search_area_multiplier);
                     //}
-
+#endif
                 }
-#else
                 search_area_multiplier = pcs_ptr->activity_level[list_idx][ref_idx];
 #endif
             }
