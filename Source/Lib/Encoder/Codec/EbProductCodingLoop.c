@@ -5378,12 +5378,12 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 256 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 256) {
                         search_area_multiplier = MAX(3, search_area_multiplier);
                     }
-                    else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64) {
-                        search_area_multiplier = MAX(2, search_area_multiplier);
-                    }
-                    else {
-                        search_area_multiplier = MAX(1, search_area_multiplier);
-                    }
+                    //else if (context_ptr->mvp_x_array[list_idx][ref_idx][mvp_index] > 64 || context_ptr->mvp_y_array[list_idx][ref_idx][mvp_index] > 64) {
+                    //    search_area_multiplier = MAX(2, search_area_multiplier);
+                    //}
+                    //else {
+                    //    search_area_multiplier = MAX(1, search_area_multiplier);
+                    //}
 
                     // just for testing 
                     //search_area_multiplier = 6;
