@@ -595,6 +595,21 @@ extern "C" {
 #define JUNE26_ADOPTIONS    1
 #define ENABLE_ADAPTIVE_NSQ_ALL_FRAMES 1    // Enable the adaptive NSQ algorithm for all frames (no longer REF only)
 
+#define ME_USE_NSC_SETTING         0 // 
+#define FIX_HIGH_MOTION            1
+#define FIX_HIGH_MOTION_NSQ        1
+#define FIX_INTRA_4X4              1
+
+#define OPTIMIZE_SPARSE_SEARCH     1
+#define FIX_TOP_N_SEARCH           1
+#if ME_USE_NSC_SETTING
+#define SPARSE_VARIANCE            1
+#endif
+#define FURTHER_TUNING             1
+
+#define MVP_DISTORTION             0
+#define CHECK_DC_DISTORTION        0
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

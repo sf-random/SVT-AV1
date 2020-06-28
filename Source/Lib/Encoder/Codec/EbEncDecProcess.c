@@ -1884,6 +1884,87 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     }
 }
 #endif
+#if FIX_HIGH_MOTION
+void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
+
+    MdSqMotionSearchCtrls *md_sq_motion_search_ctrls = &mdctxt->md_sq_motion_search_ctrls;
+
+    switch (md_sq_mv_search_level)
+    {
+    case 0:
+        md_sq_motion_search_ctrls->enabled = 0;
+        break;
+    case 1:
+        md_sq_motion_search_ctrls->enabled = 1;
+        md_sq_motion_search_ctrls->use_ssd = 0;
+
+#if ME_USE_NSC_SETTING
+        md_sq_motion_search_ctrls->size_colocated_area                    =   8;
+#else
+        md_sq_motion_search_ctrls->size_colocated_area                    =   2;
+#endif
+
+        md_sq_motion_search_ctrls->sparse_search_level_0_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_0_step             =   4;
+
+        md_sq_motion_search_ctrls->sparse_search_level_0_area_width       =  75;
+        md_sq_motion_search_ctrls->sparse_search_level_0_area_height      =  75;
+
+        md_sq_motion_search_ctrls->max_sparse_search_level_0_area_width   = 750;
+        md_sq_motion_search_ctrls->max_sparse_search_level_0_area_height  = 750;
+
+        md_sq_motion_search_ctrls->sparse_search_level_1_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_1_step             =   2;
+
+        md_sq_motion_search_ctrls->sparse_search_level_1_area_width       =  20;
+        md_sq_motion_search_ctrls->sparse_search_level_1_area_height      =  20;
+        md_sq_motion_search_ctrls->max_sparse_search_level_1_area_width   = 250;
+        md_sq_motion_search_ctrls->max_sparse_search_level_1_area_height  = 250;
+
+        md_sq_motion_search_ctrls->sparse_search_level_2_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_2_step             =   1; 
+        md_sq_motion_search_ctrls->sparse_search_level_2_area_width       =   3;
+        md_sq_motion_search_ctrls->sparse_search_level_2_area_height      =   3;
+
+        break; 
+    case 2:
+        md_sq_motion_search_ctrls->enabled = 1;
+        md_sq_motion_search_ctrls->use_ssd = 0;
+
+#if ME_USE_NSC_SETTING
+        md_sq_motion_search_ctrls->size_colocated_area                    =   8;
+#else
+        md_sq_motion_search_ctrls->size_colocated_area                    =   2;
+#endif
+        md_sq_motion_search_ctrls->sparse_search_level_0_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_0_step             =   4;
+
+        md_sq_motion_search_ctrls->sparse_search_level_0_area_width       =  75;
+        md_sq_motion_search_ctrls->sparse_search_level_0_area_height      =  75;
+
+        md_sq_motion_search_ctrls->max_sparse_search_level_0_area_width   = 750;
+        md_sq_motion_search_ctrls->max_sparse_search_level_0_area_height  = 750;
+
+        md_sq_motion_search_ctrls->sparse_search_level_1_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_1_step             =   2;
+
+        md_sq_motion_search_ctrls->sparse_search_level_1_area_width       =  20;
+        md_sq_motion_search_ctrls->sparse_search_level_1_area_height      =  20;
+        md_sq_motion_search_ctrls->max_sparse_search_level_1_area_width   = 250;
+        md_sq_motion_search_ctrls->max_sparse_search_level_1_area_height  = 250;
+
+        md_sq_motion_search_ctrls->sparse_search_level_2_enabled          =   1;
+        md_sq_motion_search_ctrls->sparse_search_level_2_step             =   1; 
+        md_sq_motion_search_ctrls->sparse_search_level_2_area_width       =   3;
+        md_sq_motion_search_ctrls->sparse_search_level_2_area_height      =   3;
+
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if PERFORM_SUB_PEL_MD
 void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_search_level) {
     MdSubPelSearchCtrls *md_subpel_search_ctrls = &mdctxt->md_subpel_search_ctrls;
@@ -6240,6 +6321,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->block_based_depth_reduction_level = 0;
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
+#endif
+#if FIX_HIGH_MOTION //-------------- here
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_sq_mv_search_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_sq_mv_search_level = 0;
+    else
+        if (enc_mode <= ENC_M3)
+            context_ptr->md_sq_mv_search_level = 1;
+        else
+            context_ptr->md_sq_mv_search_level = 2;
+
+    md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if ADD_MD_NSQ_SEARCH
     if (pd_pass == PD_PASS_0)
