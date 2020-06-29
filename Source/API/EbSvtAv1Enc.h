@@ -16,6 +16,8 @@ extern "C" {
 #include <stdio.h>
 
 #define TPL_LA 1
+#define FIX_DEFAULT_SETTINGS    1
+#define REMOVE_COMBINE_CLASS12  1
 //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
@@ -41,19 +43,19 @@ extern "C" {
  *   Config Entry.
  ************************************************/
 typedef struct PredictionStructureConfigEntry {
-  uint32_t temporal_layer_index;
-  uint32_t decode_order;
-  int32_t ref_list0[REF_LIST_MAX_DEPTH];
-  int32_t ref_list1[REF_LIST_MAX_DEPTH];
+    uint32_t temporal_layer_index;
+    uint32_t decode_order;
+    int32_t  ref_list0[REF_LIST_MAX_DEPTH];
+    int32_t  ref_list1[REF_LIST_MAX_DEPTH];
 } PredictionStructureConfigEntry;
 
 // super-res modes
 typedef enum {
-    SUPERRES_NONE,     // No frame superres allowed.
-    SUPERRES_FIXED,    // All frames are coded at the specified scale, and super-resolved.
-    SUPERRES_RANDOM,   // All frames are coded at a random scale, and super-resolved.
-    SUPERRES_QTHRESH,  // Superres scale for a frame is determined based on q_index.
-    SUPERRES_AUTO,     // Automatically select superres for appropriate frames.
+    SUPERRES_NONE, // No frame superres allowed.
+    SUPERRES_FIXED, // All frames are coded at the specified scale, and super-resolved.
+    SUPERRES_RANDOM, // All frames are coded at a random scale, and super-resolved.
+    SUPERRES_QTHRESH, // Superres scale for a frame is determined based on q_index.
+    SUPERRES_AUTO, // Automatically select superres for appropriate frames.
     SUPERRES_MODES
 } SUPERRES_MODE;
 
@@ -682,14 +684,14 @@ typedef struct EbSvtAv1EncConfiguration {
     uint64_t md_stage_1_class_prune_th;
     uint64_t md_stage_2_3_cand_prune_th;
     uint64_t md_stage_2_3_class_prune_th;
-  /* Prediction Structure user defined
+    /* Prediction Structure user defined
    */
-  PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
-  /* Flag to enable use prediction structure user defined
+    PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
+    /* Flag to enable use prediction structure user defined
    *
    * Default is false. */
-  EbBool enable_manual_pred_struct;
-  /* The minigop size of prediction structure user defined
+    EbBool enable_manual_pred_struct;
+    /* The minigop size of prediction structure user defined
    *
    * Default is 0. */
     int32_t manual_pred_struct_entry_num;
@@ -704,9 +706,9 @@ typedef struct EbSvtAv1EncConfiguration {
      * @ *config_ptr     Pointer passed back to the client during callbacks, it will be
      *                  loaded with default params from the library. */
 EB_API EbErrorType
-eb_init_handle(EbComponentType **p_handle, void *p_app_data,
-               EbSvtAv1EncConfiguration
-                   *config_ptr); // config_ptr will be loaded with default params from the library
+       eb_init_handle(EbComponentType **p_handle, void *p_app_data,
+                      EbSvtAv1EncConfiguration
+                          *config_ptr); // config_ptr will be loaded with default params from the library
 
 /* STEP 2: Set all configuration parameters.
      *
@@ -737,7 +739,6 @@ EB_API EbErrorType eb_svt_enc_stream_header(EbComponentType *    svt_enc_compone
      * Parameter:
      * @ *stream_header_ptr  stream header buffer. */
 EB_API EbErrorType eb_svt_release_enc_stream_header(EbBufferHeaderType *stream_header_ptr);
-
 
 /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
      *

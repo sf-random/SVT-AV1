@@ -162,6 +162,9 @@ typedef struct EbConfig {
     FILE *        input_stat_file;
     FILE *        output_stat_file;
     FILE *        input_pred_struct_file;
+#if FIX_DEFAULT_SETTINGS
+    char *input_pred_struct_filename;
+#endif
     EbBool        use_input_stat_file;
     EbBool        use_output_stat_file;
     EbBool        y4m_input;
@@ -414,7 +417,9 @@ typedef struct EbConfig {
     int32_t enable_palette;
     int32_t tile_columns;
     int32_t tile_rows;
+#if !FIX_DEFAULT_SETTINGS
     int32_t olpd_refinement; // Open Loop Partitioning Decision Refinement
+#endif
 
     /****************************************
      * Rate Control

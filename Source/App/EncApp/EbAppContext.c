@@ -185,7 +185,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
         (EbBool)config->enable_hbd_mode_decision;
 #endif
     callback_data->eb_enc_parameters.enable_palette           = config->enable_palette;
+#if !FIX_DEFAULT_SETTINGS
     callback_data->eb_enc_parameters.olpd_refinement          = config->olpd_refinement;
+#endif
     callback_data->eb_enc_parameters.channel_id               = config->channel_id;
     callback_data->eb_enc_parameters.active_channel_count     = config->active_channel_count;
     callback_data->eb_enc_parameters.high_dynamic_range_input = config->high_dynamic_range_input;

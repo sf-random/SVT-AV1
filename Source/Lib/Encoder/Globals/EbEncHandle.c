@@ -656,6 +656,13 @@ EbErrorType load_default_buffer_configuration_settings(
 #else
         min_paref = 25 + scs_ptr->scd_delay + eos_delay;
 #endif
+ #if PORT_PR1265
+        if (scs_ptr->static_config.hierarchical_levels == 5 &&
+            core_count == SINGLE_CORE_COUNT) {
+            min_paref += 8;
+        }
+#endif
+
         if (scs_ptr->static_config.enable_overlays)
             min_paref *= 2;
 
@@ -2061,7 +2068,11 @@ static uint32_t compute_default_look_ahead(
     EbSvtAv1EncConfiguration*   config){
     int32_t lad = 0;
     if (config->rate_control_mode == 0 || config->intra_period_length < 0)
+#if FIX_DEFAULT_SETTINGS
+        lad = (1 << config->hierarchical_levels);
+#else
         lad = (2 << config->hierarchical_levels)+1;
+#endif
     else
         lad = config->intra_period_length;
 
@@ -2077,7 +2088,11 @@ static uint32_t cap_look_ahead_distance(
         uint32_t fps = config->frame_rate < 1000 ?
                       config->frame_rate :
                       config->frame_rate >> 16;
+#if FIX_DEFAULT_SETTINGS
+        uint32_t max_cqp_lad = (1 << config->hierarchical_levels);
+#else
         uint32_t max_cqp_lad = (2 << config->hierarchical_levels) + 1;
+#endif
         uint32_t max_rc_lad  = fps << 1;
         lad = config->look_ahead_distance;
         if (config->rate_control_mode == 0 && lad > max_cqp_lad)
@@ -2512,7 +2527,9 @@ void copy_api_from_app(
     // MD Parameters
     scs_ptr->static_config.enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? ((EbSvtAv1EncConfiguration*)config_struct)->enable_hbd_mode_decision : 0;
     scs_ptr->static_config.enable_palette = ((EbSvtAv1EncConfiguration*)config_struct)->enable_palette;
+#if !FIX_DEFAULT_SETTINGS
     scs_ptr->static_config.olpd_refinement = ((EbSvtAv1EncConfiguration*)config_struct)->olpd_refinement;
+#endif
     // Adaptive Loop Filter
     scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
@@ -2603,19 +2620,38 @@ void copy_api_from_app(
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
 #if TPL_LA
+#if FIX_DEFAULT_SETTINGS
+    if ((scs_ptr->static_config.rate_control_mode != 0) || (scs_ptr->static_config.look_ahead_distance == 0))
+        scs_ptr->static_config.enable_tpl_la =0;
+    else
+        scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
+#else
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
+#endif
     scs_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)config_struct)->frames_to_be_encoded;
     if (scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.look_ahead_distance > (uint32_t)0) {
 #if LAD_MEM_RED
+#if FIX_DEFAULT_SETTINGS
+        if (scs_ptr->static_config.look_ahead_distance != (1 << scs_ptr->static_config.hierarchical_levels))
+            SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n"
+                ,(1 << scs_ptr->static_config.hierarchical_levels), scs_ptr->static_config.look_ahead_distance);
+        scs_ptr->static_config.look_ahead_distance = (1 << scs_ptr->static_config.hierarchical_levels);
+#else
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be 16 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = 16;
+#endif
 #else
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be 32 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = 32;
 #endif
     }
 #endif
-
+#if FIX_DEFAULT_SETTINGS
+    if (scs_ptr->use_input_stat_file !=0 || scs_ptr->use_output_stat_file !=0)
+            SVT_LOG("SVT [Warning]: 2pass is not supported for this branch\n");
+    scs_ptr->use_input_stat_file =0;
+    scs_ptr->use_output_stat_file = 0;
+#endif
     scs_ptr->static_config.enable_altrefs = config_struct->enable_altrefs;
     scs_ptr->static_config.altref_strength = config_struct->altref_strength;
     scs_ptr->static_config.altref_nframes = config_struct->altref_nframes;
@@ -2680,7 +2716,7 @@ static int verify_hme_dimension(unsigned int index, unsigned int HmeLevel0Search
     for (i = 0; i < number_hme_search_region_in_width; i++)
         total_search_width += number_hme_search_region_in_width_array[i];
     if ((total_search_width) != (HmeLevel0SearchAreaInWidth)) {
-        SVT_LOG("Error Instance %u: Invalid  HME Total Search Area. \n", index);
+        SVT_LOG("Error Instance %u: Summed values of HME area does not equal the total area. \n", index);
         return_error = -1;
         return return_error;
     }
@@ -2695,8 +2731,8 @@ static int verify_hme_dimension_l1_l2(unsigned int index, uint32_t number_hme_se
 
     for (i = 0; i < number_hme_search_region_in_width; i++)
         total_search_width += number_hme_search_region_in_width_array[i];
-    if ((total_search_width > 256) || (total_search_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid  HME Total Search Area. Must be [1 - 256].\n", index);
+    if ((total_search_width > 480) || (total_search_width == 0)) {
+        SVT_LOG("Error Instance %u: Invalid HME Total Search Area. Must be [1 - 480].\n", index);
         return_error = -1;
         return return_error;
     }
@@ -2808,13 +2844,13 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->search_area_width > 256) || (config->search_area_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_width. search_area_width must be [1 - 256]\n", channel_number + 1);
+    if ((config->search_area_width > 480) || (config->search_area_width == 0)) {
+        SVT_LOG("Error Instance %u: Invalid search_area_width. search_area_width must be [1 - 480]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->search_area_height > 256) || (config->search_area_height == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 256]\n", channel_number + 1);
+    if ((config->search_area_height > 480) || (config->search_area_height == 0)) {
+        SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 480]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2829,12 +2865,12 @@ static EbErrorType verify_settings(
             return_error = EB_ErrorBadParameter;
         }
 
-        if ((config->hme_level0_total_search_area_height > 256) || (config->hme_level0_total_search_area_height == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_height. hme_level0_total_search_area_height must be [1 - 256]\n", channel_number + 1);
+        if ((config->hme_level0_total_search_area_height > 480) || (config->hme_level0_total_search_area_height == 0)) {
+            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_height. hme_level0_total_search_area_height must be [1 - 480]\n", channel_number + 1);
             return_error = EB_ErrorBadParameter;
         }
-        if ((config->hme_level0_total_search_area_width > 256) || (config->hme_level0_total_search_area_width == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_width. hme_level0_total_search_area_width must be [1 - 256]\n", channel_number + 1);
+        if ((config->hme_level0_total_search_area_width > 480) || (config->hme_level0_total_search_area_width == 0)) {
+            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_width. hme_level0_total_search_area_width must be [1 - 480]\n", channel_number + 1);
             return_error = EB_ErrorBadParameter;
         }
         if (verify_hme_dimension(channel_number + 1, config->hme_level0_total_search_area_height, config->hme_level0_search_area_in_height_array, config->number_hme_search_region_in_height))
@@ -2875,6 +2911,13 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_DEFAULT_SETTINGS
+    if (config->hierarchical_levels > 4) {
+
+        SVT_LOG("Error Instance %u: The hierarchical level must be [0 - 4] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->look_ahead_distance != (uint32_t)config->intra_period_length && config->intra_period_length >= 0) {
         SVT_LOG("Error Instance %u: The rate control mode 2/3 LAD must be equal to intra_period \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2884,10 +2927,17 @@ static EbErrorType verify_settings(
 
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_DEFAULT_SETTINGS
+    if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 0 || config->tile_columns > 0) {
+        SVT_LOG("Error Instance %u: Log2Tile rows/cols must be 0 \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 6 || config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if ((1 << config->tile_rows) * (1 << config->tile_columns) > 128 || config->tile_columns > 4) {
         SVT_LOG("Error Instance %u: MaxTiles is 128 and MaxTileCols is 16 (Annex A.3) \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2897,8 +2947,8 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->scene_change_detection > 1) {
-        SVT_LOG("Error Instance %u: The scene change detection must be [0 - 1] \n", channel_number + 1);
+    if (config->scene_change_detection) {
+        SVT_LOG("Error Instance %u: Scene change detection is currently not supported\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     if (config->max_qp_allowed > MAX_QP_VALUE) {
@@ -3193,7 +3243,7 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid frame_end_cdf_update flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->frame_end_cdf_update);
       return_error = EB_ErrorBadParameter;
     }
-
+#if !FIX_DEFAULT_SETTINGS
     // mdc refinement
     if (config->olpd_refinement < (int32_t)(-1) || config->olpd_refinement > 1) {
         SVT_LOG("Error instance %u: Invalid OLPD Refinement Mode [0 .. 1], your input: %i\n", channel_number + 1, config->olpd_refinement);
@@ -3203,6 +3253,7 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Invalid OLPD Refinement mode for M%d [0], your input: %i\n", channel_number + 1, config->enc_mode, config->olpd_refinement);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     // prediction structure
     if(config->enable_manual_pred_struct) {
         if(config->manual_pred_struct_entry_num > (1<<(MAX_HIERARCHICAL_LEVEL-1))){
@@ -3306,7 +3357,11 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
 #if TPL_LA
+ #if FIX_DEFAULT_SETTINGS
+    config_ptr->enable_tpl_la = 1;
+#else
     config_ptr->enable_tpl_la = 0;
+#endif
     config_ptr->frames_to_be_encoded = 0;
 #endif
     config_ptr->target_bit_rate = 7000000;
@@ -3386,7 +3441,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_hbd_mode_decision = 1;
 #endif
     config_ptr->enable_palette = -1;
+#if !FIX_DEFAULT_SETTINGS
     config_ptr->olpd_refinement = -1;
+#endif
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;

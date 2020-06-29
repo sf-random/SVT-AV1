@@ -594,7 +594,8 @@ extern "C" {
 
 #define JUNE26_ADOPTIONS    1
 #define ENABLE_ADAPTIVE_NSQ_ALL_FRAMES 1    // Enable the adaptive NSQ algorithm for all frames (no longer REF only)
-
+#define PORT_PR1265                    1 //Resolve the hang of 31B with lp=1 which is caused by lack of PA surfaces
+#define FIX_DEFAULT_SETTINGS           1
 #define REMOVE_MR_MACRO               1  // Change MR_MODE to -enc-mode -1 (ENC_MR) and MRS_MODE to -enc-mode -2 (ENC_MRS)
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
