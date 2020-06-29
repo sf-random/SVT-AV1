@@ -223,7 +223,7 @@
 #define INTRA_ANGLE_DELTA_NEW_TOKEN "--enable-intra-angle-delta"
 #define PAETH_NEW_TOKEN "--enable-paeth"
 #define SMOOTH_NEW_TOKEN "--enable-smooth"
-#if 1//ON_OFF_FEATURE_MRP
+#if 1 //ON_OFF_FEATURE_MRP
 #define MRP_LEVEL_TOKEN "--mrp-level"
 #endif
 /**********************************
@@ -259,8 +259,14 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 };
 
 static void set_pred_struct_file(const char *value, EbConfig *cfg) {
+#if FIX_DEFAULT_SETTINGS
+    if (cfg->input_pred_struct_filename) { free(cfg->input_pred_struct_filename); }
+    cfg->input_pred_struct_filename = (char *)malloc(strlen(value) + 1);
+    EB_STRCPY(cfg->input_pred_struct_filename, strlen(value) + 1, value);
+#else
     if (cfg->input_pred_struct_file) { fclose(cfg->input_pred_struct_file); }
     FOPEN(cfg->input_pred_struct_file, value, "rb");
+#endif
     cfg->enable_manual_pred_struct = EB_TRUE;
 };
 
@@ -399,7 +405,7 @@ static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
 static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
     cfg->enable_smooth = strtol(value, NULL, 0);
 };
-#if 1//ON_OFF_FEATURE_MRP
+#if 1 //ON_OFF_FEATURE_MRP
 static void set_mrp_level(const char *value, EbConfig *cfg) {
     cfg->mrp_level = strtol(value, NULL, 0);
 };
@@ -598,11 +604,16 @@ static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
 #endif
 };
 static void set_enable_palette(const char *value, EbConfig *cfg) {
-    cfg->enable_palette = (int32_t)strtoul(value, NULL, 0);
+#if FIX_DEFAULT_SETTINGS
+    cfg->enable_palette = (int32_t)strtol(value, NULL, 0);
+}
+#else
+    cfg->enable_palette           = (int32_t)strtoul(value, NULL, 0);
 };
 static void set_enable_olpd_refinement(const char *value, EbConfig *cfg) {
     cfg->olpd_refinement = (int32_t)strtoul(value, NULL, 0);
 };
+#endif
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
     cfg->high_dynamic_range_input = strtol(value, NULL, 0);
 };
@@ -790,9 +801,15 @@ ConfigEntry config_entry_global_options[] = {
      set_frame_rate_denominator},
     //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
-    {SINGLE_INPUT, ENCODER_16BIT_PIPELINE, "Bit depth for enc-dec(0: lbd[default], 1: hbd)", set_encoder_16bit_pipeline},
+    {SINGLE_INPUT,
+     ENCODER_16BIT_PIPELINE,
+     "Bit depth for enc-dec(0: lbd[default], 1: hbd)",
+     set_encoder_16bit_pipeline},
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
-    {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "Set hierarchical levels(3 or 4[default])", set_hierarchical_levels},
+    {SINGLE_INPUT,
+     HIERARCHICAL_LEVELS_TOKEN,
+     "Set hierarchical levels(3 or 4[default])",
+     set_hierarchical_levels},
     {SINGLE_INPUT,
      PRED_STRUCT_TOKEN,
      "Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default])",
@@ -815,19 +832,22 @@ ConfigEntry config_entry_global_options[] = {
     {SINGLE_INPUT,
 #if 1 //PR_1275
      UNPIN_TOKEN,
-    "Allows the execution to be pined/unpined to/from a specific number of cores \n"
-    "The combinational use of --unpin with --lp results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores \n"
-    "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
-    "Example: 72 core machine: \n"
-    "72 jobs x -- lp 1 -- unpin 1 \n"
-    "36 jobs x -- lp 2 -- unpin 1 \n"
-    "18 jobs x -- lp 4 -- unpin 1 ",
+     "Allows the execution to be pined/unpined to/from a specific number of cores \n"
+     "The combinational use of --unpin with --lp results in memory reduction while allowing the "
+     "execution to work on any of the cores and not restrict it to specific cores \n"
+     "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
+     "Example: 72 core machine: \n"
+     "72 jobs x -- lp 1 -- unpin 1 \n"
+     "36 jobs x -- lp 2 -- unpin 1 \n"
+     "18 jobs x -- lp 4 -- unpin 1 ",
      set_unpin_execution},
-    {SINGLE_INPUT, TARGET_SOCKET, "Specify  which socket the encoder runs on"
-    "--unpin is overwritten to 0 when --ss is set to 0 or 1",
-    set_target_socket},
+    {SINGLE_INPUT,
+     TARGET_SOCKET,
+     "Specify  which socket the encoder runs on"
+     "--unpin is overwritten to 0 when --ss is set to 0 or 1",
+     set_target_socket},
     // Termination
-    {SINGLE_INPUT, NULL, NULL, NULL} };
+    {SINGLE_INPUT, NULL, NULL, NULL}};
 #else
      UNPIN_LP1_TOKEN,
      "allows the execution of multiple encodes on the CPU without having to pin them to a "
@@ -919,7 +939,7 @@ ConfigEntry config_entry_specific[] = {
      LOOP_FILTER_DISABLE_NEW_TOKEN,
      "Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled)",
      set_disable_dlf_flag},
-     // CDEF
+    // CDEF
     {SINGLE_INPUT,
      CDEF_MODE_TOKEN,
      "CDEF Mode, 0: OFF, 1-5: ON with 2,4,8,16,64 step refinement, -1: DEFAULT",
@@ -938,7 +958,7 @@ ConfigEntry config_entry_specific[] = {
      "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: "
      "7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
      set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
+#if 1 //ON_OFF_FEATURE_MRP
     {SINGLE_INPUT,
      MRP_LEVEL_TOKEN,
      "Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)",
@@ -953,101 +973,112 @@ ConfigEntry config_entry_specific[] = {
      "Use the same md results(mode, residual , cost,etc..)as the previously processed identical "
      "block(0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_redundant_blk_flag},
-     {SINGLE_INPUT,
-      SPATIAL_SSE_FL_NEW_TOKEN,
-      "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
-      set_spatial_sse_fl_flag},
-     {SINGLE_INPUT,
-      SUBPEL_TOKEN,
-      "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_sub_pel_flag},
-     {SINGLE_INPUT,
-      OVR_BNDRY_BLK_NEW_TOKEN,
-      "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
-      set_over_bndry_blk_flag},
-     {SINGLE_INPUT,
-      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
-      "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
-      set_new_nearest_comb_inject_flag},
-     {SINGLE_INPUT,
-      PRUNE_UNIPRED_ME_NEW_TOKEN,
-      "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
-      set_prune_unipred_me_flag},
-     {SINGLE_INPUT,
-      PRUNE_REF_REC_PART_NEW_TOKEN,
-      "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
-      set_prune_ref_rec_part_flag},
-     {SINGLE_INPUT,
-      NSQ_TABLE_NEW_TOKEN,
-      "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
-      set_nsq_table_flag},
-     {SINGLE_INPUT,
-      FRAME_END_CDF_UPDATE_NEW_TOKEN,
-      "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
-      set_frame_end_cdf_update_flag},
+    {SINGLE_INPUT,
+     SPATIAL_SSE_FL_NEW_TOKEN,
+     "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
+     set_spatial_sse_fl_flag},
+    {SINGLE_INPUT,
+     SUBPEL_TOKEN,
+     "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_sub_pel_flag},
+    {SINGLE_INPUT,
+     OVR_BNDRY_BLK_NEW_TOKEN,
+     "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
+     set_over_bndry_blk_flag},
+    {SINGLE_INPUT,
+     NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
+     "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
+     set_new_nearest_comb_inject_flag},
+    {SINGLE_INPUT,
+     PRUNE_UNIPRED_ME_NEW_TOKEN,
+     "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
+     set_prune_unipred_me_flag},
+    {SINGLE_INPUT,
+     PRUNE_REF_REC_PART_NEW_TOKEN,
+     "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
+     set_prune_ref_rec_part_flag},
+    {SINGLE_INPUT,
+     NSQ_TABLE_NEW_TOKEN,
+     "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
+     set_nsq_table_flag},
+    {SINGLE_INPUT,
+     FRAME_END_CDF_UPDATE_NEW_TOKEN,
+     "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
+     set_frame_end_cdf_update_flag},
 
-     // CHROMA
-     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
-     {SINGLE_INPUT,
-      DISABLE_CFL_NEW_TOKEN,
-      "Set chroma from luma (CFL) flag (0: OFF, 1: ON, -1: DEFAULT)",
-      set_disable_cfl_flag},
+    // CHROMA
+    {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
+    {SINGLE_INPUT,
+     DISABLE_CFL_NEW_TOKEN,
+#if FIX_DEFAULT_SETTINGS
+     "Disable chroma from luma (CFL) flag (0: OFF (do not disable), 1: ON (disable), -1: DEFAULT)",
+#else
+     "Set chroma from luma (CFL) flag (0: OFF, 1: ON, -1: DEFAULT)",
+#endif
+     set_disable_cfl_flag},
 
-     // LOCAL WARPED MOTION
-     {SINGLE_INPUT,
-      LOCAL_WARPED_ENABLE_NEW_TOKEN,
-      "Enable warped motion use , 0 = OFF, 1 = ON, -1 = DEFAULT",
-      set_enable_local_warped_motion_flag},
-     // GLOBAL MOTION
-     {SINGLE_INPUT,
-      GLOBAL_MOTION_ENABLE_NEW_TOKEN,
-      "Enable global motion (0: OFF, 1: ON [default])",
-      set_enable_global_motion_flag},
+    // LOCAL WARPED MOTION
+    {SINGLE_INPUT,
+     LOCAL_WARPED_ENABLE_NEW_TOKEN,
+     "Enable warped motion use , 0 = OFF, 1 = ON, -1 = DEFAULT",
+     set_enable_local_warped_motion_flag},
+    // GLOBAL MOTION
+    {SINGLE_INPUT,
+     GLOBAL_MOTION_ENABLE_NEW_TOKEN,
+     "Enable global motion (0: OFF, 1: ON [default])",
+     set_enable_global_motion_flag},
 
-     // CLASS 12
-     {SINGLE_INPUT,
-      CLASS_12_NEW_TOKEN,
-      "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
-      set_class_12_flag},
-     // EDGE SKIP ANGLE INTRA
-     {SINGLE_INPUT,
-      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
-      "Enable intra edge filtering (0: OFF, 1: ON (default))",
-      set_edge_skip_angle_intra_flag},
-     // INTER INTRA COMPOUND
-     {SINGLE_INPUT,
-      INTER_INTRA_COMPOUND_NEW_TOKEN,
-      "Enable interintra compound (0: OFF, 1: ON (default))",
-      set_interintra_compound_flag},
-     // PAETH
-     {SINGLE_INPUT,
-      PAETH_NEW_TOKEN,
-      "Enable paeth (0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_paeth_flag},
-     // SMOOTH
-     {SINGLE_INPUT,
-      SMOOTH_NEW_TOKEN,
-      "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_smooth_flag},
-     // OBMC
-     {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
-     // RDOQ
-     {SINGLE_INPUT,
-      RDOQ_NEW_TOKEN,
-      "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_rdoq_flag},
+    // CLASS 12
+    {SINGLE_INPUT,
+     CLASS_12_NEW_TOKEN,
+     "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
+     set_class_12_flag},
+    // EDGE SKIP ANGLE INTRA
+    {SINGLE_INPUT,
+     EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
+     "Enable intra edge filtering (0: OFF, 1: ON (default))",
+     set_edge_skip_angle_intra_flag},
+#if FIX_DEFAULT_SETTINGS
+    // INTRA ANGLE DELTA
+    {SINGLE_INPUT,
+     INTRA_ANGLE_DELTA_TOKEN,
+     "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
+     set_intra_angle_delta_flag},
+#endif
+    // INTER INTRA COMPOUND
+    {SINGLE_INPUT,
+     INTER_INTRA_COMPOUND_NEW_TOKEN,
+     "Enable interintra compound (0: OFF, 1: ON (default))",
+     set_interintra_compound_flag},
+    // PAETH
+    {SINGLE_INPUT,
+     PAETH_NEW_TOKEN,
+     "Enable paeth (0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_paeth_flag},
+    // SMOOTH
+    {SINGLE_INPUT,
+     SMOOTH_NEW_TOKEN,
+     "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_smooth_flag},
+    // OBMC
+    {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
+    // RDOQ
+    {SINGLE_INPUT,
+     RDOQ_NEW_TOKEN,
+     "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_rdoq_flag},
 
-     // Filter Intra
-     {SINGLE_INPUT,
-      FILTER_INTRA_NEW_TOKEN,
-      "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
-      set_enable_filter_intra_flag},
+    // Filter Intra
+    {SINGLE_INPUT,
+     FILTER_INTRA_NEW_TOKEN,
+     "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
+     set_enable_filter_intra_flag},
 
-     // Edge Intra Filter
-     {SINGLE_INPUT,
-      INTRA_EDGE_FILTER_NEW_TOKEN,
-      "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
-      set_enable_intra_edge_filter_flag},
+    // Edge Intra Filter
+    {SINGLE_INPUT,
+     INTRA_EDGE_FILTER_NEW_TOKEN,
+     "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_intra_edge_filter_flag},
 
     // Picture based rate estimation
     {SINGLE_INPUT,
@@ -1055,173 +1086,179 @@ ConfigEntry config_entry_specific[] = {
      "Enable picture based rate estimation (0: OFF, 1: ON, -1: DEFAULT)",
      set_pic_based_rate_est},
 
-     // PREDICTIVE ME
-     {SINGLE_INPUT,
-      PRED_ME_TOKEN,
-      "Set predictive motion estimation level(-1: default, [0-5])",
-      set_predictive_me_flag},
-     // BIPRED 3x3 INJECTION
-     {SINGLE_INPUT,
-      BIPRED_3x3_TOKEN,
-      "Set bipred3x3 injection (0: OFF, 1: ON FULL, 2: Reduced set, -1: DEFAULT)",
-      set_bipred3x3inject_flag},
-     // COMPOUND MODE
-     {SINGLE_INPUT,
-      COMPOUND_LEVEL_TOKEN,
-      "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
-      set_compound_level_flag},
-     // ME Tools
-     {SINGLE_INPUT,
-      USE_DEFAULT_ME_HME_TOKEN,
-      "Use default motion estimation/hierarchical motion estimation settings(0: OFF, 1: "
-      "ON[default])",
-      set_cfg_use_default_me_hme},
-     {SINGLE_INPUT,
-      HME_ENABLE_TOKEN,
-      "Enable hierarchical motion estimation(0: OFF, 1: ON)",
-      set_enable_hme_flag},
-     {SINGLE_INPUT,
-      HME_L0_ENABLE_TOKEN,
-      "Enable hierarchical motion estimation Level 0 (0: OFF, 1: ON)",
-      set_enable_hme_level_0_flag},
-     {SINGLE_INPUT,
-      HME_L1_ENABLE_TOKEN,
-      "Enable hierarchical motion estimation Level 1 (0: OFF, 1: ON)",
-      set_enable_hme_level_1_flag},
-     {SINGLE_INPUT,
-      HME_L2_ENABLE_TOKEN,
-      "Enable hierarchical motion estimation Level 2 (0: OFF, 1: ON)",
-      set_enable_hme_level_2_flag},
-     {SINGLE_INPUT,
-      EXT_BLOCK,
-      "Enable the rectangular and asymetric block (0: OFF, 1: ON)",
-      set_enable_ext_block_flag},
-     // ME Parameters
-     {SINGLE_INPUT,
-      SEARCH_AREA_WIDTH_TOKEN,
-      "Set search area in width[1-256]",
-      set_cfg_search_area_width},
-     {SINGLE_INPUT,
-      SEARCH_AREA_HEIGHT_TOKEN,
-      "Set search area in height[1-256]",
-      set_cfg_search_area_height},
-     // HME Parameters
-     {SINGLE_INPUT,
-      NUM_HME_SEARCH_WIDTH_TOKEN,
-      "Set hierarchical motion estimation search region in Width",
-      set_cfg_number_hme_search_region_in_width},
-     {SINGLE_INPUT,
-      NUM_HME_SEARCH_HEIGHT_TOKEN,
-      "Set hierarchical motion estimation search region in height",
-      set_cfg_number_hme_search_region_in_height},
-     {SINGLE_INPUT,
-      HME_SRCH_T_L0_WIDTH_TOKEN,
-      "Set hierarchical motion estimation level0 total search area in Width",
-      set_cfg_hme_level_0_total_search_area_width},
-     {SINGLE_INPUT,
-      HME_SRCH_T_L0_HEIGHT_TOKEN,
-      "Set hierarchical motion estimation level0 total search area in height",
-      set_cfg_hme_level_0_total_search_area_height},
-     // MD Parameters
-     {SINGLE_INPUT,
-      SCREEN_CONTENT_TOKEN,
-      "Set screen content detection level([0-2], 2: DEFAULT)",
-      set_screen_content_mode},
-     {SINGLE_INPUT,
-      HBD_MD_ENABLE_TOKEN,
-      "Enable high bit depth mode decision(0: OFF, 1: fully ON, 2: ON partially[default])",
-      set_enable_hbd_mode_decision},
-     {SINGLE_INPUT,
-      PALETTE_TOKEN,
-      "Set palette prediction mode(-1: default or [0-6])",
-      set_enable_palette},
-     // Optional Features
-     {SINGLE_INPUT,
-      UNRESTRICTED_MOTION_VECTOR,
-      "Allow motion vectors to reach outside of the picture boundary(O: OFF, 1: ON[default])",
-      set_unrestricted_motion_vector},
+    // PREDICTIVE ME
+    {SINGLE_INPUT,
+     PRED_ME_TOKEN,
+     "Set predictive motion estimation level(-1: default, [0-5])",
+     set_predictive_me_flag},
+    // BIPRED 3x3 INJECTION
+    {SINGLE_INPUT,
+     BIPRED_3x3_TOKEN,
+     "Set bipred3x3 injection (0: OFF, 1: ON FULL, 2: Reduced set, -1: DEFAULT)",
+     set_bipred3x3inject_flag},
+    // COMPOUND MODE
+    {SINGLE_INPUT,
+     COMPOUND_LEVEL_TOKEN,
+     "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
+     set_compound_level_flag},
+    // ME Tools
+    {SINGLE_INPUT,
+     USE_DEFAULT_ME_HME_TOKEN,
+     "Use default motion estimation/hierarchical motion estimation settings(0: OFF, 1: "
+     "ON[default])",
+     set_cfg_use_default_me_hme},
+    {SINGLE_INPUT,
+     HME_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation(0: OFF, 1: ON)",
+     set_enable_hme_flag},
+    {SINGLE_INPUT,
+     HME_L0_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 0 (0: OFF, 1: ON)",
+     set_enable_hme_level_0_flag},
+    {SINGLE_INPUT,
+     HME_L1_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 1 (0: OFF, 1: ON)",
+     set_enable_hme_level_1_flag},
+    {SINGLE_INPUT,
+     HME_L2_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 2 (0: OFF, 1: ON)",
+     set_enable_hme_level_2_flag},
+    {SINGLE_INPUT,
+     EXT_BLOCK,
+     "Enable the rectangular and asymetric block (0: OFF, 1: ON)",
+     set_enable_ext_block_flag},
+    // ME Parameters
+    {SINGLE_INPUT,
+     SEARCH_AREA_WIDTH_TOKEN,
+     "Set search area in width[1-256]",
+     set_cfg_search_area_width},
+    {SINGLE_INPUT,
+     SEARCH_AREA_HEIGHT_TOKEN,
+     "Set search area in height[1-256]",
+     set_cfg_search_area_height},
+    // HME Parameters
+    {SINGLE_INPUT,
+     NUM_HME_SEARCH_WIDTH_TOKEN,
+     "Set hierarchical motion estimation search region in Width",
+     set_cfg_number_hme_search_region_in_width},
+    {SINGLE_INPUT,
+     NUM_HME_SEARCH_HEIGHT_TOKEN,
+     "Set hierarchical motion estimation search region in height",
+     set_cfg_number_hme_search_region_in_height},
+    {SINGLE_INPUT,
+     HME_SRCH_T_L0_WIDTH_TOKEN,
+     "Set hierarchical motion estimation level0 total search area in Width",
+     set_cfg_hme_level_0_total_search_area_width},
+    {SINGLE_INPUT,
+     HME_SRCH_T_L0_HEIGHT_TOKEN,
+     "Set hierarchical motion estimation level0 total search area in height",
+     set_cfg_hme_level_0_total_search_area_height},
+    // MD Parameters
+    {SINGLE_INPUT,
+     SCREEN_CONTENT_TOKEN,
+     "Set screen content detection level([0-2], 2: DEFAULT)",
+     set_screen_content_mode},
+    {SINGLE_INPUT,
+     HBD_MD_ENABLE_TOKEN,
+     "Enable high bit depth mode decision(0: OFF, 1: fully ON, 2: ON partially[default])",
+     set_enable_hbd_mode_decision},
+    {SINGLE_INPUT,
+     PALETTE_TOKEN,
+     "Set palette prediction mode(-1: default or [0-6])",
+     set_enable_palette},
+    // Optional Features
+    {SINGLE_INPUT,
+     UNRESTRICTED_MOTION_VECTOR,
+     "Allow motion vectors to reach outside of the picture boundary(O: OFF, 1: ON[default])",
+     set_unrestricted_motion_vector},
 
-      //{ SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
-     // Latency
-     {SINGLE_INPUT,
-      INJECTOR_TOKEN,
-      "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
-      set_injector},
-     {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate", set_injector_frame_rate},
-     {SINGLE_INPUT,
-      SPEED_CONTROL_TOKEN,
-      "Enable speed control(0: OFF[default], 1: ON)",
-      speed_control_flag},
-     // Annex A parameters
-     {SINGLE_INPUT,
-      FILM_GRAIN_TOKEN,
+    //{ SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
+    // Latency
+    {SINGLE_INPUT,
+     INJECTOR_TOKEN,
+     "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
+     set_injector},
+    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate", set_injector_frame_rate},
+    {SINGLE_INPUT,
+     SPEED_CONTROL_TOKEN,
+     "Enable speed control(0: OFF[default], 1: ON)",
+     speed_control_flag},
+    // Annex A parameters
+    {SINGLE_INPUT,
+     FILM_GRAIN_TOKEN,
      "Enable film grain(0: OFF[default], 1-50: ON, film-grain denoising strength)",
-      set_cfg_film_grain},
-     // HME
-     {ARRAY_INPUT,
-      HME_LEVEL0_WIDTH,
-      "Set hierarchical motion estimation level0 search area in Width",
-      set_hme_level_0_search_area_in_width_array},
-     {ARRAY_INPUT,
-      HME_LEVEL0_HEIGHT,
-      "Set hierarchical motion estimation level0 search area in height",
-      set_hme_level_0_search_area_in_height_array},
-     {ARRAY_INPUT,
-      HME_LEVEL1_WIDTH,
-      "Set hierarchical motion estimation level1 search area in Width",
-      set_hme_level_1_search_area_in_width_array},
-     {ARRAY_INPUT,
-      HME_LEVEL1_HEIGHT,
-      "Set hierarchical motion estimation level1 search area in height",
-      set_hme_level_1_search_area_in_height_array},
-     {ARRAY_INPUT,
-      HME_LEVEL2_WIDTH,
-      "Set hierarchical motion estimation level2 search area in Width",
-      set_hme_level_2_search_area_in_width_array},
-     {ARRAY_INPUT,
-      HME_LEVEL2_HEIGHT,
-      "Set hierarchical motion estimation level2 search area in height",
-      set_hme_level_2_search_area_in_height_array},
-     // --- start: ALTREF_FILTERING_SUPPORT
-     {SINGLE_INPUT,
-      ENABLE_ALTREFS,
-      "Enable automatic alt reference frames(0: OFF, 1: ON[default])",
-      set_enable_altrefs},
-     {SINGLE_INPUT,
-      ALTREF_STRENGTH,
-      "AltRef filter strength([0-6], default: 5)",
-      set_altref_strength},
-     {SINGLE_INPUT, ALTREF_NFRAMES, "AltRef max frames([0-10], default: 7)", set_altref_n_frames},
-     {SINGLE_INPUT,
-      ENABLE_OVERLAYS,
-      "Enable the insertion of an extra picture called overlayer picture which will be used as an "
-      "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
-      set_enable_overlays},
-     // --- end: ALTREF_FILTERING_SUPPORT
-     {SINGLE_INPUT,
-      SQ_WEIGHT_TOKEN,
-      "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H "
-      "and V shapes([75-100], default: 100)",
-      set_square_weight},
-     {SINGLE_INPUT,
-      MDS_1_PRUNE_C_TH,
-      "Set MD Stage 1 prune class threshold[5-200]",
-      set_md_stage_1_class_prune_th},
-     {SINGLE_INPUT,
-      MDS_1_PRUNE_S_TH,
-      "Set MD Stage 1 prune candidate threshold[5,150]",
-      set_md_stage_1_cand_prune_th},
-     {SINGLE_INPUT,
-      MDS_2_3_PRUNE_C_TH,
-      "Set MD Stage 2/3 prune class threshold[5,100]",
-      set_md_stage_2_3_class_prune_th},
-     {SINGLE_INPUT,
-      MDS_2_3_PRUNE_S_TH,
-      "Set MD Stage 2/3 prune candidate threshold[5,50]",
-      set_md_stage_2_3_cand_prune_th},
+     set_cfg_film_grain},
+    // HME
+    {ARRAY_INPUT,
+     HME_LEVEL0_WIDTH,
+     "Set hierarchical motion estimation level0 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
+     set_hme_level_0_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL0_HEIGHT,
+     "Set hierarchical motion estimation level0 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
+     set_hme_level_0_search_area_in_height_array},
+    {ARRAY_INPUT,
+     HME_LEVEL1_WIDTH,
+     "Set hierarchical motion estimation level1 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
+     set_hme_level_1_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL1_HEIGHT,
+     "Set hierarchical motion estimation level1 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
+     set_hme_level_1_search_area_in_height_array},
+    {ARRAY_INPUT,
+     HME_LEVEL2_WIDTH,
+     "Set hierarchical motion estimation level2 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
+     set_hme_level_2_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL2_HEIGHT,
+     "Set hierarchical motion estimation level2 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
+     set_hme_level_2_search_area_in_height_array},
+    // --- start: ALTREF_FILTERING_SUPPORT
+    {SINGLE_INPUT,
+     ENABLE_ALTREFS,
+     "Enable automatic alt reference frames(0: OFF, 1: ON[default])",
+     set_enable_altrefs},
+    {SINGLE_INPUT,
+     ALTREF_STRENGTH,
+     "AltRef filter strength([0-6], default: 5)",
+     set_altref_strength},
+    {SINGLE_INPUT, ALTREF_NFRAMES, "AltRef max frames([0-10], default: 7)", set_altref_n_frames},
+    {SINGLE_INPUT,
+     ENABLE_OVERLAYS,
+     "Enable the insertion of an extra picture called overlayer picture which will be used as an "
+     "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
+     set_enable_overlays},
+    // --- end: ALTREF_FILTERING_SUPPORT
+    {SINGLE_INPUT,
+     SQ_WEIGHT_TOKEN,
+     "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H "
+     "and V shapes([75-100], default: 100)",
+     set_square_weight},
+    {SINGLE_INPUT,
+     MDS_1_PRUNE_C_TH,
+     "Set MD Stage 1 prune class threshold[5-200]",
+     set_md_stage_1_class_prune_th},
+    {SINGLE_INPUT,
+     MDS_1_PRUNE_S_TH,
+     "Set MD Stage 1 prune candidate threshold[5,150]",
+     set_md_stage_1_cand_prune_th},
+    {SINGLE_INPUT,
+     MDS_2_3_PRUNE_C_TH,
+     "Set MD Stage 2/3 prune class threshold[5,100]",
+     set_md_stage_2_3_class_prune_th},
+    {SINGLE_INPUT,
+     MDS_2_3_PRUNE_S_TH,
+     "Set MD Stage 2/3 prune candidate threshold[5,50]",
+     set_md_stage_2_3_cand_prune_th},
 
-     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
-     {SINGLE_INPUT,
+    {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
+    {SINGLE_INPUT,
      INTRA_ANGLE_DELTA_NEW_TOKEN,
      "Enable skipping the angle intra mode (0: OFF, 1: ON, -1: DEFAULT)",
      set_cdef_mode},
@@ -1232,8 +1269,8 @@ ConfigEntry config_entry_specific[] = {
     // "nx4ParentMvInjection",
     // set_nx4_4xn_parent_mv_inject_flag},
 
-     // Termination
-     {SINGLE_INPUT, NULL, NULL, NULL}};
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
 
 ConfigEntry config_entry[] = {
     // File I/O
@@ -1299,10 +1336,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CDEF_MODE_TOKEN, "CDEFMode", set_cdef_mode},
 
     // RESTORATION
-    {SINGLE_INPUT, RESTORATION_ENABLE_TOKEN, "RestorationFilter", set_enable_restoration_filter_flag},
+    {SINGLE_INPUT,
+     RESTORATION_ENABLE_TOKEN,
+     "RestorationFilter",
+     set_enable_restoration_filter_flag},
     {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
     {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
+#if 1 //ON_OFF_FEATURE_MRP
     {SINGLE_INPUT, MRP_LEVEL_TOKEN, "MrpLevel", set_mrp_level},
 #endif
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
@@ -1325,7 +1365,9 @@ ConfigEntry config_entry[] = {
 
     // LOCAL WARPED MOTION
     {SINGLE_INPUT,
-     LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", set_enable_local_warped_motion_flag},
+     LOCAL_WARPED_ENABLE_TOKEN,
+     "LocalWarpedMotion",
+     set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
 
@@ -1337,10 +1379,7 @@ ConfigEntry config_entry[] = {
      "EdgeSkipAngleIntra",
      set_edge_skip_angle_intra_flag},
     // INTRA ANGLE DELTA
-    {SINGLE_INPUT,
-     INTRA_ANGLE_DELTA_TOKEN,
-     "IntraAngleDelta",
-     set_intra_angle_delta_flag},
+    {SINGLE_INPUT, INTRA_ANGLE_DELTA_TOKEN, "IntraAngleDelta", set_intra_angle_delta_flag},
 
     // INTER INTRA COMPOUND
     {SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", set_interintra_compound_flag},
@@ -1359,7 +1398,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
 
     // Picture based rate estimation
-    { SINGLE_INPUT, PIC_BASED_RATE_EST_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
+    {SINGLE_INPUT, PIC_BASED_RATE_EST_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
 
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
@@ -1399,11 +1438,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
     {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
+#if !FIX_DEFAULT_SETTINGS
     {SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", set_enable_olpd_refinement},
+#endif
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
 #if 1 //PR_1275
-    { SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution },
+    {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
 #else
     {SINGLE_INPUT, UNPIN_LP1_TOKEN, "UnpinSingleCoreExecution", set_unpin_single_core_execution},
 #endif
@@ -1466,10 +1507,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
 
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
-    {SINGLE_INPUT, MDS_1_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_stage_1_class_prune_th },
-    {SINGLE_INPUT, MDS_1_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_stage_1_cand_prune_th },
-    {SINGLE_INPUT, MDS_2_3_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_stage_2_3_class_prune_th },
-    {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th },
+    {SINGLE_INPUT, MDS_1_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_stage_1_class_prune_th},
+    {SINGLE_INPUT, MDS_1_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_stage_1_cand_prune_th},
+    {SINGLE_INPUT,
+     MDS_2_3_PRUNE_C_TH,
+     "MdFullPruneClassThreshold",
+     set_md_stage_2_3_class_prune_th},
+    {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th},
     // double dash
 #if 1//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
@@ -1542,9 +1586,11 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, QP_LONG_TOKEN, "QP double dash token", set_cfg_qp},
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_NEW_TOKEN, "Loop Filter Disable", set_disable_dlf_flag},
 
-
     {SINGLE_INPUT, DISABLE_CFL_NEW_TOKEN, "Disable CFL", set_disable_cfl_flag},
-    {SINGLE_INPUT, INTRA_EDGE_FILTER_NEW_TOKEN, "Intra Edge Filter", set_enable_intra_edge_filter_flag},
+    {SINGLE_INPUT,
+     INTRA_EDGE_FILTER_NEW_TOKEN,
+     "Intra Edge Filter",
+     set_enable_intra_edge_filter_flag},
     {SINGLE_INPUT, INTRA_ANGLE_DELTA_NEW_TOKEN, "Intra Angle Delta", set_intra_angle_delta_flag},
     {SINGLE_INPUT, PAETH_NEW_TOKEN, "Paeth New Token", set_enable_paeth_flag},
     {SINGLE_INPUT, SMOOTH_NEW_TOKEN, "Smooth New Token", set_enable_smooth_flag},
@@ -1557,46 +1603,50 @@ ConfigEntry config_entry[] = {
  **********************************/
 void eb_config_ctor(EbConfig *config_ptr) {
     memset(config_ptr, 0, sizeof(*config_ptr));
-    config_ptr->error_log_file       = stderr;
-    config_ptr->frame_rate           = 30 << 16;
-    config_ptr->encoder_bit_depth    = 8;
+    config_ptr->error_log_file         = stderr;
+    config_ptr->frame_rate             = 30 << 16;
+    config_ptr->encoder_bit_depth      = 8;
     config_ptr->encoder_16bit_pipeline = 0;
-    config_ptr->encoder_color_format = 1; //EB_YUV420
-    config_ptr->buffered_input       = -1;
+    config_ptr->encoder_color_format   = 1; //EB_YUV420
+    config_ptr->buffered_input         = -1;
 
     config_ptr->qp                  = 50;
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
 #if TPL_LA
-    config_ptr->enable_tpl_la       = 0;
+#if FIX_DEFAULT_SETTINGS
+    config_ptr->enable_tpl_la = 1;
+#else
+    config_ptr->enable_tpl_la = 0;
 #endif
-    config_ptr->target_bit_rate     = 7000000;
-    config_ptr->max_qp_allowed      = 63;
-    config_ptr->min_qp_allowed      = 10;
+#endif
+    config_ptr->target_bit_rate = 7000000;
+    config_ptr->max_qp_allowed  = 63;
+    config_ptr->min_qp_allowed  = 10;
 
-    config_ptr->enable_adaptive_quantization              = 2;
-    config_ptr->enc_mode                                  = MAX_ENC_PRESET;
-    config_ptr->snd_pass_enc_mode                         = MAX_ENC_PRESET + 1;
-    config_ptr->intra_period                              = -2;
-    config_ptr->intra_refresh_type                        = 1;
-    config_ptr->hierarchical_levels                       = 4;
-    config_ptr->pred_structure                            = 2;
-    config_ptr->enable_global_motion                      = EB_TRUE;
-    config_ptr->enable_warped_motion                      = DEFAULT;
-    config_ptr->cdef_mode                                 = DEFAULT;
-    config_ptr->enable_restoration_filtering              = DEFAULT;
-    config_ptr->sg_filter_mode                            = DEFAULT;
-    config_ptr->wn_filter_mode                            = DEFAULT;
+    config_ptr->enable_adaptive_quantization = 2;
+    config_ptr->enc_mode                     = MAX_ENC_PRESET;
+    config_ptr->snd_pass_enc_mode            = MAX_ENC_PRESET + 1;
+    config_ptr->intra_period                 = -2;
+    config_ptr->intra_refresh_type           = 1;
+    config_ptr->hierarchical_levels          = 4;
+    config_ptr->pred_structure               = 2;
+    config_ptr->enable_global_motion         = EB_TRUE;
+    config_ptr->enable_warped_motion         = DEFAULT;
+    config_ptr->cdef_mode                    = DEFAULT;
+    config_ptr->enable_restoration_filtering = DEFAULT;
+    config_ptr->sg_filter_mode               = DEFAULT;
+    config_ptr->wn_filter_mode               = DEFAULT;
 #if !REMOVE_COMBINE_CLASS12
-    config_ptr->combine_class_12                          = DEFAULT;
+    config_ptr->combine_class_12 = DEFAULT;
 #endif
-    config_ptr->edge_skp_angle_intra                      = DEFAULT;
-    config_ptr->intra_angle_delta                         = DEFAULT;
-    config_ptr->inter_intra_compound                      = DEFAULT;
-    config_ptr->enable_paeth                              = DEFAULT;
-    config_ptr->enable_smooth                             = DEFAULT;
-#if 1//ON_OFF_FEATURE_MRP
-    config_ptr->mrp_level                                 = DEFAULT;
+    config_ptr->edge_skp_angle_intra = DEFAULT;
+    config_ptr->intra_angle_delta    = DEFAULT;
+    config_ptr->inter_intra_compound = DEFAULT;
+    config_ptr->enable_paeth         = DEFAULT;
+    config_ptr->enable_smooth        = DEFAULT;
+#if 1 //ON_OFF_FEATURE_MRP
+    config_ptr->mrp_level = DEFAULT;
 #endif
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
@@ -1640,25 +1690,27 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
 #if 1 //ENABLE_SC_DETECTOR
-    config_ptr->screen_content_mode                       = 2;
+    config_ptr->screen_content_mode = 2;
 #else
-    config_ptr->screen_content_mode                       = 0;
+    config_ptr->screen_content_mode      = 0;
 #endif
 #if 1 //CHANGE_HBD_MODE
-    config_ptr->enable_hbd_mode_decision                  = DEFAULT;
+    config_ptr->enable_hbd_mode_decision = DEFAULT;
 #else
-    config_ptr->enable_hbd_mode_decision                  = 2;
+    config_ptr->enable_hbd_mode_decision = 2;
 #endif
-    config_ptr->enable_palette                            = -1;
-    config_ptr->olpd_refinement                           = -1;
-    config_ptr->injector_frame_rate                       = 60 << 16;
+    config_ptr->enable_palette      = -1;
+#if !FIX_DEFAULT_SETTINGS
+    config_ptr->olpd_refinement     = -1;
+#endif
+    config_ptr->injector_frame_rate = 60 << 16;
 
     // ASM Type
     config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;
 #if 1 //PR_1275
-    config_ptr->unpin     = 1;
+    config_ptr->unpin = 1;
 #else
-    config_ptr->unpin_lp1     = 1;
+    config_ptr->unpin_lp1                = 1;
 #endif
     config_ptr->target_socket = -1;
 
@@ -1667,10 +1719,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // --- start: ALTREF_FILTERING_SUPPORT
     config_ptr->enable_altrefs  = EB_TRUE;
     config_ptr->altref_strength = 5;
-#if 1//NOISE_BASED_TF_FRAMES
+#if 1 //NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = 13;
 #else
-    config_ptr->altref_nframes  = 7;
+    config_ptr->altref_nframes           = 7;
 #endif
     // --- end: ALTREF_FILTERING_SUPPORT
 
@@ -1681,10 +1733,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->superres_qthres   = 43; // random threshold for now
     // end - super-resolution support
 
-    config_ptr->sq_weight                 = 100;
+    config_ptr->sq_weight = 100;
 
-    config_ptr->md_stage_1_cand_prune_th  = 75;
-    config_ptr->md_stage_1_class_prune_th = 100;
+    config_ptr->md_stage_1_cand_prune_th    = 75;
+    config_ptr->md_stage_1_class_prune_th   = 100;
     config_ptr->md_stage_2_3_cand_prune_th  = 15;
     config_ptr->md_stage_2_3_class_prune_th = 25;
 
@@ -1715,7 +1767,17 @@ void eb_config_dtor(EbConfig *config_ptr) {
         fclose(config_ptr->recon_file);
         config_ptr->recon_file = (FILE *)NULL;
     }
+#if FIX_DEFAULT_SETTINGS
+    if (config_ptr->input_pred_struct_file) {
+        fclose(config_ptr->input_pred_struct_file);
+        config_ptr->input_pred_struct_file = (FILE *)NULL;
+    }
 
+    if (config_ptr->input_pred_struct_filename) {
+        free(config_ptr->input_pred_struct_filename);
+        config_ptr->input_pred_struct_filename = NULL;
+    }
+#endif
     if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
         fclose(config_ptr->error_log_file);
         config_ptr->error_log_file = (FILE *)NULL;
@@ -2053,12 +2115,8 @@ int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char 
 }
 
 uint32_t check_long(ConfigEntry config_entry, ConfigEntry config_entry_next) {
-    if (config_entry_next.name == NULL) {
-        return 0;
-    }
-    if (EB_STRCMP(config_entry.name, config_entry_next.name) == 0) {
-        return 1;
-    }
+    if (config_entry_next.name == NULL) { return 0; }
+    if (EB_STRCMP(config_entry.name, config_entry_next.name) == 0) { return 1; }
     return 0;
 }
 
@@ -2074,7 +2132,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         int32_t sp_token_index             = -1;
         //fprintf(stderr, "\n%-25s\t%-25s\n", "TOKEN", "DESCRIPTION");
         //fprintf(stderr, "%-25s\t%-25s\n", "-nch", "NumberOfChannels");
-       char *token_options_format = "\t%-5s\t%-25s\t%-25s\n";
+        char *      token_options_format = "\t%-5s\t%-25s\t%-25s\n";
         const char *empty_string         = "";
         fprintf(stderr,
                 "\n%-25s\n",
@@ -2082,7 +2140,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         fprintf(stderr, "\n%-25s\n", "Options:");
         while (config_entry_options[++options_token_index].token != NULL) {
             uint32_t check = check_long(config_entry_options[options_token_index],
-                                                        config_entry_options[options_token_index + 1]);
+                                        config_entry_options[options_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2107,7 +2165,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         while (config_entry_global_options[++global_options_token_index].token != NULL) {
             uint32_t check =
                 check_long(config_entry_global_options[global_options_token_index],
-                    config_entry_global_options[global_options_token_index + 1]);
+                           config_entry_global_options[global_options_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2130,8 +2188,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
         fprintf(stderr, "\n%-25s\n", "Rate Control Options:");
         while (config_entry_rc[++rc_token_index].token != NULL) {
-            uint32_t check = check_long(config_entry_rc[rc_token_index],
-                                                        config_entry_rc[rc_token_index + 1]);
+            uint32_t check =
+                check_long(config_entry_rc[rc_token_index], config_entry_rc[rc_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2154,9 +2212,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
         fprintf(stderr, "\n%-25s\n", "Twopass Options:");
         while (config_entry_2p[++two_p_token_index].token != NULL) {
-            uint32_t check = check_long(
-                config_entry_2p[two_p_token_index],
-                config_entry_2p[two_p_token_index + 1]);
+            uint32_t check = check_long(config_entry_2p[two_p_token_index],
+                                        config_entry_2p[two_p_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2179,9 +2236,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
         fprintf(stderr, "\n%-25s\n", "Keyframe Placement Options:");
         while (config_entry_intra_refresh[++kf_token_index].token != NULL) {
-            uint32_t check = check_long(
-                config_entry_intra_refresh[kf_token_index],
-                config_entry_intra_refresh[kf_token_index + 1]);
+            uint32_t check = check_long(config_entry_intra_refresh[kf_token_index],
+                                        config_entry_intra_refresh[kf_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2205,7 +2261,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         fprintf(stderr, "\n%-25s\n", "AV1 Specific Options:");
         while (config_entry_specific[++sp_token_index].token != NULL) {
             uint32_t check = check_long(config_entry_specific[sp_token_index],
-                                                        config_entry_specific[sp_token_index + 1]);
+                                        config_entry_specific[sp_token_index + 1]);
             if (check == 1) {
                 token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
@@ -2477,9 +2533,84 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
 
     return return_error;
 }
+#if FIX_DEFAULT_SETTINGS
+EbErrorType handle_short_tokens(char *string) {
+    char *short_token_only = string + 2;
+    if (*(string + 3) == '\0') {
+        fprintf(stderr,
+                "warning: please use -%s instead of --%s\n",
+                short_token_only,
+                short_token_only);
+        return EB_ErrorBadParameter;
+    }
+    return EB_ErrorNone;
+}
 
+const char *handle_warnings(const char *token, char *print_message, uint8_t double_dash_token) {
+    const char *linked_token = "";
+
+    if (EB_STRCMP(token, ENCMODE_TOKEN) == 0) linked_token = PRESET_TOKEN;
+    if (EB_STRCMP(token, ENCODER_BIT_DEPTH) == 0) linked_token = INPUT_DEPTH_TOKEN;
+    if (EB_STRCMP(token, INTRA_PERIOD_TOKEN) == 0) linked_token = KEYINT_TOKEN;
+    if (EB_STRCMP(token, QP_FILE_TOKEN) == 0) linked_token = QP_FILE_NEW_TOKEN;
+    if (EB_STRCMP(token, LOOK_AHEAD_DIST_TOKEN) == 0) linked_token = LOOKAHEAD_NEW_TOKEN;
+
+    if (EB_STRCMP(token, STAT_REPORT_TOKEN) == 0) linked_token = STAT_REPORT_NEW_TOKEN;
+    if (EB_STRCMP(token, RESTORATION_ENABLE_TOKEN) == 0)
+        linked_token = RESTORATION_ENABLE_NEW_TOKEN;
+    if (EB_STRCMP(token, EDGE_SKIP_ANGLE_INTRA_TOKEN) == 0)
+        linked_token = EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN;
+    if (EB_STRCMP(token, INTER_INTRA_COMPOUND_TOKEN) == 0)
+        linked_token = INTER_INTRA_COMPOUND_NEW_TOKEN;
+    if (EB_STRCMP(token, MFMV_ENABLE_TOKEN) == 0) linked_token = MFMV_ENABLE_NEW_TOKEN;
+    if (EB_STRCMP(token, REDUNDANT_BLK_TOKEN) == 0) linked_token = REDUNDANT_BLK_NEW_TOKEN;
+    if (EB_STRCMP(token, SPATIAL_SSE_FL_TOKEN) == 0) linked_token = SPATIAL_SSE_FL_NEW_TOKEN;
+    if (EB_STRCMP(token, OVR_BNDRY_BLK_TOKEN) == 0) linked_token = OVR_BNDRY_BLK_NEW_TOKEN;
+    if (EB_STRCMP(token, NEW_NEAREST_COMB_INJECT_TOKEN) == 0)
+        linked_token = NEW_NEAREST_COMB_INJECT_NEW_TOKEN;
+    if (EB_STRCMP(token, PRUNE_UNIPRED_ME_TOKEN) == 0) linked_token = PRUNE_UNIPRED_ME_NEW_TOKEN;
+    if (EB_STRCMP(token, PRUNE_REF_REC_PART_TOKEN) == 0)
+        linked_token = PRUNE_REF_REC_PART_NEW_TOKEN;
+    if (EB_STRCMP(token, NSQ_TABLE_TOKEN) == 0) linked_token = NSQ_TABLE_NEW_TOKEN;
+    if (EB_STRCMP(token, FRAME_END_CDF_UPDATE_TOKEN) == 0)
+        linked_token = FRAME_END_CDF_UPDATE_NEW_TOKEN;
+    if (EB_STRCMP(token, LOCAL_WARPED_ENABLE_TOKEN) == 0)
+        linked_token = LOCAL_WARPED_ENABLE_NEW_TOKEN;
+    if (EB_STRCMP(token, GLOBAL_MOTION_ENABLE_TOKEN) == 0)
+        linked_token = GLOBAL_MOTION_ENABLE_NEW_TOKEN;
+    if (EB_STRCMP(token, RDOQ_TOKEN) == 0) linked_token = RDOQ_NEW_TOKEN;
+    if (EB_STRCMP(token, FILTER_INTRA_TOKEN) == 0) linked_token = FILTER_INTRA_NEW_TOKEN;
+    if (EB_STRCMP(token, HDR_INPUT_TOKEN) == 0) linked_token = HDR_INPUT_NEW_TOKEN;
+    if (EB_STRCMP(token, ADAPTIVE_QP_ENABLE_TOKEN) == 0)
+        linked_token = ADAPTIVE_QP_ENABLE_NEW_TOKEN;
+
+    if (EB_STRCMP(token, DISABLE_CFL_TOKEN) == 0) linked_token = DISABLE_CFL_NEW_TOKEN;
+    if (EB_STRCMP(token, INTRA_EDGE_FILTER_TOKEN) == 0) linked_token = INTRA_EDGE_FILTER_NEW_TOKEN;
+    if (EB_STRCMP(token, INTRA_ANGLE_DELTA_TOKEN) == 0) linked_token = INTRA_ANGLE_DELTA_NEW_TOKEN;
+    if (EB_STRCMP(token, PAETH_TOKEN) == 0) linked_token = PAETH_NEW_TOKEN;
+    if (EB_STRCMP(token, SMOOTH_TOKEN) == 0) linked_token = SMOOTH_NEW_TOKEN;
+
+    if (EB_STRLEN(linked_token, WARNING_LENGTH) > 1) {
+        const char *message_str = " will be deprecated soon, please use ";
+        EB_STRCPY(print_message, WARNING_LENGTH, token);
+        EB_STRCPY(
+            print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
+        EB_STRCPY(
+            print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, linked_token);
+        return print_message;
+    } else if (double_dash_token == 0) {
+        const char *message_str = " will be deprecated soon, please use -";
+        EB_STRCPY(print_message, WARNING_LENGTH, token);
+        EB_STRCPY(
+            print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
+        EB_STRCPY(print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, token);
+        return print_message;
+    }
+    return "";
+}
+#else
 EbErrorType handle_exceptions(char *string) {
-    char *short_token_only  = string + 2;
+    char *short_token_only = string + 2;
 
     if (EB_STRCMP(short_token_only, "w") == 0) {
         fprintf(stderr, "please use -w\n");
@@ -2495,13 +2626,13 @@ EbErrorType handle_exceptions(char *string) {
     }
     return EB_ErrorNone;
 }
-
+#endif
 /******************************************
 * Read Command Line
 ******************************************/
 EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **configs,
                               uint32_t num_channels, EbErrorType *return_errors,
-                              char     warning_str[MAX_NUM_TOKENS][WARNING_LENGTH]) {
+                              char warning_str[MAX_NUM_TOKENS][WARNING_LENGTH]) {
     EbErrorType return_error = EB_ErrorBadParameter;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char *      config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
@@ -2555,6 +2686,49 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***************************************************************************************************/
     /***********   Find SINGLE_INPUT configuration parameter tokens and call respective functions  **********/
     /***************************************************************************************************/
+#if FIX_DEFAULT_SETTINGS
+    token_index                     = -1;
+    EbErrorType return_result_error = EB_ErrorNone;
+    uint32_t    warning_index       = -1;
+    // Parse command line for tokens
+    while (config_entry[++token_index].name != NULL) {
+        if (config_entry[token_index].type == SINGLE_INPUT) {
+            char message[WARNING_LENGTH] = "";
+            // concat strings with '-'
+            char concat_str[WARNING_LENGTH] = "-";
+            EB_STRCPY(concat_str + 1, sizeof(concat_str), config_entry[token_index].token);
+            if (find_token_multiple_inputs(
+                    argc, argv, config_entry[token_index].token, config_strings) == 0) {
+                //Warning for one dash
+                if (*(config_entry[token_index].token + 2) != '\0' && // check for small token
+                    *(config_entry[token_index].token + 1) != '-' && // check for --
+                    return_result_error != EB_ErrorBadParameter) {
+                    handle_warnings(config_entry[token_index].token, message, 0);
+                    EB_STRCPY(warning_str[++warning_index], WARNING_LENGTH, message);
+                }
+                // When a token is found mark it as found in the temp token buffer
+                mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
+
+                // Fill up the values corresponding to each channel
+                for (index = 0; index < num_channels; ++index) {
+                    if (EB_STRCMP(config_strings[index], " "))
+                        (*config_entry[token_index].scf)(config_strings[index], configs[index]);
+                    else
+                        break;
+                }
+            } else if (find_token_multiple_inputs(argc, argv, concat_str, config_strings) ==
+                       0) { // handle double dash
+                handle_warnings(config_entry[token_index].token, message, 1);
+                // handle warnings for new tokens
+                if (EB_STRLEN(message, sizeof(message) > 1)) {
+                    char double_dash_warning[WARNING_LENGTH] = "-";
+                    EB_STRCPY(double_dash_warning + 1, sizeof(double_dash_warning), message);
+                    EB_STRCPY(warning_str[++warning_index], WARNING_LENGTH, double_dash_warning);
+                    warning_index++;
+                }
+                return_result_error = handle_short_tokens(concat_str);
+
+#else
     token_index                  = -1;
     uint32_t return_result_error = 0;
     uint32_t warning_index       = 0;
@@ -2579,19 +2753,20 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                               WARNING_LENGTH,
                               config_entry[token_index].token); // add token
                     EB_STRCPY(warning_str[warning_index] +
-                              EB_STRLEN(warning_str[warning_index], WARNING_LENGTH),
+                                  EB_STRLEN(warning_str[warning_index], WARNING_LENGTH),
                               WARNING_LENGTH,
                               str);
                     EB_STRCPY(warning_str[warning_index] +
-                              EB_STRLEN(warning_str[warning_index], WARNING_LENGTH),
+                                  EB_STRLEN(warning_str[warning_index], WARNING_LENGTH),
                               WARNING_LENGTH,
-                        config_entry[token_index].token);
+                              config_entry[token_index].token);
                     warning_index++;
                     //fprintf(stderr,
-                     //       "%s will be deprecated, please use -%s\n",
-                     //       config_entry[token_index].token,
-                     //       config_entry[token_index].token);
+                    //       "%s will be deprecated, please use -%s\n",
+                    //       config_entry[token_index].token,
+                    //       config_entry[token_index].token);
                 }
+#endif
                 // When a token is found mark it as found in the temp token buffer
                 mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
 
@@ -2602,6 +2777,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                     else
                         break;
                 }
+#if !FIX_DEFAULT_SETTINGS
             } else if (find_token_multiple_inputs(argc, argv, concat_str, config_strings) ==
                        0) { // handle double dash
                 result = handle_exceptions(concat_str);
@@ -2616,6 +2792,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                         break;
                 }
                 if (result == EB_ErrorBadParameter) return_result_error = 1;
+#endif
             }
         }
     }
@@ -2641,6 +2818,11 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
         if ((configs[index])->enable_manual_pred_struct == EB_TRUE) {
+#if FIX_DEFAULT_SETTINGS
+            return_errors[index] = (EbErrorType)read_pred_struct_file(
+                configs[index], configs[index]->input_pred_struct_filename, index);
+            return_error = (EbErrorType)(return_error & return_errors[index]);
+#else
             if (find_token_multiple_inputs(
                     argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_strings) == 0) {
                 mark_token_as_read(INPUT_PREDSTRUCT_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
@@ -2654,6 +2836,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                 } else
                     return_error = EB_ErrorNone;
             }
+#endif
         }
     }
 
@@ -2661,11 +2844,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***********   Find SPECIAL configuration parameter tokens and call respective functions  **********/
     /***************************************************************************************************/
     // Parse command line for search region at level 0 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_column_index = 0;
@@ -2685,12 +2870,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     //// Parse command line for search region at level 0 height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
-
+        mark_token_as_read("-" HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_row_index = 0;
             for (input_index = last_index;
@@ -2709,11 +2895,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 1 Height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_row_index = 0;
@@ -2733,12 +2921,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 1 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
-
+        mark_token_as_read("-" HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_column_index = 0;
             for (input_index = last_index;
@@ -2757,11 +2946,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 2 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_column_index = 0;
@@ -2781,12 +2972,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 2 height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
-
+        mark_token_as_read("-" HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_row_index = 0;
             for (input_index = last_index;
@@ -2816,7 +3008,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
                 // Assuming no errors, add padding to width and height
                 if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->input_padded_width = configs[index]->source_width;
+                    configs[index]->input_padded_width  = configs[index]->source_width;
                     configs[index]->input_padded_height = configs[index]->source_height;
                 }
 
