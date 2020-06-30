@@ -93,7 +93,9 @@
 #define COMPOUND_LEVEL_TOKEN "-compound"
 #define FILTER_INTRA_TOKEN "-filter-intra"
 #define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
+#if !FIX_DEFAULT_SETTINGS
 #define PIC_BASED_RATE_EST_TOKEN "-pic-based-rate-est"
+#endif
 #define USE_DEFAULT_ME_HME_TOKEN "-use-default-me-hme"
 #define HME_ENABLE_TOKEN "-hme"
 #define HME_L0_ENABLE_TOKEN "-hme-l0"
@@ -215,7 +217,9 @@
 #define HEIGHT_LONG_TOKEN "--height"
 #define NUMBER_OF_PICTURES_LONG_TOKEN "--frames"
 #define QP_LONG_TOKEN "--qp"
+#if !REMOVE_COMBINE_CLASS12
 #define CLASS_12_NEW_TOKEN "--enable-class-12"
+#endif
 #define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
 
 #define DISABLE_CFL_NEW_TOKEN "--disable-cfl"
@@ -808,7 +812,7 @@ ConfigEntry config_entry_global_options[] = {
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
-     "Set hierarchical levels(3 or 4[default])",
+     "to Set hierarchical levels(0-4 , 4[default])",
      set_hierarchical_levels},
     {SINGLE_INPUT,
      PRED_STRUCT_TOKEN,
@@ -910,13 +914,13 @@ ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
      "Intra refresh type (1: Fwd frame (Open GOP)[default] 2: Key frame (Closed GOP))",
-     set_tile_row},
+     set_cfg_intra_refresh_type},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 ConfigEntry config_entry_specific[] = {
-    // Prediction Structure
-    //{SINGLE_INPUT, ENCMODE_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
-#if 1//REMOVE_MR_MACRO
+// Prediction Structure
+//{SINGLE_INPUT, ENCMODE_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
+#if 1 //REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
 #else
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
@@ -925,8 +929,8 @@ ConfigEntry config_entry_specific[] = {
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
      "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
      set_compressed_ten_bit_format},
-    {SINGLE_INPUT, TILE_ROW_TOKEN, "Number of tile rows to use, log2[0-6]", set_tile_row},
-    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-6]", set_tile_col},
+    {SINGLE_INPUT, TILE_ROW_TOKEN, "Number of tile rows to use, restricted to 0 in this branch", set_tile_row},
+    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, restricted to 0 in this branch", set_tile_col},
     {SINGLE_INPUT, QP_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
     {SINGLE_INPUT, QP_LONG_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
 
@@ -1027,12 +1031,13 @@ ConfigEntry config_entry_specific[] = {
      GLOBAL_MOTION_ENABLE_NEW_TOKEN,
      "Enable global motion (0: OFF, 1: ON [default])",
      set_enable_global_motion_flag},
-
+#if !REMOVE_COMBINE_CLASS12
     // CLASS 12
     {SINGLE_INPUT,
      CLASS_12_NEW_TOKEN,
      "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
      set_class_12_flag},
+#endif
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
@@ -1079,13 +1084,13 @@ ConfigEntry config_entry_specific[] = {
      INTRA_EDGE_FILTER_NEW_TOKEN,
      "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_intra_edge_filter_flag},
-
+#if !FIX_DEFAULT_SETTINGS
     // Picture based rate estimation
     {SINGLE_INPUT,
      PIC_BASED_RATE_EST_TOKEN,
      "Enable picture based rate estimation (0: OFF, 1: ON, -1: DEFAULT)",
      set_pic_based_rate_est},
-
+#endif
     // PREDICTIVE ME
     {SINGLE_INPUT,
      PRED_ME_TOKEN,
@@ -1370,9 +1375,10 @@ ConfigEntry config_entry[] = {
      set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
-
+#if !REMOVE_COMBINE_CLASS12
     // CLASS 12
     {SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", set_class_12_flag},
+#endif
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
@@ -1396,10 +1402,10 @@ ConfigEntry config_entry[] = {
 
     // Edge Intra Filter
     {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
-
+#if !FIX_DEFAULT_SETTINGS
     // Picture based rate estimation
     {SINGLE_INPUT, PIC_BASED_RATE_EST_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
-
+#endif
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
     // BIPRED 3x3 INJECTION
@@ -1514,8 +1520,8 @@ ConfigEntry config_entry[] = {
      "MdFullPruneClassThreshold",
      set_md_stage_2_3_class_prune_th},
     {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th},
-    // double dash
-#if 1//REMOVE_MR_MACRO
+// double dash
+#if 1 //REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
 #else
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
@@ -1692,16 +1698,16 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #if 1 //ENABLE_SC_DETECTOR
     config_ptr->screen_content_mode = 2;
 #else
-    config_ptr->screen_content_mode      = 0;
+    config_ptr->screen_content_mode = 0;
 #endif
 #if 1 //CHANGE_HBD_MODE
     config_ptr->enable_hbd_mode_decision = DEFAULT;
 #else
     config_ptr->enable_hbd_mode_decision = 2;
 #endif
-    config_ptr->enable_palette      = -1;
+    config_ptr->enable_palette = -1;
 #if !FIX_DEFAULT_SETTINGS
-    config_ptr->olpd_refinement     = -1;
+    config_ptr->olpd_refinement = -1;
 #endif
     config_ptr->injector_frame_rate = 60 << 16;
 
@@ -1710,7 +1716,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #if 1 //PR_1275
     config_ptr->unpin = 1;
 #else
-    config_ptr->unpin_lp1                = 1;
+    config_ptr->unpin_lp1 = 1;
 #endif
     config_ptr->target_socket = -1;
 
@@ -1722,7 +1728,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #if 1 //NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = 13;
 #else
-    config_ptr->altref_nframes           = 7;
+    config_ptr->altref_nframes = 7;
 #endif
     // --- end: ALTREF_FILTERING_SUPPORT
 
@@ -2727,11 +2733,12 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                     warning_index++;
                 }
                 return_result_error = handle_short_tokens(concat_str);
-
+                // When a token is found mark it as found in the temp token buffer
+                mark_token_as_read(concat_str, cmd_copy, &cmd_token_cnt);
 #else
-    token_index                  = -1;
+    token_index = -1;
     uint32_t return_result_error = 0;
-    uint32_t warning_index       = 0;
+    uint32_t warning_index = 0;
     // Parse command line for tokens
     while (config_entry[++token_index].name != NULL) {
         if (config_entry[token_index].type == SINGLE_INPUT) {
@@ -2766,9 +2773,9 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                     //       config_entry[token_index].token,
                     //       config_entry[token_index].token);
                 }
-#endif
                 // When a token is found mark it as found in the temp token buffer
                 mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
+#endif
 
                 // Fill up the values corresponding to each channel
                 for (index = 0; index < num_channels; ++index) {

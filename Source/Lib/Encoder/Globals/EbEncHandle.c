@@ -2911,6 +2911,13 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_DEFAULT_SETTINGS
+    if (config->hierarchical_levels > 4) {
+
+        SVT_LOG("Error Instance %u: The hierarchical level must be [0 - 4] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->look_ahead_distance != (uint32_t)config->intra_period_length && config->intra_period_length >= 0) {
         SVT_LOG("Error Instance %u: The rate control mode 2/3 LAD must be equal to intra_period \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2920,10 +2927,17 @@ static EbErrorType verify_settings(
 
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_DEFAULT_SETTINGS
+    if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 0 || config->tile_columns > 0) {
+        SVT_LOG("Error Instance %u: Log2Tile rows/cols must be 0 \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 6 || config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if ((1 << config->tile_rows) * (1 << config->tile_columns) > 128 || config->tile_columns > 4) {
         SVT_LOG("Error Instance %u: MaxTiles is 128 and MaxTileCols is 16 (Annex A.3) \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
