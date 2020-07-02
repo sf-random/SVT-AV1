@@ -157,12 +157,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test enable_altrefs, defalt is 1;
     {"AltrefTest1", {{"EnableAltRefs", "0"}}, default_test_vectors},
-
-    // test tile settings
-    {"TileTest1", {{"TileRow", "1"}}, default_test_vectors},
-    {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
-    {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
-
     {"SpeedControlTest1", {{"speed_control_flag", "1"}}, default_test_vectors},
 
     // Validate by setting a low bitrate and MaxQpAllowed, push the encoder to producing
@@ -251,17 +245,3 @@ class TileIndependenceTest : public SvtAv1E2ETestFramework {
         SvtAv1E2ETestFramework::config_test();
     }
 };
-
-TEST_P(TileIndependenceTest, TileTest) {
-    run_death_test();
-}
-
-static const std::vector<EncTestSetting> tile_settings = {
-    {"TileTest1", {{"TileCol", "0"}, {"TileRow", "0"}}, default_test_vectors},
-    {"TileTest2", {{"TileCol", "0"}, {"TileRow", "1"}}, default_test_vectors},
-    {"TileTest3", {{"TileCol", "1"}, {"TileRow", "0"}}, default_test_vectors},
-    {"TileTest4", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors}};
-
-INSTANTIATE_TEST_CASE_P(TILETEST, TileIndependenceTest,
-                        ::testing::ValuesIn(tile_settings),
-                        EncTestSetting::GetSettingName);
