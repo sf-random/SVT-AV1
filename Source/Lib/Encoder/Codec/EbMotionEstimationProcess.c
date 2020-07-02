@@ -851,9 +851,13 @@ EbErrorType signal_derivation_me_kernel_oq(
     PictureParentControlSet   *pcs_ptr,
     MotionEstimationContext_t   *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if REMOVE_MR_MACRO
+    EbEncMode enc_mode = scs_ptr->use_output_stat_file ?
+        pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#else
     uint8_t  enc_mode = scs_ptr->use_output_stat_file ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
 #if ON_OFF_FEATURE_MRP
     context_ptr->me_context_ptr->mrp_level = pcs_ptr->mrp_level;
 #endif
@@ -964,7 +968,11 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
     // HME Search Method
 #if ADD_MRS_MODE
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MRS)
+#else
     if (MRS_MODE)
+#endif
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
     else
 #endif
@@ -984,7 +992,11 @@ EbErrorType signal_derivation_me_kernel_oq(
 
     // ME Search Method
 #if ADD_MRS_MODE
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MRS)
+#else
     if (MRS_MODE)
+#endif
         context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
     else
 #endif
@@ -1148,7 +1160,11 @@ EbErrorType signal_derivation_me_kernel_oq(
     else
 #endif
 #if JUNE23_ADOPTIONS
+#if REMOVE_MR_MACRO
+        if (enc_mode <= ENC_MR)
+#else
         if (MR_MODE)
+#endif
 #else
         if (enc_mode <= ENC_M0)
 #endif
@@ -1213,7 +1229,11 @@ EbErrorType signal_derivation_me_kernel_oq(
     else if (pcs_ptr->sc_content_detected)
 #else
 #if JUNE15_ADOPTIONS
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MRS)
+#else
     if (MRS_MODE)
+#endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
 #if !UNIFY_SC_NSC
     else if (pcs_ptr->sc_content_detected)

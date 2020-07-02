@@ -639,6 +639,9 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
 #if SB64_MEM_OPT
                                                 uint8_t sb_size,
 #endif
+#if MEM_OPT_UV_MODE
+                                                uint32_t buffer_desc_mask,
+#endif
 #if MEM_OPT_MD_BUF_DESC
                                                 EbPictureBufferDesc *temp_residual_ptr,
                                                 EbPictureBufferDesc *temp_recon_ptr,
@@ -665,7 +668,11 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
 #endif
     picture_buffer_desc_init_data.bit_depth                       = max_bitdepth;
     picture_buffer_desc_init_data.color_format                    = EB_YUV420;
+#if MEM_OPT_UV_MODE
+    picture_buffer_desc_init_data.buffer_enable_mask              = buffer_desc_mask;
+#else
     picture_buffer_desc_init_data.buffer_enable_mask              = PICTURE_BUFFER_DESC_FULL_MASK;
+#endif
     picture_buffer_desc_init_data.left_padding                    = 0;
     picture_buffer_desc_init_data.right_padding                   = 0;
     picture_buffer_desc_init_data.top_padding                     = 0;
@@ -699,7 +706,11 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     thirty_two_width_picture_buffer_desc_init_data.bit_depth    = EB_32BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
+#if MEM_OPT_UV_MODE
+        buffer_desc_mask;
+#else
         PICTURE_BUFFER_DESC_FULL_MASK;
+#endif
     thirty_two_width_picture_buffer_desc_init_data.left_padding  = 0;
     thirty_two_width_picture_buffer_desc_init_data.right_padding = 0;
     thirty_two_width_picture_buffer_desc_init_data.top_padding   = 0;
@@ -6577,7 +6588,11 @@ EbErrorType generate_md_stage_0_cand(
                 &cand_total_cnt);
     }
     if (!coeff_based_nsq_cand_reduction)
+#if FILTER_INTRA_CLI
+       if (context_ptr->md_filter_intra_level > 0 && av1_filter_intra_allowed_bsize(scs_ptr->seq_header.filter_intra_level, context_ptr->blk_geom->bsize))
+#else
        if (context_ptr->md_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(scs_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
+#endif
 
             inject_filter_intra_candidates(
                 pcs_ptr,
