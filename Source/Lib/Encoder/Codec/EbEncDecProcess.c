@@ -7724,9 +7724,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 
     // Set pic_obmc_mode @ MD
-    if (pd_pass == PD_PASS_0)
+    if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_pic_obmc_mode = 0;
-    else if (pd_pass == PD_PASS_1)
+    else if (context_ptr->pd_pass == PD_PASS_1)
         context_ptr->md_pic_obmc_mode = 0;
     else
         context_ptr->md_pic_obmc_mode =

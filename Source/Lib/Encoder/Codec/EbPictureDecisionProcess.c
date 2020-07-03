@@ -1599,8 +1599,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
 #endif
 #endif
-    if (pcs_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
-        assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
+    //if (pcs_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
+       // assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
 
     pcs_ptr->max_number_of_pus_per_sb =
         (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)
@@ -1646,8 +1646,8 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->nsq_search_level = NSQ_SEARCH_OFF;
 
-    if (pcs_ptr->nsq_search_level > NSQ_SEARCH_OFF)
-        assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
+    //if (pcs_ptr->nsq_search_level > NSQ_SEARCH_OFF)
+    //    assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
 
     switch (pcs_ptr->nsq_search_level) {
     case NSQ_SEARCH_OFF:

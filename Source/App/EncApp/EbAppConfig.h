@@ -194,7 +194,7 @@ typedef struct EbConfig {
     /*****************************************
      * Coding Structure
      *****************************************/
-#if 1//REMOVE_MR_MACRO
+#if 0//REMOVE_MR_MACRO
     int8_t  enc_mode;
     int8_t  snd_pass_enc_mode;
 #else
@@ -349,7 +349,7 @@ typedef struct EbConfig {
     /****************************************
      * OBMC
      ****************************************/
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
     int8_t obmc_level;
 #else
     EbBool enable_obmc;
@@ -363,7 +363,7 @@ typedef struct EbConfig {
     /****************************************
      * Filter intra prediction
      ****************************************/
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     int8_t filter_intra_level;
 #else
     EbBool enable_filter_intra;
@@ -476,7 +476,7 @@ typedef struct EbConfig {
     uint32_t channel_id;
     uint32_t active_channel_count;
     uint32_t logical_processors;
-#if 1 //PR_1275
+#if 0 //PR_1275
     uint32_t unpin;
 #else
     uint32_t unpin_lp1;
@@ -521,7 +521,7 @@ typedef struct EbConfig {
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
     EbBool enable_manual_pred_struct;
     int32_t manual_pred_struct_entry_num;
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     int                 mrp_level;
 #endif
 } EbConfig;

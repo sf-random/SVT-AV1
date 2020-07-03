@@ -15,7 +15,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#define TPL_LA 1
+#define TPL_LA 0
 //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
@@ -67,7 +67,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * density mode.
      *
      * Default is defined as MAX_ENC_PRESET. */
-#if 1//REMOVE_MR_MACRO
+#if 0//REMOVE_MR_MACRO
     int8_t enc_mode;
 #else
     uint8_t enc_mode;
@@ -76,7 +76,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * First pass has the option to run with second pass ME settings.
     *
     * Default is defined as MAX_ENC_PRESET. */
-#if 1//REMOVE_MR_MACRO
+#if 0//REMOVE_MR_MACRO
     int8_t snd_pass_enc_mode;
 #else
     uint8_t snd_pass_enc_mode;
@@ -283,7 +283,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_paeth;
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     /* mrp level
     *
     * Default is -1. */
@@ -377,7 +377,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is -1 (auto) */
     int disable_cfl_flag;
 
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
     /* obmc_level specifies the level of the OBMC feature that would be
      * considered when the level is specified in the command line instruction (CLI).
      * The meaning of the feature level in the CLI is different from that for
@@ -405,7 +405,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int enable_rdoq;
 
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     /* Filter intra prediction
     *
     * The table below specifies the meaning of filter_intra_level when specified in the CLI.
@@ -469,7 +469,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * 2 = Auto: 8bit & 10bit mode decision
      *
     * Default is -1. */
-#if 1 //CHANGE_HBD_MODE
+#if 0 //CHANGE_HBD_MODE
     int8_t enable_hbd_mode_decision;
 #else
     uint8_t enable_hbd_mode_decision;
@@ -504,7 +504,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default depends on rate control mode.*/
     uint32_t look_ahead_distance;
 
-#if 1 //TPL_LA
+#if 0 //TPL_LA
     /* Enable TPL in look ahead, only works when look_ahead_distance>0
      * 0 = disable TPL in look ahead
      * 1 = enable TPL in look ahead
@@ -615,7 +615,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * LogicalProcessorNumber and TargetSocket are not set, threads are managed by
      * OS thread scheduler. */
     uint32_t logical_processors;
-#if 1 //PR_1275
+#if 0 //PR_1275
     /* Unpin the execution .This option does not
     * set the execution to be pinned to a specific number of cores when set to 1. this allows the execution
     * of multiple encodes on the CPU wihtout having to pin them to a specific mask

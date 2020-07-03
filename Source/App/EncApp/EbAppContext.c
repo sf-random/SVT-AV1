@@ -136,7 +136,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.inter_intra_compound     = config->inter_intra_compound;
     callback_data->eb_enc_parameters.enable_paeth             = config->enable_paeth;
     callback_data->eb_enc_parameters.enable_smooth            = config->enable_smooth;
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     callback_data->eb_enc_parameters.mrp_level                = config->mrp_level;
 #endif
     callback_data->eb_enc_parameters.enable_mfmv              = config->enable_mfmv;
@@ -149,7 +149,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
     callback_data->eb_enc_parameters.obmc_level               = (int8_t)config->obmc_level;
 #else
     callback_data->eb_enc_parameters.enable_obmc              = (EbBool)config->enable_obmc;
@@ -160,7 +160,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.compound_level           = config->compound_level;
     callback_data->eb_enc_parameters.set_chroma_mode          = config->set_chroma_mode;
     callback_data->eb_enc_parameters.disable_cfl_flag         = config->disable_cfl_flag;
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     callback_data->eb_enc_parameters.filter_intra_level       = (int8_t)config->filter_intra_level;
 #else
     callback_data->eb_enc_parameters.enable_filter_intra      = (EbBool)config->enable_filter_intra;
@@ -187,7 +187,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
         config->hme_level0_total_search_area_height;
     callback_data->eb_enc_parameters.screen_content_mode = (EbBool)config->screen_content_mode;
     callback_data->eb_enc_parameters.enable_hbd_mode_decision =
-#if 1 //CHANGE_HBD_MODE
+#if 0 //CHANGE_HBD_MODE
         config->enable_hbd_mode_decision;
 #else
         (EbBool)config->enable_hbd_mode_decision;
@@ -209,7 +209,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.speed_control_flag        = config->speed_control_flag;
     callback_data->eb_enc_parameters.use_cpu_flags             = config->cpu_flags_limit;
     callback_data->eb_enc_parameters.logical_processors        = config->logical_processors;
-#if 1 //PR_1275
+#if 0 //PR_1275
     callback_data->eb_enc_parameters.unpin                     = config->unpin;
 #else
     callback_data->eb_enc_parameters.unpin_lp1 = config->unpin_lp1;

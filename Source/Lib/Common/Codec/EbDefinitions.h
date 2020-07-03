@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
 // START  BEYOND_CS2 /////////////////////////////////////////////////////////
-#define BEYOND_CS2        1 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
+#define BEYOND_CS2        0 // BASED ON CS2 branch 3a19f29b789df30ef81d5bb263ce991617cbf30c
 
 #if BEYOND_CS2
 
@@ -184,7 +184,7 @@ extern "C" {
 
 // START  MAY2020 /////////////////////////////////////////////////////////
 
-#define MAY2020        1 // BASED ON apr2020 branch 62c1da44c258c973d668744b5aabfd1214cd8b22
+#define MAY2020        0 // BASED ON apr2020 branch 62c1da44c258c973d668744b5aabfd1214cd8b22
 
 #if MAY2020
 #define FIX_RC_SB_SIZE                       1 // Force SB size to 64x64 when rate control is on
@@ -351,7 +351,7 @@ extern "C" {
 
 
 // START  svt-01 /////////////////////////////////////////////////////////
-#define SVT_01 1
+#define SVT_01 0
 
 #if SVT_01
 
@@ -743,7 +743,7 @@ enum {
  * this number can be increased by increasing the constant
  * FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
  */
-#if 1//NOISE_BASED_TF_FRAMES
+#if 0//NOISE_BASED_TF_FRAMES
 #define ALTREF_MAX_NFRAMES 13
 #else
 #define ALTREF_MAX_NFRAMES 10

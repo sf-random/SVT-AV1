@@ -86,7 +86,7 @@
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
 #define GLOBAL_MOTION_ENABLE_TOKEN "-global-motion"
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
 #define OBMC_TOKEN "-obmc-level"
 #else
 #define OBMC_TOKEN "-obmc"
@@ -95,7 +95,7 @@
 #define PRED_ME_TOKEN "-pred-me"
 #define BIPRED_3x3_TOKEN "-bipred-3x3"
 #define COMPOUND_LEVEL_TOKEN "-compound"
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
 #define FILTER_INTRA_TOKEN "-filter-intra-level"
 #else
 #define FILTER_INTRA_TOKEN "-filter-intra"
@@ -161,7 +161,7 @@
 #define SPEED_CONTROL_TOKEN "-speed-ctrl"
 #define ASM_TYPE_TOKEN "-asm"
 #define THREAD_MGMNT "-lp"
-#if 1 //PR_1275
+#if 0 //PR_1275
 #define UNPIN_TOKEN "-unpin"
 #else
 #define UNPIN_LP1_TOKEN "-unpin-lp1"
@@ -212,7 +212,7 @@
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
 #define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
 #define RDOQ_NEW_TOKEN "--enable-rdoq"
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
 #define FILTER_INTRA_NEW_TOKEN "--filter-intra-level"
 #else
 #define FILTER_INTRA_NEW_TOKEN "--enable-filter-intra"
@@ -235,7 +235,7 @@
 #define INTRA_ANGLE_DELTA_NEW_TOKEN "--enable-intra-angle-delta"
 #define PAETH_NEW_TOKEN "--enable-paeth"
 #define SMOOTH_NEW_TOKEN "--enable-smooth"
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
 #define MRP_LEVEL_TOKEN "--mrp-level"
 #endif
 /**********************************
@@ -411,7 +411,7 @@ static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
 static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
     cfg->enable_smooth = strtol(value, NULL, 0);
 };
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
 static void set_mrp_level(const char *value, EbConfig *cfg) {
     cfg->mrp_level = strtol(value, NULL, 0);
 };
@@ -452,7 +452,7 @@ static void set_chroma_mode(const char *value, EbConfig *cfg) {
 static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
     cfg->disable_cfl_flag = strtol(value, NULL, 0);
 };
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
 static void set_obmc_level_flag(const char *value, EbConfig *cfg) {
     cfg->obmc_level = (EbBool)strtoul(value, NULL, 0);
 };
@@ -473,7 +473,7 @@ static void set_bipred3x3inject_flag(const char *value, EbConfig *cfg) {
 static void set_compound_level_flag(const char *value, EbConfig *cfg) {
     cfg->compound_level = strtol(value, NULL, 0);
 };
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
 static void set_filter_intra_level_flag(const char *value, EbConfig *cfg) {
     cfg->filter_intra_level = (int8_t)strtoul(value, NULL, 0);
 };
@@ -615,7 +615,7 @@ static void set_superres_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
-#if 1 //CHANGE_HBD_MODE
+#if 0 //CHANGE_HBD_MODE
     cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
 #else
     cfg->enable_hbd_mode_decision = (int8_t)strtoul(value, NULL, 0);
@@ -701,7 +701,7 @@ static void set_asm_type(const char *value, EbConfig *cfg) {
 static void set_logical_processors(const char *value, EbConfig *cfg) {
     cfg->logical_processors = (uint32_t)strtoul(value, NULL, 0);
 };
-#if 1 //PR_1275
+#if 0 //PR_1275
 static void set_unpin_execution(const char *value, EbConfig *cfg) {
     cfg->unpin = (uint32_t)strtoul(value, NULL, 0);
 };
@@ -837,7 +837,7 @@ ConfigEntry config_entry_global_options[] = {
      set_asm_type},
     {SINGLE_INPUT, THREAD_MGMNT, "number of logical processors to be used", set_logical_processors},
     {SINGLE_INPUT,
-#if 1 //PR_1275
+#if 0 //PR_1275
      UNPIN_TOKEN,
     "Allows the execution to be pined/unpined to/from a specific number of cores \n"
     "The combinational use of --unpin with --lp results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores \n"
@@ -920,7 +920,7 @@ ConfigEntry config_entry_intra_refresh[] = {
 ConfigEntry config_entry_specific[] = {
     // Prediction Structure
     //{SINGLE_INPUT, ENCMODE_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
-#if 1//REMOVE_MR_MACRO
+#if 0//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
 #else
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
@@ -962,7 +962,7 @@ ConfigEntry config_entry_specific[] = {
      "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: "
      "7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
      set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     {SINGLE_INPUT,
      MRP_LEVEL_TOKEN,
      "Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)",
@@ -1054,7 +1054,7 @@ ConfigEntry config_entry_specific[] = {
       "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
       set_enable_smooth_flag},
      // OBMC
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
      {SINGLE_INPUT, OBMC_TOKEN, "OBMC Level(0: OFF, 1: Fully ON, 2 and 3 are faster levels, -1: DEFAULT)", set_obmc_level_flag},
 #else
      {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
@@ -1066,7 +1066,7 @@ ConfigEntry config_entry_specific[] = {
       set_enable_rdoq_flag},
 
      // Filter Intra
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     {SINGLE_INPUT,
      FILTER_INTRA_NEW_TOKEN,
      "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
@@ -1337,7 +1337,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, RESTORATION_ENABLE_TOKEN, "RestorationFilter", set_enable_restoration_filter_flag},
     {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
     {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     {SINGLE_INPUT, MRP_LEVEL_TOKEN, "MrpLevel", set_mrp_level},
 #endif
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
@@ -1384,7 +1384,7 @@ ConfigEntry config_entry[] = {
     // SMOOTH
     {SINGLE_INPUT, SMOOTH_TOKEN, "Smooth", set_enable_smooth_flag},
     // OBMC
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_obmc_level_flag},
 #else
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
@@ -1392,7 +1392,7 @@ ConfigEntry config_entry[] = {
     // RDOQ
     {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_enable_rdoq_flag},
     // Filter Intra
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_filter_intra_level_flag},
 #else
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_enable_filter_intra_flag},
@@ -1445,7 +1445,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", set_enable_olpd_refinement},
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
-#if 1 //PR_1275
+#if 0 //PR_1275
     { SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution },
 #else
     {SINGLE_INPUT, UNPIN_LP1_TOKEN, "UnpinSingleCoreExecution", set_unpin_single_core_execution},
@@ -1514,7 +1514,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MDS_2_3_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_stage_2_3_class_prune_th },
     {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th },
     // double dash
-#if 1//REMOVE_MR_MACRO
+#if 0//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
 #else
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
@@ -1565,7 +1565,7 @@ ConfigEntry config_entry[] = {
      set_enable_local_warped_motion_flag},
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_NEW_TOKEN, "Global Motion", set_enable_global_motion_flag},
     {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_enable_rdoq_flag},
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_filter_intra_level_flag},
 #else
     {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_enable_filter_intra_flag},
@@ -1642,7 +1642,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->inter_intra_compound                      = DEFAULT;
     config_ptr->enable_paeth                              = DEFAULT;
     config_ptr->enable_smooth                             = DEFAULT;
-#if 1//ON_OFF_FEATURE_MRP
+#if 0//ON_OFF_FEATURE_MRP
     config_ptr->mrp_level                                 = DEFAULT;
 #endif
     config_ptr->enable_mfmv                               = DEFAULT;
@@ -1657,7 +1657,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
     config_ptr->disable_cfl_flag                          = DEFAULT;
-#if 1 // OBMC_CLI
+#if 0 // OBMC_CLI
     config_ptr->obmc_level                                = DEFAULT;
 #else
     config_ptr->enable_obmc                               = EB_TRUE;
@@ -1666,7 +1666,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->pred_me                                   = DEFAULT;
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
-#if 1 // FILTER_INTRA_CLI
+#if 0 // FILTER_INTRA_CLI
     config_ptr->filter_intra_level                        = DEFAULT;
 #else
     config_ptr->enable_filter_intra                       = EB_TRUE;
@@ -1694,12 +1694,12 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_width_array[1]  = 1;
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-#if 1 //ENABLE_SC_DETECTOR
+#if 0 //ENABLE_SC_DETECTOR
     config_ptr->screen_content_mode                       = 2;
 #else
     config_ptr->screen_content_mode                       = 0;
 #endif
-#if 1 //CHANGE_HBD_MODE
+#if 0 //CHANGE_HBD_MODE
     config_ptr->enable_hbd_mode_decision                  = DEFAULT;
 #else
     config_ptr->enable_hbd_mode_decision                  = 2;
@@ -1710,7 +1710,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
 
     // ASM Type
     config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;
-#if 1 //PR_1275
+#if 0 //PR_1275
     config_ptr->unpin     = 1;
 #else
     config_ptr->unpin_lp1     = 1;
@@ -1722,7 +1722,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // --- start: ALTREF_FILTERING_SUPPORT
     config_ptr->enable_altrefs  = EB_TRUE;
     config_ptr->altref_strength = 5;
-#if 1//NOISE_BASED_TF_FRAMES
+#if 0//NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = 13;
 #else
     config_ptr->altref_nframes  = 7;
