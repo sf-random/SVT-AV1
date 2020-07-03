@@ -617,7 +617,9 @@ extern "C" {
 #define CHECK_DC_DISTORTION        0
 
 #define HEAVY_SEARCH 1
-
+#if HEAVY_SEARCH
+#define SPARSE_VARIANCE            1
+#endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 
