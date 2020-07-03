@@ -5212,7 +5212,11 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_width >> 1),
         -(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
         +(context_ptr->md_nsq_motion_search_ctrls.full_pel_search_height >> 1),
+#if FIX_HIGH_MOTION
         1,
+#else
+        8,
+#endif
 #if SEARCH_TOP_N
         context_ptr->md_subpel_search_ctrls.half_pel_search_pos_cnt > 1,
 #endif

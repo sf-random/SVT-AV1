@@ -603,7 +603,7 @@ extern "C" {
 
 ///////////////////////////////////////
 #define SHUT_GLOBAL 0
-#if 1
+#if 0
 #define ME_USE_NSC_SETTING         0 // 
 #define FIX_HIGH_MOTION            1
 #define FIX_HIGH_MOTION_NSQ        1
@@ -619,7 +619,7 @@ extern "C" {
 #define MVP_DISTORTION             0
 #define CHECK_DC_DISTORTION        0
 
-#define HEAVY_SEARCH 1
+#define HEAVY_SEARCH 0
 #if HEAVY_SEARCH
 #define SPARSE_VARIANCE            1
 #endif
