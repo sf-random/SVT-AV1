@@ -4156,6 +4156,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->global_mv_injection = 0;
 
+#if SHUT_GLOBAL
+    context_ptr->global_mv_injection = 0;
+#endif
+
     if (pd_pass == PD_PASS_0)
         context_ptr->new_nearest_injection = 0;
     else if (pd_pass == PD_PASS_1)

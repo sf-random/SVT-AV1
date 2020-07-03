@@ -601,6 +601,8 @@ extern "C" {
 #define FILTER_INTRA_CLI    1 // Improve CLI support for Filter Intra (OFF / Fully ON / Other Levels)
 #define MEM_OPT_UV_MODE     1 // Memory optimization for independant uv mode
 
+///////////////////////////////////////
+#define SHUT_GLOBAL 1
 #if 0
 #define ME_USE_NSC_SETTING         0 // 
 #define FIX_HIGH_MOTION            1
