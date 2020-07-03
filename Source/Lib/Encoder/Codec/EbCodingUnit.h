@@ -423,9 +423,7 @@ typedef struct BlkStruct {
     int32_t        ii_wedge_sign;
 #endif
     uint8_t        filter_intra_mode;// ec
-#if !CLEAN_UP_SB_DATA_6
     uint8_t        do_not_process_block;
-#endif
 #if SB_MEM_OPT
     uint8_t                  use_intrabc;
 #endif
@@ -524,9 +522,7 @@ typedef struct BlkStruct {
 #endif
     uint8_t        filter_intra_mode;// ec
     PaletteInfo    palette_info; // ec
-#if !CLEAN_UP_SB_DATA_6
     uint8_t        do_not_process_block;
-#endif
 #if SB_MEM_OPT
     uint8_t                  use_intrabc;
 #endif

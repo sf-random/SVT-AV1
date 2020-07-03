@@ -1242,10 +1242,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_16bit_pipeline;
-#if RATE_MEM_OPT
-        input_data.serial_rate_est = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pic_based_rate_est &&
-            input_data.enc_dec_segment_col == 1 && input_data.enc_dec_segment_row == 1 ?  1 : 0;
-#endif
 
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
@@ -2359,27 +2355,6 @@ void copy_api_from_app(
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
 
     //hack for enc_modes to allow user see modes 0..6
-#if REMAP_MODES
-    uint8_t enc_mode_cfg = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
-    if (enc_mode_cfg == ENC_M0)
-        scs_ptr->static_config.enc_mode = ENC_M0;
-    else if (enc_mode_cfg == ENC_M1)
-        scs_ptr->static_config.enc_mode = ENC_M1;
-    else if (enc_mode_cfg == ENC_M2)
-        scs_ptr->static_config.enc_mode = ENC_M3;
-    else if (enc_mode_cfg == ENC_M3)
-        scs_ptr->static_config.enc_mode = ENC_M5;
-    else if (enc_mode_cfg == ENC_M4)
-        scs_ptr->static_config.enc_mode = ENC_M6;
-    else if (enc_mode_cfg == ENC_M5)
-        scs_ptr->static_config.enc_mode = ENC_M7;
-    else if (enc_mode_cfg == ENC_M6)
-        scs_ptr->static_config.enc_mode = ENC_M8;
-    else
-        scs_ptr->static_config.enc_mode = ENC_M8;
-
-    printf("Going to Run M%i \n", scs_ptr->static_config.enc_mode);
-#endif
 
 
     scs_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->snd_pass_enc_mode;

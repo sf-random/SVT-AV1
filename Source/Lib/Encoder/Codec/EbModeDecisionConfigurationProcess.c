@@ -1460,9 +1460,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
 #endif
 #endif
-#if SHUT_LAYER_BASED_FEATURES
-    enable_wm = EB_TRUE;
-#endif
     frm_hdr->allow_warped_motion =
         enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&
@@ -2121,10 +2118,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         context_ptr->qp = pcs_ptr->picture_qp;
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
-#if REDUCE_COMPLEX_CLIP_CYCLES
-        pcs_ptr->coef_coded_area = 0;
-        pcs_ptr->below32_coded_area = 0;
-#endif
 #if  ADAPTIVE_NSQ_CR
         // Init block selection
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);

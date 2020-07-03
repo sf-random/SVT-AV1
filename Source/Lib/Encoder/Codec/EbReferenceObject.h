@@ -42,10 +42,6 @@ typedef struct EbReferenceObject {
 #if TPL_1PASS_IMP
     double               r0;
 #endif
-#if REDUCE_COMPLEX_CLIP_CYCLES
-    uint8_t coef_coded_area;
-    uint8_t below32_coded_area;
-#endif
 #if ADAPTIVE_NSQ_CR
     uint32_t ref_part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
 #endif

@@ -194,14 +194,6 @@ typedef struct  ObmcControls {
     uint8_t near_count;    //how many near to consider injecting obmc 0..3
 }ObmcControls;
 #endif
-#if REDUCE_COMPLEX_CLIP_CYCLES
-typedef struct PicComplexControls {
-    uint8_t base_intra_th;// Threshold for intra coded area
-    uint8_t base_coeff_th;// Threshold for coeff coded area
-    uint8_t base_small_block_size_th;// Threshold for small block coded area
-    uint8_t use_th_qp_offset;// Flag to indicate whether a qp-based offset will be added to the base_threshold
-} PicComplexControls;
-#endif
 #if NSQ_CYCLES_REDUCTION
 typedef struct  NsqCycleRControls {
     uint8_t enabled; // On/Off feature control
@@ -770,11 +762,6 @@ typedef struct ModeDecisionContext {
 #endif
 #if UV_SEARCH_MODE_INJCECTION
     uint8_t       intra_chroma_search_follows_intra_luma_injection;
-#endif
-#if REDUCE_COMPLEX_CLIP_CYCLES
-    uint8_t pic_class;
-    uint8_t reduce_complex_clip_cycles_level;
-    PicComplexControls pic_complexity_ctrls;
 #endif
 #if NSQ_CYCLES_REDUCTION
     NsqCycleRControls nsq_cycles_red_ctrls;

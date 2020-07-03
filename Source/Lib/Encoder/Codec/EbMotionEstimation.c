@@ -8204,10 +8204,6 @@ void hme_level_1(
     int16_t  y_top_left_search_region;
     uint32_t search_region_index;
     // Round up x_HME_L0 to be a multiple of 8
-#if PRUNE_HME_L0
-    hme_level1_search_area_in_width = (hme_level1_search_area_in_width * context_ptr->hme_factor) / 100;
-    hme_level1_search_area_in_height = (hme_level1_search_area_in_height * context_ptr->hme_factor) / 100;
-#endif
 #if ADD_HME_DECIMATION_SIGNAL
     // Don't change TWO_DECIMATION_HME refinement; use the HME distance algorithm only for non-2D HME
     if (context_ptr->hme_decimation <= ONE_DECIMATION_HME) {
@@ -8397,12 +8393,6 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
     // 8 or non multiple of 8 SAD calculation performance is the same for
     // searchregion width from 1 to 8
     (void)pcs_ptr;
-#if PRUNE_HME_L1
-     int16_t hme_level2_search_area_in_width = (int16_t)(context_ptr->hme_level2_search_area_in_width_array[search_region_number_in_width] * context_ptr->hme_factor)/100;
-    // Round up x_HME_L0 to be a multiple of 8
-    int16_t search_area_width = (int16_t)((hme_level2_search_area_in_width + 7) & ~0x07);
-    int16_t search_area_height = (int16_t) (context_ptr->hme_level2_search_area_in_height_array[search_region_number_in_height] * context_ptr->hme_factor)/100;
-#else
 #if ADD_HME_DECIMATION_SIGNAL
     // Don't change TWO_DECIMATION_HME or ONE_DECIMATION_HME refinement; use the HME distance algorithm only for 0D HME
     if (context_ptr->hme_decimation <= ZERO_DECIMATION_HME) {
@@ -8425,7 +8415,6 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
     int16_t search_area_height =
         (int16_t)
             context_ptr->hme_level2_search_area_in_height_array[search_region_number_in_height];
-#endif
 #endif
     int16_t x_search_area_origin;
     int16_t y_search_area_origin;
@@ -10928,9 +10917,6 @@ void hme_level1_sb(
                     if (enable_hme_level1_flag) {
                         search_region_number_in_height = 0;
                         search_region_number_in_width = 0;
-#if PRUNE_HME_L0
-                        context_ptr->hme_factor = context_ptr->adjust_hme_l1_factor[list_index][ref_pic_index];
-#endif
 #if ADD_HME_DECIMATION_SIGNAL
                         uint16_t dist = (context_ptr->me_alt_ref == EB_TRUE) ?
                             ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center)) :
@@ -11121,9 +11107,6 @@ void hme_level2_sb(
                     if (enable_hme_level2_flag) {
                         search_region_number_in_height = 0;
                         search_region_number_in_width = 0;
-#if PRUNE_HME_L1
-                        context_ptr->hme_factor = context_ptr->adjust_hme_l2_factor[list_index][ref_pic_index];
-#endif
 #if ADD_HME_DECIMATION_SIGNAL
                         uint16_t dist = (context_ptr->me_alt_ref == EB_TRUE) ?
                             ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center)) :
@@ -11590,11 +11573,6 @@ void hme_sb(
         context_ptr,
         input_ptr);
     // prune hierarchical ME level 0
-#if PRUNE_HME_L0
-    prune_hme_results(
-        context_ptr,
-        0);
-#endif
     // perform hierarchical ME level 1
     hme_level1_sb(
         pcs_ptr,
@@ -11603,11 +11581,6 @@ void hme_sb(
         context_ptr,
         input_ptr);
     // prune hierarchical ME level 1
-#if PRUNE_HME_L1
-    prune_hme_results(
-        context_ptr,
-        1);
-#endif
     // perform hierarchical ME level 2
     hme_level2_sb(
         pcs_ptr,
@@ -12537,12 +12510,6 @@ EbErrorType motion_estimate_sb(
             for(uint32_t pi = 0; pi < MAX_ME_PU_COUNT; pi++)
 #endif
                 context_ptr->p_sb_best_mv[li][ri][pi] = 0;
-#endif
-#if PRUNE_HME_L0
-            context_ptr->adjust_hme_l1_factor[li][ri] = 100;
-#endif
-#if PRUNE_HME_L1
-            context_ptr->adjust_hme_l2_factor[li][ri] = 100;
 #endif
         }
     }

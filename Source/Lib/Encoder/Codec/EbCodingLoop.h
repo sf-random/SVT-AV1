@@ -160,10 +160,6 @@ static const uint16_t block_prob_intra_tab[5][9][3][2] = {
 #else
 #if COEFF_BASED_BYPASS_NSQ
 #if MERGED_COEFF_BAND
-#if SPEED_WEIGHT
-static const uint64_t speed_weight[9] = {100,100,100,50,50,50,50,70,70};
-static const uint64_t speed_weight2[9] = {100,100,100,60,60,60,60,80,80};
-#endif
 #if SSE_BASED_SPLITTING
 static const uint64_t sse_grad_weight[5][9][3] = {
 {

@@ -133,9 +133,6 @@ void* set_me_hme_params_oq(
 #endif
 #if NEW_HME_ME_SIZES
 #if PRESETS_SHIFT
-#if M1_COMBO_2 || M2_COMBO_2
-            if (pcs_ptr->enc_mode <= ENC_M0) {
-#else
 #if JUNE17_ADOPTIONS
             if (pcs_ptr->enc_mode <= ENC_M3) {
 #else
@@ -152,7 +149,6 @@ void* set_me_hme_params_oq(
             if (pcs_ptr->enc_mode <= ENC_M4) {
 #else
             if (pcs_ptr->enc_mode <= ENC_M2) {
-#endif
 #endif
 #endif
 #endif
@@ -261,21 +257,10 @@ void* set_me_hme_params_oq(
 #endif
 #if !NEW_M8
 #if UPGRADE_M6_M7_M8
-#if REVERT_YELLOW // HME/ME
-            else if (pcs_ptr->enc_mode <= ENC_M7) {
-                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
-                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 300;
-            }
-            else {
-                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
-                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
-            }
-#else
             else {
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 300;
             }
-#endif
 #else
             else {
                 me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
@@ -300,11 +285,7 @@ void* set_me_hme_params_oq(
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
 #else
 #if MAY17_ADOPTIONS
-#if SHUT_RESOLUTION_CHECKS
-    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
-#else
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 192 : 256;
-#endif
 #else
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
 #endif
@@ -359,11 +340,7 @@ void* set_me_hme_params_oq(
 #if MAY12_ADOPTIONS
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
 #if MAY17_ADOPTIONS
-#if SHUT_RESOLUTION_CHECKS
-    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
-#else
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 192 : 256;
-#endif
 #else
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
 #endif
@@ -413,13 +390,8 @@ void* set_me_hme_params_oq(
     }
 #endif
     else {
-#if REVERT_YELLOW // HME/ME
-        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 25;
-        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 50;
-#else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
-#endif
     }
 #else
     else {
@@ -522,13 +494,8 @@ void* set_me_hme_params_oq(
 #endif
 #endif
 #if HME_4K_ADOPTIONS
-#if SHUT_RESOLUTION_CHECKS
-            me_context_ptr->hme_level0_total_search_area_width =  120;
-            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
-#else
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
-#endif
 #else
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 120;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
@@ -635,35 +602,21 @@ void* set_me_hme_params_oq(
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #endif
-#if SHUT_RESOLUTION_CHECKS
-    else
-#else
     else if (input_resolution <= INPUT_SIZE_720p_RANGE)
-#endif
-#else
-#if SHUT_RESOLUTION_CHECKS
-    if (1)
 #else
     if (input_resolution <= INPUT_SIZE_720p_RANGE)
 #endif
-#endif
 #if PRESETS_SHIFT
-#if M2_COMBO_1
-        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
-#else
 #if PRESET_SHIFITNG
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M2 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #endif
-#endif
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M3 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #endif
-#if !SHUT_RESOLUTION_CHECKS
     else
         me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
-#endif
 #else
     me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
 #endif
@@ -1208,11 +1161,7 @@ EbErrorType signal_derivation_me_kernel_oq(
 #endif
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
 #if !MAY12_ADOPTIONS
-#if M2_COMBO_2 || M2_COMBO_3
-    else if (enc_mode <= ENC_M1)
-#else
     else if (enc_mode <= ENC_M2)
-#endif
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 3);
 #endif
     else
