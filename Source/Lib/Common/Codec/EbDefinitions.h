@@ -616,6 +616,8 @@ extern "C" {
 #define MVP_DISTORTION             0
 #define CHECK_DC_DISTORTION        0
 
+#define HEAVY_SEARCH 1
+
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
 

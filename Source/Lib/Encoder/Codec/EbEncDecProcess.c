@@ -1899,7 +1899,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
         md_sq_motion_search_ctrls->enabled = 1;
         md_sq_motion_search_ctrls->use_ssd = 0;
 
-#if ME_USE_NSC_SETTING
+#if ME_USE_NSC_SETTING || HEAVY_SEARCH
         md_sq_motion_search_ctrls->size_colocated_area                    =   8;
 #else
         md_sq_motion_search_ctrls->size_colocated_area                    =   2;
