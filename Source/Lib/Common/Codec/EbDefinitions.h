@@ -601,6 +601,7 @@ extern "C" {
 #define FILTER_INTRA_CLI    1 // Improve CLI support for Filter Intra (OFF / Fully ON / Other Levels)
 #define MEM_OPT_UV_MODE     1 // Memory optimization for independant uv mode
 
+#if 0
 #define ME_USE_NSC_SETTING         0 // 
 #define FIX_HIGH_MOTION            1
 #define FIX_HIGH_MOTION_NSQ        1
@@ -619,6 +620,7 @@ extern "C" {
 #define HEAVY_SEARCH 1
 #if HEAVY_SEARCH
 #define SPARSE_VARIANCE            1
+#endif
 #endif
 #endif
 // END  SVT_01 /////////////////////////////////////////////////////////
