@@ -602,8 +602,8 @@ extern "C" {
 #define MEM_OPT_UV_MODE     1 // Memory optimization for independant uv mode
 
 ///////////////////////////////////////
-#define SHUT_GLOBAL 1
-#if 0
+#define SHUT_GLOBAL 0
+#if 1
 #define ME_USE_NSC_SETTING         0 // 
 #define FIX_HIGH_MOTION            1
 #define FIX_HIGH_MOTION_NSQ        1
