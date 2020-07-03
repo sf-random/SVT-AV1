@@ -619,7 +619,7 @@ extern "C" {
 #define MVP_DISTORTION             0
 #define CHECK_DC_DISTORTION        0
 
-#define HEAVY_SEARCH 0
+#define HEAVY_SEARCH 1
 #if HEAVY_SEARCH
 #define SPARSE_VARIANCE            1
 #endif

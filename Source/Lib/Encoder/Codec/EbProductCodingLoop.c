@@ -5315,7 +5315,7 @@ void md_sq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
             context_ptr->fast_lambda_md[EB_10_BIT_MD] :
             context_ptr->fast_lambda_md[EB_8_BIT_MD];
-#if !HEAVY_SEARCH
+#if 1//!HEAVY_SEARCH
         if (RDCOST(fast_lambda, 16, pa_me_distortion) > RDCOST(fast_lambda, 16, 5 * context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight))
 #endif
         {
